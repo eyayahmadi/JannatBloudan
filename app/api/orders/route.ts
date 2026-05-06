@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
+import { canFulfillLine } from "@/lib/stock/validate-order"
 
 export async function GET(request: NextRequest) {
   try {
@@ -92,12 +93,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: itemsError.message }, { status: 500 })
     }
 
-    // Mettre à jour le stock
-    for (const item of body.items) {
-      await supabase.rpc("decrement_stock", {
-        product_id: item.productId,
-        quantity: item.quantity,
-      })
+    const { error: decErr } = await supabase.rpc("decrement_stock_for_order", {
+      p_order_id: order.id,
+      p_user_id: null,
+    })
+    if (decErr) {
+      await supabase.from("order_items").delete().eq("order_id", order.id)
+      await supabase.from("orders").delete().eq("id", order.id)
+      return NextResponse.json(
+        { error: decErr.message || "Stock: impossible de valider la commande" },
+        { status: 409 },
+      )
     }
 
     return NextResponse.json({ order }, { status: 201 })

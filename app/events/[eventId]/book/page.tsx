@@ -121,7 +121,7 @@ export default function BookEventPage() {
 
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-[#2d2416] mb-2 animate-fade-up">Réserver un Événement</h1>
-          <p className="text-[#8b6f47]">Jannat Baloudan — événements & célébrations</p>
+          <p className="text-[#8b6f47]">Jannat Bloudan — événements et célébrations</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-up [animation-delay:100ms]">

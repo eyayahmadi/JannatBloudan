@@ -11,7 +11,7 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import { getBrowserSupabaseEnv, getServerSupabaseEnv } from "@/lib/supabase/config"
-import { normalizeRole } from "@/lib/auth/roles"
+import { normalizeRole, type AppRole } from "@/lib/auth/roles"
 
 /**
  * Client Supabase avec service_role (opérations admin.*).
@@ -75,4 +75,30 @@ export async function requireAdmin(): Promise<
     }
   }
   return { ok: true, user }
+}
+
+/**
+ * Garde : utilisateur auth avec un rôle dans `allowed`.
+ * Utile pour caisse (CASHIER) ou autres routes staff hors ADMIN seul.
+ */
+export async function requireRoles(
+  allowed: readonly AppRole[],
+): Promise<
+  { ok: true; user: SessionUser; role: AppRole } | { ok: false; response: NextResponse }
+> {
+  const user = await getCurrentSessionUser()
+  if (!user) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "unauthenticated" }, { status: 401 }),
+    }
+  }
+  const role = normalizeRole((user.user_metadata as { role?: unknown })?.role)
+  if (!(allowed as readonly string[]).includes(role)) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "forbidden" }, { status: 403 }),
+    }
+  }
+  return { ok: true, user, role }
 }

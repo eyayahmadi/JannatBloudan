@@ -2,12 +2,12 @@ import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
 export const metadata: Metadata = {
-  title: "Menu — Jannat Baloudan | Cuisine Syrienne",
+  title: "Menu — Jannat Bloudan | Cuisine syrienne",
   description:
-    "Découvrez notre carte : mezzes, shawarma, kibbeh, manakish et desserts orientaux. Fait maison avec des ingrédients frais.",
+    "Découvrez notre carte : mezze, shawarma, kibbeh, manakish et desserts orientaux. Fait maison avec des ingrédients frais.",
   openGraph: {
-    title: "Menu — Jannat Baloudan",
-    description: "Mezzes, shawarma, grillades et patisseries orientales. Cuisine syrienne authentique.",
+    title: "Menu — Jannat Bloudan",
+    description: "Mezze, shawarma, grillades et pâtisseries orientales. Cuisine syrienne authentique.",
   },
 }
 

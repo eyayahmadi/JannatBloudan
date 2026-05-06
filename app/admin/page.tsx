@@ -414,7 +414,7 @@ export default function AdminDashboard() {
         />
 
         <div className="mx-auto max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4 animate-fade-up [animation-delay:80ms]">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4 animate-fade-up [animation-delay:80ms]">
           <Button asChild variant="outline" className="h-20 bg-transparent">
             <Link href="/admin/menu" className="flex flex-col gap-2">
               <span className="font-semibold">Gestion du Menu</span>
@@ -428,8 +428,8 @@ export default function AdminDashboard() {
             </Link>
           </Button>
           <Button asChild variant="outline" className="h-20 bg-transparent">
-            <Link href="/admin/purchases" className="flex flex-col gap-2">
-              <span className="font-semibold">Achats</span>
+            <Link href="/admin/supplier-invoices" className="flex flex-col gap-2">
+              <span className="font-semibold">Factures fournisseurs</span>
               <span className="text-xs">Factures</span>
             </Link>
           </Button>
@@ -437,6 +437,12 @@ export default function AdminDashboard() {
             <Link href="/admin/staff" className="flex flex-col gap-2">
               <span className="font-semibold">Personnel</span>
               <span className="text-xs">Equipe</span>
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="h-20 bg-transparent">
+            <Link href="/admin/insights" className="flex flex-col gap-2">
+              <span className="font-semibold">Insights ops</span>
+              <span className="text-xs">Tendances &amp; suggestions</span>
             </Link>
           </Button>
           <Button asChild variant="outline" className="h-20 bg-transparent">
@@ -481,6 +487,18 @@ export default function AdminDashboard() {
             <Link href="/admin/qr" className="flex flex-col gap-2">
               <span className="font-semibold">QR Codes</span>
               <span className="text-xs">Tables connectees</span>
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="h-20 border-amber-300/60 bg-gradient-to-br from-amber-50 to-yellow-50 dark:border-amber-800/30 dark:from-amber-950/20 dark:to-yellow-950/15">
+            <Link href="/caisse" className="flex flex-col gap-2">
+              <span className="font-semibold">💶 Caisse intelligente</span>
+              <span className="text-xs">Synthèse & jour</span>
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="h-20 border-slate-300/60 bg-slate-50/80 dark:border-slate-700/40 dark:bg-slate-900/60">
+            <Link href="/admin/taxes" className="flex flex-col gap-2">
+              <span className="font-semibold">Taxes TVA</span>
+              <span className="text-xs">Règles & périmètres</span>
             </Link>
           </Button>
           <Button asChild variant="outline" className="h-20 border-emerald-300/50 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-950/20">

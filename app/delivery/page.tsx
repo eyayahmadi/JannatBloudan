@@ -24,6 +24,7 @@ import { PageShell } from "@/components/site/PageShell"
 import { AIAgentBadge } from "@/components/ai/AIAgentBadge"
 import { SiteFooter } from "@/components/site/SiteFooter"
 import { SiteHeader } from "@/components/site/SiteHeader"
+import { MobileBottomNav } from "@/components/site/MobileBottomNav"
 import { SITE } from "@/lib/site-config"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -1101,7 +1102,7 @@ export default function DeliveryPage() {
   )
 
   return (
-    <PageShell>
+    <PageShell contentClassName="pb-20 lg:pb-0">
       <SiteHeader
         backHref="/"
         center={searchField}
@@ -1600,6 +1601,7 @@ export default function DeliveryPage() {
       />
       <AIAgentBadge context="menu" position="bottom-left" />
       <SiteFooter />
+      <MobileBottomNav />
     </PageShell>
   )
 }

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getSupabaseBrowserSetupMessage, hasBrowserSupabaseEnv } from '@/lib/supabase/config'
+import { normalizeRole } from '@/lib/auth/roles'
 
 type Role =
   | 'CLIENT'
@@ -61,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       firstName: metadata.first_name ?? '',
       lastName: metadata.last_name ?? '',
       phone: metadata.phone ?? null,
-      role: (metadata.role as Role) ?? 'CLIENT',
+      role: normalizeRole(metadata.role) as Role,
       restaurantId: metadata.restaurantId ?? null,
       addresses: metadata.addresses ?? [],
     }

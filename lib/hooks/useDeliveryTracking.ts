@@ -11,10 +11,9 @@ import {
 const STORAGE_KEY = "jb-deliveries"
 
 /**
- * Restaurant par defaut (Paris - place de la Concorde). A remplacer
- * par la position reelle lue des parametres restaurants.
+ * Restaurant (point de départ livraisons / carte). Aligné sur SITE.address — Erfurt, Thüringen.
  */
-export const RESTAURANT_LOCATION: GeoPoint = { lat: 48.8656, lng: 2.3212 }
+export const RESTAURANT_LOCATION: GeoPoint = { lat: 50.9792, lng: 11.0325 }
 
 /**
  * Seed de livraisons demo pour faire vivre l'interface sans backend.
@@ -36,11 +35,11 @@ function seedDemoDeliveries(): DeliveryTracking[] {
       driver_rating: 4.9,
       customer_name: "Sara Ben Ali",
       customer_phone: "+216 98 765 432",
-      delivery_address: "12 rue de la Republique, 75001 Paris",
-      delivery_notes: "Interphone : Ben Ali. 3e etage.",
+      delivery_address: "Mozartstraße 10, 99084 Erfurt",
+      delivery_notes: "Interphone : Ben Ali. 3ᵉ étage.",
       pickup_location: RESTAURANT_LOCATION,
-      delivery_location: { lat: 48.8606, lng: 2.3376 },
-      driver_location: { lat: 48.8641, lng: 2.3284 },
+      delivery_location: { lat: 50.975, lng: 11.018 },
+      driver_location: { lat: 50.977, lng: 11.026 },
       status: "en_route",
       payment_status: "cash_on_delivery",
       total_amount: 47.5,
@@ -63,9 +62,9 @@ function seedDemoDeliveries(): DeliveryTracking[] {
       driver_phone: "+216 22 111 222",
       customer_name: "Ahmed Kacem",
       customer_phone: "+216 55 123 456",
-      delivery_address: "45 avenue Bourguiba, Sfax",
+      delivery_address: "Anger 14, 99084 Erfurt",
       pickup_location: RESTAURANT_LOCATION,
-      delivery_location: { lat: 48.8738, lng: 2.2954 },
+      delivery_location: { lat: 50.9775, lng: 11.037 },
       status: "assigned",
       payment_status: "paid",
       total_amount: 32.9,
@@ -82,9 +81,9 @@ function seedDemoDeliveries(): DeliveryTracking[] {
       order_number: "1003",
       customer_name: "Yassine Mabrouk",
       customer_phone: "+216 97 654 321",
-      delivery_address: "8 rue Hedi Chaker, Tunis",
+      delivery_address: "Juri-Gagarin-Ring 34, 99084 Erfurt",
       pickup_location: RESTAURANT_LOCATION,
-      delivery_location: { lat: 48.8529, lng: 2.3499 },
+      delivery_location: { lat: 50.972, lng: 11.028 },
       status: "pending",
       payment_status: "cash_on_delivery",
       total_amount: 28.0,

@@ -1,5 +1,7 @@
 "use client"
 
+import { SITE } from "@/lib/site-config"
+
 type InvoiceItem = { name: string; quantity: number; unitPrice: number }
 
 type Props = {
@@ -30,10 +32,10 @@ export function InvoicePDF({
       <div className="mb-8 flex items-start justify-between">
         <div>
           <h1 className="font-display text-2xl font-semibold text-amber-950 dark:text-amber-100">
-            Jannat Baloudan
+            Jannat Bloudan
           </h1>
           <p className="text-sm text-amber-800/70 dark:text-amber-300/70">Restaurant syrien authentique</p>
-          <p className="mt-1 text-xs text-amber-700/50 dark:text-amber-400/50">Paris, France</p>
+          <p className="mt-1 text-xs text-amber-700/50 dark:text-amber-400/50">{SITE.address.full}</p>
         </div>
         <div className="text-right">
           <p className="text-lg font-bold text-amber-950 dark:text-amber-100">{invoiceNumber}</p>
@@ -85,12 +87,12 @@ export function InvoicePDF({
       </div>
 
       <div className="mt-6 flex items-center justify-between rounded-xl bg-green-50/50 p-3 text-sm dark:bg-green-950/20">
-        <span className="text-green-800 dark:text-green-300">Paye par {paymentMethod}</span>
-        <span className="font-medium text-green-700 dark:text-green-400">Validee</span>
+        <span className="text-green-800 dark:text-green-300">Payé par {paymentMethod}</span>
+        <span className="font-medium text-green-700 dark:text-green-400">Validée</span>
       </div>
 
       <p className="mt-8 text-center text-xs text-amber-700/50 dark:text-amber-400/50">
-        Merci de votre visite — Jannat Baloudan
+        Merci de votre visite — Jannat Bloudan
       </p>
     </div>
   )

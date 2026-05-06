@@ -1,11 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react"
 import {
   AnimatePresence,
   motion,
   useInView,
+  useReducedMotion,
   useScroll,
   useTransform,
   type Variants,
@@ -14,14 +15,19 @@ import type { LucideIcon } from "lucide-react"
 import {
   ArrowRight,
   Award,
+  Baby,
+  Cake,
   Calendar,
   ChefHat,
+  ChevronLeft,
   ChevronRight,
   Clock,
   Flame,
+  Gamepad2,
   Heart,
   Leaf,
   MapPin,
+  Palette,
   Phone as PhoneIcon,
   Quote,
   Shield,
@@ -33,12 +39,16 @@ import {
   Mail,
   Instagram,
   Facebook,
+  MessageCircle,
 } from "lucide-react"
 import { PublicHeader } from "@/components/site/PublicHeader"
 import { BloudanLogoMark } from "@/components/site/BloudanLogoMark"
+import { MobileBottomNav } from "@/components/site/MobileBottomNav"
+import { ScrollToTop } from "@/components/site/ScrollToTop"
 import { Button } from "@/components/ui/button"
 import { ChatWidget } from "@/components/chat/ChatWidget"
 import { cn } from "@/lib/utils"
+import { SITE } from "@/lib/site-config"
 import { useI18n } from "@/lib/i18n/context"
 
 /* -------------------------------------------------------------------------- */
@@ -62,6 +72,48 @@ const scaleIn: Variants = {
   visible: { opacity: 1, scale: 1, transition: { duration: 0.7, ease: [0.2, 0.8, 0.2, 1] } },
 }
 
+/** Versions allégées lorsque prefers-reduced-motion est actif. */
+const fadeUpReduced: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.22 } },
+}
+const fadeInReduced: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.22 } },
+}
+const scaleInReduced: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.22 } },
+}
+const staggerReduced: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0, delayChildren: 0 } },
+}
+
+type RevealVariants = {
+  fadeUp: Variants
+  fadeIn: Variants
+  scaleIn: Variants
+  stagger: Variants
+}
+
+function buildRevealVariants(reducedMotion: boolean): RevealVariants {
+  if (!reducedMotion)
+    return { fadeUp, fadeIn, scaleIn, stagger }
+  return {
+    fadeUp: fadeUpReduced,
+    fadeIn: fadeInReduced,
+    scaleIn: scaleInReduced,
+    stagger: staggerReduced,
+  }
+}
+
+const LandingRevealCtx = createContext<RevealVariants>(buildRevealVariants(false))
+
+function useReveal() {
+  return useContext(LandingRevealCtx)
+}
+
 function Section({
   id,
   className,
@@ -73,13 +125,14 @@ function Section({
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, margin: "-80px" })
+  const { stagger: staggerReveal } = useReveal()
   return (
     <motion.section
       id={id}
       ref={ref}
       initial="hidden"
       animate={inView ? "visible" : "hidden"}
-      variants={stagger}
+      variants={staggerReveal}
       className={cn("relative", className)}
     >
       {children}
@@ -91,6 +144,9 @@ function Section({
 /*  Data                                                                      */
 /* -------------------------------------------------------------------------- */
 
+const LANDING_PHOTO =
+  "h-full w-full min-h-0 object-cover object-center [filter:brightness(1.06)_contrast(1.04)_saturate(1.04)]"
+
 const CUISINE_ORDER = ["mezze", "grillades", "desserts", "boissons", "chicha"] as const
 const CUISINE_ICONS: Record<(typeof CUISINE_ORDER)[number], LucideIcon> = {
   mezze: Leaf,
@@ -100,38 +156,91 @@ const CUISINE_ICONS: Record<(typeof CUISINE_ORDER)[number], LucideIcon> = {
   chicha: Sparkles,
 }
 const CUISINE_IMGS: Record<(typeof CUISINE_ORDER)[number], string> = {
-  mezze: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1200&q=80",
-  grillades: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80",
-  desserts: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=1200&q=80",
-  boissons: "https://images.unsplash.com/photo-1527169402691-feff5539e52c?auto=format&fit=crop&w=1200&q=80",
-  chicha: "https://images.unsplash.com/photo-1558024920-b41e1887dc32?auto=format&fit=crop&w=1200&q=80",
+  mezze: "/images/syrian-mezze-table-spread.png",
+  grillades: "/images/syrian-mandi-lamb-rice-platter.png",
+  desserts: "/images/dessert-booza-rolls-pistachio.png",
+  boissons: "/images/drinks-smoothies-variety.png",
+  chicha: "/images/shisha-lounge-candles.png",
 }
 
 const POPULAR_ORDER = ["d1", "d2", "d3", "d4"] as const
 const POPULAR_IMGS: Record<(typeof POPULAR_ORDER)[number], string> = {
-  d1: "https://images.unsplash.com/photo-1565299543923-37dd37887442?auto=format&fit=crop&w=900&q=80",
-  d2: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
-  d3: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=900&q=80",
-  d4: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=900&q=80",
+  d1: "/images/syrian-mandi-lamb-rice-platter.png",
+  d2: "/images/western-burger-mix-fries.png",
+  d3: "/images/syrian-mezze-manakish-hummus.png",
+  d4: "/images/dessert-crepes-chocolate-strawberry.png",
 }
 
 const WHY_ICONS = [Truck, Leaf, ChefHat, Shield] as const
 
+/**
+ * Visuels événements — Unsplash (mariages, anniversaires, soirées privées).
+ * Ces photos restent jusqu'à ce que les vraies photos du restaurant soient
+ * fournies (à déposer dans /public/images puis remplacer ces URLs).
+ */
 const EVENT_IMGS = [
-  "https://images.unsplash.com/photo-1464366404606-a3988986a6b9?auto=format&fit=crop&w=1100&q=80",
-  "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1100&q=80",
-  "https://images.unsplash.com/photo-1530023367847-a683933f4172?auto=format&fit=crop&w=1100&q=80",
+  "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=90",
+  "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=90",
+  "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=1200&q=90",
 ] as const
 
-const GALLERY = [
-  "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1565299543923-37dd37887442?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c1?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1558024920-b41e1887dc32?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1527169402691-feff5539e52c?auto=format&fit=crop&w=1200&q=80",
+/**
+ * Visuel "Jannat livré chez vous" — photo locale de grillade mixte syrienne
+ * (déjà utilisée par /app/delivery/page.tsx).
+ */
+const DELIVERY_IMG = "/mixed-shawarma-syrian-style.jpg"
+
+/**
+ * Section "Experience" — moments familiaux & hospitalité syrienne au resto.
+ * Photos locales fournies par le client (haute qualité, vraie ambiance Jannat) :
+ * - restaurant : main offrant une assiette de kibbeh — geste d'hospitalité syrienne
+ * - family    : grande tablée de mezzés avec lanternes — repas familial festif
+ * Les `<img>` ont un fallback `onError` vers une autre image locale par sécurité.
+ */
+const EXPERIENCE_IMGS = {
+  restaurant: "/images/jannat-syrian-hospitality-kibbeh.png",
+  family: "/images/jannat-arab-feast-lantern-table.png",
+} as const
+
+const EXPERIENCE_FALLBACK = {
+  restaurant: "/images/syrian-mandi-lamb-rice-platter.png",
+  family: "/images/syrian-mezze-table-spread.png",
+} as const
+
+/**
+ * Espace familles & enfants — visuels locaux d'enfants/familles.
+ * - hero  : moment complice mère & enfant partageant un milkshake au restaurant
+ * - play  : enfants qui dansent dans une salle de jeux colorée (aire de jeux)
+ * - art   : main d'enfant peinte de couleurs vives (activité créative)
+ * `onError` retombe sur l'image "art" pour rester dans le thème enfants.
+ */
+const FAMILY_KIDS_IMGS = {
+  hero: "/images/family-mother-son-milkshake-restaurant.png",
+  play: "/images/kids-dancing-playroom-balloons.png",
+  art: "/images/kids-painted-rainbow-hand.png",
+} as const
+
+const FAMILY_KIDS_FALLBACK = "/images/kids-painted-rainbow-hand.png"
+
+const STORY_IMGS = {
+  /** Syrie — livre-sculpture 3D évoquant les monuments syriens (Palmyre, mosquée, citadelle) */
+  syria: "/images/syria-history-book-3d.png",
+  /** Bloudan (Syrie) — vue sur la vallée & les montagnes, atmosphère source du nom Jannat */
+  bloudan: "/images/bloudan-panorama.png",
+} as const
+
+/**
+ * Slider "atmosphère" — séquence narrative cinématographique :
+ *   Syrie → Food → Dessert → Drinks → Bloudan → Chicha → (loop)
+ * Une seule image visible à la fois, fondu enchaîné + léger Ken Burns.
+ */
+const GALLERY: readonly string[] = [
+  "/images/syria-umayyad-square-night.png",
+  "/images/syrian-mezze-tabbouleh-falafel-dolma.png",
+  "/images/dessert-booza-stretch-pistachio.png",
+  "/images/drinks-strawberry-milkshakes.png",
+  "/images/bloudan-winter-mountains.png",
+  "/images/shisha-lounge-neon.png",
 ] as const
 
 /* -------------------------------------------------------------------------- */
@@ -139,28 +248,38 @@ const GALLERY = [
 /* -------------------------------------------------------------------------- */
 
 export default function HomePage() {
+  const prefersReducedMotion = useReducedMotion() === true
+  const revealVariants = useMemo(() => buildRevealVariants(prefersReducedMotion), [prefersReducedMotion])
+
   return (
-    <div className="relative min-h-screen overflow-x-hidden" style={{ background: "var(--lux-gradient-paper)" }}>
+    <LandingRevealCtx.Provider value={revealVariants}>
+    <div className="relative min-h-screen overflow-x-hidden pb-20 lg:pb-0" style={{ background: "var(--lux-gradient-paper)" }}>
       <PublicHeader />
 
-      <Hero />
-      <StatsStrip />
-      <StoryBloudan />
-      <CuisineSection />
-      <PopularDishes />
-      <MenuPreview />
-      <WhyOrder />
-      <Experience />
-      <ReservationCTA />
-      <EventsSection />
-      <DeliverySection />
-      <Reviews />
-      <Gallery />
-      <Contact />
+      <main id="main-content" tabIndex={-1} className="focus:outline-none">
+        <Hero />
+        <StatsStrip />
+        <StoryBloudan />
+        <CuisineSection />
+        <PopularDishes />
+        <MenuPreview />
+        <WhyOrder />
+        <Experience />
+        <FamilyKidsSection />
+        <ReservationCTA />
+        <EventsSection />
+        <DeliverySection />
+        <Reviews />
+        <Gallery />
+        <Contact />
+      </main>
       <FooterElegant />
 
       <ChatWidget />
+      <ScrollToTop position="bottom-left" />
+      <MobileBottomNav />
     </div>
+    </LandingRevealCtx.Provider>
   )
 }
 
@@ -170,43 +289,44 @@ export default function HomePage() {
 
 function Hero() {
   const { t } = useI18n()
+  const reduceHero = useReducedMotion() === true
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] })
-  const y = useTransform(scrollYProgress, [0, 1], [0, 140])
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.2])
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.08])
+  const y = useTransform(scrollYProgress, [0, 1], [0, reduceHero ? 0 : 140])
+  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, reduceHero ? 1 : 0.2])
+  const scale = useTransform(scrollYProgress, [0, 1], [1, reduceHero ? 1 : 1.08])
 
   return (
     <section ref={ref} className="relative min-h-[92vh] w-full overflow-hidden">
       {/* Background image with parallax + zoom */}
       <motion.div style={{ y, scale }} className="absolute inset-0 will-change-transform">
         <img
-          src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=2200&q=85"
+          src="/images/syria-damascus-night-skyline.png"
           alt={t("landing.hero.imageAlt")}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover [filter:brightness(1.08)_contrast(1.05)_saturate(1.05)]"
         />
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(135deg, rgba(26,20,16,0.72) 0%, rgba(74,15,28,0.55) 45%, rgba(26,20,16,0.85) 100%)",
+              "linear-gradient(135deg, rgba(26,20,16,0.38) 0%, rgba(74,15,28,0.28) 48%, rgba(26,20,16,0.55) 100%)",
           }}
         />
         {/* Decorative gold dust */}
         <div
-          className="absolute inset-0 opacity-30 mix-blend-screen"
+          className="absolute inset-0 opacity-16 mix-blend-screen"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 20% 30%, rgba(217,183,106,0.25), transparent 40%), radial-gradient(circle at 80% 70%, rgba(217,183,106,0.2), transparent 45%)",
+              "radial-gradient(circle at 20% 30%, rgba(217,183,106,0.2), transparent 40%), radial-gradient(circle at 80% 70%, rgba(217,183,106,0.16), transparent 45%)",
           }}
         />
       </motion.div>
 
       <motion.div style={{ opacity }} className="relative z-10 mx-auto flex min-h-[92vh] max-w-7xl flex-col items-center justify-center px-4 py-24 text-center sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: reduceHero ? 0 : 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
+          transition={{ duration: reduceHero ? 0.2 : 0.8, delay: reduceHero ? 0 : 0.1 }}
           className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium uppercase tracking-[0.3em] text-[color:var(--lux-sand)] backdrop-blur-md"
         >
           <Sparkles className="h-3.5 w-3.5 text-[color:var(--lux-gold-bright)]" />
@@ -214,12 +334,16 @@ function Hero() {
         </motion.div>
 
         <motion.h1
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: reduceHero ? 0 : 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.25, ease: [0.2, 0.8, 0.2, 1] }}
-          className="font-display text-5xl font-semibold leading-[1.05] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-[88px]"
+          transition={{
+            duration: reduceHero ? 0.22 : 1,
+            delay: reduceHero ? 0 : 0.25,
+            ease: [0.2, 0.8, 0.2, 1],
+          }}
+          className="max-w-5xl text-balance font-display text-4xl font-semibold leading-[1.1] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
         >
-          {t("landing.hero.h1a")}
+          <span className="text-white/95">{t("landing.hero.titleLine1")}</span>
           <span
             className="italic"
             style={{
@@ -229,25 +353,23 @@ function Hero() {
               color: "transparent",
             }}
           >
-            {t("landing.hero.h1b")}
+            {t("landing.hero.titleLine2")}
           </span>
-          <br />
-          {t("landing.hero.h1c")}
         </motion.h1>
 
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: reduceHero ? 0 : 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="mt-8 max-w-2xl text-lg leading-relaxed text-[color:var(--lux-sand)] sm:text-xl"
+          transition={{ duration: reduceHero ? 0.2 : 0.8, delay: reduceHero ? 0 : 0.5 }}
+          className="mt-8 max-w-2xl text-pretty text-lg leading-relaxed text-white/90 sm:text-xl"
         >
           {t("landing.hero.subtitle")}
         </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: reduceHero ? 0 : 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.7 }}
+          transition={{ duration: reduceHero ? 0.2 : 0.8, delay: reduceHero ? 0 : 0.7 }}
           className="mt-12 flex flex-col items-center gap-4 sm:flex-row sm:gap-5"
         >
           <PrimaryCTA href="/delivery" icon={<Truck className="h-5 w-5" />}>
@@ -262,19 +384,28 @@ function Hero() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1.4, delay: 1.2 }}
+          transition={{ duration: reduceHero ? 0.2 : 1.4, delay: reduceHero ? 0 : 1.2 }}
           className="absolute bottom-10 left-1/2 -translate-x-1/2"
         >
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-            className="flex h-10 w-6 items-start justify-center rounded-full border border-white/40 p-1.5"
-          >
-            <div
-              className="h-2 w-1 rounded-full"
-              style={{ background: "var(--lux-gradient-gold)" }}
-            />
-          </motion.div>
+          {reduceHero ? (
+            <div className="flex h-10 w-6 items-start justify-center rounded-full border border-white/40 p-1.5 opacity-80">
+              <div
+                className="h-2 w-1 rounded-full"
+                style={{ background: "var(--lux-gradient-gold)" }}
+              />
+            </div>
+          ) : (
+            <motion.div
+              animate={{ y: [0, 10, 0] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+              className="flex h-10 w-6 items-start justify-center rounded-full border border-white/40 p-1.5"
+            >
+              <div
+                className="h-2 w-1 rounded-full"
+                style={{ background: "var(--lux-gradient-gold)" }}
+              />
+            </motion.div>
+          )}
         </motion.div>
       </motion.div>
     </section>
@@ -297,13 +428,13 @@ function PrimaryCTA({
       size="hero"
       className="group relative w-fit max-w-full overflow-hidden pl-8 pr-7"
     >
-      <Link href={href}>
+      <Link href={href} className="outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--lux-bordeaux)]/30">
         {icon}
         <span className="relative z-10">{children}</span>
-        <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1" />
+        <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0" />
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-0 translate-x-[-120%] bg-gradient-to-r from-transparent via-white/50 to-transparent transition duration-700 group-hover:translate-x-[120%]"
+          className="pointer-events-none absolute inset-0 translate-x-[-120%] bg-gradient-to-r from-transparent via-white/50 to-transparent transition-[transform] duration-[1150ms] ease-out motion-reduce:duration-0 motion-reduce:transition-none group-hover:translate-x-[120%] motion-reduce:group-hover:translate-x-[-120%]"
         />
       </Link>
     </Button>
@@ -326,7 +457,7 @@ function GhostCTA({
       size="hero"
       className={cn("w-fit max-w-full", variant === "solid" && "shadow-xl")}
     >
-      <Link href={href}>
+      <Link href={href} className="outline-none focus-visible:ring-2 focus-visible:ring-white/65 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--lux-bordeaux)]/20">
         {children}
         <ArrowRight className="h-4 w-4" />
       </Link>
@@ -340,6 +471,8 @@ function GhostCTA({
 
 function StatsStrip() {
   const { t } = useI18n()
+  const { fadeUp, stagger } = useReveal()
+  const preferReducedMotion = useReducedMotion() === true
   const stats = [
     { icon: Star, value: t("landing.stats.s1"), label: t("landing.stats.l1") },
     { icon: Clock, value: t("landing.stats.s2"), label: t("landing.stats.l2") },
@@ -356,7 +489,7 @@ function StatsStrip() {
               <motion.div
                 key={s.label}
                 variants={fadeUp}
-                whileHover={{ y: -4 }}
+                whileHover={preferReducedMotion ? undefined : { y: -4 }}
                 className="flex items-center gap-4"
               >
                 <div
@@ -384,66 +517,109 @@ function StatsStrip() {
 
 function StoryBloudan() {
   const { t } = useI18n()
+  const { fadeUp, fadeIn } = useReveal()
+  const preferReducedMotion = useReducedMotion() === true
+  const bloudanQuote = t("landing.bloudan.quote").trim()
   return (
-    <Section id="about" className="py-24 sm:py-32">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-20 lg:px-8">
-        <motion.div variants={fadeUp}>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
-            {t("landing.story.kicker")}
-          </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight text-amber-950 sm:text-5xl lg:text-6xl">
-            {t("landing.story.titleA")}
-            <span className="text-gold italic">{t("landing.story.titleB")}</span>
-            {t("landing.story.titleC")}
-          </h2>
-          <div className="hairline-gold my-8" />
-          <div className="space-y-5 text-base leading-relaxed text-amber-900/90 sm:text-lg">
-            <p>{t("landing.story.p1")}</p>
-            <p>{t("landing.story.p2")}</p>
-            <p className="italic text-[color:var(--lux-bordeaux)]">{t("landing.story.quote")}</p>
-          </div>
-          <div className="mt-10 flex flex-wrap gap-4">
-            <Button asChild variant="luxPanel" size="panel">
-              <Link href="/menu">
-                {t("landing.story.cta")} <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </motion.div>
-
-        <motion.div variants={fadeIn} className="relative">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] shadow-[0_40px_80px_-30px_rgba(74,15,28,0.45)]">
-            <motion.img
-              whileHover={{ scale: 1.06 }}
-              transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
-              src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c1?auto=format&fit=crop&w=1400&q=85"
-              alt={t("landing.story.imageAlt")}
-              className="h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-          </div>
-          {/* Floating card */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="absolute -bottom-6 -left-6 max-w-[240px] rounded-2xl bg-white p-5 shadow-[0_24px_60px_-22px_rgba(26,20,16,0.4)] sm:-left-10"
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--lux-gold-deep)]">
-              {t("landing.story.cardKicker")}
+    <Section id="about" className="py-28 sm:py-36">
+      <div className="mx-auto max-w-7xl space-y-24 px-4 sm:px-6 lg:space-y-32 lg:px-8">
+        {/* La Syrie */}
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-20">
+          <motion.div variants={fadeUp}>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
+              {t("landing.syria.kicker")}
             </p>
-            <p className="mt-2 font-display text-lg font-semibold text-amber-950">
-              {t("landing.story.cardTitle")}
-            </p>
+            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight text-amber-950 sm:text-5xl lg:text-6xl">
+              {t("landing.syria.titleA")}
+              <span className="text-gold italic">{t("landing.syria.titleEm")}</span>
+            </h2>
+            <div className="hairline-gold my-8" />
+            <div className="space-y-5 text-base leading-relaxed text-amber-900/90 sm:text-lg">
+              <p>{t("landing.syria.p1")}</p>
+              <p>{t("landing.syria.p2")}</p>
+            </div>
           </motion.div>
-          {/* Decorative gold frame */}
-          <div
-            className="absolute -right-6 -top-6 -z-10 h-full w-full rounded-[2rem] border-2"
-            style={{ borderColor: "color-mix(in srgb, var(--lux-gold) 45%, transparent)" }}
-            aria-hidden
-          />
-        </motion.div>
+          <motion.div variants={fadeIn} className="relative">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] shadow-[0_32px_64px_-28px_rgba(74,15,28,0.35)]">
+              <motion.img
+                whileHover={preferReducedMotion ? undefined : { scale: 1.06 }}
+                transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
+                src={STORY_IMGS.syria}
+                alt={t("landing.syria.imageAlt")}
+                className={cn(LANDING_PHOTO)}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-amber-950/25 via-transparent to-white/5" />
+            </div>
+            <div
+              className="absolute -right-4 -top-4 -z-10 h-full w-full rounded-[2rem] border-2"
+              style={{ borderColor: "color-mix(in srgb, var(--lux-gold) 45%, transparent)" }}
+              aria-hidden
+            />
+          </motion.div>
+        </div>
+
+        {/* Bloudan — origine du nom */}
+        <div className="grid grid-cols-1 items-center gap-12 pb-40 lg:grid-cols-2 lg:gap-20 lg:pb-32">
+          <motion.div variants={fadeIn} className="relative order-2 lg:order-1">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] shadow-[0_32px_64px_-28px_rgba(74,15,28,0.35)]">
+              <motion.img
+                whileHover={preferReducedMotion ? undefined : { scale: 1.06 }}
+                transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
+                src={STORY_IMGS.bloudan}
+                alt={t("landing.bloudan.imageAlt")}
+                className={cn(LANDING_PHOTO)}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-amber-950/28 via-transparent to-white/5" />
+            </div>
+            <motion.div
+              initial={{ opacity: 0, x: -24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="absolute -bottom-6 -right-4 max-w-[240px] rounded-2xl bg-white p-5 shadow-[0_24px_60px_-22px_rgba(26,20,16,0.4)] sm:-right-8"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--lux-gold-deep)]">
+                {t("landing.bloudan.cardKicker")}
+              </p>
+              <p className="mt-2 font-display text-lg font-semibold text-amber-950">
+                {t("landing.bloudan.cardTitle")}
+              </p>
+            </motion.div>
+            <div
+              className="absolute -left-4 -top-4 -z-10 h-full w-full rounded-[2rem] border-2"
+              style={{ borderColor: "color-mix(in srgb, var(--lux-gold) 45%, transparent)" }}
+              aria-hidden
+            />
+          </motion.div>
+          <motion.div variants={fadeUp} className="order-1 lg:order-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
+              {t("landing.bloudan.kicker")}
+            </p>
+            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight text-amber-950 sm:text-5xl lg:text-6xl">
+              {t("landing.bloudan.titleA")}
+              <span className="text-gold italic">{t("landing.bloudan.titleEm")}</span>
+              {t("landing.bloudan.titleC")}
+            </h2>
+            <div className="hairline-gold my-8" />
+            <div className="space-y-5 text-base leading-relaxed text-amber-900/90 sm:text-lg">
+              <p>{t("landing.bloudan.p1")}</p>
+              <p>{t("landing.bloudan.p2")}</p>
+              <p>{t("landing.bloudan.p3")}</p>
+              {bloudanQuote ? (
+                <p className="border-l-2 border-[color:var(--lux-gold)]/50 pl-4 italic text-[color:var(--lux-bordeaux)]">
+                  {t("landing.bloudan.quote")}
+                </p>
+              ) : null}
+            </div>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <Button asChild variant="luxPanel" size="panel">
+                <Link href="/menu">
+                  {t("landing.bloudan.cta")} <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </Section>
   )
@@ -455,18 +631,20 @@ function StoryBloudan() {
 
 function CuisineSection() {
   const { t } = useI18n()
+  const preferReducedMotion = useReducedMotion() === true
+  const { fadeUp, stagger, scaleIn } = useReveal()
   return (
-    <Section className="py-24 sm:py-32" id="cuisine">
+    <Section className="py-28 sm:py-36" id="cuisine">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div variants={fadeUp} className="mx-auto mb-14 max-w-3xl text-center">
+        <motion.div variants={fadeUp} className="mx-auto mb-16 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
             {t("landing.cuisine.kicker")}
           </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold text-amber-950 sm:text-5xl lg:text-6xl">
+          <h2 className="mt-4 text-balance font-display text-4xl font-semibold text-amber-950 sm:text-5xl lg:text-6xl">
             {t("landing.cuisine.titleA")}
             <span className="text-gold italic">{t("landing.cuisine.titleEm")}</span>
           </h2>
-          <p className="mt-6 text-lg text-amber-900/80">
+          <p className="mt-6 text-pretty text-lg leading-relaxed text-amber-900/85 sm:text-[1.05rem]">
             {t("landing.cuisine.lead")}
           </p>
         </motion.div>
@@ -480,19 +658,19 @@ function CuisineSection() {
               <motion.div
                 key={id}
                 variants={scaleIn}
-                whileHover={{ y: -8 }}
+                whileHover={preferReducedMotion ? undefined : { y: -8 }}
                 transition={{ type: "spring", stiffness: 260, damping: 22 }}
                 className="group relative overflow-hidden rounded-[1.75rem] bg-white shadow-[0_20px_50px_-24px_rgba(74,15,28,0.35)] ring-1 ring-[color:var(--lux-gold)]/15"
               >
-                <div className="relative h-60 overflow-hidden">
+                <div className="relative h-56 overflow-hidden bg-amber-50">
                   <motion.img
                     src={CUISINE_IMGS[id]}
                     alt={title}
-                    className="h-full w-full object-cover"
-                    whileHover={{ scale: 1.08 }}
+                    className="absolute inset-0 h-full w-full object-cover object-center [filter:brightness(1.06)_contrast(1.04)_saturate(1.04)]"
+                    whileHover={preferReducedMotion ? undefined : { scale: 1.08 }}
                     transition={{ duration: 1.1, ease: [0.2, 0.8, 0.2, 1] }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-amber-950/25 to-transparent" />
                   <div
                     className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl text-[color:var(--lux-ink)] shadow-md"
                     style={{ background: "var(--lux-gradient-gold)" }}
@@ -518,6 +696,13 @@ function CuisineSection() {
             )
           })}
         </motion.div>
+
+        <motion.p
+          variants={fadeUp}
+          className="mx-auto mt-16 max-w-3xl text-center text-pretty text-base leading-relaxed text-amber-900/88 sm:text-lg"
+        >
+          {t("landing.cuisine.boissonsDessertsChicha")}
+        </motion.p>
       </div>
     </Section>
   )
@@ -529,33 +714,40 @@ function CuisineSection() {
 
 function PopularDishes() {
   const { t } = useI18n()
+  const preferReducedMotion = useReducedMotion() === true
+  const { fadeUp, stagger } = useReveal()
   return (
-    <Section className="relative py-24 sm:py-32" id="popular">
+    <Section className="relative py-28 sm:py-36" id="popular">
       <div
         aria-hidden
         className="absolute inset-x-0 top-0 h-px"
         style={{ background: "linear-gradient(90deg, transparent, var(--lux-gold), transparent)" }}
       />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div variants={fadeUp} className="mb-14 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
-          <div>
+        <motion.div variants={fadeUp} className="mb-12 flex flex-col gap-6 md:mb-14 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0 max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
               {t("landing.popular.kicker")}
             </p>
-            <h2 className="mt-4 font-display text-4xl font-semibold text-amber-950 sm:text-5xl lg:text-6xl">
+            <h2 className="mt-4 text-balance font-display text-4xl font-semibold text-amber-950 sm:text-5xl lg:text-6xl">
               {t("landing.popular.titleA")}<span className="text-gold italic">{t("landing.popular.titleEm")}</span>
             </h2>
+            <p className="mt-5 text-pretty text-base leading-relaxed text-amber-900/85 sm:text-lg">
+              {t("landing.popular.lead")}
+            </p>
           </div>
-          <Button
-            asChild
-            variant="link"
-            className="inline-flex w-fit items-center gap-2 text-sm font-semibold !no-underline text-amber-950 transition hover:gap-3 hover:!no-underline"
-            size="sm"
-          >
-            <Link href="/menu">
-              {t("landing.popular.explore")} <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="shrink-0 md:pt-8">
+            <Button
+              asChild
+              variant="link"
+              className="inline-flex w-fit items-center gap-2 text-sm font-semibold !no-underline text-amber-950 transition hover:gap-3 hover:!no-underline"
+              size="sm"
+            >
+              <Link href="/menu">
+                {t("landing.popular.explore")} <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
         </motion.div>
 
         <motion.div variants={stagger} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -571,7 +763,7 @@ function PopularDishes() {
             <motion.div
               key={key}
               variants={fadeUp}
-              whileHover={{ y: -6 }}
+              whileHover={preferReducedMotion ? undefined : { y: -6 }}
               transition={{ type: "spring", stiffness: 280, damping: 24 }}
               className="premium-card group flex flex-col overflow-hidden p-0"
             >
@@ -579,8 +771,8 @@ function PopularDishes() {
                 <motion.img
                   src={d.img}
                   alt={d.name}
-                  className="h-full w-full object-cover"
-                  whileHover={{ scale: 1.08 }}
+                  className={LANDING_PHOTO}
+                  whileHover={preferReducedMotion ? undefined : { scale: 1.08 }}
                   transition={{ duration: 1, ease: [0.2, 0.8, 0.2, 1] }}
                 />
                 <span
@@ -601,7 +793,7 @@ function PopularDishes() {
                     asChild
                     variant="gold"
                     size="chip"
-                    className="hover:scale-[1.04]"
+                    className="hover:scale-[1.04] motion-reduce:hover:scale-100"
                   >
                     <Link href="/delivery">{t("landing.popular.add")}</Link>
                   </Button>
@@ -622,6 +814,8 @@ function PopularDishes() {
 
 function MenuPreview() {
   const { t } = useI18n()
+  const reducedMotionMarquee = useReducedMotion() === true
+  const { fadeUp } = useReveal()
   const categories = Array.from({ length: 8 }, (_, i) => t(`landing.menuPreview.cat${i}`))
   return (
     <Section className="relative overflow-hidden py-20">
@@ -639,20 +833,33 @@ function MenuPreview() {
         </motion.div>
       </div>
       <div className="relative flex overflow-hidden">
-        <motion.div
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
-          className="flex shrink-0 gap-4 pr-4"
-        >
-          {[...categories, ...categories].map((c, i) => (
-            <span
-              key={i}
-              className="whitespace-nowrap rounded-full border border-[color:var(--lux-gold)]/40 bg-white/80 px-6 py-3 font-display text-lg text-amber-950 shadow-sm backdrop-blur-md"
-            >
-              {c}
-            </span>
-          ))}
-        </motion.div>
+        {reducedMotionMarquee ? (
+          <div className="mx-auto flex max-w-7xl flex-wrap justify-center gap-3 px-4">
+            {categories.map((c, i) => (
+              <span
+                key={`${c}-${i}`}
+                className="whitespace-nowrap rounded-full border border-[color:var(--lux-gold)]/40 bg-white/80 px-6 py-3 font-display text-lg text-amber-950 shadow-sm backdrop-blur-md"
+              >
+                {c}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <motion.div
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+            className="flex shrink-0 gap-4 pr-4"
+          >
+            {[...categories, ...categories].map((c, i) => (
+              <span
+                key={i}
+                className="whitespace-nowrap rounded-full border border-[color:var(--lux-gold)]/40 bg-white/80 px-6 py-3 font-display text-lg text-amber-950 shadow-sm backdrop-blur-md"
+              >
+                {c}
+              </span>
+            ))}
+          </motion.div>
+        )}
       </div>
       <div className="mt-12 flex justify-center">
         <Button asChild variant="luxPanel" size="panel" className="px-8 py-3.5">
@@ -671,9 +878,11 @@ function MenuPreview() {
 
 function WhyOrder() {
   const { t } = useI18n()
+  const preferReducedMotion = useReducedMotion() === true
+  const { fadeUp, stagger } = useReveal()
   const keys = ["r1", "r2", "r3", "r4"] as const
   return (
-    <Section className="py-24 sm:py-32">
+    <Section className="py-28 sm:py-36">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} className="mx-auto mb-14 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
@@ -692,7 +901,7 @@ function WhyOrder() {
               <motion.div
                 key={k}
                 variants={fadeUp}
-                whileHover={{ y: -6 }}
+                whileHover={preferReducedMotion ? undefined : { y: -6 }}
                 className="premium-card shimmer-gold group relative h-full p-7 text-center"
               >
                 <div
@@ -718,28 +927,48 @@ function WhyOrder() {
 
 function Experience() {
   const { t } = useI18n()
+  const preferReducedMotion = useReducedMotion() === true
+  const { fadeUp, fadeIn, stagger } = useReveal()
   const bullets = [t("landing.experience.b1"), t("landing.experience.b2"), t("landing.experience.b3"), t("landing.experience.b4")]
   return (
-    <Section className="relative py-24 sm:py-32">
+    <Section className="relative py-28 sm:py-36">
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-20 lg:px-8">
         <motion.div variants={fadeIn} className="relative order-2 lg:order-1">
           <div className="grid grid-cols-2 gap-4">
-            <motion.div whileHover={{ y: -4 }} className="relative aspect-[3/4] overflow-hidden rounded-2xl shadow-xl">
+            <motion.div
+              whileHover={preferReducedMotion ? undefined : { y: -4 }}
+              className="relative aspect-[3/4] overflow-hidden rounded-2xl shadow-[0_24px_48px_-20px_rgba(74,15,28,0.3)]"
+            >
               <motion.img
-                src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=900&q=80"
+                src={EXPERIENCE_IMGS.restaurant}
                 alt={t("landing.experience.img1")}
-                className="h-full w-full object-cover"
-                whileHover={{ scale: 1.06 }}
+                className={LANDING_PHOTO}
+                whileHover={preferReducedMotion ? undefined : { scale: 1.06 }}
                 transition={{ duration: 1 }}
+                onError={(e) => {
+                  const img = e.currentTarget as HTMLImageElement
+                  if (img.src !== window.location.origin + EXPERIENCE_FALLBACK.restaurant) {
+                    img.src = EXPERIENCE_FALLBACK.restaurant
+                  }
+                }}
               />
             </motion.div>
-            <motion.div whileHover={{ y: -4 }} className="relative mt-10 aspect-[3/4] overflow-hidden rounded-2xl shadow-xl">
+            <motion.div
+              whileHover={preferReducedMotion ? undefined : { y: -4 }}
+              className="relative mt-10 aspect-[3/4] overflow-hidden rounded-2xl shadow-[0_24px_48px_-20px_rgba(74,15,28,0.3)]"
+            >
               <motion.img
-                src="https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?auto=format&fit=crop&w=900&q=80"
+                src={EXPERIENCE_IMGS.family}
                 alt={t("landing.experience.img2")}
-                className="h-full w-full object-cover"
-                whileHover={{ scale: 1.06 }}
+                className={LANDING_PHOTO}
+                whileHover={preferReducedMotion ? undefined : { scale: 1.06 }}
                 transition={{ duration: 1 }}
+                onError={(e) => {
+                  const img = e.currentTarget as HTMLImageElement
+                  if (img.src !== window.location.origin + EXPERIENCE_FALLBACK.family) {
+                    img.src = EXPERIENCE_FALLBACK.family
+                  }
+                }}
               />
             </motion.div>
           </div>
@@ -751,7 +980,6 @@ function Experience() {
           </p>
           <h2 className="mt-4 font-display text-4xl font-semibold leading-tight text-amber-950 sm:text-5xl lg:text-6xl">
             {t("landing.experience.titleA")}<span className="text-gold italic">{t("landing.experience.titleEm")}</span>
-            {t("landing.experience.titleB")}
           </h2>
           <div className="hairline-gold my-8" />
           <p className="text-base leading-relaxed text-amber-900/90 sm:text-lg">
@@ -776,17 +1004,168 @@ function Experience() {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Espace familles & enfants — jeux et activités                             */
+/* -------------------------------------------------------------------------- */
+
+const FAMILY_FEATURES = ["f1", "f2", "f3", "f4"] as const
+const FAMILY_ICONS: Record<(typeof FAMILY_FEATURES)[number], LucideIcon> = {
+  f1: Gamepad2,
+  f2: Palette,
+  f3: Baby,
+  f4: Cake,
+}
+
+function FamilyKidsSection() {
+  const { t } = useI18n()
+  const preferReducedMotion = useReducedMotion() === true
+  const { fadeUp, fadeIn, stagger } = useReveal()
+  return (
+    <Section id="family-kids" className="relative py-28 sm:py-36">
+      <div
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, var(--lux-gold), transparent)" }}
+      />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <motion.div variants={fadeUp} className="mx-auto mb-14 max-w-3xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
+            {t("landing.familyKids.kicker")}
+          </p>
+          <h2 className="mt-4 text-balance font-display text-4xl font-semibold leading-tight text-amber-950 sm:text-5xl lg:text-6xl">
+            {t("landing.familyKids.titleA")}
+            <span className="text-gold italic">{t("landing.familyKids.titleEm")}</span>
+            {t("landing.familyKids.titleB")}
+          </h2>
+          <p className="mt-6 text-pretty text-base leading-relaxed text-amber-900/85 sm:text-lg">
+            {t("landing.familyKids.lead")}
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          {/* Visuels */}
+          <motion.div variants={fadeIn} className="relative">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] shadow-[0_32px_64px_-28px_rgba(74,15,28,0.35)]">
+              <motion.img
+                whileHover={preferReducedMotion ? undefined : { scale: 1.06 }}
+                transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
+                src={FAMILY_KIDS_IMGS.hero}
+                alt={t("landing.familyKids.photoAlt1")}
+                className={cn(LANDING_PHOTO)}
+                onError={(e) => {
+                  e.currentTarget.src = FAMILY_KIDS_FALLBACK
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-amber-950/30 via-transparent to-white/5" />
+            </div>
+            {/* Petite carte flottante haut-gauche : activités créatives */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="absolute -top-6 -left-4 hidden w-[180px] overflow-hidden rounded-2xl bg-white shadow-[0_24px_60px_-22px_rgba(26,20,16,0.4)] sm:-left-8 md:block"
+            >
+              <div className="relative h-[150px] w-full bg-amber-50">
+                <img
+                  src={FAMILY_KIDS_IMGS.art}
+                  alt={t("landing.familyKids.photoAlt2")}
+                  className={LANDING_PHOTO}
+                  onError={(e) => {
+                    e.currentTarget.src = FAMILY_KIDS_FALLBACK
+                  }}
+                />
+              </div>
+            </motion.div>
+            {/* Petite carte flottante bas-droit : aire de jeux */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="absolute -bottom-8 -right-4 hidden w-[220px] overflow-hidden rounded-2xl bg-white shadow-[0_24px_60px_-22px_rgba(26,20,16,0.4)] sm:-right-8 md:block"
+            >
+              <div className="relative h-[140px] w-full bg-amber-50">
+                <img
+                  src={FAMILY_KIDS_IMGS.play}
+                  alt={t("landing.familyKids.photoAlt2")}
+                  className={LANDING_PHOTO}
+                  onError={(e) => {
+                    e.currentTarget.src = FAMILY_KIDS_FALLBACK
+                  }}
+                />
+              </div>
+              <div className="p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[color:var(--lux-gold-deep)]">
+                  {t("landing.familyKids.badgeLabel")}
+                </p>
+                <p className="mt-1 font-display text-sm font-semibold text-amber-950">
+                  {t("landing.familyKids.badgeValue")}
+                </p>
+              </div>
+            </motion.div>
+            <div
+              className="absolute -left-4 -top-4 -z-10 h-full w-full rounded-[2rem] border-2"
+              style={{ borderColor: "color-mix(in srgb, var(--lux-gold) 45%, transparent)" }}
+              aria-hidden
+            />
+          </motion.div>
+
+          {/* Liste des features */}
+          <motion.div variants={stagger} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {FAMILY_FEATURES.map((key) => {
+              const Icon = FAMILY_ICONS[key]
+              return (
+                <motion.div
+                  key={key}
+                  variants={fadeUp}
+                  whileHover={preferReducedMotion ? undefined : { y: -4 }}
+                  className="premium-card group relative h-full p-6"
+                >
+                  <div
+                    className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl text-[color:var(--lux-ink)] shadow-[0_10px_30px_-14px_rgba(201,162,76,0.55)]"
+                    style={{ background: "var(--lux-gradient-gold)" }}
+                  >
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-display text-lg font-semibold text-amber-950">
+                    {t(`landing.familyKids.${key}.title`)}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-amber-900/80">
+                    {t(`landing.familyKids.${key}.desc`)}
+                  </p>
+                </motion.div>
+              )
+            })}
+            <motion.div variants={fadeUp} className="sm:col-span-2">
+              <Button asChild variant="gold" size="hero" className="w-full sm:w-auto shadow-lg">
+                <Link href="/reservation">
+                  <Calendar className="h-5 w-5" />
+                  {t("landing.familyKids.cta")}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </motion.div>
+          </motion.div>
+        </div>
+      </div>
+    </Section>
+  )
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Réservation CTA                                                           */
 /* -------------------------------------------------------------------------- */
 
 function ReservationCTA() {
   const { t } = useI18n()
+  const preferReducedMotion = useReducedMotion() === true
+  const { scaleIn } = useReveal()
   return (
     <Section className="py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           variants={scaleIn}
-          whileHover={{ y: -4 }}
+          whileHover={preferReducedMotion ? undefined : { y: -4 }}
           className="relative overflow-hidden rounded-[2rem] p-10 text-white shadow-[0_40px_80px_-35px_rgba(74,15,28,0.55)] sm:p-14"
           style={{ background: "var(--lux-gradient-ink)" }}
         >
@@ -820,7 +1199,7 @@ function ReservationCTA() {
                 <Link href="/reservation">
                   <Calendar className="h-5 w-5" />
                   {t("landing.resa.cta")}
-                  <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1" />
+                  <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0" />
                 </Link>
               </Button>
             </div>
@@ -837,6 +1216,8 @@ function ReservationCTA() {
 
 function EventsSection() {
   const { t } = useI18n()
+  const preferReducedMotion = useReducedMotion() === true
+  const { fadeUp, stagger } = useReveal()
   const keys = ["e1", "e2", "e3"] as const
   const events = keys.map((k, i) => ({
     title: t(`landing.events.${k}.title`),
@@ -844,7 +1225,7 @@ function EventsSection() {
     img: EVENT_IMGS[i],
   }))
   return (
-    <Section className="py-24 sm:py-32" id="events">
+    <Section className="py-28 sm:py-36" id="events">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} className="mx-auto mb-14 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
@@ -852,7 +1233,6 @@ function EventsSection() {
           </p>
           <h2 className="mt-4 font-display text-4xl font-semibold text-amber-950 sm:text-5xl lg:text-6xl">
             {t("landing.events.titleA")}<span className="text-gold italic">{t("landing.events.titleEm")}</span>
-            {t("landing.events.titleB")}
           </h2>
           <p className="mt-6 text-lg text-amber-900/80">
             {t("landing.events.lead")}
@@ -863,20 +1243,20 @@ function EventsSection() {
             <motion.div
               key={e.title}
               variants={fadeUp}
-              whileHover={{ y: -8 }}
-              className="group relative aspect-[4/5] overflow-hidden rounded-[1.75rem] shadow-xl"
+              whileHover={preferReducedMotion ? undefined : { y: -8 }}
+              className="group relative aspect-[4/5] overflow-hidden rounded-[1.75rem] shadow-[0_20px_50px_-24px_rgba(74,15,28,0.4)]"
             >
               <motion.img
                 src={e.img}
                 alt={e.title}
-                className="h-full w-full object-cover"
-                whileHover={{ scale: 1.08 }}
+                className={LANDING_PHOTO}
+                whileHover={preferReducedMotion ? undefined : { scale: 1.08 }}
                 transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-amber-950/85 via-amber-950/25 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-6 text-white">
                 <h3 className="font-display text-2xl font-semibold sm:text-3xl">{e.title}</h3>
-                <p className="mt-2 text-sm text-white/90">{e.desc}</p>
+                <p className="mt-2 text-sm text-white/95">{e.desc}</p>
                 <Link
                   href="/events"
                   className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[color:var(--lux-gold-bright)] transition group-hover:gap-2"
@@ -887,10 +1267,19 @@ function EventsSection() {
             </motion.div>
           ))}
         </motion.div>
-        <motion.div variants={fadeUp} className="mt-12 flex justify-center">
-          <Button asChild variant="gold" size="hero">
+        <motion.div
+          variants={fadeUp}
+          className="mt-12 flex flex-col items-stretch justify-center gap-4 sm:flex-row sm:items-center"
+        >
+          <Button asChild variant="gold" size="hero" className="shadow-lg">
             <Link href="/events">
               <Calendar className="h-5 w-5" />
+              {t("landing.events.ctaEvent")}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button asChild variant="luxOutlineBordeaux" size="hero" className="border-2 bg-white/80 shadow-md sm:min-w-[220px]">
+            <Link href="/#contact">
               {t("landing.events.cta")}
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -907,9 +1296,11 @@ function EventsSection() {
 
 function DeliverySection() {
   const { t } = useI18n()
+  const reduceFloating = useReducedMotion() === true
+  const { fadeUp, fadeIn } = useReveal()
   const tags = [t("landing.delivery.t1"), t("landing.delivery.t2"), t("landing.delivery.t3"), t("landing.delivery.t4")]
   return (
-    <Section className="py-24 sm:py-32">
+    <Section className="py-28 sm:py-36">
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
         <motion.div variants={fadeUp}>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
@@ -934,38 +1325,53 @@ function DeliverySection() {
             ))}
           </div>
           <div className="mt-8">
-            <PrimaryCTA href="/delivery" icon={<Truck className="h-5 w-5" />}>
+            <PrimaryCTA href="/reservation" icon={<Calendar className="h-5 w-5" />}>
               {t("landing.delivery.cta")}
             </PrimaryCTA>
           </div>
         </motion.div>
         <motion.div variants={fadeIn} className="relative">
-          <div className="relative aspect-square overflow-hidden rounded-[2rem] shadow-[0_40px_80px_-30px_rgba(74,15,28,0.45)]">
+          <div className="relative aspect-square overflow-hidden rounded-[2rem] shadow-[0_32px_64px_-28px_rgba(74,15,28,0.35)]">
             <motion.img
-              whileHover={{ scale: 1.05 }}
+              whileHover={reduceFloating ? undefined : { scale: 1.05 }}
               transition={{ duration: 1.2 }}
-              src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=1400&q=85"
+              src={DELIVERY_IMG}
               alt={t("landing.delivery.imgAlt")}
-              className="h-full w-full object-cover"
+              className={LANDING_PHOTO}
             />
           </div>
           {/* Floating badge */}
-          <motion.div
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -left-6 top-8 flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-xl"
-          >
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-[color:var(--lux-ink)]"
-              style={{ background: "var(--lux-gradient-gold)" }}
+          {reduceFloating ? (
+            <div className="absolute -left-6 top-8 flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-xl">
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-[color:var(--lux-ink)]"
+                style={{ background: "var(--lux-gradient-gold)" }}
+              >
+                <Clock className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-widest text-amber-800/70">{t("landing.delivery.floatLabel")}</p>
+                <p className="font-display text-lg font-bold text-amber-950">{t("landing.delivery.floatValue")}</p>
+              </div>
+            </div>
+          ) : (
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -left-6 top-8 flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-xl"
             >
-              <Clock className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs font-medium uppercase tracking-widest text-amber-800/70">{t("landing.delivery.floatLabel")}</p>
-              <p className="font-display text-lg font-bold text-amber-950">{t("landing.delivery.floatValue")}</p>
-            </div>
-          </motion.div>
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-[color:var(--lux-ink)]"
+                style={{ background: "var(--lux-gradient-gold)" }}
+              >
+                <Clock className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-widest text-amber-800/70">{t("landing.delivery.floatLabel")}</p>
+                <p className="font-display text-lg font-bold text-amber-950">{t("landing.delivery.floatValue")}</p>
+              </div>
+            </motion.div>
+          )}
         </motion.div>
       </div>
     </Section>
@@ -976,19 +1382,82 @@ function DeliverySection() {
 /*  Avis clients                                                              */
 /* -------------------------------------------------------------------------- */
 
+/** Représentation visuelle cohérente avec un score type Google (ex. 4,3/5) */
+function GoogleAggregateStars({ rating }: { rating: number }) {
+  const full = Math.floor(rating)
+  const partial = Math.max(0, Math.min(1, rating - full))
+  return (
+    <div
+      className="flex items-center justify-center gap-0.5"
+      aria-label={`${rating} sur 5`}
+    >
+      {[0, 1, 2, 3, 4].map((i) => {
+        if (i < full) {
+          return (
+            <Star
+              key={i}
+              className="h-6 w-6 fill-[color:var(--lux-gold)] text-[color:var(--lux-gold)] sm:h-7 sm:w-7"
+            />
+          )
+        }
+        if (i === full && partial > 0.01) {
+          return (
+            <span key={i} className="relative inline-block h-6 w-6 sm:h-7 sm:w-7">
+              <Star className="h-6 w-6 text-amber-200/50 sm:h-7 sm:w-7" />
+              <span
+                className="absolute left-0 top-0 h-full overflow-hidden"
+                style={{ width: `${partial * 100}%` }}
+              >
+                <Star className="h-6 w-6 fill-[color:var(--lux-gold)] text-[color:var(--lux-gold)] sm:h-7 sm:w-7" />
+              </span>
+            </span>
+          )
+        }
+        return (
+          <Star key={i} className="h-6 w-6 text-amber-200/45 sm:h-7 sm:w-7" />
+        )
+      })}
+    </div>
+  )
+}
+
 function Reviews() {
   const { t } = useI18n()
+  const preferReducedMotion = useReducedMotion() === true
+  const { fadeUp, stagger } = useReveal()
   const keys = ["r1", "r2", "r3"] as const
+  const summaryRating = 4.3
   return (
-    <Section className="py-24 sm:py-32">
+    <Section className="py-28 sm:py-36">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} className="mx-auto mb-14 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
             {t("landing.reviews.kicker")}
           </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold text-amber-950 sm:text-5xl lg:text-6xl">
-            {t("landing.reviews.titleA")}<span className="text-gold italic">{t("landing.reviews.titleEm")}</span>
+          <h2 className="mt-4 text-balance font-display text-4xl font-semibold text-amber-950 sm:text-5xl lg:text-6xl">
+            {t("landing.reviews.heading")}
           </h2>
+          <p className="mt-5 text-pretty text-base leading-relaxed text-amber-900/85 sm:text-lg">
+            {t("landing.reviews.lead")}
+          </p>
+          <div className="mt-6">
+            <GoogleAggregateStars rating={summaryRating} />
+          </div>
+          <p className="mt-3 text-sm text-amber-800/90">
+            <span className="font-semibold tabular-nums text-amber-950">
+              {t("landing.reviews.summaryScore")}
+            </span>
+            <span className="mx-2 text-amber-700/50">·</span>
+            {t("landing.reviews.summaryNote")}
+          </p>
+          <div className="mt-6">
+            <Button asChild variant="gold" size="panel" className="shadow-md">
+              <a href={t("landing.reviews.googleHref")} target="_blank" rel="noopener noreferrer">
+                {t("landing.reviews.ctaGoogle")}
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            </Button>
+          </div>
         </motion.div>
         <motion.div variants={stagger} className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {keys.map((k) => {
@@ -1001,13 +1470,16 @@ function Reviews() {
             <motion.div
               key={k}
               variants={fadeUp}
-              whileHover={{ y: -6 }}
+              whileHover={preferReducedMotion ? undefined : { y: -6 }}
               className="premium-card group relative h-full p-8"
             >
               <Quote className="absolute right-6 top-6 h-10 w-10 text-[color:var(--lux-gold)]/40" />
-              <div className="mb-5 flex items-center gap-1">
+              <div className="mb-4 flex items-center gap-0.5" aria-hidden>
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-5 w-5 fill-[color:var(--lux-gold)] text-[color:var(--lux-gold)]" />
+                  <Star
+                    key={i}
+                    className="h-4 w-4 fill-[color:var(--lux-gold)] text-[color:var(--lux-gold)]"
+                  />
                 ))}
               </div>
               <p className="text-base italic leading-relaxed text-amber-900/90">
@@ -1038,41 +1510,112 @@ function Reviews() {
 /*  Galerie                                                                   */
 /* -------------------------------------------------------------------------- */
 
+/** Durée pendant laquelle chaque image reste affichée (incl. fondu). */
+const SLIDE_DURATION_MS = 3800
+/** Durée totale du Ken Burns (un peu > au slide pour garder le mouvement vivant). */
+const KEN_BURNS_S = (SLIDE_DURATION_MS + 800) / 1000
+
 function Gallery() {
   const { t } = useI18n()
+  const kenReduced = useReducedMotion() === true
+  const { fadeUp, scaleIn } = useReveal()
+  const [index, setIndex] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const len = GALLERY.length
+
+  useEffect(() => {
+    if (paused) return
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % len)
+    }, SLIDE_DURATION_MS)
+    return () => clearInterval(id)
+  }, [paused, len])
+
+  const goTo = (i: number) => setIndex(((i % len) + len) % len)
+  const next = () => goTo(index + 1)
+  const prev = () => goTo(index - 1)
+
   return (
-    <Section className="py-24 sm:py-32">
+    <Section className="py-28 sm:py-36">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} className="mx-auto mb-12 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
             {t("landing.gallery.kicker")}
           </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold text-amber-950 sm:text-5xl lg:text-6xl">
+          <h2 className="mt-4 text-balance font-display text-4xl font-semibold text-amber-950 sm:text-5xl lg:text-6xl">
             {t("landing.gallery.titleA")}<span className="text-gold italic">{t("landing.gallery.titleEm")}</span>
           </h2>
         </motion.div>
 
-        <motion.div variants={stagger} className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-          {GALLERY.map((src, i) => (
-            <motion.div
-              key={i}
-              variants={fadeIn}
-              whileHover={{ y: -4 }}
-              className={cn(
-                "group relative overflow-hidden rounded-2xl shadow-md",
-                i % 5 === 0 ? "col-span-2 row-span-2 aspect-square" : "aspect-square",
-              )}
-            >
-              <motion.img
-                src={src}
-                alt={`${t("landing.gallery.imageAlt")} ${i + 1}`}
-                className="h-full w-full object-cover"
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 1, ease: [0.2, 0.8, 0.2, 1] }}
+        <motion.div
+          variants={scaleIn}
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          className="group relative mx-auto aspect-[16/9] w-full max-w-4xl overflow-hidden rounded-[20px] bg-amber-50 shadow-[0_30px_80px_-30px_rgba(74,15,28,0.45)] ring-1 ring-[color:var(--lux-gold)]/20"
+          aria-roledescription="carousel"
+          aria-label={t("landing.gallery.titleA") + t("landing.gallery.titleEm")}
+        >
+          <AnimatePresence initial={false}>
+            <motion.img
+              key={GALLERY[index]}
+              src={GALLERY[index]}
+              alt={`${t("landing.gallery.imageAlt")} ${index + 1}`}
+              className="absolute inset-0 h-full w-full object-cover [filter:brightness(1.04)_contrast(1.04)_saturate(1.05)]"
+              initial={{ opacity: 0, scale: kenReduced ? 1 : 1.0 }}
+              animate={{ opacity: 1, scale: kenReduced ? 1 : 1.06 }}
+              exit={{ opacity: 0, scale: kenReduced ? 1 : 1.08 }}
+              transition={
+                kenReduced
+                  ? { duration: 0.28 }
+                  : {
+                      opacity: { duration: 1.0, ease: [0.2, 0.8, 0.2, 1] },
+                      scale: { duration: KEN_BURNS_S, ease: "linear" },
+                    }
+              }
+              loading="lazy"
+              draggable={false}
+            />
+          </AnimatePresence>
+
+          <button
+            type="button"
+            onClick={prev}
+            aria-label="Image précédente"
+            className="absolute left-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/55 text-amber-950 backdrop-blur-md ring-1 ring-white/60 opacity-0 transition-all duration-300 hover:bg-white/85 hover:scale-105 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-[color:var(--lux-gold)] sm:left-5"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={next}
+            aria-label="Image suivante"
+            className="absolute right-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/55 text-amber-950 backdrop-blur-md ring-1 ring-white/60 opacity-0 transition-all duration-300 hover:bg-white/85 hover:scale-105 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-[color:var(--lux-gold)] sm:right-5"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+
+          <div
+            className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white/35 px-3 py-2 backdrop-blur-md ring-1 ring-white/50 sm:bottom-5"
+            role="tablist"
+            aria-label="Sélecteur d'image"
+          >
+            {GALLERY.map((src, i) => (
+              <button
+                key={src}
+                type="button"
+                role="tab"
+                aria-selected={i === index}
+                aria-label={`Image ${i + 1}`}
+                onClick={() => goTo(i)}
+                className={cn(
+                  "h-2 rounded-full transition-all duration-500 ease-out",
+                  i === index
+                    ? "w-7 bg-[color:var(--lux-gold-deep)]"
+                    : "w-2 bg-amber-950/35 hover:bg-amber-950/55",
+                )}
               />
-              <div className="absolute inset-0 bg-black/0 transition group-hover:bg-black/20" />
-            </motion.div>
-          ))}
+            ))}
+          </div>
         </motion.div>
       </div>
     </Section>
@@ -1085,16 +1628,20 @@ function Gallery() {
 
 function Contact() {
   const { t } = useI18n()
+  const { fadeUp, scaleIn } = useReveal()
   return (
-    <Section id="contact" className="py-24 sm:py-32">
+    <Section id="contact" className="py-28 sm:py-36">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div variants={fadeUp} className="mx-auto mb-14 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
             {t("landing.contact.kicker")}
           </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold text-amber-950 sm:text-5xl lg:text-6xl">
-            {t("landing.contact.titleA")}<span className="text-gold italic">{t("landing.contact.titleEm")}</span>
+          <h2 className="mt-4 text-balance font-display text-4xl font-semibold text-amber-950 sm:text-5xl lg:text-6xl">
+            {t("landing.contact.heading")}
           </h2>
+          <p className="mt-5 text-pretty text-base leading-relaxed text-amber-900/85 sm:text-lg">
+            {t("landing.contact.lead")}
+          </p>
         </motion.div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.2fr]">
@@ -1105,11 +1652,36 @@ function Contact() {
               lines={[t("landing.contact.addressL1"), t("landing.contact.addressL2")]}
             />
             <div className="hairline-gold my-6" />
-            <ContactRow
-              icon={<PhoneIcon className="h-5 w-5" />}
-              title={t("landing.contact.phoneTitle")}
-              lines={[t("landing.contact.phone")]}
-            />
+            <div className="flex items-start gap-4">
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[color:var(--lux-ink)] shadow-md"
+                style={{ background: "var(--lux-gradient-gold)" }}
+              >
+                <PhoneIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-800/70">
+                  {t("landing.contact.phoneTitle")}
+                </p>
+                <p className="mt-1 font-display text-lg font-medium text-amber-950">
+                  <a
+                    href={`tel:${t("landing.contact.phoneDial")}`}
+                    className="hover:underline"
+                  >
+                    {t("landing.contact.phone")}
+                  </a>
+                </p>
+                <a
+                  href={t("landing.contact.whatsappHref")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--lux-bordeaux)] hover:underline"
+                >
+                  <MessageCircle className="h-4 w-4 shrink-0" />
+                  {t("landing.contact.whatsappLabel")}
+                </a>
+              </div>
+            </div>
             <div className="hairline-gold my-6" />
             <ContactRow
               icon={<Mail className="h-5 w-5" />}
@@ -1120,11 +1692,80 @@ function Contact() {
             <ContactRow
               icon={<Clock className="h-5 w-5" />}
               title={t("landing.contact.hoursTitle")}
-              lines={[t("landing.contact.h1"), t("landing.contact.h2"), t("landing.contact.h3")]}
+              lines={[
+                t("landing.contact.hourMon"),
+                t("landing.contact.hourTue"),
+                t("landing.contact.hourWed"),
+                t("landing.contact.hourThu"),
+                t("landing.contact.hourFri"),
+                t("landing.contact.hourSat"),
+                t("landing.contact.hourSun"),
+              ]}
             />
+            <div className="hairline-gold my-6" />
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-800/70">
+              {t("landing.contact.socialTitle")}
+            </p>
+            <ul className="mt-3 space-y-2 text-sm text-amber-900/90">
+              <li>
+                <a
+                  href={t("landing.contact.whatsappHref")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 font-medium text-[color:var(--lux-bordeaux)] underline-offset-2 hover:underline"
+                >
+                  <MessageCircle className="h-4 w-4 shrink-0" />
+                  {t("landing.contact.whatsappLabel")}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={t("landing.contact.mapHref")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 font-medium text-[color:var(--lux-bordeaux)] underline-offset-2 hover:underline"
+                >
+                  <MapPin className="h-4 w-4 shrink-0" />
+                  {t("landing.contact.mapLinkLabel")}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={SITE.contact.googleBusinessUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 font-medium text-[color:var(--lux-bordeaux)] underline-offset-2 hover:underline"
+                >
+                  <Star className="h-4 w-4 shrink-0" />
+                  {t("landing.contact.googleBusinessLabel")}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={SITE.contact.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 font-medium text-[color:var(--lux-bordeaux)] underline-offset-2 hover:underline"
+                >
+                  <Instagram className="h-4 w-4 shrink-0" />
+                  {t("landing.contact.instagramLabel")}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={SITE.contact.facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 font-medium text-[color:var(--lux-bordeaux)] underline-offset-2 hover:underline"
+                >
+                  <Facebook className="h-4 w-4 shrink-0" />
+                  {t("landing.contact.facebookLabel")}
+                </a>
+              </li>
+            </ul>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild variant="gold" size="panelSm">
-                <a href="tel:+33123456789">
+                <a href={`tel:${t("landing.contact.phoneDial")}`}>
                   <PhoneIcon className="h-4 w-4" /> {t("landing.contact.call")}
                 </a>
               </Button>
@@ -1135,11 +1776,21 @@ function Contact() {
               </Button>
             </div>
           </motion.div>
-          <motion.div variants={scaleIn} className="overflow-hidden rounded-[1.75rem] shadow-xl ring-1 ring-[color:var(--lux-gold)]/25">
+          <motion.div variants={scaleIn} className="flex flex-col overflow-hidden rounded-[1.75rem] shadow-xl ring-1 ring-[color:var(--lux-gold)]/25">
+            <div className="border-b border-[color:var(--lux-gold)]/15 bg-white/60 px-4 py-3 text-center text-sm">
+              <a
+                href={t("landing.contact.mapHref")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-[color:var(--lux-bordeaux)] underline-offset-2 hover:underline"
+              >
+                {t("landing.contact.mapLinkLabel")}
+              </a>
+            </div>
             <iframe
               title={t("landing.contact.mapTitle")}
-              src="https://www.openstreetmap.org/export/embed.html?bbox=2.361%2C48.856%2C2.385%2C48.868&layer=mapnik"
-              className="h-full min-h-[360px] w-full"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=11.012%2C50.968%2C11.052%2C50.992&layer=mapnik"
+              className="h-full min-h-[360px] w-full flex-1"
               loading="lazy"
             />
           </motion.div>
@@ -1161,8 +1812,8 @@ function ContactRow({ icon, title, lines }: { icon: React.ReactNode; title: stri
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-800/70">{title}</p>
         <div className="mt-1 space-y-0.5 font-display text-lg font-medium text-amber-950">
-          {lines.map((l) => (
-            <p key={l}>{l}</p>
+          {lines.map((l, idx) => (
+            <p key={idx}>{l}</p>
           ))}
         </div>
       </div>
@@ -1200,7 +1851,7 @@ function FooterElegant() {
                 <BloudanLogoMark withPhotoBack />
               </div>
               <div>
-                <p className="font-display text-2xl font-semibold">Jannat Baloudan</p>
+                <p className="font-display text-2xl font-semibold">{t("landing.footer.brand")}</p>
                 <p className="text-sm text-[color:var(--lux-sand)]/80">{t("landing.footer.tagline")}</p>
               </div>
             </div>
@@ -1208,8 +1859,21 @@ function FooterElegant() {
               {t("landing.footer.about")}
             </p>
             <div className="mt-6 flex items-center gap-3">
-              <SocialIcon href="#" icon={<Instagram className="h-5 w-5" />} />
-              <SocialIcon href="#" icon={<Facebook className="h-5 w-5" />} />
+              <SocialIcon
+                href={SITE.contact.googleBusinessUrl}
+                icon={<Star className="h-5 w-5" />}
+                ariaLabel={t("landing.contact.googleBusinessLabel")}
+              />
+              <SocialIcon
+                href={SITE.contact.instagramUrl}
+                icon={<Instagram className="h-5 w-5" />}
+                ariaLabel={t("landing.contact.instagramLabel")}
+              />
+              <SocialIcon
+                href={SITE.contact.facebookUrl}
+                icon={<Facebook className="h-5 w-5" />}
+                ariaLabel={t("landing.contact.facebookLabel")}
+              />
             </div>
           </div>
 
@@ -1231,9 +1895,24 @@ function FooterElegant() {
               {t("landing.footer.contact")}
             </p>
             <ul className="mt-4 space-y-2 text-sm text-[color:var(--lux-sand)]/85">
-              <li className="flex items-start gap-2"><MapPin className="mt-0.5 h-4 w-4" /> 12 rue de l'Orient, Paris</li>
-              <li className="flex items-center gap-2"><PhoneIcon className="h-4 w-4" /> +33 1 23 45 67 89</li>
-              <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> contact@jannatbaloudan.fr</li>
+              <li className="flex items-start gap-2">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  {t("landing.contact.addressL1")}, {t("landing.contact.addressL2")}
+                </span>
+              </li>
+              <li className="flex items-center gap-2">
+                <PhoneIcon className="h-4 w-4 shrink-0" />
+                <a href={`tel:${t("landing.contact.phoneDial")}`} className="hover:text-white">
+                  {t("landing.contact.phone")}
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <Mail className="h-4 w-4 shrink-0" />
+                <a href={`mailto:${t("landing.contact.email")}`} className="hover:text-white">
+                  {t("landing.contact.email")}
+                </a>
+              </li>
             </ul>
           </div>
         </div>
@@ -1241,7 +1920,7 @@ function FooterElegant() {
         <div className="hairline-gold my-10 opacity-60" />
 
         <div className="flex flex-col items-center justify-between gap-4 text-xs text-[color:var(--lux-sand)]/70 sm:flex-row">
-          <p>© {new Date().getFullYear()} Jannat Baloudan — {t("landing.footer.endLine")}</p>
+          <p>© {new Date().getFullYear()} {t("landing.footer.brand")} — {t("landing.footer.endLine")}</p>
           <p className="font-display italic">{t("landing.footer.byline")}</p>
         </div>
       </div>
@@ -1249,11 +1928,22 @@ function FooterElegant() {
   )
 }
 
-function SocialIcon({ href, icon }: { href: string; icon: React.ReactNode }) {
+function SocialIcon({
+  href,
+  icon,
+  ariaLabel,
+}: {
+  href: string
+  icon: React.ReactNode
+  ariaLabel?: string
+}) {
   return (
     <a
       href={href}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/5 transition hover:border-[color:var(--lux-gold)] hover:bg-white/10"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={ariaLabel}
+      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/5 transition hover:border-[color:var(--lux-gold)] hover:bg-white/10 outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lux-gold)]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--lux-bordeaux)]"
     >
       {icon}
     </a>

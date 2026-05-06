@@ -21,6 +21,7 @@ import { PageShell } from "@/components/site/PageShell"
 import { AIAgentBadge } from "@/components/ai/AIAgentBadge"
 import { SiteFooter } from "@/components/site/SiteFooter"
 import { SiteHeader } from "@/components/site/SiteHeader"
+import { MobileBottomNav } from "@/components/site/MobileBottomNav"
 import { SITE } from "@/lib/site-config"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -177,12 +178,17 @@ export default function ReservationPage() {
   }
 
   const getTableColor = (table: Table) => {
-    if (table.status === "occupied") return "bg-red-200 border-red-400 cursor-not-allowed"
-    if (table.status === "reserved") return "bg-orange-200 border-orange-400 cursor-not-allowed"
-    if (table.capacity < guests) return "bg-gray-200 border-gray-400 cursor-not-allowed opacity-50"
-    if (selectedZone && table.zone !== selectedZone) return "bg-gray-200 border-gray-400 cursor-not-allowed opacity-50"
-    if (selectedTable?.id === table.id) return "bg-green-500 border-green-600 cursor-pointer"
-    return "bg-blue-100 border-blue-400 cursor-pointer hover:bg-blue-200"
+    if (table.status === "occupied")
+      return "bg-red-100 border-red-300 text-red-700 cursor-not-allowed"
+    if (table.status === "reserved")
+      return "bg-orange-100 border-orange-300 text-orange-700 cursor-not-allowed"
+    if (table.capacity < guests)
+      return "bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed opacity-60"
+    if (selectedZone && table.zone !== selectedZone)
+      return "bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed opacity-60"
+    if (selectedTable?.id === table.id)
+      return "border-[color:var(--lux-gold)] text-[color:var(--lux-ink)] cursor-pointer shadow-[0_10px_25px_-10px_rgba(201,162,76,0.55)] [background:var(--lux-gradient-gold)] scale-110"
+    return "bg-emerald-50 border-emerald-300 text-emerald-800 cursor-pointer hover:bg-emerald-100 hover:border-emerald-500 hover:shadow-md"
   }
 
   const getTableSize = (type: string) => {
@@ -202,51 +208,60 @@ export default function ReservationPage() {
 
   if (step === "confirmed") {
     return (
-      <PageShell>
+      <PageShell contentClassName="pb-20 lg:pb-0">
         <SiteHeader backHref="/" />
         <div className="flex flex-1 items-center justify-center p-6 sm:p-10">
         <Card className="w-full max-w-2xl border-white/50 bg-white/85 shadow-lg backdrop-blur-md animate-fade-up">
           <CardContent className="p-10 text-center sm:p-12">
-            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="w-12 h-12 text-green-600" />
+            <div
+              className="relative mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full text-white shadow-[0_18px_40px_-15px_rgba(16,185,129,0.5)]"
+              style={{
+                background: "linear-gradient(135deg, #10b981 0%, #047857 100%)",
+              }}
+            >
+              <CheckCircle2 className="h-12 w-12" />
+              <span
+                aria-hidden
+                className="absolute inset-0 rounded-full ring-4 ring-emerald-200/50 animate-pulse-glow"
+              />
             </div>
             <h1 className="mb-4 font-display text-3xl font-semibold text-amber-950">Réservation confirmée !</h1>
-            <p className="text-[#8b6f47] mb-2">
+            <p className="text-amber-900/75 mb-2">
               Numéro de réservation:{" "}
               <span className="font-semibold">{reservationNumber ?? "#en-attente"}</span>
             </p>
 
-            <div className="bg-[#faf8f3] rounded-lg p-6 my-8 space-y-3">
-              <div className="flex items-center justify-center gap-2 text-[#8b6f47]">
-                <Calendar className="w-5 h-5 text-[#d4a574]" />
+            <div className="bg-[color:var(--lux-cream)] rounded-lg p-6 my-8 space-y-3">
+              <div className="flex items-center justify-center gap-2 text-amber-900/75">
+                <Calendar className="w-5 h-5 text-[color:var(--lux-gold)]" />
                 <span className="font-medium">{selectedDate}</span>
               </div>
-              <div className="flex items-center justify-center gap-2 text-[#8b6f47]">
-                <Clock className="w-5 h-5 text-[#d4a574]" />
+              <div className="flex items-center justify-center gap-2 text-amber-900/75">
+                <Clock className="w-5 h-5 text-[color:var(--lux-gold)]" />
                 <span className="font-medium">{selectedTime}</span>
               </div>
-              <div className="flex items-center justify-center gap-2 text-[#8b6f47]">
-                <Users className="w-5 h-5 text-[#d4a574]" />
+              <div className="flex items-center justify-center gap-2 text-amber-900/75">
+                <Users className="w-5 h-5 text-[color:var(--lux-gold)]" />
                 <span className="font-medium">
                   {guests} personne{guests > 1 ? "s" : ""}
                 </span>
               </div>
-              <div className="flex items-center justify-center gap-2 text-[#8b6f47]">
-                <MapPin className="w-5 h-5 text-[#d4a574]" />
+              <div className="flex items-center justify-center gap-2 text-amber-900/75">
+                <MapPin className="w-5 h-5 text-[color:var(--lux-gold)]" />
                 <span className="font-medium">
                   Table n°{selectedTable?.number} - {zones.find((z) => z.id === selectedTable?.zone)?.name}
                 </span>
               </div>
               {customerInfo.specialRequest && (
-                <div className="flex items-center justify-center gap-2 text-[#8b6f47]">
-                  <Sparkles className="w-5 h-5 text-[#d4a574]" />
+                <div className="flex items-center justify-center gap-2 text-amber-900/75">
+                  <Sparkles className="w-5 h-5 text-[color:var(--lux-gold)]" />
                   <span className="font-medium">{customerInfo.specialRequest}</span>
                 </div>
               )}
             </div>
 
-            <div className="bg-[#d4a574] rounded-lg p-4 mb-8">
-              <p className="text-sm text-[#2d2416]">
+            <div className="bg-[color:var(--lux-gold)] rounded-lg p-4 mb-8">
+              <p className="text-sm text-amber-950">
                 Un email de confirmation a été envoyé à <span className="font-semibold">{customerInfo.email}</span>
               </p>
             </div>
@@ -271,13 +286,15 @@ export default function ReservationPage() {
           </CardContent>
         </Card>
         </div>
+        <SiteFooter />
+        <MobileBottomNav />
       </PageShell>
     )
   }
 
   if (step === "details") {
     return (
-      <PageShell>
+      <PageShell contentClassName="pb-20 lg:pb-0">
         <SiteHeader backOnClick={() => setStep("select")} />
 
         <div className="mx-auto max-w-3xl flex-1 px-4 py-10 sm:px-6">
@@ -291,30 +308,30 @@ export default function ReservationPage() {
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-[#d4a574]" />
+                  <Calendar className="w-5 h-5 text-[color:var(--lux-gold)]" />
                   <div>
-                    <p className="text-sm text-[#8b6f47]">Date</p>
+                    <p className="text-sm text-amber-900/75">Date</p>
                     <p className="font-medium">{selectedDate}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-[#d4a574]" />
+                  <Clock className="w-5 h-5 text-[color:var(--lux-gold)]" />
                   <div>
-                    <p className="text-sm text-[#8b6f47]">Heure</p>
+                    <p className="text-sm text-amber-900/75">Heure</p>
                     <p className="font-medium">{selectedTime}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Users className="w-5 h-5 text-[#d4a574]" />
+                  <Users className="w-5 h-5 text-[color:var(--lux-gold)]" />
                   <div>
-                    <p className="text-sm text-[#8b6f47]">Personnes</p>
+                    <p className="text-sm text-amber-900/75">Personnes</p>
                     <p className="font-medium">{guests}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-[#d4a574]" />
+                  <MapPin className="w-5 h-5 text-[color:var(--lux-gold)]" />
                   <div>
-                    <p className="text-sm text-[#8b6f47]">Table</p>
+                    <p className="text-sm text-amber-900/75">Table</p>
                     <p className="font-medium">
                       N°{selectedTable?.number} - {zones.find((z) => z.id === selectedTable?.zone)?.name}
                     </p>
@@ -367,7 +384,7 @@ export default function ReservationPage() {
                   rows={4}
                   className="resize-none"
                 />
-                <p className="text-sm text-[#8b6f47] mt-1">
+                <p className="text-sm text-amber-900/75 mt-1">
                   Indiquez-nous toute demande particulière pour rendre votre expérience unique
                 </p>
               </div>
@@ -384,12 +401,14 @@ export default function ReservationPage() {
             </CardContent>
           </Card>
         </div>
+        <SiteFooter />
+        <MobileBottomNav />
       </PageShell>
     )
   }
 
   return (
-    <PageShell>
+    <PageShell contentClassName="pb-20 lg:pb-0">
       <SiteHeader backHref="/" />
 
       <PageHero
@@ -485,21 +504,37 @@ export default function ReservationPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-3">
-                  {zones.map((zone) => (
-                    <button
-                      key={zone.id}
-                      onClick={() => setSelectedZone(zone.id)}
-                      className={`p-4 rounded-lg border-2 transition-all text-left ${
-                        selectedZone === zone.id
-                          ? "border-green-500 bg-green-50"
-                          : "border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="text-3xl mb-2">{zone.icon}</div>
-                      <h3 className="font-semibold text-[#2d2416]">{zone.name}</h3>
-                      <p className="text-sm text-[#8b6f47]">{zone.description}</p>
-                    </button>
-                  ))}
+                  {zones.map((zone) => {
+                    const active = selectedZone === zone.id
+                    return (
+                      <button
+                        key={zone.id}
+                        type="button"
+                        onClick={() => setSelectedZone(active ? "" : zone.id)}
+                        aria-pressed={active}
+                        className={`group relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all duration-300 ${
+                          active
+                            ? "border-[color:var(--lux-gold)] bg-gradient-to-br from-[color:var(--lux-cream)] to-white shadow-[0_10px_28px_-15px_rgba(201,162,76,0.5)]"
+                            : "border-amber-900/15 bg-white/80 hover:-translate-y-0.5 hover:border-[color:var(--lux-gold)]/50 hover:shadow-md"
+                        }`}
+                      >
+                        <div className="mb-2 text-3xl">{zone.icon}</div>
+                        <h3 className="font-display text-base font-semibold text-amber-950">
+                          {zone.name}
+                        </h3>
+                        <p className="text-xs text-amber-900/70">{zone.description}</p>
+                        {active ? (
+                          <span
+                            aria-hidden
+                            className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-[color:var(--lux-ink)] shadow"
+                            style={{ background: "var(--lux-gradient-gold)" }}
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                          </span>
+                        ) : null}
+                      </button>
+                    )
+                  })}
                 </div>
                 {selectedZone && (
                   <Button variant="ghost" size="sm" onClick={() => setSelectedZone("")} className="mt-3 w-full">
@@ -517,25 +552,36 @@ export default function ReservationPage() {
                   <div className="flex items-center gap-3 text-sm font-normal">
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded bg-blue-100 border-2 border-blue-400" />
-                      <span className="text-[#8b6f47]">Disponible</span>
+                      <span className="text-amber-900/75">Disponible</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded bg-orange-200 border-2 border-orange-400" />
-                      <span className="text-[#8b6f47]">Réservé</span>
+                      <span className="text-amber-900/75">Réservé</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded bg-red-200 border-2 border-red-400" />
-                      <span className="text-[#8b6f47]">Occupé</span>
+                      <span className="text-amber-900/75">Occupé</span>
                     </div>
                   </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="relative bg-slate-100 rounded-lg p-8 min-h-[400px]">
+                <div
+                  className="relative min-h-[420px] overflow-hidden rounded-2xl border border-amber-900/10 p-8 shadow-inner"
+                  style={{
+                    background:
+                      "repeating-linear-gradient(45deg, color-mix(in srgb, var(--lux-cream) 90%, white) 0 18px, color-mix(in srgb, var(--lux-sand) 70%, white) 18px 19px), color-mix(in srgb, var(--lux-cream) 80%, white)",
+                  }}
+                >
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[color:var(--lux-gold)]/15 blur-3xl"
+                  />
                   {filteredTables.map((table) => (
                     <button
                       key={table.id}
-                      className={`absolute border-2 flex flex-col items-center justify-center gap-1 transition-all ${getTableSize(table.type)} ${getTableColor(table)}`}
+                      aria-label={`Table ${table.number} - ${table.capacity} personnes - ${table.status}`}
+                      className={`absolute border-2 flex flex-col items-center justify-center gap-1 transition-all duration-300 ${getTableSize(table.type)} ${getTableColor(table)}`}
                       style={{ left: `${table.x}px`, top: `${table.y}px` }}
                       onClick={() => handleTableSelect(table)}
                       disabled={
@@ -551,21 +597,37 @@ export default function ReservationPage() {
                   ))}
 
                   {/* Restaurant Elements */}
-                  <div className="absolute bottom-4 right-4 bg-slate-300 rounded-lg px-4 py-2 text-sm font-medium text-slate-700">
-                    Bar
+                  <div className="absolute bottom-4 right-4 rounded-xl bg-amber-950/85 px-4 py-2 text-sm font-medium text-amber-50 shadow-md backdrop-blur">
+                    🍷 Bar
                   </div>
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-300 rounded-lg px-4 py-2 text-sm font-medium text-slate-700">
+                  <div className="absolute left-1/2 top-4 -translate-x-1/2 rounded-xl bg-amber-950/85 px-4 py-2 text-sm font-medium text-amber-50 shadow-md backdrop-blur">
                     Entrée
                   </div>
                 </div>
 
                 {selectedTable && (
-                  <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                    <p className="text-green-900 font-medium">
-                      Table n°{selectedTable.number} sélectionnée (
-                      {zones.find((z) => z.id === selectedTable.zone)?.name}) - Capacité: {selectedTable.capacity}{" "}
-                      personnes
-                    </p>
+                  <div
+                    className="mt-4 flex items-center gap-3 rounded-2xl border border-[color:var(--lux-gold)]/40 p-4 shadow-[0_10px_25px_-15px_rgba(201,162,76,0.45)]"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, color-mix(in srgb, var(--lux-cream) 92%, white), white)",
+                    }}
+                  >
+                    <span
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[color:var(--lux-ink)] shadow-md"
+                      style={{ background: "var(--lux-gradient-gold)" }}
+                    >
+                      <CheckCircle2 className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-display text-sm font-semibold text-amber-950">
+                        Table n°{selectedTable.number} sélectionnée
+                      </p>
+                      <p className="text-xs text-amber-900/70">
+                        Zone {zones.find((z) => z.id === selectedTable.zone)?.name} • Capacité{" "}
+                        {selectedTable.capacity} personnes
+                      </p>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -581,23 +643,23 @@ export default function ReservationPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
-                    <Calendar className="w-5 h-5 text-[#d4a574] mt-0.5" />
+                    <Calendar className="w-5 h-5 text-[color:var(--lux-gold)] mt-0.5" />
                     <div>
-                      <p className="text-sm text-[#8b6f47]">Date</p>
+                      <p className="text-sm text-amber-900/75">Date</p>
                       <p className="font-medium">{selectedDate || "Non sélectionnée"}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Clock className="w-5 h-5 text-[#d4a574] mt-0.5" />
+                    <Clock className="w-5 h-5 text-[color:var(--lux-gold)] mt-0.5" />
                     <div>
-                      <p className="text-sm text-[#8b6f47]">Heure</p>
+                      <p className="text-sm text-amber-900/75">Heure</p>
                       <p className="font-medium">{selectedTime || "Non sélectionnée"}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Users className="w-5 h-5 text-[#d4a574] mt-0.5" />
+                    <Users className="w-5 h-5 text-[color:var(--lux-gold)] mt-0.5" />
                     <div>
-                      <p className="text-sm text-[#8b6f47]">Personnes</p>
+                      <p className="text-sm text-amber-900/75">Personnes</p>
                       <p className="font-medium">{guests}</p>
                     </div>
                   </div>
@@ -605,15 +667,15 @@ export default function ReservationPage() {
                     <div className="flex items-start gap-3">
                       <span className="text-xl mt-0.5">{zones.find((z) => z.id === selectedZone)?.icon}</span>
                       <div>
-                        <p className="text-sm text-[#8b6f47]">Zone</p>
+                        <p className="text-sm text-amber-900/75">Zone</p>
                         <p className="font-medium">{zones.find((z) => z.id === selectedZone)?.name}</p>
                       </div>
                     </div>
                   )}
                   <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-[#d4a574] mt-0.5" />
+                    <MapPin className="w-5 h-5 text-[color:var(--lux-gold)] mt-0.5" />
                     <div>
-                      <p className="text-sm text-[#8b6f47]">Table</p>
+                      <p className="text-sm text-amber-900/75">Table</p>
                       <p className="font-medium">{selectedTable ? `N°${selectedTable.number}` : "Non sélectionnée"}</p>
                     </div>
                   </div>
@@ -628,14 +690,18 @@ export default function ReservationPage() {
                   Continuer
                 </Button>
 
-                <div className="pt-4 border-t border-[#d4a574]/20 space-y-2 text-sm text-[#8b6f47]">
+                <div className="pt-4 border-t border-[color:var(--lux-gold)]/25 space-y-2 text-sm text-amber-900/75">
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4" />
-                    <span>01 23 45 67 89</span>
+                    <a href={`tel:${SITE.contact.phoneE164}`} className="hover:text-amber-950">
+                      {SITE.contact.phoneDisplay}
+                    </a>
                   </div>
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4" />
-                    <span>contact@restaurant.fr</span>
+                    <a href={`mailto:${SITE.contact.email}`} className="hover:text-amber-950">
+                      {SITE.contact.email}
+                    </a>
                   </div>
                 </div>
               </CardContent>
@@ -645,6 +711,7 @@ export default function ReservationPage() {
       </div>
       <AIAgentBadge context="events" />
       <SiteFooter />
+      <MobileBottomNav />
     </PageShell>
   )
 }

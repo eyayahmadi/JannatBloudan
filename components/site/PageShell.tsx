@@ -8,16 +8,31 @@ type PageShellProps = {
   grain?: boolean
 }
 
+/**
+ * Conteneur racine pour les pages publiques.
+ * - mesh-page-bg : fond doux à dégradés multiples
+ * - grain-overlay : grain subtil
+ * - id="main-content" : ancre pour le skip-link a11y du Header
+ */
 export function PageShell({ children, className, contentClassName, grain = true }: PageShellProps) {
   return (
     <div
       className={cn(
-        "relative min-h-screen mesh-page-bg overflow-x-hidden",
+        "relative min-h-screen min-h-dvh mesh-page-bg overflow-x-hidden",
         grain && "grain-overlay",
         className,
       )}
     >
-      <div className={cn("relative z-[2] flex min-h-screen flex-col", contentClassName)}>{children}</div>
+      <div
+        id="main-content"
+        tabIndex={-1}
+        className={cn(
+          "relative z-[2] flex min-h-screen min-h-dvh flex-col scroll-mt-24 focus:outline-none",
+          contentClassName,
+        )}
+      >
+        {children}
+      </div>
     </div>
   )
 }

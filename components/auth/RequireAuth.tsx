@@ -40,7 +40,7 @@ export function RequireAuth({ children, roles, fallback }: RequireAuthProps) {
   }, [loading, isAuthenticated, user, roles, router, pathname])
 
   if (loading) {
-    return fallback ?? <div className="p-6 text-center text-slate-500">VÇ¸rification de la session...</div>
+    return fallback ?? <div className="p-6 text-center text-slate-500">Vérification de la session...</div>
   }
 
   if (!isAuthenticated) {

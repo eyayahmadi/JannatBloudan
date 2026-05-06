@@ -72,10 +72,10 @@ export const MenuPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="relative w-11 h-11 rounded-lg overflow-hidden shadow-md">
-                <img src="/logo-jannat.png" alt="Jannat Baloudan" className="w-full h-full object-cover" />
+                <img src="/logo-jannat.png" alt="Jannat Bloudan" className="w-full h-full object-cover" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-[#6b5a47]">Menu Jannat Baloudan</h1>
+                <h1 className="text-xl font-semibold text-[#6b5a47]">Menu Jannat Bloudan</h1>
                 <p className="text-xs text-[#9c8b7a]">Cuisine Syrienne Authentique</p>
               </div>
             </div>

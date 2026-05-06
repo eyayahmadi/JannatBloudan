@@ -22,6 +22,7 @@ import {
   UtensilsCrossed,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { CashRegisterMovementForm } from "@/components/caisse/CashRegisterMovementForm"
 import { useRealtimeOrders, type KitchenOrderInput } from "@/lib/hooks/useRealtimeOrders"
 import { useNotifications } from "@/lib/hooks/useNotifications"
 
@@ -393,7 +394,7 @@ export default function PosPage() {
   )
 
   return (
-    <RequireAuth roles={["ADMIN", "STAFF"]}>
+    <RequireAuth roles={["ADMIN", "STAFF", "CASHIER"]}>
       <PageShell className="min-h-screen bg-slate-100 dark:bg-slate-950">
         <SiteHeader
           backHref="/admin"
@@ -460,6 +461,12 @@ export default function PosPage() {
         {/* Mobile layout */}
         <div className="flex flex-1 flex-col md:hidden">
           {mobileView === "menu" ? menuPanel : ticketPanel}
+        </div>
+
+        <div className="border-t border-slate-200 bg-slate-50/95 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div className="mx-auto max-w-7xl">
+            <CashRegisterMovementForm />
+          </div>
         </div>
 
         {/* Bottom bar — daily summary */}

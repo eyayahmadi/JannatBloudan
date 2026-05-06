@@ -2,12 +2,13 @@ import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
 export const metadata: Metadata = {
-  title: "Evenements — Jannat Baloudan | Celebrations & Receptions",
+  title: "Événements — Jannat Bloudan | Célébrations et réceptions",
   description:
-    "Organisez mariages, anniversaires et evenements d'entreprise au restaurant Jannat Baloudan. Espaces privatifs et menus sur mesure.",
+    "Organisez mariages, anniversaires et événements d'entreprise au restaurant Jannat Bloudan. Espaces privatifs et menus sur mesure.",
   openGraph: {
-    title: "Evenements — Jannat Baloudan",
-    description: "Mariages, anniversaires et soirees d'entreprise dans un cadre oriental elegant.",
+    title: "Événements — Jannat Bloudan",
+    description:
+      "Mariages, anniversaires et soirées d'entreprise dans un cadre oriental élégant.",
   },
 }
 

@@ -52,7 +52,7 @@ function generateCampaigns(): Campaign[] {
       id: "CMP-003",
       name: "Bienvenue nouveaux clients",
       targetSegment: "Nouveaux clients",
-      message: "Bienvenue chez Jannat Baloudan ! -15% sur votre 2eme commande.",
+      message: "Bienvenue chez Jannat Bloudan ! -15 % sur votre deuxième commande.",
       channel: "sms",
       discount: 15,
       timing: "24h apres inscription",

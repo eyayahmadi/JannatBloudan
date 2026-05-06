@@ -19,7 +19,10 @@ import { de } from "./messages/de"
 
 const MESSAGES: Record<Locale, Messages> = { fr, en, ar, de }
 
-/** Résout a.b.c dans un objet messages (nesting quelconque, typage souple) */
+/** Résout a.b.c dans un objet messages (nesting quelconque, typage souple).
+ *  ⚠️ La chaîne vide "" est une traduction valide (utilisée par ex. pour
+ *  un suffixe `titleB` qui n'existe pas dans certaines langues) ; on la
+ *  renvoie telle quelle, sinon `undefined`. */
 function resolveMessagePath(msgs: Messages, path: string): string | undefined {
   const segments = path.split(".")
   let node: unknown = msgs
@@ -30,7 +33,7 @@ function resolveMessagePath(msgs: Messages, path: string): string | undefined {
       return undefined
     }
   }
-  return typeof node === "string" && node ? node : undefined
+  return typeof node === "string" ? node : undefined
 }
 
 type I18nContextType = {
@@ -177,9 +180,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       const chain: Messages[] = [messages, MESSAGES.en, MESSAGES[DEFAULT_LOCALE]]
       for (const pack of chain) {
         const val = resolveMessagePath(pack, path)
-        if (val) return val
+        if (val !== undefined) return val
       }
-      return defaultValue !== undefined && defaultValue !== "" ? defaultValue : path
+      return defaultValue !== undefined ? defaultValue : path
     },
     [locale, messages, autoMap],
   )
@@ -206,9 +209,9 @@ export function useI18n(): I18nContextType {
         const chain: Messages[] = [fr, MESSAGES.en, MESSAGES[DEFAULT_LOCALE]]
         for (const pack of chain) {
           const v = resolveMessagePath(pack, path)
-          if (v) return v
+          if (v !== undefined) return v
         }
-        return def !== undefined && def !== "" ? def : path
+        return def !== undefined ? def : path
       },
       dir: "ltr",
       messages: fr,

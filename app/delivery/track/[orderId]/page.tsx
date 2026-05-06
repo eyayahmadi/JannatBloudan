@@ -452,8 +452,8 @@ export default function TrackOrderPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-900 font-medium">123 Rue de la Republique</p>
-                <p className="text-slate-600">75001 Paris</p>
+                <p className="text-slate-900 font-medium">Mozartstraße 10</p>
+                <p className="text-slate-600">99084 Erfurt, Thüringen</p>
                 <p className="text-slate-600 mt-2">Tel: 06 12 34 56 78</p>
               </CardContent>
             </Card>

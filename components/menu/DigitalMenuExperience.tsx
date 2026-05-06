@@ -1,0 +1,557 @@
+"use client"
+
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import type { LucideIcon } from "lucide-react"
+import {
+  Search,
+  ShoppingCart,
+  Sparkles,
+  Star,
+  Flame,
+  Minus,
+  Plus,
+  X,
+  UtensilsCrossed,
+} from "lucide-react"
+import { useMenuCart } from "@/contexts/MenuCartContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import { toast } from "sonner"
+import { useI18n } from "@/lib/i18n/context"
+
+type MenuItem = {
+  id: string
+  name: string
+  name_ar: string | null
+  description: string
+  price: number
+  image_url: string | null
+  section: string
+  categoryName: string
+  category: string
+  station: string
+  is_popular: boolean
+  is_chef_choice: boolean
+  is_recommended: boolean
+  tags: string[]
+  availability: "available" | "limited" | "out"
+  max_orderable: number
+  can_order: boolean
+}
+
+const SECTION_IDS = ["all", "food", "desserts", "drinks", "special"] as const
+type SectionId = (typeof SECTION_IDS)[number]
+
+const SECTION_ICON: Record<SectionId, LucideIcon> = {
+  all: UtensilsCrossed,
+  food: UtensilsCrossed,
+  desserts: Star,
+  drinks: Sparkles,
+  special: Flame,
+}
+
+function isSectionId(s: string): s is SectionId {
+  return (SECTION_IDS as readonly string[]).includes(s)
+}
+
+export function DigitalMenuExperience() {
+  const { locale, t } = useI18n()
+  const { add, open, setOpen, items, setQty, subtotal, count, clear } = useMenuCart()
+  const [data, setData] = useState<{
+    items: MenuItem[]
+    by_section: Record<string, MenuItem[]>
+    chef_choice: MenuItem[]
+    recommended: MenuItem[]
+    most_popular: MenuItem[]
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [q, setQ] = useState("")
+  const [section, setSection] = useState<string>("all")
+  const [popularOnly, setPopularOnly] = useState(false)
+  const [placing, setPlacing] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/menu?locale=${encodeURIComponent(locale)}`, {
+        cache: "no-store",
+      })
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error)
+      setData({
+        items: j.items ?? [],
+        by_section: j.by_section ?? {},
+        chef_choice: j.chef_choice ?? [],
+        recommended: j.recommended ?? [],
+        most_popular: j.most_popular ?? [],
+      })
+    } catch (e) {
+      console.error(e)
+      toast.error(t("menu.errorLoad"))
+    } finally {
+      setLoading(false)
+    }
+  }, [locale, t])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  const tagMeta = useCallback(
+    (tag: string) => {
+      if (tag === "popular" || tag === "populaire")
+        return { text: t("menu.tagPopular"), className: "bg-amber-500/20 text-amber-900" }
+      if (tag === "new" || tag === "nouveau")
+        return { text: t("menu.tagNew"), className: "bg-emerald-500/20 text-emerald-900" }
+      if (tag === "spicy" || tag === "épicé")
+        return { text: t("menu.tagSpicy"), className: "bg-rose-500/20 text-rose-900" }
+      if (tag === "vegetarian" || tag === "végétarien")
+        return { text: t("menu.tagVegetarian"), className: "bg-lime-500/20 text-lime-900" }
+      return { text: tag, className: "bg-slate-500/10 text-slate-700" }
+    },
+    [t],
+  )
+
+  const filtered = useMemo(() => {
+    if (!data) return []
+    let list = data.items
+    if (section !== "all") {
+      list = data.by_section[section] ?? list.filter((i) => i.section === section)
+    }
+    if (popularOnly) list = list.filter((i) => i.is_popular)
+    if (q.trim()) {
+      const needle = q.toLowerCase()
+      list = list.filter(
+        (i) =>
+          i.name.toLowerCase().includes(needle) ||
+          (i.name_ar && i.name_ar.toLowerCase().includes(needle)) ||
+          i.description.toLowerCase().includes(needle),
+      )
+    }
+    return list
+  }, [data, section, q, popularOnly])
+
+  const placeOrder = async () => {
+    if (items.length === 0) return
+    setPlacing(true)
+    try {
+      const body = {
+        customerName: "Web Menu",
+        orderType: "a emporter",
+        subtotal: subtotal,
+        deliveryFee: 0,
+        tax: 0,
+        total: subtotal,
+        items: items.map((i) => ({
+          productId: i.id,
+          productName: i.name,
+          quantity: i.quantity,
+          unitPrice: i.price,
+          subtotal: i.price * i.quantity,
+        })),
+      }
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+      const j = await res.json()
+      if (!res.ok) {
+        toast.error(j.error || t("menu.orderFailed"))
+        return
+      }
+      toast.success(t("menu.orderSuccess"))
+      clear()
+      setOpen(false)
+      void load()
+    } finally {
+      setPlacing(false)
+    }
+  }
+
+  if (loading && !data) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center text-muted-foreground">
+        {t("menu.loading")}
+      </div>
+    )
+  }
+
+  if (!data?.items.length) {
+    return (
+      <div className="rounded-2xl border border-dashed p-8 text-center text-muted-foreground">
+        <p className="mb-2 font-medium text-foreground">{t("menu.emptyTitle")}</p>
+        <p className="text-sm">{t("menu.emptyHint")}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-8 pb-32">
+      <div className="sticky top-0 z-40 -mx-4 border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur-md sm:-mx-6 lg:-mx-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative max-w-md flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t("menu.searchPlaceholder")}
+              className="pl-9"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant={popularOnly ? "default" : "outline"}
+              size="sm"
+              onClick={() => setPopularOnly((p) => !p)}
+            >
+              {t("menu.popularFilter")}
+            </Button>
+            <Button
+              type="button"
+              className="relative"
+              onClick={() => setOpen(true)}
+            >
+              <ShoppingCart className="mr-2 h-4 w-4" />
+              {t("menu.cart")}
+              {count > 0 && (
+                <span className="ml-1 rounded-full bg-primary-foreground/20 px-2 py-0.5 text-xs text-primary-foreground">
+                  {count}
+                </span>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-3 flex w-full gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {SECTION_IDS.map((sid) => {
+            const Icon = SECTION_ICON[sid]
+            return (
+              <Button
+                key={sid}
+                type="button"
+                size="sm"
+                variant={section === sid ? "default" : "secondary"}
+                className={cn(
+                  "shrink-0 rounded-full",
+                  sid === "special" && section === sid && "bg-violet-900 text-violet-50",
+                )}
+                onClick={() => setSection(sid)}
+              >
+                <Icon className="mr-1 h-4 w-4" />
+                {t(`menu.section.${sid}`)}
+              </Button>
+            )
+          })}
+        </div>
+      </div>
+
+      {data.chef_choice.length > 0 && section === "all" && !q && (
+        <Block title={t("menu.chefBlockTitle")} subtitle={t("menu.chefBlockSubtitle")} variant="amber">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {data.chef_choice.slice(0, 3).map((item) => (
+              <MenuCard key={item.id} item={item} onAdd={add} tagMeta={tagMeta} />
+            ))}
+          </div>
+        </Block>
+      )}
+
+      {data.most_popular.length > 0 && section === "all" && !q && (
+        <Block title={t("menu.popularBlockTitle")} subtitle={t("menu.popularBlockSubtitle")} variant="default">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {data.most_popular.map((item) => (
+              <MenuCard key={item.id} item={item} onAdd={add} tagMeta={tagMeta} />
+            ))}
+          </div>
+        </Block>
+      )}
+
+      {data.recommended.length > 0 && section === "all" && !q && (
+        <Block title={t("menu.recommendedBlockTitle")} subtitle={t("menu.recommendedBlockSubtitle")} variant="violet">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {data.recommended.slice(0, 4).map((item) => (
+              <MenuCard key={item.id} item={item} onAdd={add} tagMeta={tagMeta} />
+            ))}
+          </div>
+        </Block>
+      )}
+
+      <div
+        className={cn(
+          "rounded-3xl p-1",
+          section === "special" && "bg-zinc-950 p-4 text-zinc-100 ring-1 ring-violet-500/30",
+          section === "drinks" && "bg-gradient-to-br from-cyan-50 to-blue-100 p-4",
+          section === "desserts" && "bg-gradient-to-br from-rose-50 to-amber-50 p-4",
+        )}
+      >
+        <h2
+          className={cn(
+            "mb-4 text-xl font-semibold",
+            section === "special" && "text-violet-200",
+          )}
+        >
+          {section === "all"
+            ? t("menu.menuTitle")
+            : isSectionId(section)
+              ? t(`menu.section.${section}`)
+              : t("menu.categoryFallback")}
+        </h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filtered.map((item, i) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.02 }}
+            >
+              <MenuCard
+                item={item}
+                onAdd={add}
+                tagMeta={tagMeta}
+                dark={section === "special"}
+                sweet={section === "desserts"}
+                drink={section === "drinks"}
+              />
+            </motion.div>
+          ))}
+        </div>
+        {filtered.length === 0 && (
+          <p className="py-8 text-center text-sm text-muted-foreground">{t("menu.noItemsCategory")}</p>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="fixed inset-0 z-40 bg-black/40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setOpen(false)}
+            aria-hidden
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {open && (
+          <motion.aside
+            initial={{ x: 360, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 360, opacity: 0 }}
+            className="fixed right-0 top-0 z-[60] h-full w-full max-w-md border-l border-border bg-background shadow-2xl"
+          >
+            <div className="flex h-full flex-col p-4">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold">{t("menu.cartDrawerTitle")}</h3>
+                <Button type="button" size="icon" variant="ghost" onClick={() => setOpen(false)}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+                {items.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("menu.cartEmpty")}</p>
+                ) : (
+                  items.map((i) => (
+                    <div
+                      key={i.id}
+                      className="flex items-center justify-between gap-2 rounded-xl border p-2 text-sm"
+                    >
+                      <div>
+                        <p className="font-medium">{i.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {(i.price * i.quantity).toFixed(2)} €
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="secondary"
+                          className="h-8 w-8"
+                          onClick={() => setQty(i.id, i.quantity - 1)}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-6 text-center">{i.quantity}</span>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="secondary"
+                          className="h-8 w-8"
+                          onClick={() => setQty(i.id, i.quantity + 1)}
+                          disabled={i.quantity >= i.maxOrderable}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="mt-4 space-y-2 border-t pt-4">
+                <div className="flex justify-between text-sm">
+                  <span>{t("menu.total")}</span>
+                  <span className="font-semibold">{subtotal.toFixed(2)} €</span>
+                </div>
+                <Button
+                  className="w-full"
+                  disabled={items.length === 0 || placing}
+                  onClick={() => void placeOrder()}
+                >
+                  {placing ? t("menu.orderPlacing") : t("menu.orderPlace")}
+                </Button>
+              </div>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+function Block({
+  title,
+  subtitle,
+  variant,
+  children,
+}: {
+  title: string
+  subtitle: string
+  variant: "default" | "amber" | "violet"
+  children: React.ReactNode
+}) {
+  const cls =
+    variant === "amber"
+      ? "border-amber-200/50 bg-amber-50/40"
+      : variant === "violet"
+        ? "border-violet-200/50 bg-violet-50/40"
+        : "border-border/60 bg-card/30"
+  return (
+    <section className={cn("rounded-3xl border p-4 sm:p-6", cls)}>
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function MenuCard({
+  item,
+  onAdd,
+  tagMeta,
+  dark,
+  sweet,
+  drink,
+}: {
+  item: MenuItem
+  tagMeta: (tag: string) => { text: string; className: string }
+  onAdd: (p: { id: string; name: string; price: number; maxOrderable: number }) => void
+  dark?: boolean
+  sweet?: boolean
+  drink?: boolean
+}) {
+  const { t, locale } = useI18n()
+  const can = item.can_order
+  return (
+    <div
+      className={cn(
+        "group flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-shadow hover:-translate-y-0.5 hover:shadow-md",
+        dark && "border-violet-500/20 bg-zinc-900/90",
+        sweet && "border-rose-200/60",
+        drink && "border-cyan-200/50 bg-white/80",
+      )}
+    >
+      <div
+        className={cn(
+          "relative aspect-[4/3] w-full overflow-hidden bg-muted",
+          !item.image_url && "flex items-center justify-center text-4xl",
+        )}
+      >
+        {item.image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.image_url}
+            alt={item.name}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <span>{sectionEmoji(item.section)}</span>
+        )}
+        {item.is_popular && (
+          <span className="absolute left-2 top-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-xs font-medium text-white">
+            {t("menu.tagPopular")}
+          </span>
+        )}
+        {item.availability === "limited" && (
+          <span className="absolute bottom-2 right-2 rounded bg-amber-600/90 px-2 py-0.5 text-xs text-white">
+            {t("menu.limitedBadge")}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-3">
+        <div className="mb-1 flex flex-wrap gap-1">
+          {item.tags.slice(0, 3).map((tagStr) => {
+            const meta = tagMeta(tagStr)
+            return (
+              <Badge key={tagStr} className={cn("text-xs font-normal", meta.className)} variant="secondary">
+                {meta.text}
+              </Badge>
+            )
+          })}
+        </div>
+        <h3
+          className={cn("font-semibold leading-tight", dark && "text-zinc-50")}
+        >
+          {item.name}
+        </h3>
+        {item.name_ar && locale !== "ar" && (
+          <p className="text-sm text-muted-foreground" dir="rtl">
+            {item.name_ar}
+          </p>
+        )}
+        <p
+          className={cn(
+            "mt-1 line-clamp-2 flex-1 text-sm text-muted-foreground",
+            dark && "text-zinc-300",
+          )}
+        >
+          {item.description}
+        </p>
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <span className={cn("text-lg font-bold", drink && "text-cyan-900", sweet && "text-rose-900")}>
+            {item.price.toFixed(2)} €
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            className="transition active:scale-95"
+            disabled={!can}
+            onClick={() =>
+              onAdd({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                maxOrderable: item.max_orderable,
+              })
+            }
+          >
+            {can ? t("menu.addToCart") : t("menu.unavailableShort")}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function sectionEmoji(s: string) {
+  if (s === "desserts") return "🍰"
+  if (s === "drinks") return "🥤"
+  if (s === "special") return "💨"
+  return "🍽️"
+}

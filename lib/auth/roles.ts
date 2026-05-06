@@ -54,7 +54,7 @@ export function dashboardPathForRole(role: AppRole): string {
     case "SHISHA":
       return "/shisha/orders"
     case "CASHIER":
-      return "/cashier/dashboard"
+      return "/caisse"
     case "DELIVERY":
       return "/delivery/dashboard"
     case "CLIENT":

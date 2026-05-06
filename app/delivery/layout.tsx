@@ -2,11 +2,11 @@ import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
 export const metadata: Metadata = {
-  title: "Livraison — Jannat Baloudan | Commander en Ligne",
+  title: "Livraison — Jannat Bloudan | Commander en ligne",
   description:
-    "Commandez nos specialites syriennes en livraison ou a emporter. Tracking en temps reel, paiement securise.",
+    "Commandez nos spécialités syriennes en livraison ou à emporter. Suivi en temps réel, paiement sécurisé.",
   openGraph: {
-    title: "Livraison — Jannat Baloudan",
+    title: "Livraison — Jannat Bloudan",
     description: "Commandez en ligne et faites-vous livrer nos plats syriens authentiques.",
   },
 }

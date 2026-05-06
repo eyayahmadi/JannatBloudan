@@ -46,7 +46,9 @@ export async function PATCH(request: Request, { params }: Params) {
   if (body.status === "paid" && !body.paid_at)
     allowed.paid_at = new Date().toISOString()
   if (body.notes !== undefined) allowed.notes = body.notes
-  if (body.cashier_id) allowed.cashier_id = body.cashier_id
+  if (body.payment_stage) allowed.payment_stage = body.payment_stage
+  if (body.cancel_reason !== undefined) allowed.cancel_reason = body.cancel_reason
+  if (body.payment_split !== undefined) allowed.payment_split = body.payment_split
 
   if (!hasServerSupabaseEnv()) {
     return NextResponse.json({

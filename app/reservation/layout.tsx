@@ -2,12 +2,13 @@ import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
 export const metadata: Metadata = {
-  title: "Reservation — Jannat Baloudan | Reserver une Table",
+  title: "Réservation — Jannat Bloudan | Réserver une table",
   description:
-    "Reservez votre table au restaurant Jannat Baloudan. Terrasse, interieur, VIP ou gaming room — choisissez votre ambiance.",
+    "Réservez votre table au restaurant Jannat Bloudan. Terrasse, intérieur, VIP ou gaming room — choisissez votre ambiance.",
   openGraph: {
-    title: "Reservation — Jannat Baloudan",
-    description: "Reservez votre table pour une experience culinaire syrienne inoubliable.",
+    title: "Réservation — Jannat Bloudan",
+    description:
+      "Réservez votre table pour une expérience culinaire syrienne inoubliable.",
   },
 }
 

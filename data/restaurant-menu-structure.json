@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "title": "Bloudan — structure de carte (exemple, non consommé par le build)",
+    "locale": "de",
+    "note": "Les catégories et produits réels proviennent de la base (scripts/13 + admin). Utilisez ce JSON comme modèle d’import manuel."
+  },
+  "sections": {
+    "food": {
+      "label_de": "Speisen",
+      "categories": [
+        "Vorspeisen",
+        "Salate",
+        "Suppen",
+        "Manakish",
+        "Pizza",
+        "Gerichte",
+        "Burgers",
+        "Sandwiches"
+      ]
+    },
+    "desserts": {
+      "label_de": "Desserts",
+      "categories": [
+        "Waffel",
+        "Crepes",
+        "Kuchen",
+        "Ice Cream",
+        "Pancakes",
+        "Fruits salad"
+      ]
+    },
+    "drinks": {
+      "label_de": "Getränke",
+      "categories": [
+        "Soft drinks",
+        "Juices",
+        "Smoothies",
+        "Milkshakes",
+        "Cocktails",
+        "Coffee",
+        "Tea"
+      ]
+    },
+    "special": {
+      "label_de": "Shisha & Lounge",
+      "categories": ["Shisha"]
+    }
+  },
+  "itemSchema": {
+    "name": "string",
+    "name_ar": "string | null",
+    "category": "slug de categories",
+    "price": 0.0,
+    "description": "string",
+    "tags": ["popular", "new", "spicy", "vegetarian"]
+  }
+}

@@ -31,6 +31,9 @@ type Category = {
   id: string
   name: string
   slug: string
+  section?: string
+  is_active?: boolean
+  display_order?: number
 }
 
 type Product = {
@@ -38,29 +41,51 @@ type Product = {
   name: string
   price: number
   stock_quantity: number
-  category: { id: string; name: string; slug: string } | null
+  category: { id: string; name: string; slug: string; section?: string } | null
   image_url: string | null
   is_available: boolean
   description: string | null
+  name_ar?: string | null
+  station?: string | null
+  is_popular?: boolean
+  is_new?: boolean
+  is_vegetarian?: boolean
+  is_chef_choice?: boolean
+  is_recommended?: boolean
+  product_ingredients?: Array<{ quantity: number | string; ingredients: { id: string; name: string } | null }>
   _popularityScore?: number
 }
 
 type ProductFormData = {
   name: string
+  name_ar: string
   description: string
   price: string
   category_id: string
   stock_quantity: string
   image_url: string
+  station: string
+  is_popular: boolean
+  is_new: boolean
+  is_vegetarian: boolean
+  is_chef_choice: boolean
+  is_recommended: boolean
 }
 
 const EMPTY_FORM: ProductFormData = {
   name: "",
+  name_ar: "",
   description: "",
   price: "",
   category_id: "",
   stock_quantity: "",
   image_url: "",
+  station: "KITCHEN",
+  is_popular: false,
+  is_new: false,
+  is_vegetarian: false,
+  is_chef_choice: false,
+  is_recommended: false,
 }
 
 type SortKey = "name" | "price" | "popularity"
@@ -87,34 +112,48 @@ export default function MenuManagementPage() {
   const [formData, setFormData] = useState<ProductFormData>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [ingredients, setIngredients] = useState<{ id: string; name: string; unit: string }[]>([])
+  const [recipeLines, setRecipeLines] = useState<{ ingredient_id: string; quantity: string }[]>([])
 
-  const fetchProducts = useCallback(async () => {
+  const loadCatalog = useCallback(async () => {
     try {
-      const res = await fetch("/api/products")
+      const res = await fetch("/api/admin/catalog", { cache: "no-store" })
+      if (res.status === 401 || res.status === 403) {
+        const r2 = await fetch("/api/products")
+        const d2 = await r2.json()
+        const prods: Product[] = (d2.products ?? []).map((p: Product) => ({
+          ...p,
+          _popularityScore: getPopularityScore(p),
+        }))
+        setProducts(prods)
+        const rc = await fetch("/api/categories")
+        const dc = await rc.json()
+        setCategories(dc.categories ?? [])
+        return
+      }
       const data = await res.json()
+      if (!res.ok) return
       const prods: Product[] = (data.products ?? []).map((p: Product) => ({
         ...p,
-        _popularityScore: getPopularityScore(p),
+        _popularityScore: getPopularityScore(p as Product),
       }))
       setProducts(prods)
-    } catch {
-      /* ignore */
-    }
-  }, [])
-
-  const fetchCategories = useCallback(async () => {
-    try {
-      const res = await fetch("/api/categories")
-      const data = await res.json()
       setCategories(data.categories ?? [])
+      setIngredients(
+        (data.ingredients ?? []).map((i: { id: string; name: string; unit: string | null }) => ({
+          id: i.id,
+          name: i.name,
+          unit: i.unit || "",
+        })),
+      )
     } catch {
       /* ignore */
     }
   }, [])
 
   useEffect(() => {
-    Promise.all([fetchProducts(), fetchCategories()]).finally(() => setLoading(false))
-  }, [fetchProducts, fetchCategories])
+    loadCatalog().finally(() => setLoading(false))
+  }, [loadCatalog])
 
   const topPopularIds = useMemo(() => {
     const sorted = [...products].sort(
@@ -153,18 +192,34 @@ export default function MenuManagementPage() {
   const openAddModal = () => {
     setFormData(EMPTY_FORM)
     setEditingProduct(null)
+    setRecipeLines([])
     setShowAddModal(true)
   }
 
   const openEditModal = (product: Product) => {
     setFormData({
       name: product.name,
+      name_ar: product.name_ar ?? "",
       description: product.description ?? "",
       price: product.price.toString(),
       category_id: product.category?.id ?? "",
-      stock_quantity: product.stock_quantity.toString(),
+      stock_quantity: String(product.stock_quantity ?? 0),
       image_url: product.image_url ?? "",
+      station: (product.station as string) || "KITCHEN",
+      is_popular: !!product.is_popular,
+      is_new: !!product.is_new,
+      is_vegetarian: !!product.is_vegetarian,
+      is_chef_choice: !!product.is_chef_choice,
+      is_recommended: !!product.is_recommended,
     })
+    setRecipeLines(
+      (product.product_ingredients ?? [])
+        .filter((x) => x.ingredients?.id)
+        .map((x) => ({
+          ingredient_id: x.ingredients!.id,
+          quantity: String(x.quantity ?? ""),
+        })),
+    )
     setEditingProduct(product)
     setShowAddModal(true)
   }
@@ -178,40 +233,77 @@ export default function MenuManagementPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
+      const tags: string[] = []
+      if (formData.is_popular) tags.push("popular")
+      if (formData.is_new) tags.push("new")
+      if (formData.is_vegetarian) tags.push("vegetarian")
+
       const payload = {
         name: formData.name,
+        name_ar: formData.name_ar || null,
         description: formData.description || null,
         price: parseFloat(formData.price) || 0,
         category_id: formData.category_id || null,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         image_url: formData.image_url || null,
+        station: formData.station,
+        is_popular: formData.is_popular,
+        is_new: formData.is_new,
+        is_vegetarian: formData.is_vegetarian,
+        is_chef_choice: formData.is_chef_choice,
+        is_recommended: formData.is_recommended,
+        tags,
+        spice_level: null as string | null,
       }
-
       if (editingProduct) {
-        const res = await fetch(`/api/products/${editingProduct.id}`, {
+        const res = await fetch(`/api/admin/products/${editingProduct.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({
+            ...payload,
+            is_available: true,
+          }),
         })
         if (res.ok) {
-          const data = await res.json()
-          setProducts((prev) =>
-            prev.map((p) =>
-              p.id === editingProduct.id
-                ? { ...p, ...data.product, _popularityScore: p._popularityScore }
-                : p,
-            ),
-          )
+          if (ingredients.length > 0) {
+            const lines = recipeLines
+              .filter((l) => l.ingredient_id && l.quantity)
+              .map((l) => ({
+                ingredient_id: l.ingredient_id,
+                quantity: parseFloat(l.quantity) || 0,
+              }))
+            await fetch(`/api/admin/product-ingredients/${editingProduct.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ lines }),
+            })
+          }
+          await loadCatalog()
           closeModal()
         }
       } else {
-        const res = await fetch("/api/products", {
+        const res = await fetch("/api/admin/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         })
         if (res.ok) {
-          await fetchProducts()
+          const d = await res.json()
+          const newId = d.product?.id as string
+          if (newId && recipeLines.some((l) => l.ingredient_id && l.quantity)) {
+            const lines = recipeLines
+              .filter((l) => l.ingredient_id && l.quantity)
+              .map((l) => ({
+                ingredient_id: l.ingredient_id,
+                quantity: parseFloat(l.quantity) || 0,
+              }))
+            await fetch(`/api/admin/product-ingredients/${newId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ lines }),
+            })
+          }
+          await loadCatalog()
           closeModal()
         }
       }
@@ -226,7 +318,7 @@ export default function MenuManagementPage() {
     if (!deleteConfirm) return
     setDeleting(true)
     try {
-      const res = await fetch(`/api/products/${deleteConfirm.id}`, { method: "DELETE" })
+      const res = await fetch(`/api/admin/products/${deleteConfirm.id}`, { method: "DELETE" })
       if (res.ok) {
         setProducts((prev) => prev.filter((p) => p.id !== deleteConfirm.id))
         setDeleteConfirm(null)
@@ -240,7 +332,7 @@ export default function MenuManagementPage() {
 
   const toggleAvailability = async (product: Product) => {
     try {
-      const res = await fetch(`/api/products/${product.id}`, {
+      const res = await fetch(`/api/admin/products/${product.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_available: !product.is_available }),
@@ -529,6 +621,17 @@ export default function MenuManagementPage() {
                     </div>
 
                     <div>
+                      <Label className="text-sm">Nom (arabe)</Label>
+                      <Input
+                        className="mt-1"
+                        dir="rtl"
+                        placeholder="…"
+                        value={formData.name_ar}
+                        onChange={(e) => setFormData((f) => ({ ...f, name_ar: e.target.value }))}
+                      />
+                    </div>
+
+                    <div>
                       <Label className="text-sm">Description</Label>
                       <Textarea
                         className="mt-1"
@@ -578,10 +681,130 @@ export default function MenuManagementPage() {
                         {categories.map((cat) => (
                           <option key={cat.id} value={cat.id}>
                             {cat.name}
+                            {cat.section ? ` (${cat.section})` : ""}
                           </option>
                         ))}
                       </select>
                     </div>
+
+                    <div>
+                      <Label className="text-sm">Station (cuisine, bar, chicha)</Label>
+                      <select
+                        className="mt-1 w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                        value={formData.station}
+                        onChange={(e) => setFormData((f) => ({ ...f, station: e.target.value }))}
+                      >
+                        <option value="KITCHEN">KITCHEN</option>
+                        <option value="BAR">BAR</option>
+                        <option value="SHISHA">SHISHA</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 text-sm">
+                      <label className="flex items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          checked={formData.is_popular}
+                          onChange={(e) => setFormData((f) => ({ ...f, is_popular: e.target.checked }))}
+                        />
+                        Populaire
+                      </label>
+                      <label className="flex items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          checked={formData.is_new}
+                          onChange={(e) => setFormData((f) => ({ ...f, is_new: e.target.checked }))}
+                        />
+                        Nouveau
+                      </label>
+                      <label className="flex items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          checked={formData.is_vegetarian}
+                          onChange={(e) => setFormData((f) => ({ ...f, is_vegetarian: e.target.checked }))}
+                        />
+                        Végétarien
+                      </label>
+                      <label className="flex items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          checked={formData.is_chef_choice}
+                          onChange={(e) => setFormData((f) => ({ ...f, is_chef_choice: e.target.checked }))}
+                        />
+                        Choix du chef
+                      </label>
+                      <label className="flex items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          checked={formData.is_recommended}
+                          onChange={(e) => setFormData((f) => ({ ...f, is_recommended: e.target.checked }))}
+                        />
+                        Recommandé
+                      </label>
+                    </div>
+
+                    {ingredients.length > 0 && (
+                      <div className="rounded-lg border border-slate-200 p-2 dark:border-slate-600">
+                        <Label className="text-sm">Recette (stock intelligent)</Label>
+                        <p className="text-xs text-slate-500 mb-2">
+                          Quantité consommée <strong>par unité de plat</strong> (selon l&apos;unité de
+                          l&apos;ingrédient en stock).
+                        </p>
+                        {recipeLines.map((line, idx) => (
+                          <div key={idx} className="mb-2 flex flex-wrap items-end gap-2">
+                            <select
+                              className="flex-1 min-w-[140px] rounded border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
+                              value={line.ingredient_id}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                setRecipeLines((rows) =>
+                                  rows.map((r, j) => (j === idx ? { ...r, ingredient_id: v } : r)),
+                                )
+                              }}
+                            >
+                              <option value="">Ingrédient</option>
+                              {ingredients.map((ing) => (
+                                <option key={ing.id} value={ing.id}>
+                                  {ing.name} ({ing.unit})
+                                </option>
+                              ))}
+                            </select>
+                            <Input
+                              className="w-24"
+                              type="number"
+                              step="any"
+                              placeholder="Qté"
+                              value={line.quantity}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                setRecipeLines((rows) =>
+                                  rows.map((r, j) => (j === idx ? { ...r, quantity: v } : r)),
+                                )
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setRecipeLines((rows) => rows.filter((_, j) => j !== idx))}
+                            >
+                              ×
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="mt-1"
+                          onClick={() =>
+                            setRecipeLines((r) => [...r, { ingredient_id: "", quantity: "1" }])
+                          }
+                        >
+                          + Ingrédient
+                        </Button>
+                      </div>
+                    )}
 
                     <div>
                       <Label className="text-sm">URL de l&apos;image</Label>

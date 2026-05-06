@@ -21,6 +21,7 @@ import { PageShell } from "@/components/site/PageShell"
 import { AIAgentBadge } from "@/components/ai/AIAgentBadge"
 import { SiteFooter } from "@/components/site/SiteFooter"
 import { SiteHeader } from "@/components/site/SiteHeader"
+import { MobileBottomNav } from "@/components/site/MobileBottomNav"
 import { SITE } from "@/lib/site-config"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -136,7 +137,7 @@ export default function EventsPage() {
   }
 
   return (
-    <PageShell>
+    <PageShell contentClassName="pb-20 lg:pb-0">
       <SiteHeader
         backHref="/"
         trailing={
@@ -341,6 +342,7 @@ export default function EventsPage() {
       </div>
       <AIAgentBadge context="events" />
       <SiteFooter />
+      <MobileBottomNav />
     </PageShell>
   )
 }
