@@ -15,7 +15,7 @@ const typeConfig: Record<NotificationType, { icon: typeof Bell; color: string; b
 }
 
 export function NotificationCenter() {
-  const { notifications, unreadCount, markAllRead, dismiss } = useNotifications()
+  const { notifications, unreadCount, markAllRead, dismiss, isAdminAudience } = useNotifications()
   const [open, setOpen] = useState(false)
 
   return (
@@ -26,7 +26,7 @@ export function NotificationCenter() {
           setOpen((v) => !v)
           if (!open && unreadCount > 0) markAllRead()
         }}
-        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-amber-900/15 bg-white/80 text-amber-900 shadow-sm backdrop-blur-sm transition hover:bg-amber-100/80 dark:border-white/15 dark:bg-white/10 dark:text-amber-200 dark:hover:bg-white/20"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--lux-gold)]/25 bg-white/90 text-amber-900 shadow-sm backdrop-blur-sm transition hover:border-[color:var(--lux-gold)]/40 hover:bg-white hover:shadow-md dark:border-[color:var(--lux-gold)]/30 dark:bg-zinc-900/90 dark:text-amber-200 dark:hover:bg-zinc-900"
         aria-label="Notifications"
       >
         <Bell className="h-4 w-4" />
@@ -42,7 +42,17 @@ export function NotificationCenter() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-12 z-50 w-80 max-h-96 overflow-y-auto rounded-2xl border border-amber-200/50 bg-white shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-stone-900">
             <div className="sticky top-0 flex items-center justify-between border-b border-amber-100 bg-white/95 px-4 py-3 dark:border-white/10 dark:bg-stone-900/95">
-              <h3 className="text-sm font-semibold text-amber-950 dark:text-amber-100">Notifications</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-amber-950 dark:text-amber-100">Notifications</h3>
+                {isAdminAudience ? (
+                  <span
+                    className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-900/40 dark:text-amber-100"
+                    title="Vue administrateur — toutes les notifications de tous les rôles"
+                  >
+                    Admin · vue globale
+                  </span>
+                ) : null}
+              </div>
               {notifications.length > 0 && (
                 <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={markAllRead}>
                   Tout lire

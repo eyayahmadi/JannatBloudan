@@ -90,7 +90,7 @@ export default function PosTablesPage() {
   }
 
   return (
-    <RequireAuth roles={["ADMIN", "STAFF"]}>
+    <RequireAuth roles={["ADMIN", "CASHIER"]}>
       <PageShell className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <SiteHeader backHref="/pos" backLabel="POS" hideMainNav />
 

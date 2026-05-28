@@ -11,12 +11,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Loader2, MinusCircle, PlusCircle } from "lucide-react"
+import { Loader2, MinusCircle, PlusCircle, Lock } from "lucide-react"
+import { CaisseMovementAttachmentUploader } from "@/components/caisse/CaisseMovementAttachmentUploader"
+import { useAuth } from "@/lib/context/AuthContext"
+import { normalizeRole } from "@/lib/auth/roles"
 
 type Kind = "sortie_caisse" | "avance_client" | "ajustement"
 
-/** Journal caisse boutique : relié à POST /api/staff/cash-register-movements */
+/**
+ * Journal caisse boutique : relié à POST /api/staff/cash-register-movements.
+ * Réservé ADMIN / CASHIER. Garde côté composant en plus de la garde de page,
+ * pour empêcher tout affichage involontaire (re-use dans une autre page).
+ */
 export function CashRegisterMovementForm() {
+  const { user } = useAuth()
+  const role = user ? normalizeRole(user.role) : "CLIENT"
+  const allowed = role === "ADMIN" || role === "CASHIER"
+  if (!allowed) {
+    return (
+      <div className="rounded-2xl border border-dashed border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+        <div className="flex items-center gap-2 font-semibold">
+          <Lock className="h-4 w-4" />
+          Réservé caisse / administration
+        </div>
+        <p className="mt-1 text-xs text-amber-900/80 dark:text-amber-100/80">
+          Le journal caisse (sorties, avances, ajustements) est réservé aux rôles
+          ADMIN et CASHIER.
+        </p>
+      </div>
+    )
+  }
+
+  return <CashRegisterMovementFormInner />
+}
+
+function CashRegisterMovementFormInner() {
   const [kind, setKind] = useState<Kind>("sortie_caisse")
   const [amount, setAmount] = useState("")
   const [description, setDescription] = useState("")
@@ -25,7 +54,7 @@ export function CashRegisterMovementForm() {
   const [beneficiaryUserId, setBeneficiaryUserId] = useState("")
   const [createExpense, setCreateExpense] = useState(true)
   const [attachmentUrl, setAttachmentUrl] = useState("")
-  const [staff, setStaff] = useState<{ id: string; user_id?: string | null; position?: string | null }[]>([])
+  const [staff, setStaff] = useState<{ id: string; user_id?: string | null; position?: string | null; employee_label?: string | null }[]>([])
 
   useEffect(() => {
     void fetch("/api/caisse/staff-list")
@@ -129,18 +158,17 @@ export function CashRegisterMovementForm() {
               .filter((s) => Boolean(s.user_id))
               .map((s) => (
                 <option key={String(s.id)} value={String(s.user_id)}>
-                  {(s.position ?? "Staff").toString()}
+                  {s.employee_label ?? (s.position ?? "Staff").toString()}
                 </option>
               ))}
           </select>
         </div>
-        <div className="space-y-1 lg:col-span-2">
-          <Label className="text-xs">URL pièce jointe (ticket / capture)</Label>
-          <Input
-            className="h-9 text-sm"
-            placeholder="https://..."
+        <div className="space-y-1 lg:col-span-4">
+          <CaisseMovementAttachmentUploader
             value={attachmentUrl}
-            onChange={(e) => setAttachmentUrl(e.target.value)}
+            onChange={setAttachmentUrl}
+            disabled={loading}
+            compact
           />
         </div>
         {kind === "sortie_caisse" ? (

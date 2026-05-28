@@ -38,7 +38,7 @@ export function PageSkeleton({
         >
           <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-[color:var(--lux-ink)]/85 via-[color:var(--lux-bordeaux-dark)]/55 to-[color:var(--lux-ink)]/85" />
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[color:var(--lux-gold)]/60 to-transparent" />
-          <div className="relative z-[1] mx-auto flex h-full max-w-7xl flex-col justify-end gap-3 px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+          <div className="site-container relative z-[1] flex h-full flex-col justify-end gap-3 py-10 sm:py-12">
             <div className="h-3 w-28 animate-pulse rounded-full bg-white/15" />
             <div className="h-8 w-64 animate-pulse rounded-lg bg-white/20 md:h-10 md:w-96" />
             <div className="h-4 w-72 animate-pulse rounded bg-white/10" />
@@ -46,7 +46,7 @@ export function PageSkeleton({
         </div>
       ) : null}
 
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="site-container py-10">
         {/* Toolbar skeleton */}
         <div className="mb-8 flex flex-wrap items-center gap-3">
           <div className="h-10 w-44 animate-pulse rounded-full bg-[color:var(--lux-sand)]/70" />

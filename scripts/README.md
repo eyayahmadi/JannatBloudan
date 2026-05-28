@@ -6,6 +6,31 @@
 - ✅ `06-commercial-ready.sql` : staff, invoices, payments, stock, loyalty, reviews, promotions, RLS
 - ✅ `08-advanced.sql` : événements privés, finance, RH, AI paper-grade (pgvector, ML registry, AB tests, audit)
 
+## ⚠️ Inscription : « Database error updating user »
+
+Après **`06-commercial-ready`** (sync `auth.users` → `public.users`) + **`08-advanced`** (RLS sur `audit_logs`), le trigger **`audit_users_trg`** peut voir ses `INSERT` dans `audit_logs` **refusés** par la RLS (politiques souvent `SELECT`-only).
+
+1. Dans Supabase → **SQL Editor**, exécute **`scripts/fix-signup-database-error-updating-user.sql`** (met à jour `log_audit_event`, `sync_auth_user_to_public`, `handle_profile_after_email_confirmed` avec `SET row_security = off`, et corrige `enforce_client_role_on_signup` pour les créations avec e-mail déjà confirmé — API admin / seed comptes test).
+2. Réessaie l’inscription. Les installs déjà migrées peuvent garder leur `08` et ne lancer **que** ce correctif une fois.
+
+## Comptes de test (un par rôle)
+
+Pour tester chaque espace (CLIENT, ADMIN, SERVEUR, CUISINE, BAR, SHISHA, CAISSE, LIVRAISON) sans créer les comptes à la main dans le dashboard :
+
+1. Vérifie que **`.env.local`** (à la racine du projet Next, dossier `pfe-main`) contient `NEXT_PUBLIC_SUPABASE_URL` et **`SUPABASE_SERVICE_ROLE_KEY`** (clé **service_role**, pas l’anon).
+2. Depuis ce même dossier :
+
+```powershell
+npm run seed:test-accounts
+```
+
+Équivalent : `node --env-file=.env.local scripts/seed-test-accounts.mjs` (Node 20.6+).
+
+3. **E-mails** générés : `client@test.local`, `admin@test.local`, `server@test.local`, etc. (domaine modifiable avec `TEST_EMAIL_DOMAIN`).
+4. **Mot de passe** par défaut : `TestAllRoles1!` — surcharge avec `TEST_ACCOUNTS_PASSWORD` (minimum 8 caractères).
+
+Le script est **idempotent** : une seconde exécution met à jour mot de passe et métadonnées. **Réservé au développement**, pas à la production.
+
 ## 🎁 NOUVEAU : 09 — Demo Data 30 jours (visuel démo)
 
 Rempli les tables de 08 avec des données **réalistes** pour que tous les dashboards soient **vivants** :
@@ -212,7 +237,7 @@ $env:DATABASE_URL="postgres://postgres:<PASSWORD>@db.<REF>.supabase.co:5432/post
 node scripts/run-migrations.mjs
 ```
 
-Le script applique automatiquement **tous** les `.sql` numérotés dans l'ordre, puis affiche un résumé.
+Le script applique **l'ordre canonique** défini dans `run-migrations.mjs` (01 → 23, puis `APPLY-ROLE-HARDENING.sql` et `fix-signup-database-error-updating-user.sql`), puis affiche un résumé.
 
 ## 📋 Ordre complet des scripts
 
@@ -228,7 +253,32 @@ Si tu pars de zéro (nouvelle base), tu dois exécuter dans cet ordre :
 | 6 | `06-commercial-ready.sql`          | **COMMERCIAL** — staff, invoices, payments, stock, loyalty, reviews, promotions, RLS, auth sync | idempotent ✅ |
 | 7 | `07-demo-seed.sql`                 | **OPTIONNEL** — seed ingrédients, promotions, récompenses fidélité, liens produit-ingrédient | idempotent ✅ |
 | 8 | `08-advanced.sql`                  | **NIVEAU PRO** — événements privés, finance, RH, AI paper-grade (pgvector, ML registry, AB tests, audit) | idempotent ✅ |
+| 9 | `09-demo-data.sql`                 | **OPTIONNEL** — métriques / agents / funnel démo (30 jours) | idempotent ✅ |
+| 10 | `10-stations.sql`                 | Stations cuisine / bar / chicha (`order_items`, files KDS) | idempotent ✅ |
+| 11 | `11-delivery-tracking.sql`        | Livraisons, chauffeurs, carte | idempotent ✅ |
+| 12 | `12-supplier-invoices.sql`        | Factures fournisseurs | idempotent ✅ |
+| 13a | `13-cash-register-movements.sql` | Mouvements de caisse | idempotent ✅ |
+| 13b | `13-digital-menu-and-stock.sql`  | Menu digital, colonnes produits / stock recette | idempotent ✅ |
+| 14 | `14-caisse-intelligence-complete.sql` | Caisse (intelligence) | idempotent ✅ |
+| 15 | `15-caisse-complete.sql`          | Caisse complète | idempotent ✅ |
+| 16 | `16-translation-cache.sql`        | Cache traductions | idempotent ✅ |
+| 17 | `17-sortie-caisse-trace.sql`      | Traçabilité sorties caisse | idempotent ✅ |
+| 18 | `18-advanced-table-pos.sql`       | Tables / POS avancé | idempotent ✅ |
+| 19 | `19-private-events-calendar.sql`  | Calendrier événements privés | idempotent ✅ |
+| 20a | `20-events-professional.sql`    | Événements publics (tarifs, attente, liste d’attente) | idempotent ✅ |
+| 20b | `20-menu-product-images-storage.sql` | Bucket Storage `menu-product-images` + RLS | idempotent ✅ |
+| 21a | `21-audit-products-api-actor.sql` | Audit API produits / acteur | idempotent ✅ |
+| 21b | `21-promotions-module.sql`       | Module promos (extensions) | idempotent ✅ |
+| 22 | `22-categories-menu-columns.sql`  | Colonnes menu / catégories | idempotent ✅ |
+| 23 | `23-client-profiles-confirm.sql` | **Auth client** — table `profiles` + trigger après `email_confirmed_at` (Supabase) | idempotent ✅ |
+| 24 | `24-restaurant-tables-qr-admin.sql` | **Tables QR admin** — `table_code`, `display_name`, `plan_zone`, positions plan, `is_active` | idempotent ✅ |
+| — | `APPLY-ROLE-HARDENING.sql`         | Force rôle CLIENT à l’inscription publique (sécurité) | idempotent ✅ |
+| — | `fix-signup-database-error-updating-user.sql` | Corrige triggers audit / sync users / signup (après 06+08+RLS) | idempotent ✅ |
 | ⚙ | `create_admin.sql`                 | Création d'un compte admin | à exécuter ponctuellement |
+
+**En une commande (tout le tableau ci-dessus sauf `create_admin`)** : définis `DATABASE_URL` (URI Postgres Supabase), installe `pg` si besoin, puis `npm run db:migrate` ou `npm run db:migrate:env` si `DATABASE_URL` est dans `.env.local`. Voir `scripts/run-migrations.mjs`.
+
+> Ne pas enchaîner `APPLY-TODAY.sql` **et** `10` + `11` : le premier regroupe déjà stations + livraison (doublon). Même logique pour `APPLY-ALL-NEW.sql` vs `04` + `05`.
 
 ## Que contient la migration 04 ?
 

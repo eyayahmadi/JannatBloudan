@@ -5,7 +5,6 @@ import {
   Calendar,
   Clock,
   Users,
-  MapPin,
   Plus,
   ChevronRight,
   Search,
@@ -14,6 +13,7 @@ import {
   Briefcase,
   Heart,
   Gift,
+  Euro,
 } from "lucide-react"
 import Link from "next/link"
 import { PageHero } from "@/components/site/PageHero"
@@ -29,6 +29,14 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 
+type EventAvailabilitySummary = {
+  capped: boolean
+  reservedPlaces: number
+  availablePlaces: number | null
+  isFull: boolean
+  fillPercent: number
+}
+
 type Event = {
   id: string
   title: string
@@ -42,6 +50,28 @@ type Event = {
   price?: number
   organizer?: string
   description: string
+  availability?: EventAvailabilitySummary
+}
+
+function listEventBadge(event: Event): { label: string; className: string } {
+  if (event.availability?.isFull) {
+    return { label: "Complet", className: "bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-200" }
+  }
+  if (
+    event.availability?.capped &&
+    event.availability.availablePlaces != null &&
+    event.availability.availablePlaces > 0 &&
+    event.availability.availablePlaces <= 10
+  ) {
+    return {
+      label: `Plus que ${event.availability.availablePlaces} places`,
+      className: "bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-100",
+    }
+  }
+  if (event.availability?.capped) {
+    return { label: "Places disponibles", className: "bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-100" }
+  }
+  return { label: "Capacité ouverte", className: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200" }
 }
 
 const eventTypes = [
@@ -73,19 +103,38 @@ export default function EventsPage() {
           return
         }
 
-        const mapped: Event[] = (body.events || []).map((ev: any) => ({
-          id: ev.id,
-          title: ev.title,
-          type: "other",
-          date: ev.event_date,
-          time: ev.start_time,
-          duration: 0,
-          capacity: 0,
-          booked: 0,
-          status: "available",
-          price: 0,
-          description: ev.description || "",
-        }))
+        const mapped: Event[] = (body.events || []).map((ev: Record<string, unknown> & { id: string }) => {
+          const avail = ev.availability as EventAvailabilitySummary | undefined
+          const capRaw = ev.max_attendees as unknown
+          const cap =
+            typeof capRaw === "number" && Number.isFinite(capRaw)
+              ? capRaw
+              : capRaw != null && String(capRaw).trim() !== ""
+                ? Number(capRaw)
+                : undefined
+          const capacity = typeof cap === "number" && Number.isFinite(cap) ? cap : undefined
+          const priceAdult =
+            typeof ev.price_adult_eur === "number"
+              ? ev.price_adult_eur
+              : typeof ev.price === "number"
+                ? ev.price
+                : 0
+
+          return {
+            id: ev.id,
+            title: String(ev.title ?? ""),
+            type: "other" as const,
+            date: String(ev.event_date ?? ""),
+            time: String(ev.start_time ?? ""),
+            duration: 0,
+            capacity: capacity,
+            booked: avail?.reservedPlaces ?? 0,
+            status: avail?.isFull ? ("booked" as const) : ("available" as const),
+            price: priceAdult,
+            description: String(ev.description ?? ""),
+            availability: avail,
+          }
+        })
         setEvents(mapped)
       } catch (err) {
         setError("Erreur réseau")
@@ -108,32 +157,6 @@ export default function EventsPage() {
   const getEventIcon = (type: string) => {
     const typeObj = eventTypes.find((t) => t.id === type)
     return typeObj ? typeObj.icon : Calendar
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "available":
-        return "bg-green-100 text-green-700"
-      case "booked":
-        return "bg-blue-100 text-blue-700"
-      case "completed":
-        return "bg-slate-100 text-slate-700"
-      default:
-        return "bg-slate-100 text-slate-700"
-    }
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "available":
-        return "Disponible"
-      case "booked":
-        return "Réservé"
-      case "completed":
-        return "Terminé"
-      default:
-        return status
-    }
   }
 
   return (
@@ -165,18 +188,18 @@ export default function EventsPage() {
           </div>
           <div className="w-px bg-white/25" />
           <div>
-            <div className="font-display text-2xl font-semibold">{events.filter((e) => e.status === "booked").length}</div>
-            <div className="text-xs uppercase tracking-wider text-amber-200/80">Réservés</div>
+            <div className="font-display text-2xl font-semibold">{events.filter((e) => e.availability?.isFull).length}</div>
+            <div className="text-xs uppercase tracking-wider text-amber-200/80">Complets</div>
           </div>
           <div className="w-px bg-white/25" />
           <div>
-            <div className="font-display text-2xl font-semibold">{events.filter((e) => e.status === "available").length}</div>
-            <div className="text-xs uppercase tracking-wider text-amber-200/80">Disponibles</div>
+            <div className="font-display text-2xl font-semibold">{events.filter((e) => !e.availability?.isFull).length}</div>
+            <div className="text-xs uppercase tracking-wider text-amber-200/80">Ouverts</div>
           </div>
         </div>
       </PageHero>
 
-      <div className="mx-auto max-w-7xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
+      <div className="site-container flex-1 py-10">
         {/* Filters */}
         <Card className="mb-8 border-white/50 bg-white/70 shadow-sm backdrop-blur-md animate-fade-up">
           <CardContent className="p-6">
@@ -253,6 +276,7 @@ export default function EventsPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {filteredEvents.map((event) => {
             const Icon = getEventIcon(event.type)
+            const badge = listEventBadge(event)
             return (
               <Card
                 key={event.id}
@@ -269,9 +293,7 @@ export default function EventsPage() {
                         <p className="text-sm text-slate-600">{event.description}</p>
                       </div>
                     </div>
-                    <Badge className={getStatusColor(event.status ?? "available")}>
-                      {getStatusText(event.status ?? "available")}
-                    </Badge>
+                    <Badge className={badge.className}>{badge.label}</Badge>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 mb-4">
@@ -288,12 +310,16 @@ export default function EventsPage() {
                     <div className="flex items-center gap-2 text-slate-700">
                       <Users className="w-4 h-4 text-orange-600" />
                       <span className="text-sm">
-                        {event.booked}/{event.capacity} pers.
+                        {event.availability?.capped && event.capacity != null
+                          ? `${event.booked ?? 0}/${event.capacity} pers.`
+                          : `${event.booked ?? 0} inscrit(s)`}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-700">
-                      <MapPin className="w-4 h-4 text-orange-600" />
-                      <span className="text-sm font-semibold">{(event.price ?? 0).toFixed(0)}€</span>
+                      <Euro className="w-4 h-4 text-orange-600" />
+                      <span className="text-sm font-semibold">
+                        {event.price != null && event.price > 0 ? `À partir de ${event.price.toFixed(2)} €` : "Gratuit"}
+                      </span>
                     </div>
                   </div>
 
@@ -304,35 +330,30 @@ export default function EventsPage() {
                     </div>
                   )}
 
-                  {event.status === "booked" && (
+                  {event.availability?.capped ? (
                     <div className="w-full bg-slate-200 rounded-full h-2 mb-4">
                       <div
                         className="bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full transition-all"
                         style={{
-                          width: `${((event.booked ?? 0) / Math.max(event.capacity ?? 1, 1)) * 100}%`,
+                          width: `${Math.min(100, Math.max(0, event.availability.fillPercent))}%`,
                         }}
                       />
                     </div>
-                  )}
+                  ) : null}
 
                   <div className="flex flex-wrap gap-2">
-                    {event.status === "available" ? (
-                      <>
-                        <Button className="flex-1 gap-2" asChild>
-                          <Link href={`/events/${event.id}/book`}>
-                            Réserver privée
-                            <ChevronRight className="w-4 h-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="outline" className="flex-1 bg-transparent" asChild>
-                          <Link href={`/events/${event.id}/participate`}>Participer (buffet / soirée)</Link>
-                        </Button>
-                      </>
-                    ) : (
-                      <Button variant="outline" className="flex-1 bg-transparent" asChild>
-                        <Link href={`/events/${event.id}`}>Voir les détails</Link>
-                      </Button>
-                    )}
+                    <Button className="flex-1 gap-2" asChild>
+                      <Link href={`/events/${event.id}/participate`}>
+                        Billetterie &amp; liste d&apos;attente
+                        <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    </Button>
+                    <Button variant="outline" className="flex-1 bg-transparent" asChild>
+                      <Link href={`/events/${event.id}/book`}>Réservation simple (sans billet)</Link>
+                    </Button>
+                    <Button variant="ghost" className="w-full shrink-0 sm:w-auto" asChild>
+                      <Link href={`/events/${event.id}`}>Voir la fiche</Link>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

@@ -139,7 +139,7 @@ function respondOrder(lang: Lang): string {
 }
 
 function dispatch(role: Role, intent: Intent, lang: Lang): string {
-  if (role !== "client") return "Admin mode."
+  if (role !== "client") return ""
   if (intent === "salutation") return respondSalutation(lang)
   if (intent === "demande_menu") return respondMenu(lang)
   if (intent === "recommandation_plat") return respondRecommendation(lang)
@@ -147,6 +147,11 @@ function dispatch(role: Role, intent: Intent, lang: Lang): string {
   if (intent === "faire_commande") return respondOrder(lang)
   return respondSalutation(lang)
 }
+
+const ADMIN_COPILOT_SYSTEM = `Tu es le copilote des administrateurs du restaurant Bloudan (Allemagne).
+Reponds en francais ou dans la langue du message, de facon concise et actionnable.
+Tu n'as pas acces direct aux bases de donnees : oriente vers /admin/insights, /admin/reports, /admin/audit-log, /admin/supplier-invoices et les modules /admin/ai/*.
+Signale quand une verification terrain ou un export comptable est necessaire.`
 
 const LLM_SYSTEM = `Tu es l'assistant du restaurant Bloudan (cuisine levantine : shawarma, falafel, mezze, kibbeh, etc.).
 Reponds de facon courte et utile, dans la meme langue que le message du client (FR / EN / DE / AR).
@@ -186,6 +191,33 @@ export async function POST(request: NextRequest) {
 
     let reply = dispatch(role, intent, lang)
     let source: "llm" | "rules" = "rules"
+
+    if (role === "admin") {
+      reply = ""
+      if (isLlmConfigured()) {
+        try {
+          const messages = [
+            {
+              role: "system" as const,
+              content: `${ADMIN_COPILOT_SYSTEM}\n--- Contexte temps reel (heuristique) ---\nCharge: ${opCtx.rushLevel}, creneau: ${opCtx.timeSlot}, week-end: ${opCtx.isWeekend ? "oui" : "non"}.`,
+            },
+            { role: "user" as const, content: message },
+          ]
+          const llmText = await chatCompletion(messages)
+          if (llmText) {
+            reply = llmText
+            source = "llm"
+          }
+        } catch {
+          /* fallback rules */
+        }
+      }
+      if (!reply) {
+        reply =
+          `Copilot admin (mode sans LLM). Accédez à /admin/copilot pour les raccourcis (rapports, OCR fournisseurs, audit, IA).\n\nRésumé de votre message : « ${message.slice(0, 360)}${message.length > 360 ? "…" : ""} »`
+        source = "rules"
+      }
+    }
 
     if (role === "client" && isLlmConfigured()) {
       const history = await loadChatHistory(sessionId)

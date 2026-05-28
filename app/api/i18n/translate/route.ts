@@ -5,6 +5,7 @@ import { I18N_SOURCE_VERSION } from "@/lib/i18n/source-version"
 import type { Locale } from "@/lib/i18n/config"
 import {
   translationApiConfigured,
+  translationConfigureHint,
   translateStrings,
 } from "@/lib/server/translation-service"
 
@@ -15,7 +16,11 @@ const ALLOWED_NON_FR: Exclude<Locale, "fr">[] = ["en", "de", "ar"]
 export async function POST(req: Request) {
   if (!translationApiConfigured()) {
     return NextResponse.json(
-      { error: "GOOGLE_TRANSLATE_API_KEY is not set", code: "NO_KEY" },
+      {
+        error: "Translation disabled or not configured on the server",
+        code: "NO_TRANSLATION",
+        hint: translationConfigureHint(),
+      },
       { status: 503 },
     )
   }

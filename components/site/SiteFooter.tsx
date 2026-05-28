@@ -34,11 +34,11 @@ const COMPANY_LINKS = [
   { href: "/login", labelKey: "client.signIn", fallback: "Connexion" },
 ] as const
 
-const LEGAL_LINKS = [
-  { href: "/legal/privacy", label: "Confidentialité" },
-  { href: "/legal/terms", label: "CGU" },
-  { href: "/legal/cookies", label: "Cookies" },
-  { href: "/legal/legal-notice", label: "Mentions légales" },
+const LEGAL_KEYS = [
+  { href: "/legal/privacy", key: "footer.legal.privacy" as const },
+  { href: "/legal/terms", key: "footer.legal.terms" as const },
+  { href: "/legal/cookies", key: "footer.legal.cookies" as const },
+  { href: "/legal/legal-notice", key: "footer.legal.legalNotice" as const },
 ] as const
 
 const SOCIAL_LINKS = [
@@ -66,28 +66,27 @@ export function SiteFooter() {
   }
 
   return (
-    <footer className="relative mt-auto overflow-hidden border-t border-[color:var(--lux-gold)]/25 text-amber-50">
-      {/* Fond luxe avec dégradé + motif syrien subtil */}
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10"
-        style={{
-          background:
-            "linear-gradient(135deg, var(--lux-charcoal) 0%, var(--lux-ink) 55%, #2b1d12 100%)",
-        }}
-      />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[color:var(--lux-gold)]/60 to-transparent" />
-      <div className="pointer-events-none absolute inset-0 syrian-pattern opacity-[0.07]" />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-32 top-1/3 h-72 w-72 rounded-full bg-[color:var(--lux-gold)]/20 blur-[120px]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-32 bottom-0 h-72 w-72 rounded-full bg-[color:var(--lux-bordeaux)]/30 blur-[140px]"
-      />
+    <footer
+      className="relative isolate mt-auto overflow-hidden border-t border-[color:var(--lux-gold)]/35 text-zinc-100"
+      style={{
+        background: "linear-gradient(135deg, var(--lux-charcoal) 0%, var(--lux-ink) 55%, #2b1d12 100%)",
+      }}
+    >
+      {/* Décor au-dessus du fond opaque du footer (plus de -z-10 : évite fond page « crème » visible) */}
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[color:var(--lux-gold)]/60 to-transparent" />
+        <div className="absolute inset-0 syrian-pattern opacity-[0.08]" />
+        <div
+          aria-hidden
+          className="absolute -left-32 top-1/3 h-72 w-72 rounded-full bg-[color:var(--lux-gold)]/20 blur-[120px]"
+        />
+        <div
+          aria-hidden
+          className="absolute -right-32 bottom-0 h-72 w-72 rounded-full bg-[color:var(--lux-bordeaux)]/30 blur-[140px]"
+        />
+      </div>
 
-      <div className="relative mx-auto max-w-7xl px-4 pb-8 pt-14 sm:px-6 sm:pt-16 lg:px-8">
+      <div className="site-container relative z-10 pb-8 pt-14 sm:pt-16">
         {/* Section principale : 4 colonnes */}
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-12">
           {/* Brand + description */}
@@ -103,20 +102,19 @@ export function SiteFooter() {
                 <p className="font-display text-xl font-semibold text-white">
                   {SITE.name}
                 </p>
-                <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-[color:var(--lux-gold-bright)]/85">
+                <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-[color:var(--lux-gold-bright)]">
                   {SITE.tagline}
                 </p>
               </div>
             </div>
 
-            <p className="mt-5 max-w-sm text-sm leading-relaxed text-amber-100/75">
-              Cuisine syrienne authentique au cœur de Damas-sur-Seine. Mezze, grillades,
-              douceurs orientales — pensés et préparés avec soin par notre équipe.
+            <p className="mt-5 max-w-sm text-sm leading-relaxed text-zinc-200">
+              {t("footer.brandBlurb")}
             </p>
 
             {/* Réseaux sociaux */}
             <div className="mt-6">
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--lux-gold-bright)]/80">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--lux-gold-bright)]">
                 {t("footer.followUs", "Suivez-nous")}
               </p>
               <div className="flex items-center gap-2.5">
@@ -127,17 +125,17 @@ export function SiteFooter() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
-                    className="group relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 backdrop-blur-md transition hover:border-[color:var(--lux-gold)]/60 hover:bg-[color:var(--lux-gold)]/15"
+                    className="group relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 backdrop-blur-md transition hover:border-[color:var(--lux-gold)]/70 hover:bg-[color:var(--lux-gold)]/20"
                   >
-                    <Icon className="h-4 w-4 text-amber-100 transition group-hover:text-[color:var(--lux-gold-bright)] group-hover:scale-110" />
+                    <Icon className="h-4 w-4 text-zinc-100 transition group-hover:text-[color:var(--lux-gold-bright)] group-hover:scale-110" />
                   </a>
                 ))}
                 <a
                   href={`mailto:${SITE.contact.email}`}
                   aria-label="Email"
-                  className="group relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 backdrop-blur-md transition hover:border-[color:var(--lux-gold)]/60 hover:bg-[color:var(--lux-gold)]/15"
+                  className="group relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 backdrop-blur-md transition hover:border-[color:var(--lux-gold)]/70 hover:bg-[color:var(--lux-gold)]/20"
                 >
-                  <Mail className="h-4 w-4 text-amber-100 transition group-hover:text-[color:var(--lux-gold-bright)] group-hover:scale-110" />
+                  <Mail className="h-4 w-4 text-zinc-100 transition group-hover:text-[color:var(--lux-gold-bright)] group-hover:scale-110" />
                 </a>
               </div>
             </div>
@@ -145,7 +143,7 @@ export function SiteFooter() {
 
           {/* Liens rapides */}
           <div className="lg:col-span-2">
-            <FooterColumnTitle>Découvrir</FooterColumnTitle>
+            <FooterColumnTitle>{t("footer.columnDiscover")}</FooterColumnTitle>
             <ul className="space-y-2.5">
               {NAV_LINKS.map(({ href, labelKey, fallback }) => (
                 <li key={href}>
@@ -156,7 +154,7 @@ export function SiteFooter() {
           </div>
 
           <div className="lg:col-span-2">
-            <FooterColumnTitle>Maison</FooterColumnTitle>
+            <FooterColumnTitle>{t("footer.columnHome")}</FooterColumnTitle>
             <ul className="space-y-2.5">
               {COMPANY_LINKS.map(({ href, labelKey, fallback }) => (
                 <li key={href}>
@@ -169,9 +167,9 @@ export function SiteFooter() {
           {/* Contact + Newsletter */}
           <div className="lg:col-span-4">
             <FooterColumnTitle>{t("footer.contact", "Contact")}</FooterColumnTitle>
-            <ul className="mb-6 space-y-3 text-sm text-amber-100/80">
+            <ul className="mb-6 space-y-3 text-sm text-zinc-200">
               <li className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[color:var(--lux-gold)]/15 text-[color:var(--lux-gold-bright)]">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[color:var(--lux-gold)]/25 text-[color:var(--lux-gold-bright)]">
                   <MapPin className="h-3.5 w-3.5" />
                 </span>
                 <span className="leading-snug">
@@ -179,54 +177,57 @@ export function SiteFooter() {
                   <br />
                   {SITE.address.postalCode} {SITE.address.addressLocality}
                   <br />
-                  <span className="text-amber-100/90">{SITE.address.addressRegion}</span>
+                  <span className="text-zinc-100">{SITE.address.addressRegion}</span>
                   <br />
-                  <span className="text-amber-100/55">
+                  <span className="text-zinc-300">
                     {SITE.address.addressCountry === "DE" ? "Allemagne" : SITE.address.addressCountry}
                   </span>
                 </span>
               </li>
               <li className="flex items-center gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[color:var(--lux-gold)]/15 text-[color:var(--lux-gold-bright)]">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[color:var(--lux-gold)]/25 text-[color:var(--lux-gold-bright)]">
                   <MessageCircle className="h-3.5 w-3.5" />
                 </span>
                 <a
                   href={SITE.contact.whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition hover:text-[color:var(--lux-gold-bright)]"
+                  className="text-zinc-100 underline-offset-2 transition hover:text-white hover:underline"
                 >
-                  WhatsApp
+                  {t("footer.whatsapp")}
                 </a>
               </li>
               <li className="flex items-center gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[color:var(--lux-gold)]/15 text-[color:var(--lux-gold-bright)]">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[color:var(--lux-gold)]/25 text-[color:var(--lux-gold-bright)]">
                   <Phone className="h-3.5 w-3.5" />
                 </span>
-                <a href={`tel:${SITE.contact.phoneE164}`} className="transition hover:text-[color:var(--lux-gold-bright)]">
+                <a
+                  href={`tel:${SITE.contact.phoneE164}`}
+                  className="text-zinc-100 underline-offset-2 transition hover:text-white hover:underline"
+                >
                   {SITE.contact.phoneDisplay}
                 </a>
               </li>
               <li className="flex items-center gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[color:var(--lux-gold)]/15 text-[color:var(--lux-gold-bright)]">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[color:var(--lux-gold)]/25 text-[color:var(--lux-gold-bright)]">
                   <Mail className="h-3.5 w-3.5" />
                 </span>
                 <a
                   href={`mailto:${SITE.contact.email}`}
-                  className="transition hover:text-[color:var(--lux-gold-bright)] break-all"
+                  className="break-all text-zinc-100 underline-offset-2 transition hover:text-white hover:underline"
                 >
                   {SITE.contact.email}
                 </a>
               </li>
               <li className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[color:var(--lux-gold)]/15 text-[color:var(--lux-gold-bright)]">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[color:var(--lux-gold)]/25 text-[color:var(--lux-gold-bright)]">
                   <Clock className="h-3.5 w-3.5" />
                 </span>
                 <span className="leading-snug text-sm">
-                  <span className="font-medium text-amber-100/90">
+                  <span className="font-medium text-white">
                     {t("footer.hours", "Horaires")}
                   </span>
-                  <span className="mt-1 block whitespace-pre-line text-amber-100/80">
+                  <span className="mt-1 block whitespace-pre-line text-zinc-200">
                     {t(
                       "landing.footer.hoursCompact",
                       "Lun–jeu · dim : 10h – minuit\nVen–sam : 10h – 2h",
@@ -239,29 +240,27 @@ export function SiteFooter() {
             {/* Newsletter */}
             <form
               onSubmit={handleSubmit}
-              className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-md"
+              className="rounded-2xl border border-white/20 bg-white/[0.08] p-4 backdrop-blur-md"
             >
-              <p className="mb-1 text-sm font-semibold text-white">Newsletter</p>
-              <p className="mb-3 text-xs text-amber-100/65">
-                Recevez nos actualités et offres privilégiées.
-              </p>
+              <p className="mb-1 text-sm font-semibold text-white">{t("footer.newsletterTitle")}</p>
+              <p className="mb-3 text-xs text-zinc-200">{t("footer.newsletterSubtitle")}</p>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
-                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-100/40" />
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    placeholder="email@exemple.com"
-                    aria-label="Adresse email pour la newsletter"
-                    className="h-10 w-full rounded-xl border border-white/15 bg-white/[0.06] pl-9 pr-3 text-sm text-white placeholder:text-amber-100/40 focus:border-[color:var(--lux-gold)]/60 focus:outline-none focus:ring-2 focus:ring-[color:var(--lux-gold)]/30"
+                    placeholder={t("footer.newsletterPlaceholder")}
+                    aria-label={t("footer.newsletterEmailAria")}
+                    className="h-10 w-full rounded-xl border border-white/25 bg-white/[0.12] pl-9 pr-3 text-sm text-white placeholder:text-zinc-400 focus:border-[color:var(--lux-gold)]/70 focus:outline-none focus:ring-2 focus:ring-[color:var(--lux-gold)]/35"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={submitting || submitted}
-                  aria-label="S'abonner à la newsletter"
+                  aria-label={t("footer.newsletterSubscribeAria")}
                   className={cn(
                     "flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-semibold text-[color:var(--lux-ink)] transition",
                     "shadow-[0_8px_22px_-10px_rgba(201,162,76,0.6)]",
@@ -281,7 +280,7 @@ export function SiteFooter() {
               {submitted ? (
                 <p className="mt-2 flex items-center gap-1.5 text-xs text-emerald-300">
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  Merci ! Votre inscription est confirmée.
+                  {t("footer.newsletterThanks")}
                 </p>
               ) : null}
             </form>
@@ -293,22 +292,23 @@ export function SiteFooter() {
 
         {/* Bottom bar */}
         <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <p className="flex items-center gap-1.5 text-xs text-amber-100/55">
+          <p className="flex items-center gap-1.5 text-xs text-zinc-300">
             © {year} {SITE.name}.{" "}
             <span className="hidden sm:inline">{t("footer.rights", "Tous droits réservés")}.</span>
-            <span className="ml-1 inline-flex items-center gap-1 text-amber-100/45">
-              Conçu avec <Heart className="h-3 w-3 text-[color:var(--lux-bordeaux)]" /> à Erfurt
+            <span className="ml-1 inline-flex items-center gap-1 text-zinc-400">
+              {t("footer.craftedWithPrefix")}{" "}
+              <Heart className="h-3 w-3 text-[color:var(--lux-bordeaux)]" /> {t("footer.craftedAt")}
             </span>
           </p>
 
-          <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[11px] text-amber-100/55">
-            {LEGAL_LINKS.map((link) => (
+          <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[11px] text-zinc-300">
+            {LEGAL_KEYS.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="transition hover:text-[color:var(--lux-gold-bright)]"
+                  className="underline-offset-2 transition hover:text-white hover:underline"
                 >
-                  {link.label}
+                  {t(link.key)}
                 </Link>
               </li>
             ))}
@@ -321,7 +321,7 @@ export function SiteFooter() {
 
 function FooterColumnTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--lux-gold-bright)]/85">
+    <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--lux-gold-bright)]">
       {children}
     </h3>
   )
@@ -331,9 +331,9 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
   return (
     <Link
       href={href}
-      className="group inline-flex items-center gap-1 text-sm text-amber-100/75 transition hover:text-[color:var(--lux-gold-bright)]"
+      className="group inline-flex items-center gap-1 text-sm text-zinc-200 transition hover:text-white"
     >
-      <ChevronRight className="h-3 w-3 -translate-x-1 opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100" />
+      <ChevronRight className="h-3 w-3 -translate-x-1 text-[color:var(--lux-gold-bright)] opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100" />
       <span className="-ml-3 transition group-hover:ml-0">{children}</span>
     </Link>
   )

@@ -120,22 +120,176 @@ function scoreColor(score: number) {
   return { ring: "border-red-500", text: "text-red-600 dark:text-red-400", bg: "from-red-500/20 to-red-500/5" }
 }
 
+function num(v: unknown, fallback: number): number {
+  const n = typeof v === "number" ? v : Number(v)
+  return Number.isFinite(n) ? n : fallback
+}
+
+function formatCheckTime(s: string): string {
+  const d = new Date(s)
+  return Number.isNaN(d.getTime()) ? s : d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+}
+
+function normalizeHaccpCheck(c: unknown, i: number): HACCPCheck | null {
+  if (!c || typeof c !== "object") return null
+  const r = c as Record<string, unknown>
+  const statusRaw = String(r.status ?? "pass").toLowerCase()
+  const status: HACCPCheck["status"] =
+    statusRaw === "warning" ? "warning" : statusRaw === "fail" ? "fail" : "pass"
+  const last = String(r.lastCheck ?? "")
+  const next = String(r.nextCheck ?? "")
+  return {
+    id: String(r.id ?? `h-${i}`),
+    name: String(r.name ?? "Controle"),
+    status,
+    lastCheck: formatCheckTime(last),
+    nextCheck: formatCheckTime(next),
+    measuredValue: String(r.measuredValue ?? r.value ?? "—"),
+    limit: String(r.limit ?? "—"),
+  }
+}
+
+function normalizeIngredient(raw: unknown, i: number): Ingredient | null {
+  if (!raw || typeof raw !== "object") return null
+  const r = raw as Record<string, unknown>
+  const name = String(r.name ?? `Ingredient-${i}`)
+  const statusRaw = String(r.status ?? "ok").toLowerCase()
+  const statusLabels: Record<string, string> = {
+    ok: "Stocke",
+    warning: "Attention",
+    critical: "Critique",
+    stored: "Stocke",
+  }
+  const temperature =
+    typeof r.temperature === "number" ? `${r.temperature}°C` : String(r.temperature ?? "—")
+  return {
+    id: String(r.id ?? `i-${i}`),
+    name,
+    category: String(r.category ?? "—"),
+    supplier: String(r.supplier ?? "—"),
+    lotNumber: String(r.lotNumber ?? r.lot ?? "—"),
+    receivedDate: String(r.receivedDate ?? "—"),
+    expiryDate: String(r.expiryDate ?? "—"),
+    daysUntilExpiry: num(r.daysUntilExpiry, 0),
+    temperature,
+    status: statusLabels[statusRaw] ?? String(r.status ?? "—"),
+  }
+}
+
+function normalizeBlockchainStep(s: unknown): BlockchainStep | null {
+  if (!s || typeof s !== "object") return null
+  const r = s as Record<string, unknown>
+  return {
+    label: String(r.label ?? r.step ?? "Etape"),
+    timestamp: String(r.timestamp ?? r.time ?? "—"),
+    verified: Boolean(r.verified ?? r.ok ?? true),
+  }
+}
+
+function normalizeBlockchain(bc: unknown): Record<string, BlockchainStep[]> {
+  if (!bc || typeof bc !== "object" || Array.isArray(bc)) return {}
+  const out: Record<string, BlockchainStep[]> = {}
+  for (const [ingredient, steps] of Object.entries(bc as Record<string, unknown>)) {
+    if (!Array.isArray(steps)) continue
+    const row = steps.map(normalizeBlockchainStep).filter(Boolean) as BlockchainStep[]
+    if (row.length) out[ingredient] = row
+  }
+  return out
+}
+
+function blockchainFromIngredients(ingredients: Ingredient[]): Record<string, BlockchainStep[]> {
+  const out: Record<string, BlockchainStep[]> = {}
+  for (const ing of ingredients) {
+    const okExpiry = ing.daysUntilExpiry >= 0
+    out[ing.name] = [
+      { label: "Fournisseur", timestamp: ing.receivedDate, verified: true },
+      { label: "Reception / lot", timestamp: `${ing.lotNumber}`, verified: true },
+      { label: "Conditions", timestamp: ing.temperature, verified: okExpiry && ing.status !== "Critique" },
+    ]
+  }
+  return out
+}
+
+function normalizeQualityPayload(raw: unknown): QualityData {
+  const fb = buildFallback()
+  if (!raw || typeof raw !== "object") return fb
+
+  const o = raw as Record<string, unknown>
+
+  const haccpRaw = Array.isArray(o.haccpChecks) ? o.haccpChecks : []
+  const haccpChecks = haccpRaw.map(normalizeHaccpCheck).filter(Boolean) as HACCPCheck[]
+  const safeHaccp = haccpChecks.length ? haccpChecks : fb.haccpChecks
+
+  const ingRaw = Array.isArray(o.ingredients) ? o.ingredients : []
+  const ingredients = ingRaw.map(normalizeIngredient).filter(Boolean) as Ingredient[]
+  const safeIng = ingredients.length ? ingredients : fb.ingredients
+
+  const comp = o.compliance
+  const complianceScore = num(
+    o.complianceScore ??
+      (comp && typeof comp === "object" ? (comp as Record<string, unknown>).score : undefined),
+    fb.complianceScore
+  )
+
+  let alerts = fb.alerts
+  if (o.alerts && typeof o.alerts === "object") {
+    const a = o.alerts as Record<string, unknown>
+    alerts = {
+      expiringSoon: num(a.expiringSoon, fb.alerts.expiringSoon),
+      expired: num(a.expired, fb.alerts.expired),
+      temperatureAlerts: num(a.temperatureAlerts ?? a.tempAlerts, fb.alerts.temperatureAlerts),
+    }
+  }
+
+  let blockchain: Record<string, BlockchainStep[]> = fb.blockchain
+  const bcRaw = o.blockchain
+  if (bcRaw && typeof bcRaw === "object" && !Array.isArray(bcRaw)) {
+    const normalized = normalizeBlockchain(bcRaw)
+    if (Object.keys(normalized).length) blockchain = normalized
+    else blockchain = blockchainFromIngredients(safeIng)
+  } else {
+    blockchain = blockchainFromIngredients(safeIng)
+  }
+  if (Object.keys(blockchain).length === 0) blockchain = fb.blockchain
+
+  return {
+    complianceScore,
+    haccpChecks: safeHaccp,
+    ingredients: safeIng,
+    alerts,
+    blockchain,
+  }
+}
+
 export default function QualityPage() {
   const [data, setData] = useState<QualityData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const fetchData = () => {
-    fetch("/api/ai/quality")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then(setData)
-      .catch(() => setData(buildFallback()))
-      .finally(() => setLoading(false))
-  }
-
   useEffect(() => {
-    fetchData()
-    const id = setInterval(fetchData, 10_000)
-    return () => clearInterval(id)
+    let cancelled = false
+
+    async function load(first: boolean) {
+      try {
+        if (first && !cancelled) setLoading(true)
+        const r = await fetch("/api/ai/quality")
+        if (!r.ok) throw new Error("bad response")
+        const raw = await r.json()
+        if (cancelled) return
+        setData(normalizeQualityPayload(raw))
+      } catch {
+        if (cancelled) return
+        setData(buildFallback())
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    load(true)
+    const id = setInterval(() => load(false), 10_000)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
   }, [])
 
   const sc = data ? scoreColor(data.complianceScore) : scoreColor(0)

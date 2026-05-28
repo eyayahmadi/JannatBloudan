@@ -44,7 +44,7 @@ export function normalizeRole(raw: unknown): AppRole {
 export function dashboardPathForRole(role: AppRole): string {
   switch (role) {
     case "ADMIN":
-      return "/admin/dashboard"
+      return "/admin"
     case "SERVER":
       return "/server/tables"
     case "KITCHEN":

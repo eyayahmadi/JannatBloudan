@@ -7,7 +7,19 @@ import { Plus, Minus, ShoppingCart, X, ChevronRight, UtensilsCrossed, ArrowLeft 
 import { PageShell } from "@/components/site/PageShell"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import type { OrderStatus } from "@/lib/hooks/useRealtimeOrders"
 import { useRealtimeOrders } from "@/lib/hooks/useRealtimeOrders"
+import { useResolvedRestaurantTable } from "@/lib/hooks/useResolvedRestaurantTable"
+
+function mapQrApiStatus(raw: string | undefined): OrderStatus {
+  const s = (raw ?? "").toLowerCase()
+  if (s === "preparing" || s === "en préparation" || s === "en preparation") return "preparing"
+  if (s === "ready" || s === "prête" || s === "prete") return "ready"
+  if (s === "delivering" || s === "en livraison") return "delivering"
+  if (s === "completed" || s === "livrée" || s === "livree") return "completed"
+  if (s === "cancelled" || s === "annulée" || s === "annulee") return "cancelled"
+  return "received"
+}
 
 const categories = [
   { id: "all", label: "Tout", icon: "🍽️" },
@@ -26,6 +38,7 @@ export default function TableMenuPage() {
   const { tableId } = useParams<{ tableId: string }>()
   const router = useRouter()
   const { addOrder } = useRealtimeOrders()
+  const { effectiveNumber, displayLabel } = useResolvedRestaurantTable(tableId)
 
   const [menuItems, setMenuItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -78,44 +91,64 @@ export default function TableMenuPage() {
   const cartCount = cart.reduce((s, c) => s + c.quantity, 0)
   const cartTotal = cart.reduce((s, c) => s + c.price * c.quantity, 0)
 
-  const submitOrder = () => {
+  const submitOrder = async () => {
     if (cart.length === 0) return
-    const localId = "ORD-" + Date.now()
-    const orderNumber = `T${tableId}-${String(Math.floor(1000 + Math.random() * 9000))}`
+    if (effectiveNumber == null) {
+      alert("Table introuvable ou en cours de chargement.")
+      return
+    }
+    const localId = `ORD-${Date.now()}`
+    const orderNumber = `T${effectiveNumber}-${String(Math.floor(1000 + Math.random() * 9000))}`
     const items = cart.map((c) => ({
       name: c.name,
       quantity: c.quantity,
       unitPrice: c.price,
     }))
 
-    // Optimistic UI local (immediat, meme offline)
+    let resolvedId = localId
+    type QrOrderPayload = {
+      id?: string
+      order_number?: string
+      total?: number
+      status?: string
+    }
+    let serverOrder: QrOrderPayload | null = null
+
+    try {
+      const res = await fetch("/api/orders/qr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: localId,
+          orderNumber,
+          tableRef: String(tableId),
+          items,
+          total: cartTotal,
+        }),
+      })
+      const json = (await res.json()) as { order?: QrOrderPayload }
+      if (json?.order?.id) {
+        resolvedId = json.order.id
+        serverOrder = json.order
+      }
+    } catch {
+      /* hors-ligne ou erreur réseau : garder localId */
+    }
+
     addOrder({
-      id: localId,
-      order_number: orderNumber,
-      table_number: Number(tableId),
+      id: resolvedId,
+      order_number: serverOrder?.order_number ?? orderNumber,
+      table_number: effectiveNumber,
       order_type: "qr_self_service",
-      status: "received",
+      status: mapQrApiStatus(serverOrder?.status),
       items: items.map((i) => ({ name: i.name, quantity: i.quantity })),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      customer_name: `Client Table ${tableId}`,
-      total: cartTotal,
+      customer_name: `Client Table ${effectiveNumber}`,
+      total: typeof serverOrder?.total === "number" ? serverOrder.total : cartTotal,
     })
 
-    // Persistance Supabase (fire-and-forget, fallback serveur gere)
-    void fetch("/api/orders/qr", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: localId,
-        orderNumber,
-        tableId: Number(tableId),
-        items,
-        total: cartTotal,
-      }),
-    }).catch(() => {})
-
-    router.push(`/table/${tableId}/order?oid=${localId}`)
+    router.push(`/table/${tableId}/order?oid=${encodeURIComponent(resolvedId)}`)
   }
 
   return (
@@ -129,7 +162,7 @@ export default function TableMenuPage() {
             <ArrowLeft className="h-4 w-4" />
             <div className="leading-tight">
               <p className="text-xs font-medium uppercase tracking-widest text-amber-700 dark:text-amber-400">
-                Table {tableId}
+                Table {displayLabel}
               </p>
               <p className="text-sm font-semibold">Menu</p>
             </div>
@@ -268,7 +301,7 @@ export default function TableMenuPage() {
           <div className="relative mt-auto flex max-h-[85vh] flex-col rounded-t-3xl bg-white shadow-2xl dark:bg-neutral-900">
             <div className="flex items-center justify-between border-b border-amber-100 px-5 py-4 dark:border-amber-900/30">
               <h2 className="text-lg font-bold text-amber-950 dark:text-white">
-                Votre commande — Table {tableId}
+                Votre commande — Table {displayLabel}
               </h2>
               <button
                 type="button"

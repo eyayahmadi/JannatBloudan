@@ -32,12 +32,26 @@ export async function POST(request: Request) {
 
     const currentTier = TIERS.find((t) => points >= t.min && points < t.max) || TIERS[0]
     const nextTier = TIERS[TIERS.indexOf(currentTier) + 1] || null
-    const progress = nextTier ? Math.round(((points - currentTier.min) / (nextTier.min - currentTier.min)) * 100) : 100
+    const progressPct = nextTier
+      ? Math.round(((points - currentTier.min) / (nextTier.min - currentTier.min)) * 100)
+      : 100
+
+    const maxPointsForBar = nextTier ? nextTier.min : currentTier.max
 
     return NextResponse.json({
-      tier: { ...currentTier, progress },
-      nextTier,
       points,
+      currentPoints: points,
+      tier: {
+        name: currentTier.name,
+        min: currentTier.min,
+        max: currentTier.max,
+        minPoints: currentTier.min,
+        maxPoints: maxPointsForBar,
+        color: currentTier.color,
+        perks: currentTier.perks,
+        progress: progressPct,
+      },
+      nextTier,
       pointsToNextTier: nextTier ? nextTier.min - points : 0,
       challenges: CHALLENGES,
       achievements: ACHIEVEMENTS,

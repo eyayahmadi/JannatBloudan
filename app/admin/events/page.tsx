@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Calendar, ChevronRight, Users } from "lucide-react"
+import { Calendar, ChevronRight, Plus, Users } from "lucide-react"
 
 import { RequireAuth } from "@/components/auth/RequireAuth"
 import { PageShell } from "@/components/site/PageShell"
@@ -37,25 +37,47 @@ export default function AdminEventsPage() {
       <PageShell className="bg-slate-50 dark:bg-slate-950">
         <SiteHeader backHref="/admin" backLabel="Dashboard" hideMainNav />
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6">
-          <div className="mb-8 flex items-center justify-between gap-4">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestion evenements</h1>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Ticketing, participants, scan d'entree et calendrier
               </p>
             </div>
-            <Button asChild variant="outline">
-              <Link href="/admin/events/calendar">
-                <Calendar className="mr-2 h-4 w-4" /> Calendrier
-              </Link>
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button asChild variant="outline">
+                <Link href="/admin/events/calendar">
+                  <Calendar className="mr-2 h-4 w-4" /> Calendrier
+                </Link>
+              </Button>
+              <Button
+                asChild
+                className="bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-sm hover:from-amber-600 hover:to-orange-700"
+              >
+                <Link href="/admin/events/new">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Creer un evenement
+                </Link>
+              </Button>
+            </div>
           </div>
 
           {loading ? (
             <p className="text-slate-500">Chargement...</p>
           ) : events.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center text-slate-500">Aucun evenement publie.</CardContent>
+              <CardContent className="flex flex-col items-center gap-4 py-12 text-center text-slate-500">
+                <p>Aucun evenement publie.</p>
+                <Button
+                  asChild
+                  className="bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700"
+                >
+                  <Link href="/admin/events/new">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Creer un evenement
+                  </Link>
+                </Button>
+              </CardContent>
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

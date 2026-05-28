@@ -69,6 +69,22 @@ export const SITE = {
  * Navigation publique affichée sur la homepage et sur l'ensemble du site
  * pour les visiteurs. N'expose JAMAIS les interfaces staff/admin.
  */
+/** Navigation principale (ancres / accueil) — hors menu « Découvrir » */
+export const SITE_MAIN_NAV = [
+  { href: "/", label: "Accueil", key: "home" },
+  { href: "/#about", label: "À propos", key: "about" },
+  { href: "/#contact", label: "Contact", key: "contact" },
+] as const
+
+/** Liens regroupés dans le menu déroulant Découvrir */
+export const SITE_DISCOVER_NAV = [
+  { href: "/menu", label: "Menu", key: "menu" },
+  { href: "/delivery", label: "Livraison", key: "delivery" },
+  { href: "/reservation", label: "Réservation", key: "reservation" },
+  { href: "/events", label: "Événements", key: "events" },
+] as const
+
+/** @deprecated préférez SITE_MAIN_NAV + SITE_DISCOVER_NAV pour l’UI header */
 export const SITE_NAV = [
   { href: "/", label: "Accueil", key: "home" },
   { href: "/menu", label: "Menu", key: "menu" },

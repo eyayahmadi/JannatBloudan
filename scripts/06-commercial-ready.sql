@@ -388,7 +388,12 @@ CREATE INDEX IF NOT EXISTS idx_reservation_reminders_res ON reservation_reminder
 --     (pour ne jamais casser l'auth en cas de vieux stubs en base).
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION sync_auth_user_to_public()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+SET row_security = off
+AS $$
 BEGIN
   -- Si deja present par id, on met a jour les infos mutables (email, metadata)
   IF EXISTS (SELECT 1 FROM public.users WHERE id = NEW.id) THEN
@@ -436,7 +441,7 @@ EXCEPTION WHEN unique_violation THEN
   -- Dernier filet de securite : on ne bloque jamais le signup
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Le trigger est pose sur auth.users (schema protege -> SECURITY DEFINER requis)
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;

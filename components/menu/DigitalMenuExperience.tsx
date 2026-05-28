@@ -13,7 +13,18 @@ import {
   Plus,
   X,
   UtensilsCrossed,
+  SlidersHorizontal,
+  RotateCcw,
 } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import { useMenuCart } from "@/contexts/MenuCartContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,25 +32,16 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n/context"
+import type { DigitalMenuProduct, MenuClientFilters, MenuSortId } from "@/lib/menu/digital-menu-product"
+import { filterMenuProducts, similarProducts, sortMenuProducts } from "@/lib/menu/filter-menu-client"
+import type { Station } from "@/lib/stations/config"
+import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
 
-type MenuItem = {
+type CatalogCategoryRow = {
   id: string
   name: string
-  name_ar: string | null
-  description: string
-  price: number
-  image_url: string | null
-  section: string
-  categoryName: string
-  category: string
-  station: string
-  is_popular: boolean
-  is_chef_choice: boolean
-  is_recommended: boolean
-  tags: string[]
-  availability: "available" | "limited" | "out"
-  max_orderable: number
-  can_order: boolean
+  slug: string
+  section?: string | null
 }
 
 const SECTION_IDS = ["all", "food", "desserts", "drinks", "special"] as const
@@ -61,32 +63,47 @@ export function DigitalMenuExperience() {
   const { locale, t } = useI18n()
   const { add, open, setOpen, items, setQty, subtotal, count, clear } = useMenuCart()
   const [data, setData] = useState<{
-    items: MenuItem[]
-    by_section: Record<string, MenuItem[]>
-    chef_choice: MenuItem[]
-    recommended: MenuItem[]
-    most_popular: MenuItem[]
+    catalog: DigitalMenuProduct[]
+    by_section: Record<string, DigitalMenuProduct[]>
+    chef_choice: DigitalMenuProduct[]
+    recommended: DigitalMenuProduct[]
+    most_popular: DigitalMenuProduct[]
+    categories: CatalogCategoryRow[]
+    often_ordered_with: Record<string, string[]>
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState("")
-  const [section, setSection] = useState<string>("all")
+  const [section, setSection] = useState<SectionId>("all")
+  const [categorySlug, setCategorySlug] = useState("all")
+  const [priceMin, setPriceMin] = useState("")
+  const [priceMax, setPriceMax] = useState("")
+  const [availableOnly, setAvailableOnly] = useState(false)
   const [popularOnly, setPopularOnly] = useState(false)
+  const [newOnly, setNewOnly] = useState(false)
+  const [spicyOnly, setSpicyOnly] = useState(false)
+  const [vegetarianOnly, setVegetarianOnly] = useState(false)
+  const [stationFilter, setStationFilter] = useState<"all" | Station>("all")
+  const [sortBy, setSortBy] = useState<MenuSortId>("name")
   const [placing, setPlacing] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/menu?locale=${encodeURIComponent(locale)}`, {
-        cache: "no-store",
+      const qs = new URLSearchParams({
+        locale,
+        include_unavailable: "1",
       })
+      const res = await fetch(`/api/menu?${qs.toString()}`, { cache: "no-store" })
       const j = await res.json()
       if (!res.ok) throw new Error(j.error)
       setData({
-        items: j.items ?? [],
+        catalog: j.items ?? [],
         by_section: j.by_section ?? {},
         chef_choice: j.chef_choice ?? [],
         recommended: j.recommended ?? [],
         most_popular: j.most_popular ?? [],
+        categories: j.categories ?? [],
+        often_ordered_with: j.often_ordered_with ?? {},
       })
     } catch (e) {
       console.error(e)
@@ -99,6 +116,9 @@ export function DigitalMenuExperience() {
   useEffect(() => {
     void load()
   }, [load])
+
+  const parsedMin = priceMin.trim() === "" ? null : Number(priceMin.replace(",", "."))
+  const parsedMax = priceMax.trim() === "" ? null : Number(priceMax.replace(",", "."))
 
   const tagMeta = useCallback(
     (tag: string) => {
@@ -115,24 +135,139 @@ export function DigitalMenuExperience() {
     [t],
   )
 
+  const categoriesForSection = useMemo(() => {
+    if (!data) return []
+    if (section === "all") return data.categories
+    return data.categories.filter((c) => (c.section ?? "food") === section)
+  }, [data, section])
+
   const filtered = useMemo(() => {
     if (!data) return []
-    let list = data.items
-    if (section !== "all") {
-      list = data.by_section[section] ?? list.filter((i) => i.section === section)
+    const f: MenuClientFilters = {
+      search: q,
+      section: section as MenuClientFilters["section"],
+      categorySlug,
+      priceMin:
+        parsedMin !== null && Number.isFinite(parsedMin) ? parsedMin : null,
+      priceMax:
+        parsedMax !== null && Number.isFinite(parsedMax) ? parsedMax : null,
+      availableOnly,
+      popularOnly,
+      newOnly,
+      spicyOnly,
+      vegetarianOnly,
+      station: stationFilter,
     }
-    if (popularOnly) list = list.filter((i) => i.is_popular)
-    if (q.trim()) {
-      const needle = q.toLowerCase()
-      list = list.filter(
-        (i) =>
-          i.name.toLowerCase().includes(needle) ||
-          (i.name_ar && i.name_ar.toLowerCase().includes(needle)) ||
-          i.description.toLowerCase().includes(needle),
-      )
+    const list = filterMenuProducts(data.catalog as DigitalMenuProduct[], f)
+    return sortMenuProducts(list, sortBy)
+  }, [
+    data,
+    q,
+    section,
+    categorySlug,
+    parsedMin,
+    parsedMax,
+    availableOnly,
+    popularOnly,
+    newOnly,
+    spicyOnly,
+    vegetarianOnly,
+    stationFilter,
+    sortBy,
+  ])
+
+  const catalogById = useMemo(() => new Map(data?.catalog.map((p) => [p.id, p]) ?? []), [data])
+
+  const resetFilters = useCallback(() => {
+    setQ("")
+    setSection("all")
+    setCategorySlug("all")
+    setPriceMin("")
+    setPriceMax("")
+    setAvailableOnly(false)
+    setPopularOnly(false)
+    setNewOnly(false)
+    setSpicyOnly(false)
+    setVegetarianOnly(false)
+    setStationFilter("all")
+    setSortBy("name")
+  }, [])
+
+  const showcaseVisible =
+    section === "all" &&
+    !q.trim() &&
+    categorySlug === "all" &&
+    !availableOnly &&
+    !popularOnly &&
+    !newOnly &&
+    !spicyOnly &&
+    !vegetarianOnly &&
+    stationFilter === "all" &&
+    sortBy === "name" &&
+    priceMin === "" &&
+    priceMax === ""
+
+  type Chip = { key: string; label: string; onClear: () => void }
+  const activeChips = useMemo((): Chip[] => {
+    const chips: Chip[] = []
+    if (q.trim()) chips.push({ key: "q", label: `${t("menu.chip.search")}: ${q.trim()}`, onClear: () => setQ("") })
+    if (section !== "all")
+      chips.push({
+        key: "section",
+        label: `${t("menu.chip.section")}: ${t(`menu.section.${section}`)}`,
+        onClear: () => setSection("all"),
+      })
+    if (categorySlug !== "all") {
+      const nm = data?.categories.find((c) => c.slug === categorySlug)?.name ?? categorySlug
+      chips.push({
+        key: "cat",
+        label: `${t("menu.chip.category")}: ${nm}`,
+        onClear: () => setCategorySlug("all"),
+      })
     }
-    return list
-  }, [data, section, q, popularOnly])
+    if (priceMin !== "") chips.push({ key: "pmin", label: `${t("menu.chip.min")}: ${priceMin} €`, onClear: () => setPriceMin("") })
+    if (priceMax !== "") chips.push({ key: "pmax", label: `${t("menu.chip.max")}: ${priceMax} €`, onClear: () => setPriceMax("") })
+    if (availableOnly)
+      chips.push({ key: "avail", label: t("menu.filterAvailableShort"), onClear: () => setAvailableOnly(false) })
+    if (popularOnly) chips.push({ key: "pop", label: t("menu.popularFilter"), onClear: () => setPopularOnly(false) })
+    if (newOnly) chips.push({ key: "new", label: t("menu.filterNewShort"), onClear: () => setNewOnly(false) })
+    if (spicyOnly) chips.push({ key: "spicy", label: t("menu.filterSpicyShort"), onClear: () => setSpicyOnly(false) })
+    if (vegetarianOnly)
+      chips.push({
+        key: "veg",
+        label: t("menu.filterVegetarianShort"),
+        onClear: () => setVegetarianOnly(false),
+      })
+    if (stationFilter !== "all") {
+      chips.push({
+        key: "station",
+        label: `${t("menu.chip.station")}: ${t(stationFilter === "KITCHEN" ? "stations.kitchen" : stationFilter === "BAR" ? "stations.bar" : "stations.shisha")}`,
+        onClear: () => setStationFilter("all"),
+      })
+    }
+    if (sortBy !== "name")
+      chips.push({
+        key: "sort",
+        label: `${t("menu.sortLabel")}: ${t(`menu.sort.${sortBy}`)}`,
+        onClear: () => setSortBy("name"),
+      })
+    return chips
+  }, [
+    q,
+    section,
+    categorySlug,
+    priceMin,
+    priceMax,
+    availableOnly,
+    popularOnly,
+    newOnly,
+    spicyOnly,
+    vegetarianOnly,
+    stationFilter,
+    sortBy,
+    data?.categories,
+    t,
+  ])
 
   const placeOrder = async () => {
     if (items.length === 0) return
@@ -180,7 +315,7 @@ export function DigitalMenuExperience() {
     )
   }
 
-  if (!data?.items.length) {
+  if (!data?.catalog?.length) {
     return (
       <div className="rounded-2xl border border-dashed p-8 text-center text-muted-foreground">
         <p className="mb-2 font-medium text-foreground">{t("menu.emptyTitle")}</p>
@@ -191,90 +326,231 @@ export function DigitalMenuExperience() {
 
   return (
     <div className="space-y-8 pb-32">
-      <div className="sticky top-0 z-40 -mx-4 border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur-md sm:-mx-6 lg:-mx-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative max-w-md flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={t("menu.searchPlaceholder")}
-              className="pl-9"
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant={popularOnly ? "default" : "outline"}
-              size="sm"
-              onClick={() => setPopularOnly((p) => !p)}
-            >
-              {t("menu.popularFilter")}
-            </Button>
-            <Button
-              type="button"
-              className="relative"
-              onClick={() => setOpen(true)}
-            >
-              <ShoppingCart className="mr-2 h-4 w-4" />
-              {t("menu.cart")}
-              {count > 0 && (
-                <span className="ml-1 rounded-full bg-primary-foreground/20 px-2 py-0.5 text-xs text-primary-foreground">
-                  {count}
-                </span>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        <div className="mt-3 flex w-full gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {SECTION_IDS.map((sid) => {
-            const Icon = SECTION_ICON[sid]
-            return (
-              <Button
-                key={sid}
-                type="button"
-                size="sm"
-                variant={section === sid ? "default" : "secondary"}
-                className={cn(
-                  "shrink-0 rounded-full",
-                  sid === "special" && section === sid && "bg-violet-900 text-violet-50",
-                )}
-                onClick={() => setSection(sid)}
-              >
-                <Icon className="mr-1 h-4 w-4" />
-                {t(`menu.section.${sid}`)}
+      <div className="site-container pt-4">
+        <StationStatusBanner />
+      </div>
+      <div className="sticky top-0 z-40 border-b border-border/60 bg-background/90 backdrop-blur-md">
+        <div className="site-container flex flex-col gap-3 py-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div className="relative max-w-xl flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={t("menu.searchPlaceholder")}
+                className="pl-9"
+                aria-label={t("menu.searchPlaceholder")}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" variant="outline" size="sm" className="gap-1" onClick={resetFilters}>
+                <RotateCcw className="h-3.5 w-3.5" />
+                {t("menu.resetFilters")}
               </Button>
-            )
-          })}
+              <Button type="button" className="relative" onClick={() => setOpen(true)}>
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                {t("menu.cart")}
+                {count > 0 && (
+                  <span className="ml-1 rounded-full bg-primary-foreground/20 px-2 py-0.5 text-xs text-primary-foreground">
+                    {count}
+                  </span>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex w-full gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {SECTION_IDS.map((sid) => {
+              const Icon = SECTION_ICON[sid]
+              return (
+                <Button
+                  key={sid}
+                  type="button"
+                  size="sm"
+                  variant={section === sid ? "default" : "secondary"}
+                  className={cn(
+                    "shrink-0 rounded-full",
+                    sid === "special" && section === sid && "bg-violet-900 text-violet-50",
+                  )}
+                  onClick={() => {
+                    setSection(sid)
+                    setCategorySlug("all")
+                  }}
+                >
+                  <Icon className="mr-1 h-4 w-4" />
+                  {t(`menu.section.${sid}`)}
+                </Button>
+              )
+            })}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+            <SlidersHorizontal className="h-4 w-4 shrink-0" />
+            <span className="text-xs font-medium uppercase tracking-wide">{t("menu.filtersTitle")}</span>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label className="text-xs text-muted-foreground">{t("menu.categoryLabel")}</Label>
+              <Select value={categorySlug} onValueChange={setCategorySlug}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={t("menu.categoryAll")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("menu.categoryAll")}</SelectItem>
+                  {categoriesForSection.map((c) => (
+                    <SelectItem key={c.id} value={c.slug}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{t("menu.priceMin")}</Label>
+              <Input
+                inputMode="decimal"
+                placeholder="0"
+                value={priceMin}
+                onChange={(e) => setPriceMin(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{t("menu.priceMax")}</Label>
+              <Input
+                inputMode="decimal"
+                placeholder="∞"
+                value={priceMax}
+                onChange={(e) => setPriceMax(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label className="text-xs text-muted-foreground">{t("menu.sortLabel")}</Label>
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as MenuSortId)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">{t("menu.sort.name")}</SelectItem>
+                  <SelectItem value="price_asc">{t("menu.sort.price_asc")}</SelectItem>
+                  <SelectItem value="price_desc">{t("menu.sort.price_desc")}</SelectItem>
+                  <SelectItem value="popular">{t("menu.sort.popular")}</SelectItem>
+                  <SelectItem value="new">{t("menu.sort.new")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5 sm:col-span-2 lg:col-span-2 xl:col-span-2">
+              <Label className="text-xs text-muted-foreground">{t("menu.stationLabel")}</Label>
+              <Select
+                value={stationFilter}
+                onValueChange={(v) => setStationFilter(v as "all" | Station)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("stations.allStations")}</SelectItem>
+                  <SelectItem value="KITCHEN">{t("stations.kitchen")}</SelectItem>
+                  <SelectItem value="BAR">{t("stations.bar")}</SelectItem>
+                  <SelectItem value="SHISHA">{t("stations.shisha")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <Checkbox checked={availableOnly} onCheckedChange={(v) => setAvailableOnly(v === true)} />
+              {t("menu.filterAvailable")}
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <Checkbox checked={popularOnly} onCheckedChange={(v) => setPopularOnly(v === true)} />
+              {t("menu.popularFilter")}
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <Checkbox checked={newOnly} onCheckedChange={(v) => setNewOnly(v === true)} />
+              {t("menu.filterNew")}
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <Checkbox checked={spicyOnly} onCheckedChange={(v) => setSpicyOnly(v === true)} />
+              {t("menu.filterSpicy")}
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <Checkbox
+                checked={vegetarianOnly}
+                onCheckedChange={(v) => setVegetarianOnly(v === true)}
+              />
+              {t("menu.filterVegetarian")}
+            </label>
+          </div>
+
+          {activeChips.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {activeChips.map((chip) => (
+                <Badge
+                  key={chip.key}
+                  variant="secondary"
+                  className="cursor-pointer gap-1 pr-1.5 hover:bg-muted-foreground/20"
+                  onClick={() => chip.onClear()}
+                >
+                  {chip.label}
+                  <X className="h-3 w-3" />
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {data.chef_choice.length > 0 && section === "all" && !q && (
+      {data.chef_choice.length > 0 && showcaseVisible && (
         <Block title={t("menu.chefBlockTitle")} subtitle={t("menu.chefBlockSubtitle")} variant="amber">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {data.chef_choice.slice(0, 3).map((item) => (
-              <MenuCard key={item.id} item={item} onAdd={add} tagMeta={tagMeta} />
+              <MenuCard
+                key={item.id}
+                item={item}
+                catalog={data.catalog}
+                oftenOrderedWith={data.often_ordered_with[item.id]}
+                onSuggestSearch={(name) => setQ(name)}
+                onAdd={add}
+                tagMeta={tagMeta}
+              />
             ))}
           </div>
         </Block>
       )}
 
-      {data.most_popular.length > 0 && section === "all" && !q && (
+      {data.most_popular.length > 0 && showcaseVisible && (
         <Block title={t("menu.popularBlockTitle")} subtitle={t("menu.popularBlockSubtitle")} variant="default">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {data.most_popular.map((item) => (
-              <MenuCard key={item.id} item={item} onAdd={add} tagMeta={tagMeta} />
+              <MenuCard
+                key={item.id}
+                item={item}
+                catalog={data.catalog}
+                oftenOrderedWith={data.often_ordered_with[item.id]}
+                onSuggestSearch={(name) => setQ(name)}
+                onAdd={add}
+                tagMeta={tagMeta}
+              />
             ))}
           </div>
         </Block>
       )}
 
-      {data.recommended.length > 0 && section === "all" && !q && (
+      {data.recommended.length > 0 && showcaseVisible && (
         <Block title={t("menu.recommendedBlockTitle")} subtitle={t("menu.recommendedBlockSubtitle")} variant="violet">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {data.recommended.slice(0, 4).map((item) => (
-              <MenuCard key={item.id} item={item} onAdd={add} tagMeta={tagMeta} />
+              <MenuCard
+                key={item.id}
+                item={item}
+                catalog={data.catalog}
+                oftenOrderedWith={data.often_ordered_with[item.id]}
+                onSuggestSearch={(name) => setQ(name)}
+                onAdd={add}
+                tagMeta={tagMeta}
+              />
             ))}
           </div>
         </Block>
@@ -310,6 +586,9 @@ export function DigitalMenuExperience() {
             >
               <MenuCard
                 item={item}
+                catalog={data.catalog}
+                oftenOrderedWith={data.often_ordered_with[item.id]}
+                onSuggestSearch={(name) => setQ(name)}
                 onAdd={add}
                 tagMeta={tagMeta}
                 dark={section === "special"}
@@ -320,7 +599,7 @@ export function DigitalMenuExperience() {
           ))}
         </div>
         {filtered.length === 0 && (
-          <p className="py-8 text-center text-sm text-muted-foreground">{t("menu.noItemsCategory")}</p>
+          <p className="py-8 text-center text-sm font-medium text-muted-foreground">{t("menu.noResults")}</p>
         )}
       </div>
 
@@ -443,13 +722,19 @@ function Block({
 
 function MenuCard({
   item,
+  catalog,
+  oftenOrderedWith,
+  onSuggestSearch,
   onAdd,
   tagMeta,
   dark,
   sweet,
   drink,
 }: {
-  item: MenuItem
+  item: DigitalMenuProduct
+  catalog: DigitalMenuProduct[]
+  oftenOrderedWith?: string[] | undefined
+  onSuggestSearch: (name: string) => void
   tagMeta: (tag: string) => { text: string; className: string }
   onAdd: (p: { id: string; name: string; price: number; maxOrderable: number }) => void
   dark?: boolean
@@ -458,6 +743,11 @@ function MenuCard({
 }) {
   const { t, locale } = useI18n()
   const can = item.can_order
+  const often = useMemo(() => {
+    const byId = new Map(catalog.map((p) => [p.id, p]))
+    return (oftenOrderedWith ?? []).map((id) => byId.get(id)).filter((x): x is DigitalMenuProduct => !!x)
+  }, [catalog, oftenOrderedWith])
+  const sim = useMemo(() => similarProducts(catalog, item.id, 3), [catalog, item.id])
   return (
     <div
       className={cn(
@@ -465,6 +755,7 @@ function MenuCard({
         dark && "border-violet-500/20 bg-zinc-900/90",
         sweet && "border-rose-200/60",
         drink && "border-cyan-200/50 bg-white/80",
+        !can && "opacity-80",
       )}
     >
       <div
@@ -478,38 +769,47 @@ function MenuCard({
           <img
             src={item.image_url}
             alt={item.name}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            className={cn(
+              "h-full w-full object-cover transition duration-500 group-hover:scale-105",
+              !can && "grayscale-[0.35]",
+            )}
           />
         ) : (
           <span>{sectionEmoji(item.section)}</span>
         )}
-        {item.is_popular && (
+        {!can ? (
+          <span className="absolute right-2 top-2 rounded-full bg-black/75 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+            {t("menu.unavailableBadge")}
+          </span>
+        ) : null}
+        {can && item.is_popular ? (
           <span className="absolute left-2 top-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-xs font-medium text-white">
             {t("menu.tagPopular")}
           </span>
-        )}
-        {item.availability === "limited" && (
+        ) : null}
+        {can && item.is_new ? (
+          <span className="absolute left-2 top-10 rounded-full bg-emerald-600/90 px-2 py-0.5 text-[10px] font-semibold text-white">
+            {t("menu.tagNew")}
+          </span>
+        ) : null}
+        {item.availability === "limited" && can ? (
           <span className="absolute bottom-2 right-2 rounded bg-amber-600/90 px-2 py-0.5 text-xs text-white">
             {t("menu.limitedBadge")}
           </span>
-        )}
+        ) : null}
       </div>
       <div className="flex flex-1 flex-col p-3">
         <div className="mb-1 flex flex-wrap gap-1">
-          {item.tags.slice(0, 3).map((tagStr) => {
+          {item.tags.slice(0, 4).map((tagStr) => {
             const meta = tagMeta(tagStr)
             return (
-              <Badge key={tagStr} className={cn("text-xs font-normal", meta.className)} variant="secondary">
+              <Badge key={`${tagStr}-${meta.text}`} className={cn("text-xs font-normal", meta.className)} variant="secondary">
                 {meta.text}
               </Badge>
             )
           })}
         </div>
-        <h3
-          className={cn("font-semibold leading-tight", dark && "text-zinc-50")}
-        >
-          {item.name}
-        </h3>
+        <h3 className={cn("font-semibold leading-tight", dark && "text-zinc-50")}>{item.name}</h3>
         {item.name_ar && locale !== "ar" && (
           <p className="text-sm text-muted-foreground" dir="rtl">
             {item.name_ar}
@@ -523,6 +823,40 @@ function MenuCard({
         >
           {item.description}
         </p>
+        {(sim.length > 0 || often.length > 0) && (
+          <div className="mt-2 space-y-1.5 border-t border-border/70 pt-2 text-[11px] text-muted-foreground">
+            {sim.length > 0 ? (
+              <p className="flex flex-wrap items-baseline gap-1 gap-y-0.5 leading-relaxed">
+                <span className="shrink-0 font-semibold text-foreground">{t("menu.similar")}:</span>
+                {sim.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className="rounded-full bg-muted px-2 py-0.5 text-left text-muted-foreground transition hover:bg-muted-foreground/15 hover:text-foreground"
+                    onClick={() => onSuggestSearch(s.name)}
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </p>
+            ) : null}
+            {often.length > 0 ? (
+              <p className="flex flex-wrap items-baseline gap-1 gap-y-0.5 leading-relaxed">
+                <span className="shrink-0 font-semibold text-foreground">{t("menu.oftenWith")}:</span>
+                {often.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className="rounded-full bg-muted px-2 py-0.5 text-left transition hover:bg-muted-foreground/15 hover:text-foreground"
+                    onClick={() => onSuggestSearch(s.name)}
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </p>
+            ) : null}
+          </div>
+        )}
         <div className="mt-3 flex items-center justify-between gap-2">
           <span className={cn("text-lg font-bold", drink && "text-cyan-900", sweet && "text-rose-900")}>
             {item.price.toFixed(2)} €

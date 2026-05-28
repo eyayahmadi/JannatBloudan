@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 
-export type TableAlertType = "call_server" | "request_bill" | "help" | "payment_done"
+export type TableAlertType = "call_server" | "request_bill" | "help" | "payment_done" | "call_cashier"
 
 export type TableAlert = {
   id: string
@@ -154,7 +154,20 @@ export function useTableAlerts() {
     [alerts],
   )
 
+  /**
+   * Réaffecte toutes les alertes ouvertes d'une table à une autre.
+   * Mise à jour locale uniquement (les alertes Supabase passent par /api/table-alerts).
+   */
+  const transferTableAlerts = useCallback((from: string, to: string) => {
+    if (!from || !to || from === to) return
+    setAlerts((prev) =>
+      prev.map((a) =>
+        a.tableId === String(from) && !a.resolvedAt ? { ...a, tableId: String(to) } : a,
+      ),
+    )
+  }, [])
+
   const active = alerts.filter((a) => !a.resolvedAt)
 
-  return { alerts, active, raise, resolve, resolveTable, activeByTable }
+  return { alerts, active, raise, resolve, resolveTable, transferTableAlerts, activeByTable }
 }

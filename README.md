@@ -1,5 +1,7 @@
 # Système de Gestion de Restaurant End-to-End
 
+> **Application PFE (Next.js)** : parcours MVP / avancé / IA + chemins dans le code → voir **[`docs/PFE-PARCOURS.md`](docs/PFE-PARCOURS.md)**.
+
 Template complet pour un système de gestion de restaurant moderne avec architecture microservices.
 
 ## Vue d'ensemble

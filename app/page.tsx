@@ -322,7 +322,7 @@ function Hero() {
         />
       </motion.div>
 
-      <motion.div style={{ opacity }} className="relative z-10 mx-auto flex min-h-[92vh] max-w-7xl flex-col items-center justify-center px-4 py-24 text-center sm:px-6 lg:px-8">
+      <motion.div style={{ opacity }} className="site-container relative z-10 flex min-h-[92vh] flex-col items-center justify-center py-24 text-center">
         <motion.div
           initial={{ opacity: 0, y: reduceHero ? 0 : 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -481,7 +481,7 @@ function StatsStrip() {
   ] as const
   return (
     <Section className="border-b border-[color:var(--lux-gold)]/20 py-8 sm:py-10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="site-container">
         <motion.div variants={stagger} className="grid grid-cols-2 gap-6 md:grid-cols-4">
           {stats.map((s) => {
             const Icon = s.icon
@@ -522,10 +522,10 @@ function StoryBloudan() {
   const bloudanQuote = t("landing.bloudan.quote").trim()
   return (
     <Section id="about" className="py-28 sm:py-36">
-      <div className="mx-auto max-w-7xl space-y-24 px-4 sm:px-6 lg:space-y-32 lg:px-8">
+      <div className="site-container space-y-24 lg:space-y-32">
         {/* La Syrie */}
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-20">
-          <motion.div variants={fadeUp}>
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          <motion.div variants={fadeUp} className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
               {t("landing.syria.kicker")}
             </p>
@@ -539,19 +539,20 @@ function StoryBloudan() {
               <p>{t("landing.syria.p2")}</p>
             </div>
           </motion.div>
-          <motion.div variants={fadeIn} className="relative">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] shadow-[0_32px_64px_-28px_rgba(74,15,28,0.35)]">
+          <motion.div variants={fadeIn} className="relative w-full min-w-0">
+            {/* Natural image ratio — no fixed aspect box (avoids beige band below image). */}
+            <div className="relative overflow-hidden rounded-[2rem] shadow-[0_32px_64px_-28px_rgba(74,15,28,0.35)] ring-1 ring-amber-900/[0.06]">
               <motion.img
                 whileHover={preferReducedMotion ? undefined : { scale: 1.06 }}
                 transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
                 src={STORY_IMGS.syria}
                 alt={t("landing.syria.imageAlt")}
-                className={cn(LANDING_PHOTO)}
+                className="block h-auto w-full object-cover object-center [filter:brightness(1.06)_contrast(1.04)_saturate(1.04)]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-amber-950/25 via-transparent to-white/5" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-amber-950/12 via-transparent to-white/[0.06]" />
             </div>
             <div
-              className="absolute -right-4 -top-4 -z-10 h-full w-full rounded-[2rem] border-2"
+              className="pointer-events-none absolute -inset-[10px] -z-10 rounded-[calc(2rem+10px)] border-2"
               style={{ borderColor: "color-mix(in srgb, var(--lux-gold) 45%, transparent)" }}
               aria-hidden
             />
@@ -559,8 +560,8 @@ function StoryBloudan() {
         </div>
 
         {/* Bloudan — origine du nom */}
-        <div className="grid grid-cols-1 items-center gap-12 pb-40 lg:grid-cols-2 lg:gap-20 lg:pb-32">
-          <motion.div variants={fadeIn} className="relative order-2 lg:order-1">
+        <div className="grid grid-cols-1 items-center gap-12 pb-40 lg:grid-cols-2 lg:gap-16 lg:pb-32">
+          <motion.div variants={fadeIn} className="relative order-2 min-w-0 lg:order-1">
             <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] shadow-[0_32px_64px_-28px_rgba(74,15,28,0.35)]">
               <motion.img
                 whileHover={preferReducedMotion ? undefined : { scale: 1.06 }}
@@ -569,7 +570,7 @@ function StoryBloudan() {
                 alt={t("landing.bloudan.imageAlt")}
                 className={cn(LANDING_PHOTO)}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-amber-950/28 via-transparent to-white/5" />
+              <div className="absolute inset-0 bg-gradient-to-t from-amber-950/14 via-transparent to-white/[0.06]" />
             </div>
             <motion.div
               initial={{ opacity: 0, x: -24 }}
@@ -591,7 +592,7 @@ function StoryBloudan() {
               aria-hidden
             />
           </motion.div>
-          <motion.div variants={fadeUp} className="order-1 lg:order-2">
+          <motion.div variants={fadeUp} className="order-1 min-w-0 lg:order-2">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
               {t("landing.bloudan.kicker")}
             </p>
@@ -635,7 +636,7 @@ function CuisineSection() {
   const { fadeUp, stagger, scaleIn } = useReveal()
   return (
     <Section className="py-28 sm:py-36" id="cuisine">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="site-container">
         <motion.div variants={fadeUp} className="mx-auto mb-16 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
             {t("landing.cuisine.kicker")}
@@ -723,7 +724,7 @@ function PopularDishes() {
         className="absolute inset-x-0 top-0 h-px"
         style={{ background: "linear-gradient(90deg, transparent, var(--lux-gold), transparent)" }}
       />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="site-container">
         <motion.div variants={fadeUp} className="mb-12 flex flex-col gap-6 md:mb-14 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0 max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
@@ -823,7 +824,7 @@ function MenuPreview() {
         className="absolute inset-0 -z-10"
         style={{ background: "linear-gradient(180deg, transparent, rgba(242,233,215,0.4), transparent)" }}
       />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="site-container">
         <motion.div variants={fadeUp} className="mb-10 text-center">
           <h3 className="font-display text-3xl font-semibold text-amber-950 sm:text-4xl">
             {t("landing.menuPreview.titleBefore")}
@@ -834,7 +835,7 @@ function MenuPreview() {
       </div>
       <div className="relative flex overflow-hidden">
         {reducedMotionMarquee ? (
-          <div className="mx-auto flex max-w-7xl flex-wrap justify-center gap-3 px-4">
+          <div className="site-container flex flex-wrap justify-center gap-3">
             {categories.map((c, i) => (
               <span
                 key={`${c}-${i}`}
@@ -883,7 +884,7 @@ function WhyOrder() {
   const keys = ["r1", "r2", "r3", "r4"] as const
   return (
     <Section className="py-28 sm:py-36">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="site-container">
         <motion.div variants={fadeUp} className="mx-auto mb-14 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
             {t("landing.why.kicker")}
@@ -931,73 +932,105 @@ function Experience() {
   const { fadeUp, fadeIn, stagger } = useReveal()
   const bullets = [t("landing.experience.b1"), t("landing.experience.b2"), t("landing.experience.b3"), t("landing.experience.b4")]
   return (
-    <Section className="relative py-28 sm:py-36">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-20 lg:px-8">
-        <motion.div variants={fadeIn} className="relative order-2 lg:order-1">
-          <div className="grid grid-cols-2 gap-4">
-            <motion.div
-              whileHover={preferReducedMotion ? undefined : { y: -4 }}
-              className="relative aspect-[3/4] overflow-hidden rounded-2xl shadow-[0_24px_48px_-20px_rgba(74,15,28,0.3)]"
+    <Section className="relative overflow-hidden py-28 sm:py-36">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-1/2 h-[88%] max-h-[900px] -translate-y-1/2 opacity-90"
+        style={{
+          background:
+            "radial-gradient(ellipse 72% 55% at 50% 50%, rgba(201,162,76,0.09), transparent 62%), radial-gradient(ellipse 50% 38% at 50% 18%, rgba(110,29,43,0.045), transparent 55%)",
+        }}
+      />
+      <div className="relative site-container">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          {/* Visuel — carte flottante, centré avec le bloc texte */}
+          <motion.div
+            variants={fadeIn}
+            className="relative order-2 flex min-w-0 w-full justify-center lg:order-1"
+          >
+            <div
+              className={cn(
+                "relative w-full rounded-[26px] bg-gradient-to-b from-white/40 via-white/[0.12] to-transparent p-3 shadow-[0_32px_80px_-34px_rgba(74,15,28,0.42),0_18px_48px_-28px_rgba(26,20,16,0.22)] backdrop-blur-[2px] ring-1 ring-amber-900/[0.06] dark:from-white/[0.08] dark:ring-white/[0.08]",
+                !preferReducedMotion && "translate-y-1.5 motion-reduce:translate-y-0",
+              )}
             >
-              <motion.img
-                src={EXPERIENCE_IMGS.restaurant}
-                alt={t("landing.experience.img1")}
-                className={LANDING_PHOTO}
-                whileHover={preferReducedMotion ? undefined : { scale: 1.06 }}
-                transition={{ duration: 1 }}
-                onError={(e) => {
-                  const img = e.currentTarget as HTMLImageElement
-                  if (img.src !== window.location.origin + EXPERIENCE_FALLBACK.restaurant) {
-                    img.src = EXPERIENCE_FALLBACK.restaurant
-                  }
-                }}
-              />
-            </motion.div>
-            <motion.div
-              whileHover={preferReducedMotion ? undefined : { y: -4 }}
-              className="relative mt-10 aspect-[3/4] overflow-hidden rounded-2xl shadow-[0_24px_48px_-20px_rgba(74,15,28,0.3)]"
-            >
-              <motion.img
-                src={EXPERIENCE_IMGS.family}
-                alt={t("landing.experience.img2")}
-                className={LANDING_PHOTO}
-                whileHover={preferReducedMotion ? undefined : { scale: 1.06 }}
-                transition={{ duration: 1 }}
-                onError={(e) => {
-                  const img = e.currentTarget as HTMLImageElement
-                  if (img.src !== window.location.origin + EXPERIENCE_FALLBACK.family) {
-                    img.src = EXPERIENCE_FALLBACK.family
-                  }
-                }}
-              />
-            </motion.div>
-          </div>
-        </motion.div>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <motion.div
+                  whileHover={preferReducedMotion ? undefined : { y: -4 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 22 }}
+                  className="relative aspect-[3/4] overflow-hidden rounded-[20px] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_20px_50px_-22px_rgba(74,15,28,0.38)]"
+                >
+                  <motion.img
+                    src={EXPERIENCE_IMGS.restaurant}
+                    alt={t("landing.experience.img1")}
+                    className={LANDING_PHOTO}
+                    whileHover={preferReducedMotion ? undefined : { scale: 1.05 }}
+                    transition={{ duration: 1 }}
+                    onError={(e) => {
+                      const img = e.currentTarget as HTMLImageElement
+                      if (img.src !== window.location.origin + EXPERIENCE_FALLBACK.restaurant) {
+                        img.src = EXPERIENCE_FALLBACK.restaurant
+                      }
+                    }}
+                  />
+                  <div className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-white/35" />
+                </motion.div>
+                <motion.div
+                  whileHover={preferReducedMotion ? undefined : { y: -4 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 22 }}
+                  className="relative mt-8 aspect-[3/4] overflow-hidden rounded-[20px] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_20px_50px_-22px_rgba(74,15,28,0.38)] sm:mt-10"
+                >
+                  <motion.img
+                    src={EXPERIENCE_IMGS.family}
+                    alt={t("landing.experience.img2")}
+                    className={LANDING_PHOTO}
+                    whileHover={preferReducedMotion ? undefined : { scale: 1.05 }}
+                    transition={{ duration: 1 }}
+                    onError={(e) => {
+                      const img = e.currentTarget as HTMLImageElement
+                      if (img.src !== window.location.origin + EXPERIENCE_FALLBACK.family) {
+                        img.src = EXPERIENCE_FALLBACK.family
+                      }
+                    }}
+                  />
+                  <div className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-white/35" />
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
 
-        <motion.div variants={fadeUp} className="order-1 lg:order-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
-            {t("landing.experience.kicker")}
-          </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight text-amber-950 sm:text-5xl lg:text-6xl">
-            {t("landing.experience.titleA")}<span className="text-gold italic">{t("landing.experience.titleEm")}</span>
-          </h2>
-          <div className="hairline-gold my-8" />
-          <p className="text-base leading-relaxed text-amber-900/90 sm:text-lg">
-            {t("landing.experience.text")}
-          </p>
-          <motion.ul variants={stagger} className="mt-8 space-y-3">
-            {bullets.map((line) => (
-              <motion.li key={line} variants={fadeUp} className="flex items-start gap-3 text-sm text-amber-950 sm:text-base">
-                <span className="mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: "var(--lux-gradient-gold)" }}>
-                  <svg className="h-3 w-3 text-[color:var(--lux-ink)]" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 6l3 3 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                <span>{line}</span>
-              </motion.li>
-            ))}
-          </motion.ul>
-        </motion.div>
+          {/* Texte — même largeur cible pour équilibre visuel */}
+          <motion.div
+            variants={fadeUp}
+            className="order-1 min-w-0 w-full text-center lg:order-2 lg:text-left"
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
+              {t("landing.experience.kicker")}
+            </p>
+            <h2 className="mt-5 text-balance font-display text-4xl font-semibold leading-[1.12] tracking-tight text-amber-950 sm:text-5xl lg:text-[2.85rem] lg:leading-[1.1]">
+              {t("landing.experience.titleA")}<span className="text-gold italic">{t("landing.experience.titleEm")}</span>
+            </h2>
+            <div className="hairline-gold mx-auto my-8 lg:mx-0" />
+            <p className="text-pretty text-[1.05rem] leading-[1.75] text-amber-900/[0.93] sm:text-lg sm:leading-[1.76]">
+              {t("landing.experience.text")}
+            </p>
+            <motion.ul variants={stagger} className="mt-10 space-y-4 text-left">
+              {bullets.map((line) => (
+                <motion.li key={line} variants={fadeUp} className="flex items-start gap-3.5 text-sm leading-relaxed text-amber-950 sm:text-[0.965rem] sm:leading-[1.7]">
+                  <span
+                    className="mt-[0.35rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full shadow-sm"
+                    style={{ background: "var(--lux-gradient-gold)" }}
+                  >
+                    <svg className="h-3 w-3 text-[color:var(--lux-ink)]" viewBox="0 0 12 12" fill="none" aria-hidden>
+                      <path d="M2 6l3 3 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <span>{line}</span>
+                </motion.li>
+              ))}
+            </motion.ul>
+          </motion.div>
+        </div>
       </div>
     </Section>
   )
@@ -1026,7 +1059,7 @@ function FamilyKidsSection() {
         className="absolute inset-x-0 top-0 h-px"
         style={{ background: "linear-gradient(90deg, transparent, var(--lux-gold), transparent)" }}
       />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="site-container">
         <motion.div variants={fadeUp} className="mx-auto mb-14 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
             {t("landing.familyKids.kicker")}
@@ -1043,7 +1076,7 @@ function FamilyKidsSection() {
 
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {/* Visuels */}
-          <motion.div variants={fadeIn} className="relative">
+          <motion.div variants={fadeIn} className="relative min-w-0">
             <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] shadow-[0_32px_64px_-28px_rgba(74,15,28,0.35)]">
               <motion.img
                 whileHover={preferReducedMotion ? undefined : { scale: 1.06 }}
@@ -1055,7 +1088,7 @@ function FamilyKidsSection() {
                   e.currentTarget.src = FAMILY_KIDS_FALLBACK
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-amber-950/30 via-transparent to-white/5" />
+              <div className="absolute inset-0 bg-gradient-to-t from-amber-950/14 via-transparent to-white/[0.06]" />
             </div>
             {/* Petite carte flottante haut-gauche : activités créatives */}
             <motion.div
@@ -1111,7 +1144,7 @@ function FamilyKidsSection() {
           </motion.div>
 
           {/* Liste des features */}
-          <motion.div variants={stagger} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <motion.div variants={stagger} className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
             {FAMILY_FEATURES.map((key) => {
               const Icon = FAMILY_ICONS[key]
               return (
@@ -1162,7 +1195,7 @@ function ReservationCTA() {
   const { scaleIn } = useReveal()
   return (
     <Section className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="site-container">
         <motion.div
           variants={scaleIn}
           whileHover={preferReducedMotion ? undefined : { y: -4 }}
@@ -1226,7 +1259,7 @@ function EventsSection() {
   }))
   return (
     <Section className="py-28 sm:py-36" id="events">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="site-container">
         <motion.div variants={fadeUp} className="mx-auto mb-14 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
             {t("landing.events.kicker")}
@@ -1238,30 +1271,35 @@ function EventsSection() {
             {t("landing.events.lead")}
           </p>
         </motion.div>
-        <motion.div variants={stagger} className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <motion.div variants={stagger} className="grid grid-cols-1 gap-8 sm:gap-9 md:grid-cols-2 md:gap-10 lg:grid-cols-3 lg:gap-10">
           {events.map((e) => (
             <motion.div
               key={e.title}
               variants={fadeUp}
-              whileHover={preferReducedMotion ? undefined : { y: -8 }}
-              className="group relative aspect-[4/5] overflow-hidden rounded-[1.75rem] shadow-[0_20px_50px_-24px_rgba(74,15,28,0.4)]"
+              whileHover={preferReducedMotion ? undefined : { y: -6 }}
+              className="group flex h-full flex-col overflow-hidden rounded-[28px] border border-amber-200/40 bg-white/95 shadow-[0_22px_55px_-28px_rgba(74,15,28,0.42)] backdrop-blur-[2px]"
             >
-              <motion.img
-                src={e.img}
-                alt={e.title}
-                className={LANDING_PHOTO}
-                whileHover={preferReducedMotion ? undefined : { scale: 1.08 }}
-                transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-amber-950/85 via-amber-950/25 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-                <h3 className="font-display text-2xl font-semibold sm:text-3xl">{e.title}</h3>
-                <p className="mt-2 text-sm text-white/95">{e.desc}</p>
+              <div className="relative h-[200px] w-full shrink-0 overflow-hidden md:h-[260px]">
+                <motion.img
+                  src={e.img}
+                  alt={e.title}
+                  className={cn(LANDING_PHOTO, "block")}
+                  whileHover={preferReducedMotion ? undefined : { scale: 1.06 }}
+                  transition={{ duration: 1.1, ease: [0.2, 0.8, 0.2, 1] }}
+                />
+                <div
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-gradient-to-t from-amber-950/40 via-amber-950/10 to-transparent"
+                  aria-hidden
+                />
+              </div>
+              <div className="flex flex-1 flex-col p-6 text-amber-950">
+                <h3 className="font-display text-xl font-semibold leading-snug tracking-tight sm:text-2xl">{e.title}</h3>
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-amber-900/88 sm:text-[0.9375rem] sm:leading-[1.65]">{e.desc}</p>
                 <Link
                   href="/events"
-                  className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[color:var(--lux-gold-bright)] transition group-hover:gap-2"
+                  className="mt-5 inline-flex shrink-0 items-center gap-1 pt-1 text-sm font-semibold text-[color:var(--lux-gold-deep)] transition hover:text-[color:var(--lux-gold-deep)] group-hover:gap-2"
                 >
-                  {t("landing.events.more")} <ArrowRight className="h-4 w-4" />
+                  {t("landing.events.more")} <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
               </div>
             </motion.div>
@@ -1300,65 +1338,84 @@ function DeliverySection() {
   const { fadeUp, fadeIn } = useReveal()
   const tags = [t("landing.delivery.t1"), t("landing.delivery.t2"), t("landing.delivery.t3"), t("landing.delivery.t4")]
   return (
-    <Section className="py-28 sm:py-36">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
-        <motion.div variants={fadeUp}>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
-            {t("landing.delivery.kicker")}
-          </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight text-amber-950 sm:text-5xl lg:text-6xl">
-            {t("landing.delivery.titleA")}<span className="text-gold italic">{t("landing.delivery.titleEm")}</span>
-            {t("landing.delivery.titleB")}
-          </h2>
-          <div className="hairline-gold my-8" />
-          <p className="text-base leading-relaxed text-amber-900/90 sm:text-lg">
-            {t("landing.delivery.text")}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            {tags.map((label) => (
-              <span
-                key={label}
-                className="rounded-full border border-[color:var(--lux-gold)]/40 bg-white/70 px-4 py-1.5 text-xs font-semibold text-amber-950 backdrop-blur"
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-          <div className="mt-8">
-            <PrimaryCTA href="/reservation" icon={<Calendar className="h-5 w-5" />}>
-              {t("landing.delivery.cta")}
-            </PrimaryCTA>
-          </div>
-        </motion.div>
-        <motion.div variants={fadeIn} className="relative">
-          <div className="relative aspect-square overflow-hidden rounded-[2rem] shadow-[0_32px_64px_-28px_rgba(74,15,28,0.35)]">
-            <motion.img
-              whileHover={reduceFloating ? undefined : { scale: 1.05 }}
-              transition={{ duration: 1.2 }}
-              src={DELIVERY_IMG}
-              alt={t("landing.delivery.imgAlt")}
-              className={LANDING_PHOTO}
-            />
-          </div>
-          {/* Floating badge */}
-          {reduceFloating ? (
-            <div className="absolute -left-6 top-8 flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-xl">
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-xl text-[color:var(--lux-ink)]"
-                style={{ background: "var(--lux-gradient-gold)" }}
-              >
-                <Clock className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium uppercase tracking-widest text-amber-800/70">{t("landing.delivery.floatLabel")}</p>
-                <p className="font-display text-lg font-bold text-amber-950">{t("landing.delivery.floatValue")}</p>
+    <Section className="relative overflow-hidden py-28 sm:py-36">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-1/2 h-[85%] max-h-[860px] -translate-y-1/2 opacity-80"
+        style={{
+          background: "radial-gradient(ellipse 68% 50% at 50% 50%, rgba(201,162,76,0.07), transparent 60%)",
+        }}
+      />
+      <div className="relative site-container">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          <motion.div
+            variants={fadeUp}
+            className="min-w-0 w-full text-center lg:text-left"
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
+              {t("landing.delivery.kicker")}
+            </p>
+            <h2 className="mt-5 text-balance font-display text-4xl font-semibold leading-[1.12] tracking-tight text-amber-950 sm:text-5xl lg:text-[2.85rem] lg:leading-[1.1]">
+              {t("landing.delivery.titleA")}<span className="text-gold italic">{t("landing.delivery.titleEm")}</span>
+              {t("landing.delivery.titleB")}
+            </h2>
+            <div className="hairline-gold mx-auto my-8 lg:mx-0" />
+            <p className="text-pretty text-[1.05rem] leading-[1.75] text-amber-900/[0.93] sm:text-lg sm:leading-[1.76]">
+              {t("landing.delivery.text")}
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
+              {tags.map((label) => (
+                <span
+                  key={label}
+                  className="rounded-full border border-[color:var(--lux-gold)]/40 bg-white/75 px-4 py-1.5 text-xs font-semibold text-amber-950 shadow-sm backdrop-blur-sm"
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+            <div className="mt-10 flex justify-center lg:justify-start">
+              <PrimaryCTA href="/reservation" icon={<Calendar className="h-5 w-5" />}>
+                {t("landing.delivery.cta")}
+              </PrimaryCTA>
+            </div>
+          </motion.div>
+          <motion.div variants={fadeIn} className="relative flex min-w-0 w-full justify-center">
+            <div
+              className={cn(
+                "relative w-full rounded-[26px] bg-gradient-to-b from-white/35 via-white/[0.1] to-transparent p-3 shadow-[0_32px_80px_-34px_rgba(74,15,28,0.4),0_18px_48px_-26px_rgba(26,20,16,0.2)] backdrop-blur-[2px] ring-1 ring-amber-900/[0.06]",
+                !reduceFloating && "translate-y-2 motion-reduce:translate-y-0",
+              )}
+            >
+              <div className="relative aspect-square overflow-hidden rounded-[20px] shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_24px_60px_-30px_rgba(74,15,28,0.4)] ring-1 ring-inset ring-white/30">
+                <motion.img
+                  whileHover={reduceFloating ? undefined : { scale: 1.045 }}
+                  transition={{ duration: 1.15, ease: [0.2, 0.8, 0.2, 1] }}
+                  src={DELIVERY_IMG}
+                  alt={t("landing.delivery.imgAlt")}
+                  className={LANDING_PHOTO}
+                />
+                <div className="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-t from-amber-950/12 via-transparent to-white/[0.08]" />
               </div>
             </div>
-          ) : (
+            {/* Floating badge */}
+            {reduceFloating ? (
+              <div className="absolute -left-4 top-8 flex items-center gap-3 rounded-2xl border border-[color:var(--lux-gold)]/25 bg-white/95 px-5 py-4 shadow-[0_24px_60px_-24px_rgba(26,20,16,0.35)] backdrop-blur-sm sm:left-0">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-[color:var(--lux-ink)]"
+                  style={{ background: "var(--lux-gradient-gold)" }}
+                >
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-widest text-amber-800/70">{t("landing.delivery.floatLabel")}</p>
+                  <p className="font-display text-lg font-bold text-amber-950">{t("landing.delivery.floatValue")}</p>
+                </div>
+              </div>
+            ) : (
             <motion.div
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -left-6 top-8 flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-xl"
+              className="absolute -left-4 top-8 flex items-center gap-3 rounded-2xl border border-[color:var(--lux-gold)]/25 bg-white/95 px-5 py-4 shadow-[0_24px_60px_-24px_rgba(26,20,16,0.35)] backdrop-blur-sm sm:left-0"
             >
               <div
                 className="flex h-10 w-10 items-center justify-center rounded-xl text-[color:var(--lux-ink)]"
@@ -1371,8 +1428,9 @@ function DeliverySection() {
                 <p className="font-display text-lg font-bold text-amber-950">{t("landing.delivery.floatValue")}</p>
               </div>
             </motion.div>
-          )}
-        </motion.div>
+            )}
+          </motion.div>
+        </div>
       </div>
     </Section>
   )
@@ -1429,7 +1487,7 @@ function Reviews() {
   const summaryRating = 4.3
   return (
     <Section className="py-28 sm:py-36">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="site-container">
         <motion.div variants={fadeUp} className="mx-auto mb-14 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
             {t("landing.reviews.kicker")}
@@ -1458,6 +1516,18 @@ function Reviews() {
               </a>
             </Button>
           </div>
+          {typeof process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_URL === "string" &&
+          process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_URL.length > 12 ? (
+            <div className="mt-10 overflow-hidden rounded-[24px] border border-[color:var(--lux-gold)]/20 shadow-lg">
+              <iframe
+                title="Google Maps — avis et fiche"
+                src={process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_URL}
+                className="h-[min(420px,55vh)] w-full border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+          ) : null}
         </motion.div>
         <motion.div variants={stagger} className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {keys.map((k) => {
@@ -1537,7 +1607,7 @@ function Gallery() {
 
   return (
     <Section className="py-28 sm:py-36">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="site-container">
         <motion.div variants={fadeUp} className="mx-auto mb-12 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
             {t("landing.gallery.kicker")}
@@ -1631,7 +1701,7 @@ function Contact() {
   const { fadeUp, scaleIn } = useReveal()
   return (
     <Section id="contact" className="py-28 sm:py-36">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="site-container">
         <motion.div variants={fadeUp} className="mx-auto mb-14 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--lux-gold-deep)]">
             {t("landing.contact.kicker")}
@@ -1840,7 +1910,7 @@ function FooterElegant() {
             "radial-gradient(circle at 15% 20%, rgba(201,162,76,0.18), transparent 45%), radial-gradient(circle at 85% 80%, rgba(110,29,43,0.25), transparent 50%)",
         }}
       />
-      <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <div className="site-container relative py-16">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3">

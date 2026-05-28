@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import { CheckCircle2, Clock, ChefHat, BellRing, PartyPopper } from "lucide-react"
 import { PageShell } from "@/components/site/PageShell"
+import { isLikelyOrderUuid } from "@/lib/orders/guest-tracking"
 
 type OrderItem = { name: string; quantity: number }
 
@@ -12,7 +13,7 @@ type Order = {
   order_number: string
   table_number: number
   order_type: string
-  status: "received" | "preparing" | "ready" | "completed"
+  status: "received" | "preparing" | "ready" | "completed" | "cancelled"
   items: OrderItem[]
   created_at: string
   updated_at: string
@@ -34,7 +35,24 @@ export default function OrderConfirmationPage() {
 
   const [order, setOrder] = useState<Order | null>(null)
 
-  const loadOrder = useCallback(() => {
+  const loadOrder = useCallback(async () => {
+    if (!orderId) return
+
+    if (isLikelyOrderUuid(orderId)) {
+      try {
+        const res = await fetch(`/api/orders/${orderId}`, { cache: "no-store" })
+        if (res.ok) {
+          const data = (await res.json()) as { order?: Order }
+          if (data.order) {
+            setOrder(data.order)
+            return
+          }
+        }
+      } catch {
+        /* continue with localStorage */
+      }
+    }
+
     const raw = localStorage.getItem("jb-realtime-orders")
     if (!raw) return
     try {
@@ -47,12 +65,19 @@ export default function OrderConfirmationPage() {
   }, [orderId])
 
   useEffect(() => {
-    loadOrder()
-    const interval = setInterval(loadOrder, 3000)
+    void loadOrder()
+    const interval = setInterval(() => void loadOrder(), 3000)
     return () => clearInterval(interval)
   }, [loadOrder])
 
-  const currentStepIdx = order ? steps.findIndex((s) => s.key === order.status) : 0
+  const currentStepIdx = order
+    ? order.status === "cancelled"
+      ? -1
+      : Math.max(
+          0,
+          steps.findIndex((s) => s.key === order.status),
+        )
+    : 0
 
   return (
     <PageShell className="dark:bg-neutral-950">
@@ -105,6 +130,16 @@ export default function OrderConfirmationPage() {
             </div>
 
             {/* Status tracker */}
+            {order.status === "cancelled" && (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center dark:border-rose-900/40 dark:bg-rose-950/30">
+                <h3 className="text-lg font-bold text-rose-800 dark:text-rose-300">Commande annulée</h3>
+                <p className="mt-1 text-sm text-rose-700/85 dark:text-rose-400/80">
+                  Cette commande n&apos;est plus active. En cas de question, appelez le personnel.
+                </p>
+              </div>
+            )}
+
+            {order.status !== "cancelled" && (
             <div className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm dark:border-amber-900/30 dark:bg-neutral-900">
               <h2 className="mb-5 text-sm font-semibold uppercase tracking-widest text-amber-700 dark:text-amber-400">
                 Suivi en temps réel
@@ -154,6 +189,7 @@ export default function OrderConfirmationPage() {
                 })}
               </div>
             </div>
+            )}
 
             {/* Thank-you message for completed orders */}
             {order.status === "completed" && (
@@ -169,7 +205,9 @@ export default function OrderConfirmationPage() {
             )}
 
             <p className="text-center text-xs text-amber-600/60 dark:text-amber-500/40">
-              Mise à jour automatique toutes les 3 secondes
+              {orderId && isLikelyOrderUuid(orderId)
+                ? "Synchronisé depuis le restaurant (via serveur)."
+                : "Mise à jour automatique depuis cet appareil toutes les 3 secondes."}
             </p>
           </div>
         )}

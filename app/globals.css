@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -792,6 +798,14 @@ body {
   background: linear-gradient(120deg, #e8a87c 0%, #d4af37 50%, #f0c27f 100%);
   -webkit-background-clip: text;
   background-clip: text;
+}
+
+/** Conteneur canonique pour pages vitrine — centré, 1200px, gouttières 24px */
+@utility site-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
 }
 
 @utility mesh-page-bg {

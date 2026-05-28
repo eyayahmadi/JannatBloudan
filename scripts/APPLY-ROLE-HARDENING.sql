@@ -14,10 +14,16 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, auth
+SET row_security = off
 AS $$
 DECLARE
   v_role text;
 BEGIN
+  -- API admin / service role (e-mail deja confirme a l'insertion) : garder le role demande.
+  IF NEW.email_confirmed_at IS NOT NULL THEN
+    RETURN NEW;
+  END IF;
+
   v_role := upper(coalesce(NEW.raw_user_meta_data ->> 'role', ''));
 
   -- Si le role tente d'etre un role interne, on le force a CLIENT.

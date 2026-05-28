@@ -10,6 +10,56 @@ type Req = {
   budget?: number
   date?: string
   preferences?: string
+  /** Capacité max du lieu / salle (places assises ou debout selon votre règle interne) */
+  maxVenueCapacity?: number
+  /** Prix cible par convive (€) — menu, formule ou ticket */
+  targetPricePerHead?: number
+}
+
+function roundMoney(n: number) {
+  return Math.round(n * 100) / 100
+}
+
+function buildCapacity(
+  guests: number,
+  maxCap: number | null,
+): {
+  max: number | null
+  guests: number
+  status: "ok" | "over" | "unknown"
+  remainingPlaces: number | null
+  fillPercent: number | null
+  note: string | null
+} {
+  if (maxCap == null || maxCap <= 0) {
+    return {
+      max: null,
+      guests,
+      status: "unknown",
+      remainingPlaces: null,
+      fillPercent: null,
+      note: "Capacité du lieu non renseignée — indiquez-la pour vérifier la cohérence avec le nombre d'invités.",
+    }
+  }
+  if (guests > maxCap) {
+    return {
+      max: maxCap,
+      guests,
+      status: "over",
+      remainingPlaces: 0,
+      fillPercent: Math.min(100, Math.round((guests / maxCap) * 100)),
+      note: `Dépassement : ${guests} invités pour ${maxCap} places max. Réduisez l'effectif, adoptez un format sur plusieurs services ou changez d'espace.`,
+    }
+  }
+  const remaining = maxCap - guests
+  return {
+    max: maxCap,
+    guests,
+    status: "ok",
+    remainingPlaces: remaining,
+    fillPercent: Math.round((guests / maxCap) * 100),
+    note: remaining <= 5 ? `Plus que ${remaining} place(s) disponible(s) dans la limite actuelle.` : null,
+  }
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -113,25 +163,61 @@ export async function POST(request: Request) {
     const type = (body.type || "private").toString().toLowerCase()
     const guests = Math.max(1, Number(body.guests ?? 20))
     const budget = Math.max(0, Number(body.budget ?? 0))
+    const maxCapRaw = body.maxVenueCapacity != null ? Number(body.maxVenueCapacity) : NaN
+    const maxVenueCapacity = Number.isFinite(maxCapRaw) && maxCapRaw > 0 ? Math.floor(maxCapRaw) : null
+    const targetPxRaw = body.targetPricePerHead != null ? Number(body.targetPricePerHead) : NaN
+    const targetPricePerHead =
+      Number.isFinite(targetPxRaw) && targetPxRaw >= 0 ? roundMoney(targetPxRaw) : null
+
     const menu = suggestMenuByType(type, guests)
     const estimatedCost = Math.round(menu.estimatedPricePerHead * guests)
     const resolvedBudget = budget > 0 ? budget : estimatedCost
     const bucket = budgetBucket(guests, resolvedBudget)
     const decor = suggestDecor(type, bucket)
+    const capacity = buildCapacity(guests, maxVenueCapacity)
 
-    const fitScore =
+    const budgetPerHead = roundMoney(resolvedBudget / guests)
+    const surplusVsEstimate = roundMoney(resolvedBudget - estimatedCost)
+
+    let targetVsEstimateNote: string | null = null
+    if (targetPricePerHead != null && targetPricePerHead > 0) {
+      const diff = roundMoney(menu.estimatedPricePerHead - targetPricePerHead)
+      if (Math.abs(diff) < 1.5) {
+        targetVsEstimateNote = "L'estimation par convive est alignée avec votre prix cible."
+      } else if (diff > 0) {
+        targetVsEstimateNote = `Estimation environ ${diff} €/pers. au-dessus du prix cible — envisager menu allégé ou budget plus large.`
+      } else {
+        targetVsEstimateNote = `Marge confortable d'environ ${Math.abs(diff)} €/pers. par rapport au prix cible.`
+      }
+    }
+
+    let fitScore =
       budget > 0
         ? Math.max(0, Math.min(100, Math.round((resolvedBudget / Math.max(estimatedCost, 1)) * 80)))
         : 82
+    if (capacity.status === "over") fitScore = Math.min(fitScore, 45)
 
     const timeline = [
-      { t: "J-14", action: "Confirmer nombre invites + allergies" },
-      { t: "J-7", action: "Valider menu + decoration" },
-      { t: "J-2", action: "Commander stock + briefer equipe" },
+      { t: "J-14", action: "Confirmer nombre invités + allergies" },
+      { t: "J-7", action: "Valider menu + décoration + capacité définitive" },
+      { t: "J-2", action: "Commander stock + briefer équipe" },
       { t: "J-0", action: "Mise en place 2h avant" },
     ]
+    if (capacity.status === "over") {
+      timeline.unshift({
+        t: "Urgent",
+        action: `Capacité dépassée (${guests} pour ${capacity.max ?? "?"} places max) — ajuster avant de confirmer le client.`,
+      })
+    }
 
     let aiNote: string | null = null
+    const capHint =
+      capacity.max != null
+        ? ` Capacité salle: ${capacity.max} places (${capacity.status === "over" ? "DEPASSEE" : "OK"}).`
+        : ""
+    const priceHint =
+      targetPricePerHead != null ? ` Prix cible par convive: ${targetPricePerHead}€.` : ""
+
     if (isLlmConfigured()) {
       aiNote = await chatCompletion([
         {
@@ -141,16 +227,24 @@ export async function POST(request: Request) {
         },
         {
           role: "user",
-          content: `Evenement: ${TYPE_LABEL[type] ?? type}, ${guests} invites, budget ${resolvedBudget}€${
-            body.date ? ", date " + body.date : ""
-          }${body.preferences ? ", preferences: " + body.preferences : ""}. Donne un conseil d'organisation.`,
+          content: `Evenement: ${TYPE_LABEL[type] ?? type}, ${guests} invités, budget total ${resolvedBudget}€ (${budgetPerHead}€/pers estimé hors option), coût menu estimé ${estimatedCost}€.${capHint}${priceHint}${
+            body.date ? " Date " + body.date + "." : ""
+          }${body.preferences ? " Préférences: " + body.preferences + "." : ""} Donne un conseil d'organisation.`,
         },
       ])
     }
 
     return NextResponse.json({
       agent: "event_planner",
-      input: { type, guests, budget, date: body.date, preferences: body.preferences },
+      input: {
+        type,
+        guests,
+        budget,
+        date: body.date,
+        preferences: body.preferences,
+        maxVenueCapacity: maxVenueCapacity ?? undefined,
+        targetPricePerHead: targetPricePerHead ?? undefined,
+      },
       proposal: {
         label: TYPE_LABEL[type] ?? "Evenement",
         menu,
@@ -162,6 +256,17 @@ export async function POST(request: Request) {
         marketingCopy: campaignCopy(type, body.date),
         timeline,
         aiNote,
+        capacity,
+        pricing: {
+          currency: "EUR" as const,
+          budgetTotal: resolvedBudget,
+          budgetPerHead,
+          estimatedTotal: estimatedCost,
+          estimatedPerHead: roundMoney(menu.estimatedPricePerHead),
+          surplusVsEstimate,
+          targetPricePerHead,
+          targetVsEstimateNote,
+        },
       },
       generatedAt: new Date().toISOString(),
     })

@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { ProductMenuImageUpload } from "@/components/admin/ProductMenuImageUpload"
 
 type Category = {
   id: string
@@ -52,6 +53,8 @@ type Product = {
   is_vegetarian?: boolean
   is_chef_choice?: boolean
   is_recommended?: boolean
+  tags?: string[] | null
+  spice_level?: string | null
   product_ingredients?: Array<{ quantity: number | string; ingredients: { id: string; name: string } | null }>
   _popularityScore?: number
 }
@@ -70,6 +73,9 @@ type ProductFormData = {
   is_vegetarian: boolean
   is_chef_choice: boolean
   is_recommended: boolean
+  spice_level: string
+  extra_tags: string
+  is_available: boolean
 }
 
 const EMPTY_FORM: ProductFormData = {
@@ -86,6 +92,9 @@ const EMPTY_FORM: ProductFormData = {
   is_vegetarian: false,
   is_chef_choice: false,
   is_recommended: false,
+  spice_level: "",
+  extra_tags: "",
+  is_available: true,
 }
 
 type SortKey = "name" | "price" | "popularity"
@@ -114,6 +123,9 @@ export default function MenuManagementPage() {
   const [deleting, setDeleting] = useState(false)
   const [ingredients, setIngredients] = useState<{ id: string; name: string; unit: string }[]>([])
   const [recipeLines, setRecipeLines] = useState<{ ingredient_id: string; quantity: string }[]>([])
+  const [newCategoryName, setNewCategoryName] = useState("")
+  const [newCategorySection, setNewCategorySection] = useState("food")
+  const [categoryBusy, setCategoryBusy] = useState(false)
 
   const loadCatalog = useCallback(async () => {
     try {
@@ -163,10 +175,16 @@ export default function MenuManagementPage() {
   }, [products])
 
   const filtered = useMemo(() => {
+    const ql = searchQuery.toLowerCase().trim()
     let result = products.filter((p) => {
-      const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
       const matchCat = selectedCategory === "all" || p.category?.name === selectedCategory
-      return matchSearch && matchCat
+      if (!ql) return matchCat
+      const inName = p.name.toLowerCase().includes(ql)
+      const inDesc = (p.description ?? "").toLowerCase().includes(ql)
+      const inTags =
+        Array.isArray(p.tags) &&
+        p.tags.some((tg) => String(tg).toLowerCase().includes(ql))
+      return matchCat && (inName || inDesc || inTags)
     })
 
     result.sort((a, b) => {
@@ -211,6 +229,15 @@ export default function MenuManagementPage() {
       is_vegetarian: !!product.is_vegetarian,
       is_chef_choice: !!product.is_chef_choice,
       is_recommended: !!product.is_recommended,
+      spice_level: product.spice_level ?? "",
+      extra_tags: (() => {
+        const builtins = new Set(["popular", "new", "vegetarian", "spicy"])
+        const raw = Array.isArray(product.tags) ? product.tags : []
+        return raw
+          .filter((tag) => !builtins.has(String(tag).toLowerCase()))
+          .join(", ")
+      })(),
+      is_available: product.is_available !== false,
     })
     setRecipeLines(
       (product.product_ingredients ?? [])
@@ -233,10 +260,17 @@ export default function MenuManagementPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      const tags: string[] = []
-      if (formData.is_popular) tags.push("popular")
-      if (formData.is_new) tags.push("new")
-      if (formData.is_vegetarian) tags.push("vegetarian")
+      const extra = formData.extra_tags
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+      const tagsSet = new Set<string>()
+      if (formData.is_popular) tagsSet.add("popular")
+      if (formData.is_new) tagsSet.add("new")
+      if (formData.is_vegetarian) tagsSet.add("vegetarian")
+      for (const x of extra) tagsSet.add(x.toLowerCase())
+      const tags = Array.from(tagsSet)
+      const spice_level = formData.spice_level.trim() ? formData.spice_level.trim() : null
 
       const payload = {
         name: formData.name,
@@ -253,16 +287,14 @@ export default function MenuManagementPage() {
         is_chef_choice: formData.is_chef_choice,
         is_recommended: formData.is_recommended,
         tags,
-        spice_level: null as string | null,
+        spice_level,
+        is_available: formData.is_available,
       }
       if (editingProduct) {
         const res = await fetch(`/api/admin/products/${editingProduct.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...payload,
-            is_available: true,
-          }),
+          body: JSON.stringify(payload),
         })
         if (res.ok) {
           if (ingredients.length > 0) {
@@ -347,6 +379,67 @@ export default function MenuManagementPage() {
     }
   }
 
+  const handleCreateCategory = async () => {
+    const name = newCategoryName.trim()
+    if (!name || categoryBusy) return
+    setCategoryBusy(true)
+    try {
+      const res = await fetch("/api/admin/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, section: newCategorySection }),
+      })
+      if (res.ok) {
+        setNewCategoryName("")
+        await loadCatalog()
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setCategoryBusy(false)
+    }
+  }
+
+  const handleDeleteCategory = async (c: Category) => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(
+        `Supprimer la catégorie « ${c.name} » ? Les plats avec cette catégorie peuvent être déclassés.`,
+      )
+    )
+      return
+    setCategoryBusy(true)
+    try {
+      const res = await fetch(`/api/admin/categories/${c.id}`, { method: "DELETE" })
+      if (res.ok) await loadCatalog()
+    } catch {
+      /* ignore */
+    } finally {
+      setCategoryBusy(false)
+    }
+  }
+
+  const handleToggleCategoryActive = async (c: Category) => {
+    const currentlyActive = c.is_active !== false
+    setCategoryBusy(true)
+    try {
+      const res = await fetch(`/api/admin/categories/${c.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_active: !currentlyActive }),
+      })
+      if (res.ok) {
+        setCategories((prev) =>
+          prev.map((x) => (x.id === c.id ? { ...x, is_active: !currentlyActive } : x)),
+        )
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setCategoryBusy(false)
+    }
+  }
+
   const categoryNames = ["all", ...categories.map((c) => c.name)]
 
   return (
@@ -371,6 +464,98 @@ export default function MenuManagementPage() {
           </div>
         ) : (
           <>
+            <Card className="mb-6 border-slate-200 dark:border-slate-700">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base text-slate-900 dark:text-white">Catégories</CardTitle>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Créer, activer ou supprimer une catégorie (rubrique carte / section).
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
+                  <div className="min-w-[160px] flex-1">
+                    <Label className="text-xs text-slate-500">Nouvelle catégorie</Label>
+                    <Input
+                      className="mt-1"
+                      placeholder="Ex. Grillades"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                    />
+                  </div>
+                  <div className="w-full sm:w-44">
+                    <Label className="text-xs text-slate-500">Section</Label>
+                    <select
+                      className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+                      value={newCategorySection}
+                      onChange={(e) => setNewCategorySection(e.target.value)}
+                    >
+                      <option value="food">food</option>
+                      <option value="desserts">desserts</option>
+                      <option value="drinks">drinks</option>
+                      <option value="special">special</option>
+                    </select>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={categoryBusy || !newCategoryName.trim()}
+                    onClick={() => void handleCreateCategory()}
+                    className="bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
+                  >
+                    Ajouter la catégorie
+                  </Button>
+                </div>
+                <div className="max-h-[220px] divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-700">
+                  {categories.length === 0 ? (
+                    <p className="p-4 text-sm text-slate-500">Aucune catégorie.</p>
+                  ) : (
+                    categories.map((c) => (
+                      <div
+                        key={c.id}
+                        className={`flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 ${
+                          c.is_active === false ? "opacity-60" : ""
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium text-slate-900 dark:text-white">{c.name}</span>
+                          <Badge variant="outline" className="text-[10px]">
+                            {c.section ?? "food"}
+                          </Badge>
+                          {c.is_active === false ? (
+                            <Badge variant="secondary" className="text-[10px]">
+                              Inactive
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            disabled={categoryBusy}
+                            onClick={() => void handleToggleCategoryActive(c)}
+                          >
+                            {c.is_active === false ? "Activer" : "Désactiver"}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            disabled={categoryBusy}
+                            onClick={() => void handleDeleteCategory(c)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Filters */}
             <Card className="mb-6 border-slate-200 dark:border-slate-700">
               <CardContent className="p-4">
@@ -378,7 +563,7 @@ export default function MenuManagementPage() {
                   <div className="flex-1 w-full relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input
-                      placeholder="Rechercher un plat..."
+                      placeholder="Rechercher un plat, tag ou description..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-9"
@@ -700,6 +885,48 @@ export default function MenuManagementPage() {
                       </select>
                     </div>
 
+                    <div>
+                      <Label className="text-sm">Visible sur le menu client</Label>
+                      <label className="mt-2 flex cursor-pointer items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                        <input
+                          type="checkbox"
+                          checked={formData.is_available}
+                          onChange={(e) => setFormData((f) => ({ ...f, is_available: e.target.checked }))}
+                          className="mt-0.5"
+                        />
+                        Afficher comme disponible dans l&apos;admin (stock et recettes peuvent encore bloquer la vente).
+                      </label>
+                    </div>
+
+                    <div>
+                      <Label className="text-sm">Intensité (piment)</Label>
+                      <select
+                        className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+                        value={formData.spice_level}
+                        onChange={(e) =>
+                          setFormData((f) => ({ ...f, spice_level: e.target.value }))
+                        }
+                      >
+                        <option value="">— Non renseigné</option>
+                        <option value="doux">doux</option>
+                        <option value="moyen">moyen</option>
+                        <option value="épicé">épicé</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label className="text-sm">Tags libres</Label>
+                      <Input
+                        className="mt-1"
+                        placeholder="chef, saison, hallal…"
+                        value={formData.extra_tags}
+                        onChange={(e) => setFormData((f) => ({ ...f, extra_tags: e.target.value }))}
+                      />
+                      <p className="mt-1 text-xs text-slate-500">
+                        Séparer par une virgule. Populaire / Nouveau / Végétarien sont pilotés par les cases à cocher.
+                      </p>
+                    </div>
+
                     <div className="flex flex-wrap gap-3 text-sm">
                       <label className="flex items-center gap-1.5">
                         <input
@@ -806,27 +1033,11 @@ export default function MenuManagementPage() {
                       </div>
                     )}
 
-                    <div>
-                      <Label className="text-sm">URL de l&apos;image</Label>
-                      <Input
-                        className="mt-1"
-                        placeholder="https://example.com/image.jpg"
-                        value={formData.image_url}
-                        onChange={(e) => setFormData((f) => ({ ...f, image_url: e.target.value }))}
-                      />
-                      {formData.image_url && (
-                        <div className="mt-2 h-32 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800">
-                          <img
-                            src={formData.image_url}
-                            alt="Aperçu"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              ;(e.target as HTMLImageElement).style.display = "none"
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
+                    <ProductMenuImageUpload
+                      value={formData.image_url}
+                      onChange={(url) => setFormData((f) => ({ ...f, image_url: url }))}
+                      disabled={saving}
+                    />
 
                     <div className="flex gap-2 pt-2">
                       <Button

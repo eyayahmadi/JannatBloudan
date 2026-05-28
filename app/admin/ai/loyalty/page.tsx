@@ -144,6 +144,154 @@ const FALLBACK: LoyaltyData = {
   },
 }
 
+function normalizeLoyaltyPayload(raw: unknown): LoyaltyData {
+  if (!raw || typeof raw !== "object") return FALLBACK
+  const r = raw as Record<string, unknown>
+
+  const pts =
+    typeof r.currentPoints === "number" && Number.isFinite(r.currentPoints)
+      ? r.currentPoints
+      : typeof r.points === "number" && Number.isFinite(r.points)
+        ? r.points
+        : FALLBACK.currentPoints
+
+  const nextTierRaw = r.nextTier
+  const nextMin =
+    nextTierRaw && typeof nextTierRaw === "object" && typeof (nextTierRaw as { min?: unknown }).min === "number"
+      ? (nextTierRaw as { min: number }).min
+      : null
+
+  let tier = FALLBACK.tier
+  const tr = r.tier
+  if (tr && typeof tr === "object") {
+    const o = tr as Record<string, unknown>
+    const name = typeof o.name === "string" ? o.name : FALLBACK.tier.name
+    const color = typeof o.color === "string" ? o.color : FALLBACK.tier.color
+    const minPoints = typeof o.minPoints === "number" ? o.minPoints : typeof o.min === "number" ? o.min : FALLBACK.tier.minPoints
+    const maxPointsRaw =
+      typeof o.maxPoints === "number" ? o.maxPoints : typeof o.max === "number" ? o.max : FALLBACK.tier.maxPoints
+    /** Fin de barre = seuil palier suivant si connu */
+    const maxPointsGoal =
+      typeof nextMin === "number" && nextMin > minPoints ? nextMin : Math.max(minPoints + 1, maxPointsRaw)
+    const perks = Array.isArray(o.perks)
+      ? o.perks.filter((x): x is string => typeof x === "string")
+      : FALLBACK.tier.perks
+    tier = { name, color, minPoints, maxPoints: maxPointsGoal, perks }
+  }
+
+  let challenges = FALLBACK.challenges
+  if (Array.isArray(r.challenges)) {
+    challenges = r.challenges
+      .map((item): Challenge | null => {
+        if (!item || typeof item !== "object") return null
+        const c = item as Record<string, unknown>
+        if (typeof c.id !== "string" || typeof c.title !== "string") return null
+        const reward = typeof c.reward === "number" ? c.reward : 0
+        const progress = typeof c.progress === "number" ? c.progress : 0
+        const target = typeof c.target === "number" && c.target > 0 ? c.target : 1
+        const active = typeof c.active === "boolean" ? c.active : true
+        return { id: c.id, title: c.title, reward, progress, target, active }
+      })
+      .filter((x): x is Challenge => x !== null)
+    if (!challenges.length) challenges = FALLBACK.challenges
+  }
+
+  function iconFromApi(ic: unknown): string {
+    if (typeof ic !== "string" || !ic.trim()) return "Star"
+    const lower = ic.trim().toLowerCase()
+    const key = lower.charAt(0).toUpperCase() + lower.slice(1)
+    return key in ICON_MAP ? key : "Star"
+  }
+
+  let achievements = FALLBACK.achievements
+  if (Array.isArray(r.achievements)) {
+    achievements = r.achievements
+      .map((item): Achievement | null => {
+        if (!item || typeof item !== "object") return null
+        const a = item as Record<string, unknown>
+        if (typeof a.id !== "string" || typeof a.title !== "string") return null
+        const unlocked = typeof a.unlocked === "boolean" ? a.unlocked : !!a.date
+        const unlockedAt =
+          typeof a.unlockedAt === "string" ? a.unlockedAt : typeof a.date === "string" ? a.date : undefined
+        return {
+          id: a.id,
+          title: a.title,
+          icon: iconFromApi(a.icon),
+          unlocked,
+          unlockedAt,
+        }
+      })
+      .filter((x): x is Achievement => x !== null)
+    if (!achievements.length) achievements = FALLBACK.achievements
+  }
+
+  let leaderboard = FALLBACK.leaderboard
+  if (Array.isArray(r.leaderboard)) {
+    leaderboard = r.leaderboard
+      .map((item): LeaderboardEntry | null => {
+        if (!item || typeof item !== "object") return null
+        const e = item as Record<string, unknown>
+        if (typeof e.rank !== "number" || typeof e.name !== "string") return null
+        const points = typeof e.points === "number" ? e.points : 0
+        const tierName = typeof e.tier === "string" ? e.tier : "Bronze"
+        return { rank: e.rank, name: e.name, points, tier: tierName }
+      })
+      .filter((x): x is LeaderboardEntry => x !== null)
+    if (!leaderboard.length) leaderboard = FALLBACK.leaderboard
+  }
+
+  let stats = FALLBACK.stats
+  if (r.stats && typeof r.stats === "object") {
+    const s = r.stats as Record<string, unknown>
+    stats = {
+      totalPointsDistributed:
+        typeof s.totalPointsDistributed === "number"
+          ? s.totalPointsDistributed
+          : FALLBACK.stats.totalPointsDistributed,
+      activeChallenges: typeof s.activeChallenges === "number" ? s.activeChallenges : FALLBACK.stats.activeChallenges,
+      unlockRate: typeof s.unlockRate === "number" ? s.unlockRate : FALLBACK.stats.unlockRate,
+    }
+  } else {
+    const activeChallengesCount = challenges.filter((c) => c.active).length
+    const unlocked = achievements.filter((a) => a.unlocked).length
+    stats = {
+      totalPointsDistributed:
+        leaderboard.length > 0
+          ? Math.round(leaderboard.reduce((sum, row) => sum + Math.max(0, row.points), 0) * 18)
+          : FALLBACK.stats.totalPointsDistributed,
+      activeChallenges: activeChallengesCount || FALLBACK.stats.activeChallenges,
+      unlockRate:
+        achievements.length > 0 ? Math.round((unlocked / achievements.length) * 100) : FALLBACK.stats.unlockRate,
+    }
+  }
+
+  let algorithm = FALLBACK.algorithm
+  const alg = r.algorithm
+  if (typeof alg === "string") {
+    algorithm = { ...FALLBACK.algorithm, name: alg }
+  } else if (alg && typeof alg === "object") {
+    const o = alg as Record<string, unknown>
+    const name = typeof o.name === "string" ? o.name : FALLBACK.algorithm.name
+    const description =
+      typeof o.description === "string" ? o.description : FALLBACK.algorithm.description
+    const factors =
+      Array.isArray(o.factors) && o.factors.every((f): f is string => typeof f === "string")
+        ? (o.factors as string[])
+        : FALLBACK.algorithm.factors
+    algorithm = { name, description, factors }
+  }
+
+  return {
+    currentPoints: pts,
+    tier,
+    challenges,
+    achievements,
+    leaderboard,
+    stats,
+    algorithm,
+  }
+}
+
 export default function LoyaltyPage() {
   const [data, setData] = useState<LoyaltyData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -157,7 +305,7 @@ export default function LoyaltyPage() {
           body: JSON.stringify({ points: 450 }),
         })
         if (!res.ok) throw new Error("fetch failed")
-        setData(await res.json())
+        setData(normalizeLoyaltyPayload(await res.json()))
       } catch {
         setData(FALLBACK)
       } finally {
@@ -168,8 +316,9 @@ export default function LoyaltyPage() {
   }, [])
 
   const d = data ?? FALLBACK
-  const tierProgress =
-    ((d.currentPoints - d.tier.minPoints) / (d.tier.maxPoints - d.tier.minPoints)) * 100
+  const denom = Math.max(1e-6, d.tier.maxPoints - d.tier.minPoints)
+  const pts = typeof d.currentPoints === "number" && Number.isFinite(d.currentPoints) ? d.currentPoints : 0
+  const tierProgress = ((pts - d.tier.minPoints) / denom) * 100
 
   return (
     <RequireAuth roles={["ADMIN", "STAFF"]}>
@@ -204,7 +353,7 @@ export default function LoyaltyPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-4xl font-black tabular-nums sm:text-5xl">
-                        {d.currentPoints.toLocaleString("fr-FR")}
+                        {pts.toLocaleString("fr-FR")}
                       </p>
                       <p className="text-sm opacity-80">points</p>
                     </div>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireAdmin } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import { insertCaisseAudit } from "@/lib/caisse/audit"
 
 function slugify(s: string) {
   return s
@@ -47,5 +48,18 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase.from("products").insert(row).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+
+  const actorEmail = typeof guard.user.email === "string" ? guard.user.email.trim() || null : null
+  await insertCaisseAudit(supabase, {
+    userId: guard.user.id ?? null,
+    userEmail: actorEmail,
+    action: "create",
+    entityType: "products",
+    entityId: String(data.id),
+    oldValues: null,
+    newValues: JSON.parse(JSON.stringify(data)) as Record<string, unknown>,
+    metadata: { source: "api/admin/products POST" },
+  })
+
   return NextResponse.json({ product: data }, { status: 201 })
 }

@@ -1,7 +1,5 @@
-"use client"
+import { redirect } from "next/navigation"
 
-import { StationBoard } from "@/components/stations/StationBoard"
-
-export default function BarPage() {
-  return <StationBoard station="BAR" />
+export default function BarIndexRedirect() {
+  redirect("/bar/orders")
 }

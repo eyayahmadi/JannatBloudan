@@ -1,30 +1,76 @@
 #!/usr/bin/env node
 /**
- * Applique les migrations SQL sur Postgres / Supabase.
+ * Applique toutes les migrations SQL sur Postgres / Supabase, dans l'ordre canonique.
  *
  * Usage:
- *   1. npm install --no-save pg
- *   2. $env:DATABASE_URL="postgres://postgres:<password>@db.<ref>.supabase.co:5432/postgres"
- *   3. node scripts/run-migrations.mjs
+ *   npm install --no-save pg
+ *   $env:DATABASE_URL="postgres://postgres:<password>@db.<ref>.supabase.co:5432/postgres"
+ *   node scripts/run-migrations.mjs
  *
- * Tu trouves DATABASE_URL dans :
- *   Supabase → Project Settings → Database → Connection string (URI)
- *   Prends le mode "Session / Transaction pooler" et remplace [YOUR-PASSWORD].
+ * Ou avec .env.local (Node 20.6+) :
+ *   node --env-file=.env.local scripts/run-migrations.mjs
+ *
+ * Non inclus (volontairement) :
+ *   - APPLY-ALL-NEW.sql, APPLY-TODAY.sql (doublons partiels de migrations numérotées)
+ *   - create_admin.sql (ponctuel / données sensibles)
+ *   - 07-demo-seed.sql, 09-demo-data.sql : optionnels ; retirer du tableau si tu veux une base vide
  */
 
-import { readFile } from "node:fs/promises"
-import { readdirSync } from "node:fs"
+import { readFile, access } from "node:fs/promises"
+import { constants } from "node:fs"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const here = __dirname
 
+/** Ordre explicite : le tri lexicographique ne suffit pas (13-*, 20-*, 21-*). */
+const NUMBERED_MIGRATIONS = [
+  "01-create-database-schema.sql",
+  "02-seed-initial-data.sql",
+  "03-create-rpc-functions.sql",
+  "04-qr-flow-and-ai-schema.sql",
+  "05-roles-and-auth-alignment.sql",
+  "06-commercial-ready.sql",
+  "07-demo-seed.sql",
+  "08-advanced.sql",
+  "09-demo-data.sql",
+  "10-stations.sql",
+  "11-delivery-tracking.sql",
+  "12-supplier-invoices.sql",
+  "13-cash-register-movements.sql",
+  "13-digital-menu-and-stock.sql",
+  "14-caisse-intelligence-complete.sql",
+  "15-caisse-complete.sql",
+  "16-translation-cache.sql",
+  "17-sortie-caisse-trace.sql",
+  "18-advanced-table-pos.sql",
+  "19-private-events-calendar.sql",
+  "20-events-professional.sql",
+  "20-menu-product-images-storage.sql",
+  "21-audit-products-api-actor.sql",
+  "21-promotions-module.sql",
+  "22-categories-menu-columns.sql",
+  "23-client-profiles-confirm.sql",
+  "24-restaurant-tables-qr-admin.sql",
+  "27-table-session-merges.sql",
+  "28-external-cash-incomes.sql",
+  "29-station-acceptance-and-availability.sql",
+  "30-purchases-to-plan.sql",
+  "31-client-credit-and-station-revenue.sql",
+]
+
+/** Après le schéma : durcissement rôles puis correctif signup / RLS audit (idempotent). */
+const POST_MIGRATIONS = ["APPLY-ROLE-HARDENING.sql", "fix-signup-database-error-updating-user.sql"]
+
+const ALL_MIGRATIONS = [...NUMBERED_MIGRATIONS, ...POST_MIGRATIONS]
+
 const DATABASE_URL = process.env.DATABASE_URL
 if (!DATABASE_URL) {
   console.error("❌  DATABASE_URL n'est pas defini.")
   console.error('   PowerShell : $env:DATABASE_URL="postgres://postgres:<password>@db.<ref>.supabase.co:5432/postgres"')
   console.error("   Bash       : export DATABASE_URL='postgres://...'")
+  console.error("   Ou         : node --env-file=.env.local scripts/run-migrations.mjs")
   process.exit(1)
 }
 
@@ -39,17 +85,17 @@ try {
 
 const { Client } = pgModule.default
 
-const migrationFiles = readdirSync(here)
-  .filter((f) => /^\d{2}-.*\.sql$/.test(f))
-  .sort()
-
-if (migrationFiles.length === 0) {
-  console.error("❌  Aucun fichier de migration trouve.")
-  process.exit(1)
+for (const file of ALL_MIGRATIONS) {
+  try {
+    await access(join(here, file), constants.R_OK)
+  } catch {
+    console.error(`❌  Fichier introuvable : ${file}`)
+    process.exit(1)
+  }
 }
 
-console.log("📄  Migrations detectees :")
-migrationFiles.forEach((f) => console.log("   •", f))
+console.log("📄  Migrations à appliquer :")
+ALL_MIGRATIONS.forEach((f) => console.log("   •", f))
 
 const client = new Client({
   connectionString: DATABASE_URL,
@@ -58,9 +104,9 @@ const client = new Client({
 
 try {
   await client.connect()
-  console.log("\n✅  Connecte a la base.")
+  console.log("\n✅  Connecté à la base.")
 
-  for (const file of migrationFiles) {
+  for (const file of ALL_MIGRATIONS) {
     const sql = await readFile(join(here, file), "utf8")
     console.log(`\n▶  Application : ${file}`)
     try {
@@ -72,11 +118,21 @@ try {
     }
   }
 
-  const rolesRes = await client.query(
-    "SELECT name, auth_level FROM user_roles ORDER BY auth_level, name",
-  )
-  const tablesRes = await client.query("SELECT count(*)::int AS n FROM restaurant_tables")
-  const tableListRes = await client.query(`
+  let rolesRes
+  let tablesRes
+  let tableListRes
+  try {
+    rolesRes = await client.query("SELECT name, auth_level FROM user_roles ORDER BY auth_level, name")
+  } catch {
+    rolesRes = { rowCount: 0, rows: [] }
+  }
+  try {
+    tablesRes = await client.query("SELECT count(*)::int AS n FROM restaurant_tables")
+  } catch {
+    tablesRes = { rows: [{ n: 0 }] }
+  }
+  try {
+    tableListRes = await client.query(`
     SELECT table_name FROM information_schema.tables
     WHERE table_schema = 'public'
       AND table_name IN (
@@ -86,14 +142,19 @@ try {
       )
     ORDER BY table_name
   `)
+  } catch {
+    tableListRes = { rowCount: 0, rows: [] }
+  }
 
   console.log("\n═════════════════════════════════════════════════")
-  console.log("  ✅  MIGRATIONS APPLIQUEES")
+  console.log("  ✅  MIGRATIONS APPLIQUÉES")
   console.log("═════════════════════════════════════════════════")
-  console.log(`  Roles (${rolesRes.rowCount}) :`)
-  rolesRes.rows.forEach((r) => console.log(`     - ${r.name}  →  ${r.auth_level}`))
-  console.log(`\n  Tables restaurant seedees : ${tablesRes.rows[0].n}`)
-  console.log(`\n  Nouvelles tables creees (${tableListRes.rowCount}/9) :`)
+  if (rolesRes.rows.length) {
+    console.log(`  Rôles (${rolesRes.rowCount}) :`)
+    rolesRes.rows.forEach((r) => console.log(`     - ${r.name}  →  ${r.auth_level}`))
+  }
+  console.log(`\n  Tables restaurant (seed) : ${tablesRes.rows[0].n}`)
+  console.log(`\n  Tables clés présentes (${tableListRes.rowCount}/9) :`)
   tableListRes.rows.forEach((r) => console.log(`     ✔ ${r.table_name}`))
   console.log("═════════════════════════════════════════════════\n")
 } finally {

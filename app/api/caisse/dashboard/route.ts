@@ -4,6 +4,7 @@ import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { htFromTtcInclusive, vatFromHt } from "@/lib/caisse/vat"
 import type { VatScope } from "@/lib/caisse/vat"
 import { aggregateElectronicVatFromPaidInvoiceRows, type PayLine } from "@/lib/caisse/split-vat"
+import { netSortieCaisseFromRows } from "@/lib/caisse/cash-movements"
 
 const ROLES = ["ADMIN", "CASHIER"] as const
 
@@ -169,18 +170,18 @@ export async function GET(request: Request) {
     const { data: movs } = await supabase
       .from("cash_register_movements")
       .select("kind, amount")
-      .gte("created_at", start)
-      .lte("created_at", endIso)
+      .gte("movement_at", start)
+      .lte("movement_at", endIso)
+
+    sortiesSum = netSortieCaisseFromRows(movs ?? [])
 
     for (const m of movs ?? []) {
       const k = String((m as { kind?: string }).kind)
       const a = Number((m as { amount?: unknown }).amount ?? 0)
-      if (k === "sortie_caisse") sortiesSum += a
-      else if (k === "avance_salaire") avancesEmpSum += a
+      if (k === "avance_salaire") avancesEmpSum += a
       else if (k === "avance_client") avancesClientSum += a
     }
-
-    sortiesSum = Math.round(sortiesSum * 100) / 100
+    avancesEmpSum = Math.round(avancesEmpSum * 100) / 100
     avancesClientSum = Math.round(avancesClientSum * 100) / 100
 
     let employeeAdvancesFromTable = 0
@@ -194,6 +195,43 @@ export async function GET(request: Request) {
     }
 
     const employeeAdvancesTotal = Math.max(avancesEmpSum, employeeAdvancesFromTable)
+
+    // Entrées caisse externes (Lieferando, Wolt, Uber Eats, virements, ...)
+    let externalIncomesTotal = 0
+    let externalCashIncome = 0
+    let externalNonCashIncome = 0
+    const externalBySource: Record<string, number> = {}
+    const externalByMethod: Record<string, number> = {}
+    try {
+      const { data: extRows } = await supabase
+        .from("external_cash_incomes")
+        .select("source, payment_method, amount")
+        .eq("business_date", day)
+
+      for (const r of extRows ?? []) {
+        const a = Number((r as { amount?: unknown }).amount ?? 0)
+        if (!Number.isFinite(a) || a <= 0) continue
+        externalIncomesTotal += a
+        const src = String((r as { source?: string }).source ?? "other")
+        const meth = String((r as { payment_method?: string }).payment_method ?? "")
+        externalBySource[src] = (externalBySource[src] ?? 0) + a
+        if (meth) externalByMethod[meth] = (externalByMethod[meth] ?? 0) + a
+        if (meth === "cash") externalCashIncome += a
+        else externalNonCashIncome += a
+      }
+
+      externalIncomesTotal = Math.round(externalIncomesTotal * 100) / 100
+      externalCashIncome = Math.round(externalCashIncome * 100) / 100
+      externalNonCashIncome = Math.round(externalNonCashIncome * 100) / 100
+      for (const k of Object.keys(externalBySource)) {
+        externalBySource[k] = Math.round(externalBySource[k] * 100) / 100
+      }
+      for (const k of Object.keys(externalByMethod)) {
+        externalByMethod[k] = Math.round(externalByMethod[k] * 100) / 100
+      }
+    } catch {
+      /* table absente avant migration 28 */
+    }
 
     const { data: closingRow } = await supabase.from("cash_day_closings").select("*").eq("business_date", day).maybeSingle()
 
@@ -273,8 +311,40 @@ export async function GET(request: Request) {
       })
     }
 
-    const expectedCashDrawer = Math.round((cashPaid - sortiesSum - employeeAdvancesTotal) * 100) / 100
+    const expectedCashDrawer =
+      Math.round((cashPaid + externalCashIncome - sortiesSum - employeeAdvancesTotal) * 100) / 100
     const invoicesTotalCount = (invRowsAll ?? []).length
+
+    let creditTotalRemaining = 0
+    let creditOpenInvoices = 0
+    let creditOverdueInvoices = 0
+    let creditClientsCount = 0
+    try {
+      const { data: creditRows } = await supabase
+        .from("v_client_credit_summary")
+        .select("open_invoices, overdue_invoices, total_remaining")
+      for (const r of (creditRows ?? []) as Array<{
+        open_invoices?: number
+        overdue_invoices?: number
+        total_remaining?: number
+      }>) {
+        creditTotalRemaining += Number(r.total_remaining ?? 0)
+        creditOpenInvoices += Number(r.open_invoices ?? 0)
+        creditOverdueInvoices += Number(r.overdue_invoices ?? 0)
+        creditClientsCount += 1
+      }
+      creditTotalRemaining = Math.round(creditTotalRemaining * 100) / 100
+    } catch {
+      /* vue absente avant migration 31 */
+    }
+
+    if (creditOverdueInvoices > 0) {
+      alerts.push({
+        code: "credit_overdue",
+        severity: creditOverdueInvoices > 5 ? "critical" : "warning",
+        message: `${creditOverdueInvoices} facture(s) crédit en retard — ${creditTotalRemaining.toFixed(2)} € à recouvrer.`,
+      })
+    }
 
     return NextResponse.json({
       ok: true,
@@ -294,8 +364,17 @@ export async function GET(request: Request) {
         sortiesCaisse: sortiesSum,
         employeeAdvances: Math.round(employeeAdvancesTotal * 100) / 100,
         advancesClient: avancesClientSum,
+        externalIncomesTotal,
+        externalCashIncome,
+        externalNonCashIncome,
+        externalBySource,
+        externalByMethod,
         invoicesCounts: invoiceStats,
         invoicesTotalCount,
+        creditTotalRemaining,
+        creditOpenInvoices,
+        creditOverdueInvoices,
+        creditClientsCount,
         expectedCashDrawerAfterMovements: expectedCashDrawer,
         cashGapAtClosing:
           closing && closing.counted_vs_expected_gap != null ? Number(closing.counted_vs_expected_gap) : null,

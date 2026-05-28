@@ -4,6 +4,7 @@ import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { htFromTtcInclusive, vatFromHt } from "@/lib/caisse/vat"
 import type { VatScope } from "@/lib/caisse/vat"
 import { aggregateElectronicVatFromPaidInvoiceRows, type PayLine } from "@/lib/caisse/split-vat"
+import { netSortieCaisseFromRows } from "@/lib/caisse/cash-movements"
 
 const ADMIN = ["ADMIN"] as const
 const CASHIER_ADMIN = ["ADMIN", "CASHIER"] as const
@@ -77,16 +78,13 @@ export async function GET(request: Request) {
       extraCash = vatFromHt(htFromTtcInclusive(decl, vatRate), vatRate)
     }
 
-    const sortiesSum = (
-      (
-        await supabase
-          .from("cash_register_movements")
-          .select("amount")
-          .eq("kind", "sortie_caisse")
-          .gte("created_at", start)
-          .lte("created_at", endIso)
-      ).data ?? []
-    ).reduce((s, x) => s + Number((x as { amount?: unknown }).amount ?? 0), 0)
+    const { data: cashMovs } = await supabase
+      .from("cash_register_movements")
+      .select("kind, amount")
+      .in("kind", ["sortie_caisse", "annulation_sortie"])
+      .gte("movement_at", start)
+      .lte("movement_at", endIso)
+    const sortiesSum = netSortieCaisseFromRows(cashMovs ?? [])
 
     let advEmp = 0
     try {

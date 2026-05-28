@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { Calendar, Clock, Users, MapPin, Check, CreditCard, User, Mail, Phone } from "lucide-react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { PageShell } from "@/components/site/PageShell"
 import { SiteFooter } from "@/components/site/SiteFooter"
 import { SiteHeader } from "@/components/site/SiteHeader"
@@ -117,6 +118,17 @@ export default function BookEventPage() {
         )}
         {!loading && !event && !error && (
           <div className="text-center text-[#8b6f47]">Événement introuvable ou non disponible.</div>
+        )}
+
+        {!loading && event && (
+          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            Pour les <strong>billets</strong> (tarifs multiples), le paiement en ligne ou sur place et la{" "}
+            <strong>liste d&apos;attente</strong> lorsque l&apos;événement est complet, utilisez la{" "}
+            <Link href={`/events/${event.id}/participate`} className="font-semibold underline underline-offset-2">
+              page Participer / billetterie
+            </Link>
+            . Cette page enregistre une demande simple sans billet.
+          </div>
         )}
 
         <div className="text-center mb-8">

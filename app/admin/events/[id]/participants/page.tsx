@@ -20,11 +20,29 @@ type Ticket = {
   children: number
   totalAmount: number
   paid: boolean
+  paymentMethod?: string
+  paymentStatus?: string
   status: "pending" | "paid" | "checked_in" | "cancelled"
   createdAt: string
 }
 
-type Summary = { count: number; revenue: number; checkedIn: number }
+type Summary = {
+  count: number
+  revenue: number
+  checkedIn: number
+  pendingPay?: number
+  paidOnline?: number
+  payAtVenue?: number
+}
+
+type WaitlistRow = {
+  id: string
+  guest_name: string
+  guest_email: string
+  party_size: number
+  status: string
+  created_at: string
+}
 
 const STATUS_STYLE: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -37,7 +55,15 @@ export default function EventParticipantsPage() {
   const params = useParams<{ id: string | string[] }>()
   const id = typeof params?.id === "string" ? params.id : Array.isArray(params?.id) ? params.id[0] : ""
   const [tickets, setTickets] = useState<Ticket[]>([])
-  const [summary, setSummary] = useState<Summary>({ count: 0, revenue: 0, checkedIn: 0 })
+  const [summary, setSummary] = useState<Summary>({
+    count: 0,
+    revenue: 0,
+    checkedIn: 0,
+    pendingPay: 0,
+    paidOnline: 0,
+    payAtVenue: 0,
+  })
+  const [waitlist, setWaitlist] = useState<WaitlistRow[]>([])
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
@@ -46,7 +72,23 @@ export default function EventParticipantsPage() {
     const res = await fetch(`/api/events/tickets?eventId=${encodeURIComponent(id)}`)
     const body = await res.json()
     setTickets(body.tickets ?? [])
-    setSummary(body.summary ?? { count: 0, revenue: 0, checkedIn: 0 })
+    const s = body.summary ?? {}
+    setSummary({
+      count: Number(s.count) || 0,
+      revenue: Number(s.revenue) || 0,
+      checkedIn: Number(s.checkedIn) || 0,
+      pendingPay: Number(s.pendingPay) || 0,
+      paidOnline: Number(s.paidOnline) || 0,
+      payAtVenue: Number(s.payAtVenue) || 0,
+    })
+
+    const wl = await fetch(`/api/events/${encodeURIComponent(id)}/waiting-list`)
+    if (wl.ok) {
+      const wlb = await wl.json()
+      setWaitlist(Array.isArray(wlb.waitlist) ? wlb.waitlist : [])
+    } else {
+      setWaitlist([])
+    }
     setLoading(false)
   }, [id])
 
@@ -85,26 +127,70 @@ export default function EventParticipantsPage() {
             </div>
           </div>
 
-          <div className="mb-6 grid grid-cols-3 gap-4">
+          <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
             <Card>
               <CardContent className="pt-6">
-                <p className="text-xs text-slate-500">Participants</p>
+                <p className="text-xs text-slate-500">Tickets actifs</p>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">{summary.count}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
-                <p className="text-xs text-slate-500">Revenus (payes)</p>
+                <p className="text-xs text-slate-500">Revenus encaisse</p>
                 <p className="text-2xl font-bold text-emerald-600">{summary.revenue.toFixed(2)} €</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
-                <p className="text-xs text-slate-500">Entrees validees</p>
+                <p className="text-xs text-slate-500">Check-in</p>
                 <p className="text-2xl font-bold text-blue-600">{summary.checkedIn}</p>
               </CardContent>
             </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-xs text-slate-500">Paiement en attente</p>
+                <p className="text-2xl font-bold text-amber-600">{summary.pendingPay ?? 0}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-xs text-slate-500">Stripe (marque pays)</p>
+                <p className="text-2xl font-bold text-violet-600">{summary.paidOnline ?? 0}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-xs text-slate-500">Au restaurant</p>
+                <p className="text-2xl font-bold text-orange-600">{summary.payAtVenue ?? 0}</p>
+              </CardContent>
+            </Card>
           </div>
+
+          <Card className="mb-6 border-dashed border-amber-300/70 dark:border-amber-700/40">
+            <CardHeader>
+              <CardTitle className="text-base text-slate-900 dark:text-white">Liste d&apos;attente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {waitlist.length === 0 ? (
+                <p className="text-sm text-slate-500">Aucune demande ou table absente.</p>
+              ) : (
+                <ul className="space-y-2 text-sm">
+                  {waitlist.slice(0, 40).map((w) => (
+                    <li
+                      key={w.id}
+                      className="flex flex-wrap justify-between gap-2 rounded-lg border border-slate-200/70 px-3 py-2 dark:border-slate-700"
+                    >
+                      <span className="font-medium text-slate-900 dark:text-white">{w.guest_name}</span>
+                      <span className="text-slate-500">{w.guest_email}</span>
+                      <Badge variant="outline">
+                        {w.party_size} pers. · {w.status}
+                      </Badge>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>
@@ -125,6 +211,7 @@ export default function EventParticipantsPage() {
                         <th>Adultes</th>
                         <th>Enfants</th>
                         <th>Montant</th>
+                        <th>Paiement</th>
                         <th>Statut</th>
                         <th className="text-right">Actions</th>
                       </tr>
@@ -140,6 +227,14 @@ export default function EventParticipantsPage() {
                           <td>{t.adults}</td>
                           <td>{t.children}</td>
                           <td>{t.totalAmount.toFixed(2)} €</td>
+                          <td className="text-xs">
+                            {(t.paymentMethod ?? "stripe") === "stripe"
+                              ? "En ligne"
+                              : t.paymentMethod === "cash_at_venue"
+                                ? "Espèces salle"
+                                : "TPE salle"}{" "}
+                            {!t.paid ? "(impaye)" : ""}
+                          </td>
                           <td>
                             <Badge className={STATUS_STYLE[t.status]}>{t.status}</Badge>
                           </td>

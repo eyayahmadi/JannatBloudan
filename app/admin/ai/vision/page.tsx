@@ -113,25 +113,177 @@ const ZONE_BAR_COLOR: Record<string, string> = {
   gaming: "bg-blue-500",
 }
 
+const TABLE_STATUSES: TableInfo["status"][] = ["occupied", "empty", "needs_cleaning", "reserved"]
+
+const ZONE_DEFS: { name: ZoneInfo["name"]; label: string }[] = [
+  { name: "interieur", label: "Interieur" },
+  { name: "terrasse", label: "Terrasse" },
+  { name: "vip", label: "VIP" },
+  { name: "gaming", label: "Gaming" },
+]
+
+function num(v: unknown, fallback: number): number {
+  const n = typeof v === "number" ? v : Number(v)
+  return Number.isFinite(n) ? n : fallback
+}
+
+function normalizeTable(t: unknown, index: number): TableInfo | null {
+  if (!t || typeof t !== "object") return null
+  const r = t as Record<string, unknown>
+  const id = num(r.id ?? r.number, index + 1)
+  const zone = String(r.zone ?? "interieur")
+  const capacity = num(r.capacity, 4)
+  const raw = String(r.status ?? "empty")
+  const status = (TABLE_STATUSES.includes(raw as TableInfo["status"]) ? raw : "empty") as TableInfo["status"]
+  return { id, zone, capacity, status }
+}
+
+function normalizeZone(z: unknown): ZoneInfo | null {
+  if (!z || typeof z !== "object") return null
+  const r = z as Record<string, unknown>
+  const name = String(r.name ?? "")
+  if (!name) return null
+  return {
+    name,
+    label: String(r.label ?? name),
+    occupancy: num(r.occupancy, 0),
+    total: Math.max(0, num(r.total, 0)),
+    occupied: Math.max(0, num(r.occupied, 0)),
+  }
+}
+
+function zonesFromTablesAndHeat(
+  tables: TableInfo[],
+  heat: Record<string, number> | undefined
+): ZoneInfo[] {
+  return ZONE_DEFS.map(({ name, label }) => {
+    const ts = tables.filter((t) => t.zone === name)
+    const fb = FALLBACK.zones.find((z) => z.name === name)
+    const total = ts.length || fb?.total || 4
+    const heatPct = heat?.[name]
+    const occupied = ts.length
+      ? ts.filter((t) => t.status === "occupied").length
+      : Math.round(((Number.isFinite(heatPct) ? heatPct! : fb?.occupancy ?? 50) / 100) * total)
+    const computedPct = Math.round((occupied / Math.max(1, total)) * 100)
+    const occupancy =
+      heatPct != null && Number.isFinite(Number(heatPct))
+        ? Math.min(100, Math.max(0, Math.round(Number(heatPct))))
+        : Math.min(100, Math.max(0, computedPct))
+    return {
+      name,
+      label,
+      occupancy,
+      total,
+      occupied: Math.min(total, Math.max(0, occupied)),
+    }
+  })
+}
+
+function normalizeAlerts(rawAlerts: unknown): Alert[] {
+  if (!Array.isArray(rawAlerts) || rawAlerts.length === 0) return FALLBACK.alerts
+  const out: Alert[] = []
+  for (let i = 0; i < rawAlerts.length; i++) {
+    const item = rawAlerts[i]
+    if (!item || typeof item !== "object") continue
+    const r = item as Record<string, unknown>
+    const sevRaw = String(r.severity ?? "medium").toLowerCase()
+    const severity: Alert["severity"] =
+      sevRaw === "high" || sevRaw === "critical" || sevRaw === "error"
+        ? "high"
+        : sevRaw === "low" || sevRaw === "info"
+          ? "low"
+          : "medium"
+    const tid = num(r.tableId ?? r.id ?? i, i)
+    out.push({
+      id: typeof r.id === "string" ? r.id : `a-${tid}-${i}`,
+      severity,
+      message: String(r.message ?? ""),
+      timestamp: typeof r.timestamp === "string" ? r.timestamp : "—",
+    })
+  }
+  return out.length ? out : FALLBACK.alerts
+}
+
+function normalizeVisionPayload(raw: unknown): VisionData {
+  if (!raw || typeof raw !== "object") return FALLBACK
+
+  const o = raw as Record<string, unknown>
+
+  const tablesRaw = Array.isArray(o.tables) ? o.tables : []
+  const tables =
+    tablesRaw.length > 0
+      ? tablesRaw.map(normalizeTable).filter(Boolean)
+      : []
+  const safeTables = tables.length ? (tables as TableInfo[]) : FALLBACK.tables
+
+  const mm = o.metrics && typeof o.metrics === "object" ? (o.metrics as Record<string, unknown>) : null
+  const metrics: VisionData["metrics"] = {
+    total: num(mm?.total, safeTables.length),
+    occupied: num(mm?.occupied, FALLBACK.metrics.occupied),
+    empty: num(mm?.empty, FALLBACK.metrics.empty),
+    needsCleaning: num(mm?.needsCleaning ?? mm?.needs_cleaning, FALLBACK.metrics.needsCleaning),
+    queue: num(mm?.queue ?? mm?.queueLength, FALLBACK.metrics.queue),
+    occupancyRate: num(mm?.occupancyRate ?? mm?.avgOccupancy, FALLBACK.metrics.occupancyRate),
+  }
+
+  let zones: ZoneInfo[] = FALLBACK.zones
+  const zArr = Array.isArray(o.zones) ? o.zones.map(normalizeZone).filter(Boolean) as ZoneInfo[] : []
+  if (zArr.length) {
+    zones = zArr
+  } else {
+    const hm = o.heatmap
+    let heat: Record<string, number> | undefined
+    if (hm && typeof hm === "object") {
+      const zonesObj = (hm as Record<string, unknown>).zones
+      if (zonesObj && typeof zonesObj === "object" && !Array.isArray(zonesObj)) {
+        const pairs = Object.entries(zonesObj as Record<string, unknown>)
+          .map(([k, v]) => [k, Number(v)] as const)
+          .filter(([, v]) => Number.isFinite(v))
+        heat = Object.fromEntries(pairs) as Record<string, number>
+      }
+    }
+    zones = zonesFromTablesAndHeat(safeTables, heat)
+  }
+
+  const alerts = normalizeAlerts(o.alerts)
+
+  return {
+    tables: safeTables,
+    zones,
+    alerts,
+    metrics,
+  }
+}
+
 export default function VisionPage() {
   const [data, setData] = useState<VisionData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const fetchData = () => {
-    fetch("/api/ai/vision")
-      .then((r) => r.json())
-      .then((d) => setData(d))
-      .catch(() => {
+  useEffect(() => {
+    let cancelled = false
+
+    async function load(first: boolean) {
+      try {
+        if (first && !cancelled) setLoading(true)
+        const r = await fetch("/api/ai/vision")
+        const raw = await r.json()
+        if (cancelled) return
+        setData(normalizeVisionPayload(raw))
+      } catch {
+        if (cancelled) return
         setData(FALLBACK)
         toast.error("Donnees de demonstration chargees")
-      })
-      .finally(() => setLoading(false))
-  }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
 
-  useEffect(() => {
-    fetchData()
-    const interval = setInterval(fetchData, 10_000)
-    return () => clearInterval(interval)
+    load(true)
+    const interval = setInterval(() => load(false), 10_000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
   }, [])
 
   const d = data ?? FALLBACK

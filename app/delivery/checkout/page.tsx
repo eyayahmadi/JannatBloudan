@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useNotifications } from "@/lib/hooks/useNotifications"
+import { cashierAudience, deliveryAudience } from "@/lib/notifications/audience"
 
 type PaymentMethod = "card" | "paypal" | "applepay" | "cash" | "instore"
 type CheckoutCartItem = {
@@ -105,7 +106,15 @@ function CheckoutContent() {
       })
     } catch { /* invoice creation is non-blocking */ }
 
-    addNotification({ type: "payment_received", title: "Paiement confirme", message: `Commande ${orderId} payee avec succes` })
+    // Audience : caisse (encaissement) + livraison (préparation tournée) + admin.
+    // Le client a son propre suivi (page tracking), il ne reçoit pas de
+    // notification staff.
+    addNotification({
+      type: "payment_received",
+      title: "Paiement confirmé",
+      message: `Commande ${orderId} payée avec succès`,
+      audience: [...new Set([...cashierAudience(), ...deliveryAudience()])],
+    })
 
     router.push(`/delivery/track/${orderId}`)
   }

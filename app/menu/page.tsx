@@ -22,7 +22,7 @@ export default function MenuOnlyPage() {
           subtitle="Mezzes, grillades, manakish, desserts orientaux — préparés chaque jour avec des ingrédients frais."
           height="sm"
         />
-        <div className="mx-auto max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        <div className="site-container flex-1 py-8">
           <DigitalMenuExperience />
         </div>
         <SiteFooter />

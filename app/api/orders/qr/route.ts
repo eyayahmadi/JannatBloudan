@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server"
+import { createServiceRoleClient } from "@/lib/auth/admin-api"
 import { createClient } from "@/lib/supabase/server"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import { resolveRestaurantTableFromRef } from "@/lib/restaurant/resolve-table"
 
 type QrOrderInput = {
   id?: string
   orderNumber?: string
-  tableId: number
+  /** @deprecated Préférer tableRef — peut être confondu id / numéro */
+  tableId?: number
+  /** Segment d’URL /table/{tableRef} (nombre, code, etc.) */
+  tableRef?: string
   items: Array<{ name: string; quantity: number; unitPrice?: number; notes?: string }>
   total?: number
   customerName?: string
@@ -15,14 +20,36 @@ type QrOrderInput = {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as QrOrderInput
-    const tableId = Number(body.tableId)
     const items = Array.isArray(body.items) ? body.items : []
 
-    if (!tableId || items.length === 0) {
-      return NextResponse.json(
-        { error: "tableId et items requis" },
-        { status: 400 },
-      )
+    const ref =
+      typeof body.tableRef === "string" && body.tableRef.trim()
+        ? body.tableRef.trim()
+        : body.tableId != null && Number.isFinite(Number(body.tableId))
+          ? String(body.tableId)
+          : ""
+
+    if (!ref || items.length === 0) {
+      return NextResponse.json({ error: "tableRef (ou tableId) et items requis" }, { status: 400 })
+    }
+
+    let tableRowId = Number(body.tableId)
+    let tableNumberForOrder = Number.isFinite(tableRowId) ? tableRowId : 0
+
+    if (hasServerSupabaseEnv()) {
+      const supaAdmin = createServiceRoleClient()
+      const resolved = await resolveRestaurantTableFromRef(supaAdmin, ref)
+      if (!resolved) {
+        return NextResponse.json({ error: "Table inconnue pour cette commande QR" }, { status: 400 })
+      }
+      tableRowId = resolved.id
+      tableNumberForOrder = resolved.table_number
+    } else if (/^\d+$/.test(ref)) {
+      const n = Number(ref)
+      tableRowId = n
+      tableNumberForOrder = n
+    } else {
+      return NextResponse.json({ error: "Sans base, utilisez un numéro de table numérique dans l’URL" }, { status: 400 })
     }
 
     const total =
@@ -32,7 +59,7 @@ export async function POST(request: Request) {
 
     const orderNumber =
       body.orderNumber ||
-      `T${tableId}-${String(Math.floor(1000 + Math.random() * 9000))}`
+      `T${tableNumberForOrder}-${String(Math.floor(1000 + Math.random() * 9000))}`
 
     if (!hasServerSupabaseEnv()) {
       return NextResponse.json(
@@ -40,7 +67,7 @@ export async function POST(request: Request) {
           order: {
             id: body.id ?? `ORD-${Date.now()}`,
             order_number: orderNumber,
-            table_number: tableId,
+            table_number: tableNumberForOrder,
             order_type: "qr_self_service",
             status: "received",
             items,
@@ -61,8 +88,8 @@ export async function POST(request: Request) {
       const { data: existing } = await supabase
         .from("table_sessions")
         .select("id")
-        .eq("table_id", tableId)
-        .eq("status", "open")
+        .eq("table_id", tableRowId)
+        .is("closed_at", null)
         .maybeSingle()
 
       if (existing?.id) {
@@ -70,7 +97,7 @@ export async function POST(request: Request) {
       } else {
         const { data: created } = await supabase
           .from("table_sessions")
-          .insert({ table_id: tableId, status: "open" })
+          .insert({ table_id: tableRowId })
           .select("id")
           .single()
         sessionId = created?.id ?? null
@@ -83,10 +110,11 @@ export async function POST(request: Request) {
       .from("orders")
       .insert({
         order_number: orderNumber,
-        customer_name: body.customerName ?? `Client Table ${tableId}`,
+        customer_name: body.customerName ?? `Client Table ${tableNumberForOrder}`,
         order_type: "qr_self_service",
         order_source: "qr_self_service",
-        table_id: tableId,
+        table_id: tableRowId,
+        table_number: tableNumberForOrder,
         session_id: sessionId,
         subtotal: total,
         total,
@@ -104,7 +132,7 @@ export async function POST(request: Request) {
           order: {
             id: body.id ?? `ORD-${Date.now()}`,
             order_number: orderNumber,
-            table_number: tableId,
+            table_number: tableNumberForOrder,
             order_type: "qr_self_service",
             status: "received",
             items,
@@ -135,7 +163,7 @@ export async function POST(request: Request) {
         order: {
           id: order.id,
           order_number: order.order_number,
-          table_number: tableId,
+          table_number: tableNumberForOrder,
           order_type: "qr_self_service",
           status: order.status ?? "received",
           items,

@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils"
 import { CashRegisterMovementForm } from "@/components/caisse/CashRegisterMovementForm"
 import { useRealtimeOrders, type KitchenOrderInput } from "@/lib/hooks/useRealtimeOrders"
 import { useNotifications } from "@/lib/hooks/useNotifications"
+import { cashierAudience } from "@/lib/notifications/audience"
 
 type MenuItem = {
   id: string
@@ -193,7 +194,12 @@ export default function PosPage() {
       clearTicket()
       setToast("Commande envoyee!")
       setTimeout(() => setToast(null), 2500)
-      addNotification({ type: "payment_received", title: "Paiement recu", message: `Ticket ${ticketNumber} paye par ${method} — ${total.toFixed(2)}€` })
+      addNotification({
+        type: "payment_received",
+        title: "Paiement recu",
+        message: `Ticket ${ticketNumber} paye par ${method} — ${total.toFixed(2)}€`,
+        audience: cashierAudience(),
+      })
     },
     [ticket, ticketNumber, total, addOrder, clearTicket, addNotification],
   )
@@ -394,7 +400,7 @@ export default function PosPage() {
   )
 
   return (
-    <RequireAuth roles={["ADMIN", "STAFF", "CASHIER"]}>
+    <RequireAuth roles={["ADMIN", "CASHIER"]}>
       <PageShell className="min-h-screen bg-slate-100 dark:bg-slate-950">
         <SiteHeader
           backHref="/admin"

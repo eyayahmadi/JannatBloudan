@@ -30,18 +30,19 @@ export function isLocale(v: unknown): v is Locale {
 }
 
 /**
- * Côté client : si 1/true, charge les traductions via `/api/i18n/translate` (Google)
+ * Côté client : si activé (par défaut oui), charge les traductions via `/api/i18n/translate`
  * à partir du référentiel FR, puis mise en cache localStorage.
- * `NEXT_PUBLIC_AUTO_TRANSLATION` est un alias équivalent.
- * Nécessite `GOOGLE_TRANSLATE_API_KEY` côté serveur.
+ * Désactivation explicite : NEXT_PUBLIC_I18N_AUTO=0 / false / off.
+ * Serveur : TRANSLATION_API_KEY + TRANSLATION_PROVIDER ; sans clé, la route renvoie 503.
  */
 function readAutoTranslationEnv(): boolean {
   const keys = ["NEXT_PUBLIC_I18N_AUTO", "NEXT_PUBLIC_AUTO_TRANSLATION"]
   for (const k of keys) {
     const v = typeof process.env[k] === "string" ? process.env[k]!.trim().toLowerCase() : ""
+    if (["0", "false", "no", "off"].includes(v)) return false
     if (["1", "true", "yes"].includes(v)) return true
   }
-  return false
+  return true
 }
 
 export const I18N_AUTO_ENABLED: boolean = readAutoTranslationEnv()

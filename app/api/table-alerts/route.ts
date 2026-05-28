@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 
-export type TableAlertType = "call_server" | "request_bill" | "help" | "payment_done"
+export type TableAlertType = "call_server" | "request_bill" | "help" | "payment_done" | "call_cashier"
 
 export type TableAlertRow = {
   id: string
@@ -18,10 +18,11 @@ function genId() {
 }
 
 function mapRow(row: any): TableAlertRow {
+  const alertType = (row.alert_type ?? row.type) as TableAlertType
   return {
     id: String(row.id),
     tableId: String(row.table_id),
-    type: row.alert_type,
+    type: alertType,
     message: row.message ?? "",
     createdAt: row.created_at,
     resolvedAt: row.resolved_at,
@@ -89,9 +90,8 @@ export async function POST(request: Request) {
       .from("table_alerts")
       .insert({
         table_id: tableId,
-        alert_type: type,
-        message,
-        status: "pending",
+        type,
+        message: message || null,
       })
       .select("*")
       .single()
@@ -128,16 +128,16 @@ export async function PATCH(request: Request) {
     if (id) {
       const { error } = await supabase
         .from("table_alerts")
-        .update({ resolved_at: resolvedAt, status: "resolved" })
+        .update({ resolved_at: resolvedAt })
         .eq("id", id)
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     } else if (tableId) {
       let q = supabase
         .from("table_alerts")
-        .update({ resolved_at: resolvedAt, status: "resolved" })
+        .update({ resolved_at: resolvedAt })
         .eq("table_id", Number(tableId))
         .is("resolved_at", null)
-      if (type) q = q.eq("alert_type", type)
+      if (type) q = q.eq("type", type)
       const { error } = await q
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     }

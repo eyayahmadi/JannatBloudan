@@ -1,9 +1,14 @@
 import { createHash } from "node:crypto"
+import googleTranslatePkg from "@google-cloud/translate"
 import { createServiceRoleClient } from "@/lib/auth/admin-api"
-import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 
-const GOOGLE_KEY =
-  process.env.GOOGLE_TRANSLATE_API_KEY ?? process.env.GOOGLE_CLOUD_TRANSLATION_API_KEY
+/** Équivalent ESM de : `const { Translate } = require('@google-cloud/translate').v2` */
+const { Translate } = googleTranslatePkg.v2
+import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import { resolveTranslationRuntime, type TranslationRuntime } from "@/lib/server/env-providers"
+import { shouldBypassMachineTranslation } from "@/lib/server/translation-guards"
+
+const CHUNK = 72
 
 /** Code langue pour l’API Google Translation v2 */
 const GOOGLE_TARGET: Record<string, string> = {
@@ -13,10 +18,19 @@ const GOOGLE_TARGET: Record<string, string> = {
   fr: "fr",
 }
 
-const CHUNK = 72
-
 export function translationApiConfigured(): boolean {
-  return typeof GOOGLE_KEY === "string" && GOOGLE_KEY.length > 8
+  return resolveTranslationRuntime().ok
+}
+
+/** Message humain lorsque non configuré (logs / API sans exposer la clé). */
+export function translationConfigureHint(): string {
+  const rt = resolveTranslationRuntime()
+  if (rt.ok) {
+    if (rt.provider === "deepl") return "deepl"
+    if (rt.provider === "google_cloud") return "google_cloud"
+    return "google"
+  }
+  return rt.message
 }
 
 function lookupHash(sourceLang: string, targetLang: string, text: string): string {
@@ -25,9 +39,9 @@ function lookupHash(sourceLang: string, targetLang: string, text: string): strin
     .digest("hex")
 }
 
-async function translateChunkGoogle(texts: string[], source: string, target: string): Promise<string[]> {
+async function translateChunkGoogle(apiKey: string, texts: string[], source: string, target: string): Promise<string[]> {
   const res = await fetch(
-    `https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(GOOGLE_KEY!)}`,
+    `https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -49,6 +63,70 @@ async function translateChunkGoogle(texts: string[], source: string, target: str
   return data.data.translations.map((x) => x.translatedText)
 }
 
+async function translateChunkGoogleCloud(
+  texts: string[],
+  source: string,
+  target: string,
+  rt: Extract<TranslationRuntime, { ok: true; provider: "google_cloud" }>,
+): Promise<string[]> {
+  const cfg: ConstructorParameters<typeof Translate>[0] = {}
+  if (rt.projectId) cfg.projectId = rt.projectId
+  if (rt.keyFilename) cfg.keyFilename = rt.keyFilename
+  if (rt.apiKey) cfg.key = rt.apiKey
+  const client = new Translate(cfg)
+  const [raw] = await client.translate(texts, { from: source, to: target, format: "text" })
+  if (Array.isArray(raw)) {
+    if (raw.length !== texts.length) throw new Error("google_cloud_translate_length_mismatch")
+    return raw
+  }
+  if (typeof raw === "string" && texts.length === 1) return [raw]
+  throw new Error("google_cloud_translate_unexpected_response")
+}
+
+const DEEPL_TARGET_MAP: Record<string, string> = {
+  en: "EN",
+  de: "DE",
+  ar: "AR",
+  fr: "FR",
+}
+const DEEPL_SOURCE_MAP: Record<string, string> = {
+  fr: "FR",
+  en: "EN",
+  de: "DE",
+  ar: "AR",
+}
+
+async function translateChunkDeepL(
+  endpoint: string,
+  apiKey: string,
+  texts: string[],
+  source: string,
+  target: string,
+): Promise<string[]> {
+  const body = new URLSearchParams()
+  for (const q of texts) body.append("text", q)
+  body.set("target_lang", DEEPL_TARGET_MAP[target] ?? target.toUpperCase())
+  const srcLang = DEEPL_SOURCE_MAP[source]
+  if (srcLang) body.set("source_lang", srcLang)
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `DeepL-Auth-Key ${apiKey}`,
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    body: body.toString(),
+  })
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(errText || res.statusText)
+  }
+  const data = (await res.json()) as { translations?: { text: string }[] }
+  const arr = data.translations ?? []
+  if (arr.length !== texts.length) throw new Error("deepl_length_mismatch")
+  return arr.map((x) => x.text)
+}
+
 /**
  * Traduit une liste de chaînes FR → locale cible, avec cache Postgres (service role).
  * En cas d’échec partiel ou d’API absente, renvoie le texte source pour les entrées concernées.
@@ -64,7 +142,9 @@ export async function translateStrings(
 
   const out = inputs.map((s) => s)
   if (src === tgt || inputs.length === 0) return out
-  if (!translationApiConfigured()) return out
+
+  const rt = resolveTranslationRuntime()
+  if (!rt.ok) return out
 
   const placeholders: Array<{ idx: number; text: string; hash: string }> = []
   for (let i = 0; i < inputs.length; i++) {
@@ -72,6 +152,7 @@ export async function translateStrings(
     if (typeof raw !== "string") continue
     const text = raw
     if (!text.trim()) continue
+    if (shouldBypassMachineTranslation(text)) continue
     placeholders.push({ idx: i, text, hash: lookupHash(src, tgt, text) })
   }
   if (placeholders.length === 0) return out
@@ -122,13 +203,18 @@ export async function translateStrings(
   try {
     for (let i = 0; i < uniqOrder.length; i += CHUNK) {
       const slice = uniqOrder.slice(i, i + CHUNK)
-      const part = await translateChunkGoogle(slice, src, tgt)
+      const part =
+        rt.provider === "deepl"
+          ? await translateChunkDeepL(rt.endpoint, rt.apiKey, slice, src, tgt)
+          : rt.provider === "google_cloud"
+            ? await translateChunkGoogleCloud(slice, src, tgt, rt)
+            : await translateChunkGoogle(rt.apiKey, slice, src, tgt)
       slice.forEach((orig, k) => {
         translatedByOriginal.set(orig, part[k] ?? orig)
       })
     }
   } catch {
-    return inputs.map((s) => (typeof s === "string" ? s : ""))
+    return out
   }
 
   const upsertMap = new Map<

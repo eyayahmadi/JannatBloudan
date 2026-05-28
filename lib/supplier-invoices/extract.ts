@@ -1,4 +1,5 @@
 import type { ExtractedInvoice } from "./types"
+import { resolveOcrRuntime } from "@/lib/server/env-providers"
 
 const SYSTEM_PROMPT = `Tu es un expert comptable pour des restaurants. Tu reçois le texte ou l'image d'une facture fournisseur.
 Extrais un JSON strict avec cette structure (chiffres en nombre, pas de texte):
@@ -67,14 +68,12 @@ function parseJson(content: string): ExtractedInvoice {
   }
 }
 
-async function callOpenAI(body: object): Promise<string> {
-  const key = process.env.OPENAI_API_KEY
-  if (!key) throw new Error("OPENAI_API_KEY manquant")
+async function callOpenAIChat(apiKey: string, body: Record<string, unknown>): Promise<string> {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
   })
@@ -87,14 +86,15 @@ async function callOpenAI(body: object): Promise<string> {
 }
 
 /**
- * Extraction texte (PDF) via modèle de chat.
+ * Extraction texte (PDF) via OCR_PROVIDER=openai (clé OCR_API_KEY ou OPENAI_API_KEY fallback).
  */
 export async function extractInvoiceFromText(plainText: string): Promise<ExtractedInvoice> {
-  if (!process.env.OPENAI_API_KEY) {
-    return emptyExtraction("Variable OPENAI_API_KEY non configuree (extraction manuelle requise)")
+  const ocr = resolveOcrRuntime()
+  if (!ocr.ok || ocr.provider !== "openai") {
+    return emptyExtraction(ocr.ok ? "Configuration OCR invalide" : ocr.message)
   }
-  const content = await callOpenAI({
-    model: process.env.OPENAI_INVOICE_MODEL ?? "gpt-4o-mini",
+  const content = await callOpenAIChat(ocr.apiKey, {
+    model: ocr.textModel ?? "gpt-4o-mini",
     response_format: { type: "json_object" },
     temperature: 0.1,
     messages: [
@@ -113,17 +113,15 @@ export async function extractInvoiceFromText(plainText: string): Promise<Extract
 }
 
 /**
- * Vision: image (PNG, JPEG, WebP).
+ * Vision: image (PNG, JPEG, WebP) — même pile OpenAI Vision.
  */
-export async function extractInvoiceFromImage(
-  base64: string,
-  mime: string,
-): Promise<ExtractedInvoice> {
-  if (!process.env.OPENAI_API_KEY) {
-    return emptyExtraction("Variable OPENAI_API_KEY non configuree (extraction manuelle requise)")
+export async function extractInvoiceFromImage(base64: string, mime: string): Promise<ExtractedInvoice> {
+  const ocr = resolveOcrRuntime()
+  if (!ocr.ok || ocr.provider !== "openai") {
+    return emptyExtraction(ocr.ok ? "Configuration OCR invalide" : ocr.message)
   }
-  const content = await callOpenAI({
-    model: process.env.OPENAI_INVOICE_VISION_MODEL ?? "gpt-4o-mini",
+  const content = await callOpenAIChat(ocr.apiKey, {
+    model: ocr.visionModel ?? "gpt-4o-mini",
     response_format: { type: "json_object" },
     temperature: 0.1,
     messages: [
@@ -146,8 +144,9 @@ export async function extractInvoiceFromImage(
 
 export async function extractTextFromPdfBuffer(buf: ArrayBuffer): Promise<string> {
   try {
-    const { PDFParse } = await import("pdf-parse")
-    const parser = new PDFParse({ data: new Uint8Array(buf) })
+    const mod = await import("pdf-parse")
+    const Parser = mod.PDFParse
+    const parser = new Parser({ data: new Uint8Array(buf) })
     const result = await parser.getText()
     await parser.destroy().catch(() => {})
     return result.text ?? ""

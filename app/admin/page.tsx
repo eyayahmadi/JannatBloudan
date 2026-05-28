@@ -14,14 +14,10 @@ import {
   ArrowDownRight,
 } from "lucide-react"
 import Link from "next/link"
+import { useAdminPortal } from "@/components/admin/admin-portal-context"
 import { RequireAuth } from "@/components/auth/RequireAuth"
-import { PageHero } from "@/components/site/PageHero"
-import { PageShell } from "@/components/site/PageShell"
-import { SiteFooter } from "@/components/site/SiteFooter"
-import { SiteHeader } from "@/components/site/SiteHeader"
 import { AIAgentBadge } from "@/components/ai/AIAgentBadge"
 import { MotionCard, CountUp, StaggerList, StaggerItem } from "@/components/ui/motion-primitives"
-import { SITE } from "@/lib/site-config"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -142,10 +138,14 @@ const getAverageRating = (orders: Order[]) => {
 }
 
 export default function AdminDashboard() {
-  const [selectedPeriod, setSelectedPeriod] = useState<DashboardPeriod>("today")
+  const { dashboardPeriod: selectedPeriod } = useAdminPortal()
   const [orders, setOrders] = useState<Order[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [overviewExtras, setOverviewExtras] = useState({
+    reservationsToday: 0,
+    upcomingEvents: 0,
+  })
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -175,6 +175,32 @@ export default function AdminDashboard() {
     }
 
     void loadDashboard()
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadOverview() {
+      try {
+        const today = new Date().toISOString().slice(0, 10)
+        const [rRes, eRes] = await Promise.all([fetch("/api/reservations"), fetch("/api/events")])
+        const rJson = rRes.ok ? await rRes.json().catch(() => ({})) : {}
+        const eJson = eRes.ok ? await eRes.json().catch(() => ({})) : {}
+        if (cancelled) return
+        const reservations = Array.isArray(rJson.reservations) ? rJson.reservations : []
+        const resToday = reservations.filter(
+          (x: { reservation_date?: string }) => x.reservation_date === today,
+        ).length
+        const events = Array.isArray(eJson.events) ? eJson.events : []
+        const up = events.filter((e: { event_date?: string }) => (e.event_date ?? "") >= today).length
+        setOverviewExtras({ reservationsToday: resToday, upcomingEvents: up })
+      } catch {
+        if (!cancelled) setOverviewExtras({ reservationsToday: 0, upcomingEvents: 0 })
+      }
+    }
+    void loadOverview()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const { periodOrders, previousOrders } = useMemo(() => {
@@ -368,198 +394,132 @@ export default function AdminDashboard() {
     }
   }
 
+  const revenueVal = periodOrders.reduce((sum, order) => sum + toNumber(order.total), 0)
+
   return (
     <RequireAuth roles={["ADMIN"]} fallback={<div className="p-6 text-center">Chargement...</div>}>
-      <PageShell>
-        <SiteHeader
-          backHref="/"
-          hideMainNav
-          trailing={
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <Button
-                variant={selectedPeriod === "today" ? "default" : "outline"}
-                size="sm"
-                className="rounded-full"
-                onClick={() => setSelectedPeriod("today")}
-              >
-                Aujourd&apos;hui
-              </Button>
-              <Button
-                variant={selectedPeriod === "week" ? "default" : "outline"}
-                size="sm"
-                className="rounded-full"
-                onClick={() => setSelectedPeriod("week")}
-              >
-                Semaine
-              </Button>
-              <Button
-                variant={selectedPeriod === "month" ? "default" : "outline"}
-                size="sm"
-                className="rounded-full"
-                onClick={() => setSelectedPeriod("month")}
-              >
-                Mois
-              </Button>
-            </div>
-          }
-        />
-
-        <PageHero
-          imageSrc={SITE.images.interior}
-          imageAlt=""
-          kicker="Administration"
-          title="Tableau de bord"
-          subtitle="Vue d’ensemble des ventes, stocks et satisfaction."
-          height="sm"
-        />
-
-        <div className="mx-auto max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4 animate-fade-up [animation-delay:80ms]">
-          <Button asChild variant="outline" className="h-20 bg-transparent">
-            <Link href="/admin/menu" className="flex flex-col gap-2">
-              <span className="font-semibold">Gestion du Menu</span>
-              <span className="text-xs">Plats & Categories</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 bg-transparent">
-            <Link href="/admin/inventory" className="flex flex-col gap-2">
-              <span className="font-semibold">Stock</span>
-              <span className="text-xs">Inventaire</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 bg-transparent">
-            <Link href="/admin/supplier-invoices" className="flex flex-col gap-2">
-              <span className="font-semibold">Factures fournisseurs</span>
-              <span className="text-xs">Factures</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 bg-transparent">
-            <Link href="/admin/staff" className="flex flex-col gap-2">
-              <span className="font-semibold">Personnel</span>
-              <span className="text-xs">Equipe</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 bg-transparent">
-            <Link href="/admin/insights" className="flex flex-col gap-2">
-              <span className="font-semibold">Insights ops</span>
-              <span className="text-xs">Tendances &amp; suggestions</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 bg-transparent">
-            <Link href="/admin/reports" className="flex flex-col gap-2">
-              <span className="font-semibold">Rapports</span>
-              <span className="text-xs">Statistiques</span>
-            </Link>
-          </Button>
+      <div className="animate-fade-up space-y-8">
+        <div className="border-b border-[color:var(--lux-bordeaux)]/10 pb-6 dark:border-zinc-800">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-900/45 dark:text-amber-200/50">
+            Vue d&apos;ensemble
+          </p>
+          <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-amber-950 dark:text-amber-50 sm:text-3xl">
+            Tableau de bord principal
+          </h1>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-amber-900/65 dark:text-amber-200/65">
+            Indicateurs clés, alertes et suggestions. Période :{" "}
+            <span className="font-medium text-amber-950 dark:text-amber-100">
+              {selectedPeriod === "today" ? "aujourd&apos;hui" : selectedPeriod === "week" ? "cette semaine" : "ce mois"}
+            </span>
+            . Utilisez le menu à gauche pour ouvrir chaque module sans quitter le portail.
+          </p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8 animate-fade-up [animation-delay:160ms]">
-          <Button asChild variant="outline" className="h-20 border-orange-300/50 bg-orange-50/50 dark:border-orange-800/30 dark:bg-orange-950/20">
-            <Link href="/kitchen" className="flex flex-col gap-2">
-              <span className="font-semibold">🍽️ Cuisine (KDS)</span>
-              <span className="text-xs">Station cuisine</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-cyan-300/60 bg-gradient-to-br from-cyan-50 to-sky-50 dark:border-cyan-700/40 dark:from-cyan-950/30 dark:to-sky-950/30">
-            <Link href="/bar" className="flex flex-col gap-2">
-              <span className="font-semibold">🍹 Bar</span>
-              <span className="text-xs">Station boissons</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-violet-300/60 bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:border-violet-700/40 dark:from-violet-950/30 dark:to-fuchsia-950/30">
-            <Link href="/shisha" className="flex flex-col gap-2">
-              <span className="font-semibold">💨 Chicha</span>
-              <span className="text-xs">Station shisha</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-indigo-300/60 bg-gradient-to-br from-indigo-50 to-purple-50 dark:border-indigo-700/40 dark:from-indigo-950/30 dark:to-purple-950/30">
-            <Link href="/driver" className="flex flex-col gap-2">
-              <span className="font-semibold">🛵 Livreur</span>
-              <span className="text-xs">Tracking livraisons</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-blue-300/50 bg-blue-50/50 dark:border-blue-800/30 dark:bg-blue-950/20">
-            <Link href="/pos" className="flex flex-col gap-2">
-              <span className="font-semibold">Caisse (POS)</span>
-              <span className="text-xs">Point de vente</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-purple-300/50 bg-purple-50/50 dark:border-purple-800/30 dark:bg-purple-950/20">
-            <Link href="/admin/qr" className="flex flex-col gap-2">
-              <span className="font-semibold">QR Codes</span>
-              <span className="text-xs">Tables connectees</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-amber-300/60 bg-gradient-to-br from-amber-50 to-yellow-50 dark:border-amber-800/30 dark:from-amber-950/20 dark:to-yellow-950/15">
-            <Link href="/caisse" className="flex flex-col gap-2">
-              <span className="font-semibold">💶 Caisse intelligente</span>
-              <span className="text-xs">Synthèse & jour</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-slate-300/60 bg-slate-50/80 dark:border-slate-700/40 dark:bg-slate-900/60">
-            <Link href="/admin/taxes" className="flex flex-col gap-2">
-              <span className="font-semibold">Taxes TVA</span>
-              <span className="text-xs">Règles & périmètres</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-emerald-300/50 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-950/20">
-            <Link href="/admin/finance" className="flex flex-col gap-2">
-              <span className="font-semibold">Finances</span>
-              <span className="text-xs">Revenus & depenses</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-rose-300/50 bg-rose-50/50 dark:border-rose-800/30 dark:bg-rose-950/20">
-            <Link href="/admin/hr" className="flex flex-col gap-2">
-              <span className="font-semibold">RH</span>
-              <span className="text-xs">Employes & planning</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-cyan-300/50 bg-cyan-50/50 dark:border-cyan-800/30 dark:bg-cyan-950/20">
-            <Link href="/server" className="flex flex-col gap-2">
-              <span className="font-semibold">Serveur</span>
-              <span className="text-xs">Commandes table</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-violet-400/60 bg-gradient-to-br from-violet-50 to-purple-50 dark:border-violet-700/40 dark:from-violet-950/30 dark:to-purple-950/30">
-            <Link href="/admin/ai" className="flex flex-col gap-2">
-              <span className="font-semibold">IA Agents</span>
-              <span className="text-xs">10 agents intelligents</span>
-            </Link>
-          </Button>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8 animate-fade-up [animation-delay:240ms]">
-          <Button asChild variant="outline" className="h-20 border-pink-300/50 bg-pink-50/50 dark:border-pink-800/30 dark:bg-pink-950/20">
-            <Link href="/admin/events/private" className="flex flex-col gap-2">
-              <span className="font-semibold">Evenements prives</span>
-              <span className="text-xs">Reservations privees</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-indigo-300/50 bg-indigo-50/50 dark:border-indigo-800/30 dark:bg-indigo-950/20">
-            <Link href="/admin/agents" className="flex flex-col gap-2">
-              <span className="font-semibold">Observability</span>
-              <span className="text-xs">Monitoring agents IA</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-slate-300/50 bg-slate-50/50 dark:border-slate-700/30 dark:bg-slate-900/30">
-            <Link href="/admin/settings" className="flex flex-col gap-2">
-              <span className="font-semibold">Parametres</span>
-              <span className="text-xs">Config systeme</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-amber-400/60 bg-gradient-to-br from-amber-50 to-orange-50 dark:border-amber-700/40 dark:from-amber-950/30 dark:to-orange-950/30">
-            <Link href="/admin/users" className="flex flex-col gap-2">
-              <span className="font-semibold">Gestion utilisateurs</span>
-              <span className="text-xs">Comptes & roles</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-20 border-lime-300/50 bg-lime-50/50 dark:border-lime-800/30 dark:bg-lime-950/20">
-            <Link href="/admin/events" className="flex flex-col gap-2">
-              <span className="font-semibold">Evenements publics</span>
-              <span className="text-xs">Calendrier & billets</span>
-            </Link>
-          </Button>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <Link
+            href="/admin/finance"
+            className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
+              Chiffre ({selectedPeriod === "today" ? "jour" : selectedPeriod === "week" ? "sem." : "mois"})
+            </p>
+            <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50">
+              {loading ? "—" : formatCurrencyDetailed(revenueVal)}
+            </p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Encaissements & TVA — détail finances</p>
+          </Link>
+          <Link
+            href="/pos"
+            className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
+              Commandes
+            </p>
+            <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50">
+              {loading ? "—" : periodOrders.length}
+            </p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Ouvrir le POS</p>
+          </Link>
+          <Link
+            href="/admin/ai/reservation"
+            className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
+              Résas. aujourd&apos;hui
+            </p>
+            <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50">
+              {overviewExtras.reservationsToday}
+            </p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Tables & planning</p>
+          </Link>
+          <Link
+            href="/admin/inventory"
+            className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
+              Alertes stock
+            </p>
+            <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50">
+              {inventoryAlerts.length}
+            </p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Gérer l&apos;inventaire</p>
+          </Link>
+          <Link
+            href="/admin/events"
+            className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
+              Événements à venir
+            </p>
+            <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50">
+              {overviewExtras.upcomingEvents}
+            </p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Billets & calendrier</p>
+          </Link>
+          <Link
+            href="/admin/supplier-invoices"
+            className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
+              Factures fourn.
+            </p>
+            <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50">→</p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">OCR & validation</p>
+          </Link>
+          <Link
+            href="/caisse"
+            className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
+              Caisse
+            </p>
+            <p className="mt-1 font-display text-lg font-semibold text-amber-950 dark:text-amber-50">Synthèse jour</p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Encaissements & écarts</p>
+          </Link>
+          <Link
+            href="/admin/staff"
+            className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
+              Équipe
+            </p>
+            <p className="mt-1 font-display text-lg font-semibold text-amber-950 dark:text-amber-50">Personnel</p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Planning & stations</p>
+          </Link>
+          <Link
+            href="/admin/ai"
+            className="group rounded-2xl border border-[color:var(--lux-gold)]/35 bg-gradient-to-br from-[color:var(--lux-bordeaux)]/10 to-[color:var(--lux-cream)]/50 p-4 shadow-sm transition hover:shadow-[var(--lux-shadow-gold)] dark:border-[color:var(--lux-gold)]/25 dark:from-zinc-900 dark:to-zinc-800/80"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--lux-bordeaux)] dark:text-amber-200/70">
+              IA & insights
+            </p>
+            <p className="mt-1 font-display text-lg font-semibold text-amber-950 dark:text-amber-50">Centre IA</p>
+            <p className="mt-1 text-[11px] text-amber-900/60 dark:text-amber-200/55">Agents, prévisions, anomalies</p>
+          </Link>
         </div>
 
         {/* Stats Grid — animated premium KPI cards */}
+        <div id="admin-analytics" className="scroll-mt-28">
         <StaggerList className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => {
             const Icon = stat.icon
@@ -617,6 +577,7 @@ export default function AdminDashboard() {
             )
           })}
         </StaggerList>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Revenue Chart */}
@@ -692,7 +653,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <CardTitle>Commandes recentes</CardTitle>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/admin/orders">Voir tout</Link>
+                  <Link href="/pos">Voir tout (POS)</Link>
                 </Button>
               </div>
             </CardHeader>
@@ -775,8 +736,8 @@ export default function AdminDashboard() {
         </div>
 
         {/* Smart Alerts */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card id="portal-alerts" className="scroll-mt-28">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-orange-600" />
@@ -844,7 +805,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card id="portal-suggestions" className="scroll-mt-28">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-blue-600" />
@@ -877,10 +838,8 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
-      </div>
         <AIAgentBadge context="admin" />
-        <SiteFooter />
-      </PageShell>
+      </div>
     </RequireAuth>
   )
 }

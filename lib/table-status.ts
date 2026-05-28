@@ -56,6 +56,7 @@ export type TableSnapshot = {
   status: TableStatus
   hasCallAlert: boolean
   hasBillAlert: boolean
+  hasCashierCall: boolean
   hasPaymentDone: boolean
   activeOrders: KitchenOrder[]
   total: number
@@ -73,12 +74,13 @@ export function computeTableSnapshot(
 
   const hasCallAlert = tableAlerts.some((a) => a.type === "call_server")
   const hasBillAlert = tableAlerts.some((a) => a.type === "request_bill")
+  const hasCashierCall = tableAlerts.some((a) => a.type === "call_cashier")
   const hasPaymentDone = tableAlerts.some((a) => a.type === "payment_done")
 
   let status: TableStatus
   if (active.length === 0) {
-    status = hasCallAlert ? "CALL_SERVER" : "FREE"
-  } else if (hasCallAlert) {
+    status = hasCallAlert || hasCashierCall ? "CALL_SERVER" : "FREE"
+  } else if (hasCallAlert || hasCashierCall) {
     status = "CALL_SERVER"
   } else if (hasPaymentDone && active.every((o) => o.status === "completed")) {
     status = "PAID"
@@ -107,6 +109,7 @@ export function computeTableSnapshot(
     status,
     hasCallAlert,
     hasBillAlert,
+    hasCashierCall,
     hasPaymentDone,
     activeOrders: active,
     total,

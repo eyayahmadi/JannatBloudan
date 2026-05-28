@@ -1,7 +1,5 @@
-"use client"
+import { redirect } from "next/navigation"
 
-import { StationBoard } from "@/components/stations/StationBoard"
-
-export default function ShishaPage() {
-  return <StationBoard station="SHISHA" />
+export default function ShishaIndexRedirect() {
+  redirect("/shisha/orders")
 }

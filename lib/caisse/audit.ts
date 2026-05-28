@@ -14,7 +14,7 @@ export async function insertCaisseAudit(
     metadata?: Record<string, unknown> | null
   },
 ) {
-  const { error } = await supabase.from("audit_logs").insert({
+  const row = {
     user_id: params.userId,
     user_email: params.userEmail ?? null,
     action: params.action,
@@ -23,6 +23,20 @@ export async function insertCaisseAudit(
     old_values: params.oldValues ?? null,
     new_values: params.newValues ?? null,
     metadata: params.metadata ?? null,
-  })
-  if (error) console.warn("[caisse/audit]", error.message)
+  }
+
+  const { error } = await supabase.from("audit_logs").insert(row)
+  if (!error) return
+
+  const fkBroken = error.code === "23503"
+  if (fkBroken && params.userId != null && params.userId !== "") {
+    const { error: err2 } = await supabase.from("audit_logs").insert({
+      ...row,
+      user_id: null,
+    })
+    if (err2) console.warn("[caisse/audit]", err2.message)
+    return
+  }
+
+  console.warn("[caisse/audit]", error.message)
 }

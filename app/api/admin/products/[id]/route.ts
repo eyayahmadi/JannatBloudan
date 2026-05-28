@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireAdmin } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import { insertCaisseAudit } from "@/lib/caisse/audit"
 
 type Ctx = { params: Promise<{ id: string }> }
+
+function serializeRow<R extends Record<string, unknown>>(row: R): Record<string, unknown> {
+  return JSON.parse(JSON.stringify(row)) as Record<string, unknown>
+}
 
 export async function PATCH(request: Request, ctx: Ctx) {
   const guard = await requireAdmin()
@@ -13,6 +18,13 @@ export async function PATCH(request: Request, ctx: Ctx) {
   const { id } = await ctx.params
   const body = await request.json()
   const supabase = createServiceRoleClient()
+
+  const { data: before, error: beforeErr } = await supabase.from("products").select("*").eq("id", id).maybeSingle()
+
+  if (beforeErr || !before) {
+    return NextResponse.json({ error: "Produit introuvable" }, { status: 404 })
+  }
+
   const allowed = [
     "name",
     "slug",
@@ -41,6 +53,19 @@ export async function PATCH(request: Request, ctx: Ctx) {
   }
   const { data, error } = await supabase.from("products").update(update).eq("id", id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const actorEmail = typeof guard.user.email === "string" ? guard.user.email.trim() || null : null
+  await insertCaisseAudit(supabase, {
+    userId: guard.user.id ?? null,
+    userEmail: actorEmail,
+    action: "update",
+    entityType: "products",
+    entityId: id,
+    oldValues: serializeRow(before as Record<string, unknown>),
+    newValues: serializeRow(data as Record<string, unknown>),
+    metadata: { source: "api/admin/products PATCH" },
+  })
+
   return NextResponse.json({ product: data })
 }
 
@@ -52,7 +77,26 @@ export async function DELETE(_request: Request, ctx: Ctx) {
   }
   const { id } = await ctx.params
   const supabase = createServiceRoleClient()
+
+  const { data: before, error: beforeErr } = await supabase.from("products").select("*").eq("id", id).maybeSingle()
+  if (beforeErr || !before) {
+    return NextResponse.json({ error: "Produit introuvable" }, { status: 404 })
+  }
+
   const { error } = await supabase.from("products").delete().eq("id", id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const actorEmail = typeof guard.user.email === "string" ? guard.user.email.trim() || null : null
+  await insertCaisseAudit(supabase, {
+    userId: guard.user.id ?? null,
+    userEmail: actorEmail,
+    action: "delete",
+    entityType: "products",
+    entityId: id,
+    oldValues: serializeRow(before as Record<string, unknown>),
+    newValues: null,
+    metadata: { source: "api/admin/products DELETE" },
+  })
+
   return NextResponse.json({ success: true })
 }

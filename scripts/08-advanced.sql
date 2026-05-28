@@ -290,8 +290,14 @@ CREATE INDEX IF NOT EXISTS idx_audit_date     ON audit_logs(created_at DESC);
 
 
 -- Trigger generique : enregistre automatiquement les UPDATE/DELETE sur les tables sensibles
+-- SECURITY DEFINER : l'INSERT dans audit_logs doit passer sous RLS (politiques souvent SELECT-only).
 CREATE OR REPLACE FUNCTION log_audit_event()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+SET row_security = off
+AS $$
 DECLARE
   v_user_id UUID;
   v_old JSONB;
@@ -334,7 +340,7 @@ BEGIN
 
   RETURN COALESCE(NEW, OLD);
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 
 -- Attacher le trigger aux tables sensibles (idempotent via DROP IF EXISTS)

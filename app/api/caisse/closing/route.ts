@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import { netSortieCaisseFromRows } from "@/lib/caisse/cash-movements"
 
 const ALLOW = ["ADMIN", "CASHIER"] as const
 
@@ -67,13 +68,14 @@ export async function POST(request: Request) {
     const { data: movs } = await supabase
       .from("cash_register_movements")
       .select("kind, amount")
-      .gte("created_at", start)
-      .lte("created_at", endIso)
+      .gte("movement_at", start)
+      .lte("movement_at", endIso)
+
+    sorties = netSortieCaisseFromRows(movs ?? [])
 
     for (const r of movs ?? []) {
       const k = String((r as { kind?: string }).kind)
       const a = Number((r as { amount?: unknown }).amount ?? 0)
-      if (k === "sortie_caisse") sorties += a
       if (k === "avance_salaire") advancesEmp += a
     }
 

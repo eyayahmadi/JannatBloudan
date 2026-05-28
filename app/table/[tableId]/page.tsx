@@ -23,6 +23,7 @@ import {
 import { PageShell } from "@/components/site/PageShell"
 import { PremiumBackdrop } from "@/components/site/PremiumBackdrop"
 import { useRealtimeOrders, type OrderStatus } from "@/lib/hooks/useRealtimeOrders"
+import { useResolvedRestaurantTable } from "@/lib/hooks/useResolvedRestaurantTable"
 import { useTableAlerts } from "@/lib/hooks/useTableAlerts"
 import { cn } from "@/lib/utils"
 
@@ -60,19 +61,23 @@ const item: Variants = {
 }
 
 export default function TableLandingPage() {
-  const { tableId } = useParams<{ tableId: string }>()
+  const { tableId: rawTableRef } = useParams<{ tableId: string }>()
+  const { resolved, effectiveNumber, displayLabel } = useResolvedRestaurantTable(rawTableRef)
   const { orders } = useRealtimeOrders()
   const { raise, activeByTable } = useTableAlerts()
   const [toast, setToast] = useState<string | null>(null)
 
-  const tableOrders = useMemo(
-    () => orders.filter((o) => String(o.table_number) === String(tableId)),
-    [orders, tableId],
-  )
+  const tableId = rawTableRef
+  const displayTableTitle = displayLabel
+
+  const tableOrders = useMemo(() => {
+    if (effectiveNumber == null) return []
+    return orders.filter((o) => String(o.table_number) === String(effectiveNumber))
+  }, [orders, effectiveNumber])
   const activeOrder = tableOrders.find(
     (o) => o.status !== "completed" && o.status !== "cancelled",
   )
-  const tableAlerts = activeByTable(String(tableId))
+  const tableAlerts = activeByTable(String(effectiveNumber ?? rawTableRef))
 
   useEffect(() => {
     if (!toast) return
@@ -91,9 +96,9 @@ export default function TableLandingPage() {
 
   function requestBill() {
     raise({
-      tableId: String(tableId),
+      tableId: String(effectiveNumber ?? rawTableRef),
       type: "request_bill",
-      message: `Table ${tableId} demande l'addition`,
+      message: `Table ${effectiveNumber ?? rawTableRef} demande l'addition`,
     })
     setToast("Votre addition est en cours de préparation 🧾")
   }
@@ -146,6 +151,12 @@ export default function TableLandingPage() {
       <PremiumBackdrop />
 
       <div className="relative mx-auto w-full max-w-2xl flex-1 px-4 py-8">
+        {resolved && resolved.is_active === false ? (
+          <div className="mb-4 rounded-2xl border border-rose-300/60 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:border-rose-500/40 dark:bg-rose-950/50 dark:text-rose-100">
+            Cette table est désactivée. Contactez l&apos;équipe pour être reassis.
+          </div>
+        ) : null}
+
         {/* Luxury welcome header */}
         <motion.section
           initial={{ opacity: 0, y: -20 }}
@@ -181,7 +192,7 @@ export default function TableLandingPage() {
                 Bienvenue
               </p>
               <p className="font-display text-3xl font-bold leading-none tracking-tight">
-                Table <span className="text-gold">{tableId}</span>
+                Table <span className="text-gold">{displayTableTitle}</span>
               </p>
             </div>
             <motion.div

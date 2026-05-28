@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     const { data, error } = await supabase
       .from("invoices")
       .select(
-        "id, order_id, session_id, customer_name, subtotal, tva_rate, tva_amount, discount_amount, total, status, payment_method, payment_stage, paid_at, cashier_id, notes, cancel_reason, payment_split, created_at, invoice_items(*)",
+        "id, order_id, session_id, guest_session_id, customer_name, subtotal, tva_rate, tva_amount, discount_amount, total, billing_type, hospitality_reason, revenue_exclude, gross_before_discount, offer_snapshot, status, payment_method, payment_stage, paid_at, cashier_id, notes, cancel_reason, payment_split, created_at, invoice_items(*)",
       )
       .gte("created_at", start)
       .lte("created_at", endIso)

@@ -38,6 +38,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Identifiant d'événement invalide" }, { status: 400 })
     }
 
+    const guests = Math.max(1, Math.floor(Number(payload.guests)))
+
+    const { fetchEventPublicRow } = await import("@/lib/events/event-queries")
+    const { getAvailabilityForEvent } = await import("@/lib/events/event-availability")
+
+    const evRow = await fetchEventPublicRow(String(payload.eventId))
+    if (!evRow) {
+      return NextResponse.json({ error: "Événement introuvable" }, { status: 404 })
+    }
+
+    const maxRaw = evRow.max_attendees != null ? Number(evRow.max_attendees) : null
+    const avail = await getAvailabilityForEvent(String(payload.eventId), maxRaw, evRow as never)
+    if (avail.capped && (avail.availablePlaces == null || guests > avail.availablePlaces)) {
+      return NextResponse.json(
+        { error: "Plus assez de places disponibles.", availability: avail },
+        { status: 409 },
+      )
+    }
+
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -49,7 +68,7 @@ export async function POST(request: NextRequest) {
           guest_name: payload.name,
           guest_email: payload.email,
           guest_phone: payload.phone,
-          number_of_guests: payload.guests,
+          number_of_guests: guests,
           special_requests: payload.message ?? null,
         },
       ])

@@ -15,12 +15,11 @@ export async function GET() {
 
   const supabase = createServiceRoleClient()
   const [cat, prod, ing] = await Promise.all([
-    supabase.from("categories").select("*").order("section").order("display_order"),
+    supabase.from("categories").select("*").order("name"),
     supabase
       .from("products")
       .select(
-        `*, categories ( id, name, slug, section, is_active, display_order ),
-         product_ingredients ( quantity, ingredients ( id, name, unit, stock_quantity ) )`,
+        `*, categories ( id, name, slug ), product_ingredients ( quantity, ingredients ( id, name, unit, stock_quantity ) )`,
       )
       .order("name"),
     supabase.from("ingredients").select("id, name, unit, stock_quantity").order("name"),

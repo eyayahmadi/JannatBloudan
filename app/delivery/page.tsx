@@ -23,6 +23,7 @@ import { PageHero } from "@/components/site/PageHero"
 import { PageShell } from "@/components/site/PageShell"
 import { AIAgentBadge } from "@/components/ai/AIAgentBadge"
 import { SiteFooter } from "@/components/site/SiteFooter"
+import { DeliveryPromoStrip } from "@/components/site/DeliveryPromoStrip"
 import { SiteHeader } from "@/components/site/SiteHeader"
 import { MobileBottomNav } from "@/components/site/MobileBottomNav"
 import { SITE } from "@/lib/site-config"
@@ -1117,20 +1118,24 @@ export default function DeliveryPage() {
             <Button
               size="sm"
               onClick={() => setShowCart(true)}
-              className="relative gap-1.5 rounded-full border-amber-900/15 bg-white/90 shadow-sm"
+              className="relative gap-1.5 overflow-visible rounded-full border-amber-900/15 bg-white/90 shadow-sm"
               variant="outline"
             >
-              <ShoppingCart className="h-4 w-4" />
+              <ShoppingCart className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">Panier</span>
-              {cartItemsCount > 0 && (
-                <Badge className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-600 p-0 text-[10px]">
-                  {cartItemsCount}
-                </Badge>
-              )}
+              {cartItemsCount > 0 ? (
+                <span
+                  className="absolute -right-1 -top-1 z-10 flex min-h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-amber-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-white"
+                  aria-label={`${cartItemsCount} articles dans le panier`}
+                >
+                  {cartItemsCount > 99 ? "99+" : cartItemsCount}
+                </span>
+              ) : null}
             </Button>
           </div>
         }
       />
+      <DeliveryPromoStrip />
 
       <PageHero
         imageSrc={SITE.images.delivery}
@@ -1142,8 +1147,8 @@ export default function DeliveryPage() {
       />
 
       {/* Categories */}
-      <div className="sticky top-14 z-40 border-b border-amber-200/40 bg-white/80 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-white/65">
-        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+      <div id="menu" className="sticky top-14 z-40 border-b border-amber-200/40 bg-white/80 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-white/65">
+        <div className="site-container py-3">
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
             <Button
               type="button"
@@ -1187,7 +1192,7 @@ export default function DeliveryPage() {
       </div>
 
       {/* Main Section */}
-      <main className="mx-auto max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+      <main className="site-container flex-1 py-8">
         <div className="flex gap-8">
           {/* Sidebar Filters */}
           <aside className="hidden lg:block w-80 flex-shrink-0">

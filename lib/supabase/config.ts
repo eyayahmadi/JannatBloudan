@@ -19,14 +19,17 @@ function looksLikePlaceholderJwt(key: string | undefined): boolean {
   if (!key?.trim()) return true
   const k = key.trim()
   if (/your-anon|your-service|xxxxx|placeholder/i.test(k)) return true
-  // Clés API Supabase (anon / service_role) = JWT
-  if (!k.startsWith("eyJ")) return true
-  return k.length < 80
+  // JWT historique Supabase (anon / service_role)
+  if (k.startsWith("eyJ") && k.length >= 80) return false
+  // Nouveaux préfixes tableau Supabase (2025+) — compat dashboard « nouvelles clés »
+  if (k.startsWith("sb_publishable_") && k.length >= 24) return false
+  if (k.startsWith("sb_secret_") && k.length >= 24) return false
+  return true
 }
 
 /**
  * Vérifie que l'URL et la clé anon ne sont plus les placeholders du .env.example
- * et que la clé ressemble à un JWT Supabase.
+ * et que les clés ressemblent aux JWT legacy (eyJ…) ou aux clés tableau (sb_publishable_ / sb_secret_).
  */
 export function hasBrowserSupabaseEnv() {
   if (!supabaseUrl || !supabaseAnonKey) return false
@@ -56,6 +59,27 @@ export function getBrowserSupabaseEnv() {
     url: supabaseUrl as string,
     anonKey: supabaseAnonKey as string,
   }
+}
+
+/**
+ * Origine pour `emailRedirectTo` (liens « confirmer l’e-mail »).
+ * En dev sur localhost, si `NEXT_PUBLIC_SITE_URL` pointe vers votre URL publique (sans placeholder),
+ * on l’utilise : les liens dans les e-mails matchent alors les « Redirect URLs » du dashboard Supabase.
+ * Sinon : origine du navigateur (pensez à ajouter `http://localhost:3000/auth/confirm` dans Supabase).
+ */
+export function getAuthRedirectOrigin(): string {
+  const raw = typeof process.env.NEXT_PUBLIC_SITE_URL === "string" ? process.env.NEXT_PUBLIC_SITE_URL : ""
+  const site = raw.trim().replace(/\/$/, "")
+  const siteOk = site.length > 0 && !looksLikePlaceholderUrl(site)
+
+  if (typeof window !== "undefined") {
+    const o = window.location.origin
+    const isLocal =
+      /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(o) || /^https?:\/\/0\.0\.0\.0(:\d+)?$/i.test(o)
+    if (siteOk && isLocal) return site
+    return o || (siteOk ? site : "")
+  }
+  return siteOk ? site : ""
 }
 
 export function getServerSupabaseEnv() {
