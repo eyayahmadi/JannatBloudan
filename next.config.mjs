@@ -1,6 +1,20 @@
+import { fileURLToPath } from "node:url"
+import { dirname } from "node:path"
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  /**
+   * Force Turbopack à utiliser ce dossier comme racine du workspace.
+   * Sinon Next.js 16 remonte la chaîne et tombe sur un package.json
+   * parent (C:\Users\MSI\Downloads\pfe-main\package.json), ce qui
+   * casse le dev server par intermittence.
+   */
+  turbopack: {
+    root: __dirname,
+  },
   typescript: {
     ignoreBuildErrors: false,
   },
