@@ -92,7 +92,7 @@ export function PageHero({
         }}
       />
 
-      <div className="relative z-[1] w-full px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+      <div className="relative z-[1] w-full py-10 sm:py-12">
         <div className="site-container flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl text-balance">
             {breadcrumb ? (

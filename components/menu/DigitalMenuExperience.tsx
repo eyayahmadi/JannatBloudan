@@ -503,65 +503,71 @@ export function DigitalMenuExperience() {
       </div>
 
       {data.chef_choice.length > 0 && showcaseVisible && (
-        <Block title={t("menu.chefBlockTitle")} subtitle={t("menu.chefBlockSubtitle")} variant="amber">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {data.chef_choice.slice(0, 3).map((item) => (
-              <MenuCard
-                key={item.id}
-                item={item}
-                catalog={data.catalog}
-                oftenOrderedWith={data.often_ordered_with[item.id]}
-                onSuggestSearch={(name) => setQ(name)}
-                onAdd={add}
-                tagMeta={tagMeta}
-              />
-            ))}
-          </div>
-        </Block>
+        <div className="site-container">
+          <Block title={t("menu.chefBlockTitle")} subtitle={t("menu.chefBlockSubtitle")} variant="amber">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {data.chef_choice.slice(0, 3).map((item) => (
+                <MenuCard
+                  key={item.id}
+                  item={item}
+                  catalog={data.catalog}
+                  oftenOrderedWith={data.often_ordered_with[item.id]}
+                  onSuggestSearch={(name) => setQ(name)}
+                  onAdd={add}
+                  tagMeta={tagMeta}
+                />
+              ))}
+            </div>
+          </Block>
+        </div>
       )}
 
       {data.most_popular.length > 0 && showcaseVisible && (
-        <Block title={t("menu.popularBlockTitle")} subtitle={t("menu.popularBlockSubtitle")} variant="default">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {data.most_popular.map((item) => (
-              <MenuCard
-                key={item.id}
-                item={item}
-                catalog={data.catalog}
-                oftenOrderedWith={data.often_ordered_with[item.id]}
-                onSuggestSearch={(name) => setQ(name)}
-                onAdd={add}
-                tagMeta={tagMeta}
-              />
-            ))}
-          </div>
-        </Block>
+        <div className="site-container">
+          <Block title={t("menu.popularBlockTitle")} subtitle={t("menu.popularBlockSubtitle")} variant="default">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {data.most_popular.map((item) => (
+                <MenuCard
+                  key={item.id}
+                  item={item}
+                  catalog={data.catalog}
+                  oftenOrderedWith={data.often_ordered_with[item.id]}
+                  onSuggestSearch={(name) => setQ(name)}
+                  onAdd={add}
+                  tagMeta={tagMeta}
+                />
+              ))}
+            </div>
+          </Block>
+        </div>
       )}
 
       {data.recommended.length > 0 && showcaseVisible && (
-        <Block title={t("menu.recommendedBlockTitle")} subtitle={t("menu.recommendedBlockSubtitle")} variant="violet">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {data.recommended.slice(0, 4).map((item) => (
-              <MenuCard
-                key={item.id}
-                item={item}
-                catalog={data.catalog}
-                oftenOrderedWith={data.often_ordered_with[item.id]}
-                onSuggestSearch={(name) => setQ(name)}
-                onAdd={add}
-                tagMeta={tagMeta}
-              />
-            ))}
-          </div>
-        </Block>
+        <div className="site-container">
+          <Block title={t("menu.recommendedBlockTitle")} subtitle={t("menu.recommendedBlockSubtitle")} variant="violet">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {data.recommended.slice(0, 4).map((item) => (
+                <MenuCard
+                  key={item.id}
+                  item={item}
+                  catalog={data.catalog}
+                  oftenOrderedWith={data.often_ordered_with[item.id]}
+                  onSuggestSearch={(name) => setQ(name)}
+                  onAdd={add}
+                  tagMeta={tagMeta}
+                />
+              ))}
+            </div>
+          </Block>
+        </div>
       )}
 
       <div
         className={cn(
-          "rounded-3xl p-1",
-          section === "special" && "bg-zinc-950 p-4 text-zinc-100 ring-1 ring-violet-500/30",
-          section === "drinks" && "bg-gradient-to-br from-cyan-50 to-blue-100 p-4",
-          section === "desserts" && "bg-gradient-to-br from-rose-50 to-amber-50 p-4",
+          "site-container",
+          section === "special" && "rounded-3xl bg-zinc-950 p-4 text-zinc-100 ring-1 ring-violet-500/30",
+          section === "drinks" && "rounded-3xl bg-gradient-to-br from-cyan-50 to-blue-100 p-4",
+          section === "desserts" && "rounded-3xl bg-gradient-to-br from-rose-50 to-amber-50 p-4",
         )}
       >
         <h2
