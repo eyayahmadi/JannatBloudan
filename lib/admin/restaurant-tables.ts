@@ -53,14 +53,27 @@ export const STATUS_LABELS_FR: Record<string, string> = {
   CALL_SERVER: "Appel serveur",
 }
 
+import { getClientPublicSiteUrl } from "@/lib/site/public-url"
+
 export function publicTableUrl(siteUrl: string, tableCode: string) {
   const base = siteUrl.replace(/\/$/, "")
   return `${base}/table/${encodeURIComponent(tableCode)}`
 }
 
-export function qrImageUrlForTable(siteUrl: string, tableCode: string, size = 220) {
+/**
+ * Image QR (api.qrserver.com). Le param `version` (cache-buster) est ajouté
+ * uniquement quand demandé : utile pour le bouton « Regénérer QR » qui force
+ * un re-fetch des images côté navigateur.
+ */
+export function qrImageUrlForTable(
+  siteUrl: string,
+  tableCode: string,
+  size = 220,
+  version?: string | number,
+) {
   const target = publicTableUrl(siteUrl, tableCode)
-  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(target)}`
+  const v = version ? `&v=${encodeURIComponent(String(version))}` : ""
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(target)}${v}`
 }
 
 /**
@@ -73,10 +86,7 @@ export function qrImageUrlForTable(siteUrl: string, tableCode: string, size = 22
  *  - `table_number` numérique    → /table/{number} (résolu côté public)
  *  - `id`                        → fallback `t{id}`
  *
- * Base URL :
- *  - `NEXT_PUBLIC_SITE_URL` si défini et non placeholder.
- *  - sinon `window.location.origin` côté client.
- *  - sinon chemin relatif.
+ * Base URL : déléguée à `getClientPublicSiteUrl()` (helper central).
  */
 export function resolveClientPreviewUrl(table: {
   id?: number | null
@@ -94,16 +104,7 @@ export function resolveClientPreviewUrl(table: {
     }
   }
   if (!ref) return ""
-  const env =
-    typeof process !== "undefined" && typeof process.env.NEXT_PUBLIC_SITE_URL === "string"
-      ? process.env.NEXT_PUBLIC_SITE_URL.trim().replace(/\/$/, "")
-      : ""
-  const base =
-    env && !/your-project-ref|placeholder|example\.com/i.test(env)
-      ? env
-      : typeof window !== "undefined"
-        ? window.location.origin
-        : ""
+  const base = getClientPublicSiteUrl()
   if (!base) return `/table/${encodeURIComponent(ref)}`
   return publicTableUrl(base, ref)
 }

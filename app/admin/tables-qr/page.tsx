@@ -41,6 +41,7 @@ import {
   qrImageUrlForTable,
   publicTableUrl,
 } from "@/lib/admin/restaurant-tables"
+import { getClientPublicSiteUrl } from "@/lib/site/public-url"
 import { cn } from "@/lib/utils"
 
 type RestaurantTable = {
@@ -56,12 +57,12 @@ type RestaurantTable = {
   position_y?: number | null
   is_active?: boolean | null
   current_session_id?: string | null
+  /** Calculés côté API (helper central) — fiables en prod. */
+  public_url?: string | null
+  qr_image_url?: string | null
 }
 
-const siteBase =
-  typeof process !== "undefined" && process.env.NEXT_PUBLIC_SITE_URL
-    ? process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "")
-    : ""
+type SiteUrlSource = "env" | "vercel" | "request" | "dev" | "none"
 
 export default function AdminTablesQRPage() {
   const [tables, setTables] = useState<RestaurantTable[]>([])
@@ -70,6 +71,9 @@ export default function AdminTablesQRPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<RestaurantTable | null>(null)
   const [saving, setSaving] = useState(false)
+  const [siteUrl, setSiteUrl] = useState("")
+  const [siteUrlSource, setSiteUrlSource] = useState<SiteUrlSource>("none")
+  const [qrVersion, setQrVersion] = useState<number | null>(null)
 
   const [form, setForm] = useState({
     table_number: "",
@@ -84,16 +88,24 @@ export default function AdminTablesQRPage() {
     is_active: true,
   })
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (refresh?: number) => {
     setLoading(true)
     try {
-      const res = await fetch("/api/admin/restaurant-tables")
+      const qs = refresh ? `?refresh=${refresh}` : ""
+      const res = await fetch(`/api/admin/restaurant-tables${qs}`, { cache: "no-store" })
       const j = await res.json()
       if (res.ok && Array.isArray(j.tables)) setTables(j.tables)
+      if (typeof j.siteUrl === "string") setSiteUrl(j.siteUrl)
+      if (typeof j.siteUrlSource === "string") setSiteUrlSource(j.siteUrlSource as SiteUrlSource)
+      if (refresh) setQrVersion(refresh)
     } finally {
       setLoading(false)
     }
   }, [])
+
+  const regenerateQrCodes = useCallback(() => {
+    void load(Date.now())
+  }, [load])
 
   useEffect(() => {
     void load()
@@ -201,8 +213,15 @@ export default function AdminTablesQRPage() {
 
   const qrFor = (t: RestaurantTable) => {
     const code = (t.table_code && String(t.table_code).trim()) || `t${t.id}`
-    const base = siteBase || (typeof window !== "undefined" ? window.location.origin : "")
-    return { code, img: qrImageUrlForTable(base || "http://localhost:3000", code, 200), url: publicTableUrl(base || "http://localhost:3000", code) }
+    if (t.public_url && t.qr_image_url) {
+      return { code, img: t.qr_image_url, url: t.public_url }
+    }
+    const base = siteUrl || getClientPublicSiteUrl() || "http://localhost:3000"
+    return {
+      code,
+      img: qrImageUrlForTable(base, code, 200, qrVersion ?? undefined),
+      url: publicTableUrl(base, code),
+    }
   }
 
   const downloadQr = async (t: RestaurantTable) => {
@@ -250,6 +269,17 @@ export default function AdminTablesQRPage() {
               <RefreshCw className={cn("mr-1.5 h-4 w-4", loading && "animate-spin")} />
               Actualiser
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={regenerateQrCodes}
+              disabled={loading}
+              title="Regénère les QR codes avec l'URL publique actuelle"
+            >
+              <QrCode className="mr-1.5 h-4 w-4" />
+              Regénérer QR
+            </Button>
             <Button type="button" variant="outline" size="sm" onClick={printAll}>
               <Printer className="mr-1.5 h-4 w-4" />
               Imprimer QR
@@ -261,6 +291,7 @@ export default function AdminTablesQRPage() {
           </div>
         }
       >
+        <SiteUrlBanner siteUrl={siteUrl} source={siteUrlSource} />
         <Tabs value={tab} onValueChange={setTab} className="space-y-6">
           <TabsList className="print:hidden">
             <TabsTrigger value="liste" className="gap-1.5">
@@ -523,5 +554,49 @@ export default function AdminTablesQRPage() {
         </Dialog>
       </AdminPageFrame>
     </RequireAuth>
+  )
+}
+
+function SiteUrlBanner({
+  siteUrl,
+  source,
+}: {
+  siteUrl: string
+  source: SiteUrlSource
+}) {
+  if (!siteUrl) return null
+  const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)/i.test(siteUrl)
+  const isWarn = isLocalhost || source === "dev" || source === "none"
+
+  const sourceLabel = {
+    env: "NEXT_PUBLIC_SITE_URL (.env / Vercel)",
+    vercel: "déploiement Vercel auto",
+    request: "détecté depuis la requête",
+    dev: "fallback développement",
+    none: "non configuré",
+  }[source]
+
+  return (
+    <div
+      className={cn(
+        "mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-xs print:hidden",
+        isWarn
+          ? "border-amber-400/60 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200"
+          : "border-emerald-300/50 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200",
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Badge variant={isWarn ? "secondary" : "default"} className="font-mono text-[10px]">
+          {sourceLabel}
+        </Badge>
+        <span className="font-medium">URL des QR&nbsp;:</span>
+        <code className="break-all font-mono">{siteUrl}/table/{`{code}`}</code>
+      </div>
+      {isWarn ? (
+        <span className="text-[11px] opacity-90">
+          ⚠ Cette base URL est locale — pour la prod, définis <code className="font-mono">NEXT_PUBLIC_SITE_URL</code> sur ton hébergeur puis clique « Regénérer QR ».
+        </span>
+      ) : null}
+    </div>
   )
 }

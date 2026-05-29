@@ -2,8 +2,7 @@ import { NextResponse } from "next/server"
 import { createServiceRoleClient } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { qrImageUrlForTable, publicTableUrl } from "@/lib/admin/restaurant-tables"
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+import { getPublicSiteUrlSource } from "@/lib/site/public-url"
 
 type TableRow = {
   id: number
@@ -27,7 +26,9 @@ function mockTables() {
   }))
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { url: SITE_URL, source: siteUrlSource } = getPublicSiteUrlSource(request)
+
   if (hasServerSupabaseEnv()) {
     try {
       const supabase = createServiceRoleClient()
@@ -52,7 +53,12 @@ export async function GET() {
             qrDataUrl: qrImageUrlForTable(SITE_URL, code, 200),
           }
         })
-        return NextResponse.json({ tables, source: "database" })
+        return NextResponse.json({
+          tables,
+          source: "database",
+          siteUrl: SITE_URL,
+          siteUrlSource,
+        })
       }
     } catch {
       /* fallback mock */
@@ -67,5 +73,10 @@ export async function GET() {
       qrDataUrl: qrImageUrlForTable(SITE_URL, t.table_code, 200),
     }
   })
-  return NextResponse.json({ tables, source: "mock" })
+  return NextResponse.json({
+    tables,
+    source: "mock",
+    siteUrl: SITE_URL,
+    siteUrlSource,
+  })
 }

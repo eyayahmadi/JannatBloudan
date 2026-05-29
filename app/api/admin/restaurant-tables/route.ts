@@ -5,7 +5,10 @@ import {
   TABLE_BUSINESS_ZONES,
   TABLE_PLAN_ZONES,
   TABLE_ADMIN_STATUSES,
+  publicTableUrl,
+  qrImageUrlForTable,
 } from "@/lib/admin/restaurant-tables"
+import { getPublicSiteUrlSource } from "@/lib/site/public-url"
 
 const ALLOW = ["ADMIN", "SERVER"] as const
 
@@ -35,11 +38,18 @@ function slugCode(raw: string, tableNumber: number): string {
   return `t${tableNumber}`
 }
 
-/** Liste complète des tables (admin). */
-export async function GET() {
+/**
+ * Liste complète des tables (admin). Enrichit chaque ligne avec
+ * `public_url` et `qr_image_url` calculés à partir du helper central
+ * `getPublicSiteUrlSource()`. Le `?refresh=<timestamp>` côté client sert
+ * de cache-buster pour le bouton « Regénérer QR ».
+ */
+export async function GET(request: Request) {
   const guard = await requireRoles(ALLOW)
   if (!guard.ok) return guard.response
-  if (!hasServerSupabaseEnv()) return NextResponse.json({ tables: [], disabled: true })
+  if (!hasServerSupabaseEnv()) {
+    return NextResponse.json({ tables: [], disabled: true })
+  }
 
   const supabase = createServiceRoleClient()
   const { data, error } = await supabase
@@ -50,7 +60,33 @@ export async function GET() {
     .order("table_number", { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ tables: data ?? [] })
+
+  const { url: siteUrl, source: siteUrlSource } = getPublicSiteUrlSource(request)
+  const refreshRaw = new URL(request.url).searchParams.get("refresh") ?? ""
+  const version = refreshRaw ? refreshRaw.slice(0, 32) : undefined
+
+  type Row = {
+    id: number
+    table_code?: string | null
+    [k: string]: unknown
+  }
+
+  const rows = (data ?? []) as Row[]
+  const tables = rows.map((t) => {
+    const code = (t.table_code && String(t.table_code).trim()) || `t${t.id}`
+    return {
+      ...t,
+      table_code: code,
+      public_url: siteUrl ? publicTableUrl(siteUrl, code) : "",
+      qr_image_url: siteUrl ? qrImageUrlForTable(siteUrl, code, 220, version) : "",
+    }
+  })
+
+  return NextResponse.json({
+    tables,
+    siteUrl,
+    siteUrlSource,
+  })
 }
 
 /** Créer une table (ID = max+1). */
