@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import { createServiceRoleClient } from "@/lib/auth/admin-api"
-import { createClient } from "@/lib/supabase/server"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { resolveRestaurantTableFromRef } from "@/lib/restaurant/resolve-table"
 
@@ -11,7 +10,13 @@ type QrOrderInput = {
   tableId?: number
   /** Segment d’URL /table/{tableRef} (nombre, code, etc.) */
   tableRef?: string
-  items: Array<{ name: string; quantity: number; unitPrice?: number; notes?: string }>
+  items: Array<{
+    productId?: string
+    name: string
+    quantity: number
+    unitPrice?: number
+    notes?: string
+  }>
   total?: number
   customerName?: string
   notes?: string
@@ -80,7 +85,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const supabase = await createClient()
+    const supabase = createServiceRoleClient()
 
     // Ouvrir ou recuperer une session pour la table
     let sessionId: string | null = null
@@ -112,14 +117,13 @@ export async function POST(request: Request) {
         order_number: orderNumber,
         customer_name: body.customerName ?? `Client Table ${tableNumberForOrder}`,
         order_type: "qr_self_service",
-        order_source: "qr_self_service",
+        source: "qr_self_service",
         table_id: tableRowId,
         table_number: tableNumberForOrder,
         session_id: sessionId,
         subtotal: total,
         total,
         status: "pending",
-        payment_status: "pending",
         notes: body.notes ?? null,
       })
       .select("*")
@@ -128,27 +132,15 @@ export async function POST(request: Request) {
     if (error || !order) {
       console.error("[orders/qr] insert order error", error)
       return NextResponse.json(
-        {
-          order: {
-            id: body.id ?? `ORD-${Date.now()}`,
-            order_number: orderNumber,
-            table_number: tableNumberForOrder,
-            order_type: "qr_self_service",
-            status: "received",
-            items,
-            total,
-            created_at: new Date().toISOString(),
-            source: "mock-fallback",
-            warning: error?.message,
-          },
-        },
-        { status: 201 },
+        { error: error?.message ?? "Impossible d'enregistrer la commande QR" },
+        { status: 500 },
       )
     }
 
     // Inserer les order_items (best-effort)
     const rows = items.map((it) => ({
       order_id: order.id,
+      ...(it.productId ? { product_id: it.productId } : {}),
       product_name: it.name,
       quantity: it.quantity,
       unit_price: it.unitPrice ?? 0,
@@ -156,7 +148,16 @@ export async function POST(request: Request) {
       special_instructions: it.notes ?? null,
     }))
     const { error: itemsErr } = await supabase.from("order_items").insert(rows)
-    if (itemsErr) console.warn("[orders/qr] insert items warning", itemsErr)
+    if (itemsErr) {
+      console.warn("[orders/qr] insert items warning", itemsErr)
+      await supabase.from("orders").delete().eq("id", order.id)
+      return NextResponse.json({ error: itemsErr.message }, { status: 500 })
+    }
+
+    await supabase
+      .from("restaurant_tables")
+      .update({ status: "ORDERING", last_activity: new Date().toISOString() })
+      .eq("id", tableRowId)
 
     return NextResponse.json(
       {

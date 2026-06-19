@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import {
   isBillableItemStatus,
   type Station,
@@ -8,6 +8,7 @@ import {
 } from "@/lib/stations/config"
 import type { RefusalReasonCode } from "@/lib/stations/refusal-reasons"
 import { inferStation } from "@/lib/stations/inference"
+import { isLikelyOrderUuid } from "@/lib/orders/guest-tracking"
 
 export type OrderStatus = "received" | "preparing" | "ready" | "delivering" | "completed" | "cancelled"
 export type OrderType = "qr_self_service" | "server" | "pos" | "delivery"
@@ -83,6 +84,31 @@ export type KitchenOrderInput = Omit<KitchenOrder, "items"> & {
 }
 
 const STORAGE_KEY = "jb-realtime-orders"
+const LIVE_SYNC_MS = 4000
+
+/** Routes staff où les commandes QR doivent remonter depuis Supabase. */
+function shouldSyncOrdersFromServer(): boolean {
+  if (typeof window === "undefined") return false
+  return /^\/(kitchen|bar|shisha|server|pos|caisse|admin)(\/|$)/.test(window.location.pathname)
+}
+
+function mergeLocalAndServerOrders(local: KitchenOrder[], server: KitchenOrder[]): KitchenOrder[] {
+  const byId = new Map<string, KitchenOrder>()
+
+  for (const o of local) {
+    if (!isLikelyOrderUuid(o.id)) byId.set(o.id, o)
+  }
+  for (const o of server) {
+    byId.set(o.id, o)
+  }
+  for (const o of local) {
+    if (isLikelyOrderUuid(o.id) && !byId.has(o.id)) byId.set(o.id, o)
+  }
+
+  return Array.from(byId.values()).sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  )
+}
 
 function loadOrders(): KitchenOrder[] {
   if (typeof window === "undefined") return []
@@ -169,10 +195,47 @@ function recomputeOrderTotal(order: KitchenOrder, fallback: number): number {
 export function useRealtimeOrders() {
   const [orders, setOrders] = useState<KitchenOrder[]>(loadOrders)
   const [lastEvent, setLastEvent] = useState<string | null>(null)
+  const knownServerOrderIds = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     persistOrders(orders)
   }, [orders])
+
+  useEffect(() => {
+    if (!shouldSyncOrdersFromServer()) return
+
+    let cancelled = false
+
+    const pull = async () => {
+      try {
+        const res = await fetch("/api/orders/live", { cache: "no-store" })
+        if (!res.ok) return
+        const json = (await res.json()) as { orders?: KitchenOrder[] }
+        const serverOrders = Array.isArray(json.orders) ? json.orders : []
+        if (cancelled) return
+
+        let hasNew = false
+        for (const o of serverOrders) {
+          if (!knownServerOrderIds.current.has(o.id)) {
+            knownServerOrderIds.current.add(o.id)
+            if (isLikelyOrderUuid(o.id)) hasNew = true
+          }
+        }
+
+        setOrders((prev) => mergeLocalAndServerOrders(prev, serverOrders))
+        if (hasNew) setLastEvent("NEW_ORDER")
+      } catch {
+        /* réseau / auth — on garde le local */
+      }
+    }
+
+    void pull()
+    const id = window.setInterval(() => void pull(), LIVE_SYNC_MS)
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+    }
+  }, [])
 
   const addOrder = useCallback((order: KitchenOrderInput) => {
     setOrders((prev) => {
@@ -236,6 +299,26 @@ export function useRealtimeOrders() {
         }),
       )
       setLastEvent("ITEM_STATUS_UPDATED")
+
+      if (isLikelyOrderUuid(itemId)) {
+        void (async () => {
+          try {
+            if (nextStatus === "accepted") {
+              await fetch(`/api/stations/items/${itemId}/accept`, { method: "POST" })
+              return
+            }
+            if (nextStatus === "preparing" || nextStatus === "ready" || nextStatus === "served") {
+              await fetch(`/api/stations/items/${itemId}/advance`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ to: nextStatus }),
+              })
+            }
+          } catch {
+            /* état local conservé */
+          }
+        })()
+      }
     },
     [],
   )

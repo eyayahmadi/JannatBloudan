@@ -100,6 +100,7 @@ export default function TableMenuPage() {
     const localId = `ORD-${Date.now()}`
     const orderNumber = `T${effectiveNumber}-${String(Math.floor(1000 + Math.random() * 9000))}`
     const items = cart.map((c) => ({
+      productId: String(c.id),
       name: c.name,
       quantity: c.quantity,
       unitPrice: c.price,
@@ -126,13 +127,18 @@ export default function TableMenuPage() {
           total: cartTotal,
         }),
       })
-      const json = (await res.json()) as { order?: QrOrderPayload }
+      const json = (await res.json()) as { order?: QrOrderPayload; error?: string }
+      if (!res.ok) {
+        alert(json.error ?? "Impossible d'envoyer la commande. Réessayez ou appelez le serveur.")
+        return
+      }
       if (json?.order?.id) {
         resolvedId = json.order.id
         serverOrder = json.order
       }
     } catch {
-      /* hors-ligne ou erreur réseau : garder localId */
+      alert("Connexion impossible. Vérifiez le réseau ou appelez le serveur.")
+      return
     }
 
     addOrder({
