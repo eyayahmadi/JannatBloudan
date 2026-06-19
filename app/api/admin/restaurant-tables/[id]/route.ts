@@ -25,8 +25,9 @@ function normStatus(z: string): string | null {
 }
 
 function slugCode(raw: string, tableNumber: number): string {
-  const s = raw
-    .trim()
+  const trimmed = raw.trim()
+  if (/^[TNC]\d{2}$/i.test(trimmed)) return trimmed.toUpperCase()
+  const s = trimmed
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9_-]/g, "")

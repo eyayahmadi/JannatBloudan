@@ -17,7 +17,11 @@
     "db:migrate:env": "node --env-file=.env.local scripts/run-migrations.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "i18n:audit": "node scripts/i18n-audit.mjs",
+    "i18n:audit:soft": "node scripts/i18n-audit.mjs --soft",
+    "tables:generate-sql": "node scripts/generate-jannat-tables-sql.mjs",
+    "tables:seed-info": "node scripts/seed-jannat-tables.mjs"
   },
   "dependencies": {
     "@google-cloud/translate": "^9.4.1",

@@ -58,6 +58,7 @@ const NUMBERED_MIGRATIONS = [
   "29-station-acceptance-and-availability.sql",
   "30-purchases-to-plan.sql",
   "31-client-credit-and-station-revenue.sql",
+  "32-jannat-real-tables.sql",
 ]
 
 /** Après le schéma : durcissement rôles puis correctif signup / RLS audit (idempotent). */

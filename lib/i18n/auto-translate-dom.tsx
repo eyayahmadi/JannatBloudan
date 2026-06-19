@@ -23,8 +23,9 @@ import { useEffect, useRef } from "react"
 import { useI18n } from "@/lib/i18n/context"
 import type { Locale } from "@/lib/i18n/config"
 import { translatePage } from "@/lib/client/translate-page"
+import { getSeedDictionary } from "@/lib/i18n/seed-dictionary"
 
-const CACHE_PREFIX = "i18n_mt_ui_v1"
+const CACHE_PREFIX = "i18n_mt_ui_v2"
 const CACHE_MAX = 2500
 const BATCH_MAX = 120
 const DEBOUNCE_MS = 140
@@ -117,7 +118,10 @@ export function AutoTranslateDom() {
   localeRef.current = locale
 
   useEffect(() => {
-    cacheRef.current = loadCache(locale)
+    // L'ordre importe : le SEED écrase la version persistée pour les chaînes
+    // connues (source de vérité figée dans le bundle) ; les autres entrées
+    // restent disponibles via le cache local pour éviter de re-frapper l'API.
+    cacheRef.current = { ...loadCache(locale), ...getSeedDictionary(locale) }
 
     const collectInto = (
       root: Node,
@@ -200,6 +204,20 @@ export function AutoTranslateDom() {
       }
     }
 
+    // Recherche tolérante à l'espace de bord : essaie la forme brute puis trimée,
+    // tout en réappliquant le préfixe / suffixe d'origine pour préserver la mise
+    // en page (ex. "Table " utilisé devant un span avec un identifiant).
+    const lookup = (original: string, translations: Record<string, string>): string => {
+      const exact = translations[original]
+      if (typeof exact === "string") return exact
+      const leadMatch = original.match(/^\s+/)?.[0] ?? ""
+      const trailMatch = original.match(/\s+$/)?.[0] ?? ""
+      const core = original.slice(leadMatch.length, original.length - trailMatch.length)
+      const hit = translations[core]
+      if (typeof hit === "string") return `${leadMatch}${hit}${trailMatch}`
+      return original
+    }
+
     const applyTranslations = (
       textEntries: TextEntry[],
       attrEntries: AttrEntry[],
@@ -207,11 +225,11 @@ export function AutoTranslateDom() {
     ) => {
       const currentLocale = localeRef.current
       for (const { node, original } of textEntries) {
-        const out = currentLocale === "fr" ? original : translations[original] ?? original
+        const out = currentLocale === "fr" ? original : lookup(original, translations)
         if (node.data !== out) node.data = out
       }
       for (const { el, attr, original } of attrEntries) {
-        const out = currentLocale === "fr" ? original : translations[original] ?? original
+        const out = currentLocale === "fr" ? original : lookup(original, translations)
         if (el.getAttribute(attr) !== out) el.setAttribute(attr, out)
       }
     }
@@ -232,8 +250,13 @@ export function AutoTranslateDom() {
 
       const cache = cacheRef.current
       const missingSet = new Set<string>()
-      for (const { original } of textBuf) if (!cache[original]) missingSet.add(original)
-      for (const { original } of attrBuf) if (!cache[original]) missingSet.add(original)
+      const isCached = (s: string): boolean => {
+        if (typeof cache[s] === "string") return true
+        const trimmed = s.trim()
+        return trimmed !== s && typeof cache[trimmed] === "string"
+      }
+      for (const { original } of textBuf) if (!isCached(original)) missingSet.add(original)
+      for (const { original } of attrBuf) if (!isCached(original)) missingSet.add(original)
 
       if (missingSet.size === 0) {
         applyTranslations(textBuf, attrBuf, cache)

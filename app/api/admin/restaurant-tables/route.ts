@@ -6,6 +6,7 @@ import {
   TABLE_PLAN_ZONES,
   TABLE_ADMIN_STATUSES,
   publicTableUrl,
+  publicTableMenuUrl,
   qrImageUrlForTable,
 } from "@/lib/admin/restaurant-tables"
 import { getPublicSiteUrlSource } from "@/lib/site/public-url"
@@ -28,8 +29,9 @@ function normStatus(z: string): string | null {
 }
 
 function slugCode(raw: string, tableNumber: number): string {
-  const s = raw
-    .trim()
+  const trimmed = raw.trim()
+  if (/^[TNC]\d{2}$/i.test(trimmed)) return trimmed.toUpperCase()
+  const s = trimmed
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9_-]/g, "")
@@ -77,8 +79,9 @@ export async function GET(request: Request) {
     return {
       ...t,
       table_code: code,
-      public_url: siteUrl ? publicTableUrl(siteUrl, code) : "",
-      qr_image_url: siteUrl ? qrImageUrlForTable(siteUrl, code, 220, version) : "",
+      public_url: siteUrl ? publicTableMenuUrl(siteUrl, code) : "",
+      landing_url: siteUrl ? publicTableUrl(siteUrl, code) : "",
+      qr_image_url: siteUrl ? qrImageUrlForTable(siteUrl, code, 220, version, "menu") : "",
     }
   })
 
@@ -114,9 +117,15 @@ export async function POST(request: Request) {
       ? normPlanZone(body.plan_zone)!
       : zone === "terrasse"
         ? "terrasse"
-        : zone === "interieur" || zone === "evenement"
-          ? "interieur"
-          : "salle"
+        : zone === "nofra"
+          ? "nofra"
+          : zone === "central"
+            ? "central"
+            : zone === "interieur" || zone === "evenement"
+              ? "central"
+              : zone === "salle" || zone === "vip"
+                ? "nofra"
+                : "terrasse"
 
   const displayName =
     typeof body.display_name === "string" && body.display_name.trim() ? body.display_name.trim().slice(0, 120) : null

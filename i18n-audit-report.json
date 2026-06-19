@@ -1,0 +1,3886 @@
+{
+  "files": [
+    {
+      "file": "app/admin/reports/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Revenus (commandes hors annulées)",
+          "line": 229
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Paiements réussis (total)",
+          "line": 234
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Cash réussi vs hors cash",
+          "line": 235
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Factures payées (facturation)",
+          "line": 240
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Factures annulées",
+          "line": 241
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Hospitalités / hors CA facture",
+          "line": 242
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Rabais sur factures (hors hosp.)",
+          "line": 243
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ventes par jour",
+          "line": 247
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Produit",
+          "line": 257
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Paiements réussis",
+          "line": 378
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Facturation & hospitalité",
+          "line": 404
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Factures annulées",
+          "line": 409
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Hospitalités / hors CA",
+          "line": 417
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Offres appliquées (épargne)",
+          "line": 422
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Lignes facture · annulations & pertes",
+          "line": 428
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Lignes annulées",
+          "line": 431
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Total HT/TTC lignes annulées",
+          "line": 435
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Dépenses, caisse table, stock",
+          "line": 454
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Dépenses (livre)",
+          "line": 459
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun mouvement ou table absente.",
+          "line": 476
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun mouvement sur la période.",
+          "line": 484
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Détail des paiements par moyen (statut `succeeded`)",
+          "line": 493
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Pas de paiement encaissé sur la fenêtre.",
+          "line": 498
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ouvrir la validation OCR",
+          "line": 538
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Module factures désactivé ou non configuré.",
+          "line": 542
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ventes journalières",
+          "line": 550
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Produits les plus vendus",
+          "line": 593
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Charge par serveur (si `assigned_to` renseigné)",
+          "line": 627
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Stock (instantané)",
+          "line": 669
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Résumé stock indisponible (Supabase désactivé).",
+          "line": 673
+        }
+      ]
+    },
+    {
+      "file": "components/admin/ai/InsightAgentDashboards.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Erreur de chargement",
+          "line": 40
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Mode décision",
+          "line": 82
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Confiance modèle",
+          "line": 181
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Impact estimé",
+          "line": 187
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune alerte temps réel.",
+          "line": 225
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Timeline opérationnelle (démonstration).",
+          "line": 254
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Marge pondérée",
+          "line": 323
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Étoiles",
+          "line": 331
+        },
+        {
+          "kind": "jsx-text",
+          "text": "À réviser",
+          "line": 337
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Positionnement relatif des plats (démo).",
+          "line": 350
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Top rentabilité",
+          "line": 402
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Top commandés",
+          "line": 421
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun signal critique.",
+          "line": 447
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Popularité",
+          "line": 481
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Étapes suivies",
+          "line": 532
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Points de friction",
+          "line": 538
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Idées de relance",
+          "line": 544
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Entrée → Menu → Panier → Paiement → Confirmé",
+          "line": 556
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Récupération & conversion",
+          "line": 665
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Optimisation opérationnelle temps réel",
+          "line": 738
+        },
+        {
+          "kind": "jsx-text",
+          "text": "File + cuisine (démo)",
+          "line": 751
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Modèle actif",
+          "line": 887
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Santé globale",
+          "line": 897
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Dérive",
+          "line": 916
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Catégorie star",
+          "line": 1044
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Rush / calme — suggestions adaptées.",
+          "line": 1056
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Conversion est.",
+          "line": 1083
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Timeline feuille de route tech",
+          "line": 1229
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/event-planner/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Décrivez l&apos;événement ; la proposition apparaît à droite.",
+          "line": 176
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Type d&apos;événement",
+          "line": 180
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Invités",
+          "line": 202
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Capacité max salle",
+          "line": 225
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Nombre de places assises/debout acceptées dans l&apos;espace.",
+          "line": 234
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Pour comparer à l&apos;estimation automatique du plan.",
+          "line": 247
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Préférences / contraintes",
+          "line": 262
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Résumé opérationnel et supports client.",
+          "line": 292
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Capacité maximale dépassée",
+          "line": 329
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Invités",
+          "line": 346
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Capacité salle",
+          "line": 384
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Non renseignée",
+          "line": 398
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Taux de remplissage",
+          "line": 411
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Budget, estimation menu et écart — même logique que la billetterie événements.",
+          "line": 434
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Estimation totale (menu / service)",
+          "line": 438
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Estimation par convive",
+          "line": 444
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Budget total alloué",
+          "line": 450
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Écart budget − estimation",
+          "line": 456
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Utilisation estimée du budget",
+          "line": 493
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Menu proposé",
+          "line": 511
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Décoration &amp; ambiance",
+          "line": 534
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Repères jusqu&apos;au jour&nbsp;J",
+          "line": 557
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Menu ou ticket visé",
+          "line": 242
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Régime halal strict, enfants, musique live…",
+          "line": 266
+        }
+      ]
+    },
+    {
+      "file": "app/admin/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Encaissements & TVA — détail finances",
+          "line": 429
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ouvrir le POS",
+          "line": 441
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Gérer l&apos;inventaire",
+          "line": 465
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Synthèse jour",
+          "line": 496
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Encaissements & écarts",
+          "line": 497
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Agents, prévisions, anomalies",
+          "line": 517
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Revenus sur 7 jours",
+          "line": 586
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun produit vendu.",
+          "line": 618
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Voir tout (POS)",
+          "line": 656
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune commande pour cette periode.",
+          "line": 665
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune alerte de stock.",
+          "line": 708
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune commande",
+          "line": 755
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune commande enregistree pour cette periode. Verifiez le systeme.",
+          "line": 756
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Rupture de stock critique",
+          "line": 766
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Baisse de revenus",
+          "line": 777
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Des commandes sont en attente depuis plus longtemps que la normale.",
+          "line": 789
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Tout va bien",
+          "line": 799
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune alerte critique. Les operations se deroulent normalement.",
+          "line": 800
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ce plat genere le plus de revenus. Envisagez de le promouvoir en homepage et sur les reseaux sociaux.",
+          "line": 820
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ce produit est en baisse. Considerez une promotion ou un ajustement de recette.",
+          "line": 826
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Optimiser les heures de pointe",
+          "line": 830
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Analysez les heures de commande pour ajuster le personnel et reduire les temps d&apos;attente.",
+          "line": 831
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Programme de fidelite",
+          "line": 834
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Les clients reguliers generent 60% du chiffre. Renforcez le programme de fidelite pour augmenter la retention.",
+          "line": 835
+        }
+      ]
+    },
+    {
+      "file": "components/admin/promotions/PromotionsAdminModule.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Promotions & réductions",
+          "line": 476
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Total des remises enregistrées en caisse",
+          "line": 545
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Somme des économies clients (HT)",
+          "line": 559
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune offre dans cette vue.",
+          "line": 590
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Remisé",
+          "line": 676
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Application automatique à la caisse (selon règles)",
+          "line": 697
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Valeur (% ou € selon type)",
+          "line": 794
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Conditions (affichées caisse & client)",
+          "line": 804
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Début",
+          "line": 813
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Montant min. commande (€ HT)",
+          "line": 839
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Max / client",
+          "line": 848
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Visibilité canal",
+          "line": 857
+        },
+        {
+          "kind": "jsx-text",
+          "text": "IDs produits (un par ligne, UUID)",
+          "line": 910
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Clés catégories (séparées par virgule)",
+          "line": 919
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Happy hour — début (h)",
+          "line": 928
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Fidélité — min. commandes",
+          "line": 938
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Table — min. convives",
+          "line": 942
+        },
+        {
+          "kind": "jsx-text",
+          "text": "BXGY achetés",
+          "line": 948
+        },
+        {
+          "kind": "jsx-text",
+          "text": "% sur ligne offerte",
+          "line": 956
+        },
+        {
+          "kind": "jsx-text",
+          "text": "% équivalent caisse",
+          "line": 962
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Max quantité panier",
+          "line": 970
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Fin compte à rebours (affiche)",
+          "line": 975
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ex. Offre spéciale weekend",
+          "line": 763
+        }
+      ]
+    },
+    {
+      "file": "app/reservation/my-reservations/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Confirmée",
+          "line": 64
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Terminée",
+          "line": 68
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Annulée",
+          "line": 70
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Mes réservations",
+          "line": 165
+        },
+        {
+          "kind": "jsx-text",
+          "text": "À venir et historique, au même endroit.",
+          "line": 166
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réservations à venir",
+          "line": 175
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune réservation à venir",
+          "line": 198
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réserver une table",
+          "line": 200
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Table",
+          "line": 309
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Demande spéciale",
+          "line": 322
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réservations d'événements",
+          "line": 382
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun événement réservé",
+          "line": 389
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Confirmée",
+          "line": 401
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Demande spéciale:",
+          "line": 419
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune réservation passée",
+          "line": 440
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Table",
+          "line": 480
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Demande spéciale",
+          "line": 493
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Historique événements",
+          "line": 510
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun historique d'événement",
+          "line": 517
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Passé",
+          "line": 528
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Demande spéciale:",
+          "line": 546
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ex: Anniversaire, décorations...",
+          "line": 269
+        }
+      ]
+    },
+    {
+      "file": "components/reservation/ReservationBookingFlow.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Réservation confirmée !",
+          "line": 225
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Voir mes réservations",
+          "line": 268
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Retour à l'accueil",
+          "line": 280
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Vos informations",
+          "line": 309
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Complétez vos informations pour finaliser la réservation",
+          "line": 310
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Récapitulatif",
+          "line": 314
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Table",
+          "line": 342
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Téléphone *",
+          "line": 374
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réserver une table",
+          "line": 430
+        },
+        {
+          "kind": "jsx-text",
+          "text": "En tant que client fidele, profitez d&apos;un dessert offert sur votre prochaine reservation.",
+          "line": 441
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Table suggeree automatiquement",
+          "line": 450
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Date et heure",
+          "line": 467
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Nombre de personnes",
+          "line": 498
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Choisissez votre zone",
+          "line": 515
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réservé",
+          "line": 571
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Occupé",
+          "line": 575
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Récapitulatif",
+          "line": 653
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Table",
+          "line": 690
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ex: Anniversaire, décorations, allergies alimentaires, chaise haute pour bébé...",
+          "line": 389
+        },
+        {
+          "kind": "attr:title",
+          "text": "Réserver une table",
+          "line": 742
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Table ${table.number} - ${table.capacity} personnes - ${table.status}",
+          "line": 595
+        }
+      ]
+    },
+    {
+      "file": "app/account/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Aucune adresse enregistrée",
+          "line": 280
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Libellé",
+          "line": 359
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun favori pour le moment",
+          "line": 429
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Découvrir le menu",
+          "line": 434
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Voir le menu",
+          "line": 495
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Mezzés, plats signatures, boissons et desserts.",
+          "line": 496
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Recommander votre dernière commande",
+          "line": 504
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Mes recommandations",
+          "line": 522
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Promotions & réductions",
+          "line": 535
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Commander avec le menu",
+          "line": 542
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Scanner une table (QR)",
+          "line": 553
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Numéro de table",
+          "line": 559
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ouvrir la table",
+          "line": 570
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Portail client",
+          "line": 655
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Sections du compte client",
+          "line": 211
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Modifier",
+          "line": 335
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Supprimer",
+          "line": 345
+        },
+        {
+          "kind": "attr:title",
+          "text": "Mon compte",
+          "line": 637
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Navigation rapide du compte",
+          "line": 722
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/memory/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Agent Mémoire &amp; RAG",
+          "line": 112
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Impossible de charger la mémoire",
+          "line": 158
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Client ID",
+          "line": 169
+        },
+        {
+          "kind": "jsx-text",
+          "text": "État backend RAG",
+          "line": 179
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Préférences de goût",
+          "line": 211
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Poids agrégés sur les tags détectés (lexical).",
+          "line": 213
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune préférence enregistrée pour cette clé.",
+          "line": 217
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Chunks indexés pour le retrieval.",
+          "line": 241
+        },
+        {
+          "kind": "jsx-text",
+          "text": "segments en mémoire pour cette session",
+          "line": 247
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Résumés de commandes",
+          "line": 254
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Historique condensé des commandes liées au client.",
+          "line": 255
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun résumé de commande stocké.",
+          "line": 259
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réactions positives",
+          "line": 278
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune trace positive pour l&apos;instant.",
+          "line": 283
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réactions négatives",
+          "line": 299
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune friction enregistrée.",
+          "line": 304
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réponse inattendue",
+          "line": 358
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "sessionId ou identifiant stable",
+          "line": 140
+        }
+      ]
+    },
+    {
+      "file": "app/admin/menu/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Catégories",
+          "line": 469
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Nouvelle catégorie",
+          "line": 477
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune catégorie.",
+          "line": 510
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun plat trouvé.",
+          "line": 778
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Nom du plat",
+          "line": 799
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Catégorie",
+          "line": 857
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Sélectionner...",
+          "line": 865
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Visible sur le menu client",
+          "line": 889
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Intensité (piment)",
+          "line": 902
+        },
+        {
+          "kind": "jsx-text",
+          "text": "— Non renseigné",
+          "line": 910
+        },
+        {
+          "kind": "jsx-text",
+          "text": "épicé",
+          "line": 913
+        },
+        {
+          "kind": "jsx-text",
+          "text": "par unité de plat",
+          "line": 977
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ingrédient",
+          "line": 992
+        },
+        {
+          "kind": "attr:title",
+          "text": "Gestion du menu",
+          "line": 448
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Rechercher un plat, tag ou description...",
+          "line": 566
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Décrivez le plat...",
+          "line": 823
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Qté",
+          "line": 1003
+        }
+      ]
+    },
+    {
+      "file": "components/caisse/CaisseInvoicesPanel.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Impayé:",
+          "line": 347
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réductions:",
+          "line": 348
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Offert/Hospitalité:",
+          "line": 349
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Annulé:",
+          "line": 350
+        },
+        {
+          "kind": "jsx-text",
+          "text": "N° facture",
+          "line": 357
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Client",
+          "line": 358
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Déjà payé:",
+          "line": 449
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Espèces",
+          "line": 541
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Hospitalité / offert (0 €)",
+          "line": 544
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Espèces",
+          "line": 568
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Hospitalité / offert (0 €)",
+          "line": 571
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Espèces",
+          "line": 584
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Hospitalité / offert (0 €)",
+          "line": 587
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Annuler une ligne article",
+          "line": 659
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Conséquence",
+          "line": 663
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Annulé avant préparation",
+          "line": 672
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Gaspillage / perte (déjà préparé)",
+          "line": 673
+        }
+      ]
+    },
+    {
+      "file": "components/caisse/ClientCreditsPanel.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Clients avec dette",
+          "line": 320
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Tous",
+          "line": 333
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Client",
+          "line": 353
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Total dû",
+          "line": 355
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Échéance",
+          "line": 357
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune facture ouverte.",
+          "line": 473
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun paiement enregistré.",
+          "line": 538
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Facture",
+          "line": 545
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Méthode",
+          "line": 546
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun rappel envoyé.",
+          "line": 573
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Facture",
+          "line": 602
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Méthode",
+          "line": 615
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Enregistrer un rappel",
+          "line": 648
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Téléphone",
+          "line": 664
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Message envoyé",
+          "line": 672
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Enregistrer rappel",
+          "line": 685
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Bonjour, vous avez une facture en attente…",
+          "line": 677
+        }
+      ]
+    },
+    {
+      "file": "components/server/ServerFloorPlan.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Transfert de table",
+          "line": 420
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Table d&apos;origine (occupée)",
+          "line": 428
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Table destination (libre)",
+          "line": 451
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Appeler la caisse",
+          "line": 504
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Numéro de table",
+          "line": 511
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Fusionner des tables",
+          "line": 547
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Table principale (destinataire)",
+          "line": 556
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Tables à fusionner (au moins 1)",
+          "line": 582
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Plan de salle — Service",
+          "line": 873
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Plan de salle — Service",
+          "line": 890
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ex. client préfère le fond de salle",
+          "line": 479
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ex. clients regroupés sur une grande table",
+          "line": 642
+        },
+        {
+          "kind": "attr:title",
+          "text": "Dissoudre le groupe",
+          "line": 710
+        },
+        {
+          "kind": "attr:title",
+          "text": "Appel serveur",
+          "line": 807
+        },
+        {
+          "kind": "attr:title",
+          "text": "Commande prête",
+          "line": 817
+        },
+        {
+          "kind": "attr:title",
+          "text": "Libérer la table",
+          "line": 832
+        },
+        {
+          "kind": "attr:title",
+          "text": "Dissoudre le groupe (avant paiement)",
+          "line": 855
+        }
+      ]
+    },
+    {
+      "file": "app/admin/events/private/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Impossible de charger le détail.",
+          "line": 422
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Choisissez une réservation",
+          "line": 426
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Cliquez sur une carte dans le calendrier",
+          "line": 427
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Détail",
+          "line": 634
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Détails événement",
+          "line": 663
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Actions et préparation",
+          "line": 664
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Reste à payer",
+          "line": 803
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Historique des changements",
+          "line": 818
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Notifications envoyées / planifiées (log)",
+          "line": 835
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun item encore — ajoutez une ligne ci-dessous.",
+          "line": 884
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ajouter une tâche achat/préparation",
+          "line": 888
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Envoyer un devis",
+          "line": 906
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Téléphone",
+          "line": 773
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Demandes spéciales",
+          "line": 774
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Élément ex: gâteau",
+          "line": 890
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Qté",
+          "line": 892
+        }
+      ]
+    },
+    {
+      "file": "components/account/AccountDashboardOverview.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Résumé",
+          "line": 325
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Accès immédiat",
+          "line": 344
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun historique de commande à afficher",
+          "line": 413
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Passez votre première commande pour la retrouver ici.",
+          "line": 414
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Les offres en cours s&apos;affichent ici lorsqu&apos;elles sont publiées.",
+          "line": 498
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Fidélité",
+          "line": 545
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Récompense suivante",
+          "line": 568
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Dessert offert à 500 pts · ou café offert dès 50 pts dans l&apos;onglet fidélité.",
+          "line": 569
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réservation",
+          "line": 587
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Événement",
+          "line": 604
+        },
+        {
+          "kind": "jsx-text",
+          "text": "C&apos;est aujourd&apos;hui !",
+          "line": 614
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Rien à venir pour le moment",
+          "line": 637
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réservez une table ou un événement pour voir le détail ici.",
+          "line": 638
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Les actualités et rappels personnalisés apparaîtront ici.",
+          "line": 663
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ajoutez des favoris en commandant depuis le menu.",
+          "line": 705
+        }
+      ]
+    },
+    {
+      "file": "app/admin/audit-log/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Toutes",
+          "line": 220
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Création",
+          "line": 221
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Entité (table)",
+          "line": 230
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Par page",
+          "line": 278
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Événements",
+          "line": 303
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Chargement du journal…",
+          "line": 312
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune entrée ne correspond aux filtres.",
+          "line": 315
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Résumé",
+          "line": 322
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Système / non renseigné",
+          "line": 356
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Email exact, UUID, ou nom d&apos;entité…",
+          "line": 183
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "E-mail ou UUID auth…",
+          "line": 198
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Toutes",
+          "line": 217
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "UUID ou texte id…",
+          "line": 244
+        }
+      ]
+    },
+    {
+      "file": "app/events/[eventId]/book/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Chargement de l'événement...",
+          "line": 113
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Événement introuvable ou non disponible.",
+          "line": 120
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réserver un Événement",
+          "line": 135
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Jannat Bloudan — événements et célébrations",
+          "line": 136
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Détails de l'événement",
+          "line": 143
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Informations de réservation",
+          "line": 196
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Nombre d'invités",
+          "line": 251
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Récapitulatif",
+          "line": 308
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Événement:",
+          "line": 311
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Invités:",
+          "line": 322
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Demande spéciale:",
+          "line": 328
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Montant estimé:",
+          "line": 331
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Précisez vos attentes (décoration, menu, musique...)",
+          "line": 284
+        }
+      ]
+    },
+    {
+      "file": "app/events/create/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Type d'événement",
+          "line": 58
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Détails de l'événement",
+          "line": 91
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Titre de l'événement *",
+          "line": 95
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Heure de début *",
+          "line": 118
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Durée (heures) *",
+          "line": 131
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Capacité *",
+          "line": 144
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Récapitulatif",
+          "line": 196
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Date et heure",
+          "line": 211
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Capacité",
+          "line": 222
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Annuler",
+          "line": 243
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Nom de l'organisateur",
+          "line": 174
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Décrivez votre événement...",
+          "line": 184
+        }
+      ]
+    },
+    {
+      "file": "components/caisse/CaisseTableSessionPanel.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Par invité / sous-commande",
+          "line": 167
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Pas encore de lignes de facture pour cette session.",
+          "line": 169
+        },
+        {
+          "kind": "jsx-text",
+          "text": "soldé",
+          "line": 192
+        },
+        {
+          "kind": "jsx-text",
+          "text": "hospitalité",
+          "line": 193
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Nouvel invité (split paiement)",
+          "line": 203
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Transfert de table",
+          "line": 211
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Clôturer table",
+          "line": 226
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Résolution reliquat",
+          "line": 232
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune (tout est payé)",
+          "line": 238
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Annulé",
+          "line": 240
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "ID table destination (numérique)",
+          "line": 213
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Motif obligatoire si non payé",
+          "line": 249
+        }
+      ]
+    },
+    {
+      "file": "app/admin/tables-qr/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Désactivée",
+          "line": 331
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune table dans cette zone de plan.",
+          "line": 405
+        },
+        {
+          "kind": "jsx-text",
+          "text": "N° table",
+          "line": 449
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Capacité max",
+          "line": 458
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Nom affiché (optionnel)",
+          "line": 467
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Zone métier",
+          "line": 480
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Statut (réf. caisse)",
+          "line": 521
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Table active (QR utilisable)",
+          "line": 542
+        },
+        {
+          "kind": "jsx-text",
+          "text": "URL des QR&nbsp;:",
+          "line": 592
+        },
+        {
+          "kind": "attr:title",
+          "text": "Regénère les QR codes avec l'URL publique actuelle",
+          "line": 278
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "ex. t12 ou vip-nord",
+          "line": 475
+        }
+      ]
+    },
+    {
+      "file": "app/caisse/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Factures journée",
+          "line": 493
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Estimation TVA (règle admin)",
+          "line": 509
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Dernière clôture (date)",
+          "line": 532
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Pas encore clôturée aujourd’hui.",
+          "line": 541
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune alerte automatique détectée.",
+          "line": 565
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Tickets événements (jour sélectionné)",
+          "line": 673
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Espèces comptées (physique)",
+          "line": 705
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Espèces déclarées (officiel)",
+          "line": 715
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Commentaire (écart, incident)",
+          "line": 726
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Avance salarié (sortie instantanée en caisse)",
+          "line": 1049
+        },
+        {
+          "kind": "attr:title",
+          "text": "Synthèse du jour",
+          "line": 389
+        }
+      ]
+    },
+    {
+      "file": "app/delivery/checkout/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Téléphone",
+          "line": 261
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Paiement sécurisé en ligne",
+          "line": 317
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Paiement rapide avec Apple Pay",
+          "line": 353
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Espèces à la livraison",
+          "line": 369
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Payer à la caisse du restaurant",
+          "line": 386
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Payez sur place au retrait",
+          "line": 387
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Récapitulatif",
+          "line": 479
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Votre panier est vide.",
+          "line": 484
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Retour au menu",
+          "line": 486
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Facture PDF envoyée par email",
+          "line": 533
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "123 Rue de la République",
+          "line": 232
+        }
+      ]
+    },
+    {
+      "file": "app/delivery/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Tous",
+          "line": 1165
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Type de service",
+          "line": 1438
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Votre panier",
+          "line": 1496
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Votre panier est vide",
+          "line": 1505
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ajoutez des plats pour commencer votre commande",
+          "line": 1506
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Parcourir le menu",
+          "line": 1507
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Frais de livraison",
+          "line": 1573
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Rechercher un plat…",
+          "line": 1097
+        },
+        {
+          "kind": "attr:title",
+          "text": "Nos créations",
+          "line": 1144
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ex: Sans oignons, bien cuit...",
+          "line": 1468
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "${cartItemsCount} articles dans le panier",
+          "line": 1129
+        }
+      ]
+    },
+    {
+      "file": "components/account/client-portal-panels.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Mes tickets événements",
+          "line": 481
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun ticket événement pour le moment",
+          "line": 490
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Découvrir les événements",
+          "line": 495
+        },
+        {
+          "kind": "jsx-text",
+          "text": "· Réglé",
+          "line": 548
+        },
+        {
+          "kind": "jsx-text",
+          "text": "· À régler",
+          "line": 550
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Autres événements",
+          "line": 558
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Filtre par type de commande",
+          "line": 162
+        },
+        {
+          "kind": "attr:title",
+          "text": "Aucune commande",
+          "line": 198
+        },
+        {
+          "kind": "attr:title",
+          "text": "Aucune réservation",
+          "line": 297
+        },
+        {
+          "kind": "attr:title",
+          "text": "Aucune facture",
+          "line": 395
+        }
+      ]
+    },
+    {
+      "file": "app/admin/events/new/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Creer un evenement",
+          "line": 137
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Taille du pack groupe (personnes)",
+          "line": 197
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Paiement propose au client",
+          "line": 204
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Expire la place si le paiement en ligne n&apos;est pas termine.",
+          "line": 232
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Fenetre pour confirmer quand une place se libere.",
+          "line": 244
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Annuler",
+          "line": 259
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Details visibles sur la fiche...",
+          "line": 150
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Pour N personnes",
+          "line": 194
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Par defaut 6",
+          "line": 198
+        }
+      ]
+    },
+    {
+      "file": "app/delivery/track/[orderId]/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Commande",
+          "line": 260
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Suivi de commande",
+          "line": 272
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Details de la commande",
+          "line": 359
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Nous n'avons pas retrouve les details de cette commande.",
+          "line": 364
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Retour au menu",
+          "line": 366
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Votre livreur",
+          "line": 423
+        },
+        {
+          "kind": "jsx-text",
+          "text": "99084 Erfurt, Thüringen",
+          "line": 456
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Votre commande arrive bientot !",
+          "line": 469
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Besoin d'aide avec votre commande ?",
+          "line": 476
+        }
+      ]
+    },
+    {
+      "file": "app/server/[tableId]/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "· cette table est la principale du groupe.",
+          "line": 342
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ajoutez des plats",
+          "line": 633
+        },
+        {
+          "kind": "attr:title",
+          "text": "Annuler la commande complète",
+          "line": 466
+        },
+        {
+          "kind": "attr:title",
+          "text": "Modifier quantité",
+          "line": 511
+        },
+        {
+          "kind": "attr:title",
+          "text": "Modifier note / allergie",
+          "line": 520
+        },
+        {
+          "kind": "attr:title",
+          "text": "Annuler cet item avec raison",
+          "line": 531
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Rechercher un produit...",
+          "line": 559
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Note / allergie (ex. sans oignon, sans gluten…)",
+          "line": 672
+        },
+        {
+          "kind": "attr:title",
+          "text": "Table ${tableId}",
+          "line": 287
+        }
+      ]
+    },
+    {
+      "file": "components/caisse/ExternalIncomePanel.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Entrée caisse externe",
+          "line": 199
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Mode de réception",
+          "line": 237
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Date métier",
+          "line": 259
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Libellé source (obligatoire pour « Autre »)",
+          "line": 270
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Libellé / précision (optionnel)",
+          "line": 280
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Numéro de référence (virement, ID payout…)",
+          "line": 291
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Journal entrées externes",
+          "line": 370
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ex. partenariat hôtel X",
+          "line": 273
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Détails (période, lots, etc.)",
+          "line": 306
+        }
+      ]
+    },
+    {
+      "file": "app/admin/cash-sorties/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Historique récent (500 max.)",
+          "line": 130
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun mouvement.",
+          "line": 136
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Bénéficiaire",
+          "line": 144
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Rôle",
+          "line": 145
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Détail",
+          "line": 146
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Validé par",
+          "line": 147
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Annulation traçable",
+          "line": 217
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ex. erreur de montant saisi…",
+          "line": 234
+        }
+      ]
+    },
+    {
+      "file": "app/admin/supplier-invoices/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Ajouter une facture",
+          "line": 394
+        },
+        {
+          "kind": "jsx-text",
+          "text": "N° facture",
+          "line": 444
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Verifier la facture",
+          "line": 753
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Cette facture est deja validee.",
+          "line": 757
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Fournisseur (texte facture)",
+          "line": 761
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Produit (extrait)",
+          "line": 799
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Produit",
+          "line": 467
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ingrédient",
+          "line": 571
+        }
+      ]
+    },
+    {
+      "file": "app/admin/users/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Rôle",
+          "line": 204
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Créé le",
+          "line": 206
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Désactivé",
+          "line": 261
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Prénom",
+          "line": 419
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Téléphone",
+          "line": 443
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Rôle",
+          "line": 456
+        },
+        {
+          "kind": "attr:title",
+          "text": "Gestion des utilisateurs",
+          "line": 75
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Rechercher (email, nom, téléphone)…",
+          "line": 176
+        }
+      ]
+    },
+    {
+      "file": "components/caisse/DailyRevenueDashboard.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Revenu par station",
+          "line": 253
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Unités",
+          "line": 287
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Annulé",
+          "line": 291
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune vente.",
+          "line": 304
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Par méthode de paiement",
+          "line": 333
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun paiement.",
+          "line": 337
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Par plateforme externe",
+          "line": 373
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune entrée externe.",
+          "line": 377
+        }
+      ]
+    },
+    {
+      "file": "components/caisse/SortieCaisseDialog.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Sortie de caisse",
+          "line": 186
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Personne (prénom / nom)",
+          "line": 212
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Rôle / fonction",
+          "line": 216
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Employé relié (optionnel)",
+          "line": 222
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Date et heure du mouvement *",
+          "line": 240
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Validé par (connecté)",
+          "line": 247
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ou laisser vide si employé ci-dessous",
+          "line": 213
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ex. serveur, gérant",
+          "line": 217
+        }
+      ]
+    },
+    {
+      "file": "app/admin/staff/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Top Serveurs du mois",
+          "line": 200
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun serveur disponible.",
+          "line": 207
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun employe trouve.",
+          "line": 266
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ajouter un employe",
+          "line": 335
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Gerer les commandes",
+          "line": 397
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Gerer les reservations",
+          "line": 401
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Rechercher un employe...",
+          "line": 243
+        }
+      ]
+    },
+    {
+      "file": "app/delivery/orders/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Mes commandes",
+          "line": 89
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Suivi en temps réel de vos livraisons.",
+          "line": 90
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Articles commandés:",
+          "line": 116
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Voir détails",
+          "line": 190
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune commande",
+          "line": 204
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Commencez à commander pour voir vos commandes ici",
+          "line": 205
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Parcourir le menu",
+          "line": 207
+        }
+      ]
+    },
+    {
+      "file": "app/server/walk-in/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "À emporter",
+          "line": 246
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Téléphone",
+          "line": 247
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ajoutez des plats",
+          "line": 372
+        },
+        {
+          "kind": "attr:title",
+          "text": "Commande sans table",
+          "line": 191
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ex. à venir chercher dans 20 min",
+          "line": 283
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Rechercher un produit...",
+          "line": 294
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Note / allergie (ex. sans oignon)",
+          "line": 428
+        }
+      ]
+    },
+    {
+      "file": "components/admin/AuditLogDetailModal.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Détails de l&apos;événement",
+          "line": 118
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Date et heure",
+          "line": 144
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Entité",
+          "line": 159
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Élément",
+          "line": 170
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Pas de différence détaillée (entrée brute ou données identiques).",
+          "line": 181
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Champs secrets remplacés par « masqué » pour l&apos;affichage.",
+          "line": 221
+        }
+      ]
+    },
+    {
+      "file": "app/events/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Créer",
+          "line": 170
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réservation simple (sans billet)",
+          "line": 352
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Voir la fiche",
+          "line": 355
+        },
+        {
+          "kind": "attr:title",
+          "text": "Événements & célébrations",
+          "line": 180
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Rechercher un événement...",
+          "line": 210
+        }
+      ]
+    },
+    {
+      "file": "components/caisse/CreditInvoiceDialog.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Marquer en crédit (kridi)",
+          "line": 145
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Nom client",
+          "line": 167
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Téléphone",
+          "line": 171
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Échéance (date)",
+          "line": 197
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Acomptes encaissés maintenant",
+          "line": 208
+        }
+      ]
+    },
+    {
+      "file": "components/events/EventsBrowsePanel.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Réserver un événement",
+          "line": 157
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun événement pour le moment",
+          "line": 219
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Revenez bientôt ou élargissez votre recherche.",
+          "line": 220
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Réservation simple",
+          "line": 288
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Rechercher un événement...",
+          "line": 168
+        }
+      ]
+    },
+    {
+      "file": "app/account/history/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:title",
+          "text": "Mon historique",
+          "line": 94
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Filtre par type de commande",
+          "line": 120
+        },
+        {
+          "kind": "attr:title",
+          "text": "Aucune commande",
+          "line": 156
+        },
+        {
+          "kind": "attr:title",
+          "text": "Aucune réservation",
+          "line": 257
+        }
+      ]
+    },
+    {
+      "file": "app/account/reviews/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Votre commentaire",
+          "line": 212
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Partagez votre expérience…",
+          "line": 225
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Retirer la photo",
+          "line": 251
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "${star} étoile${star > 1 ? \"s\" : \"\"}",
+          "line": 60
+        }
+      ]
+    },
+    {
+      "file": "app/admin/hr/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Gestion des Ressources Humaines",
+          "line": 196
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Employe du mois",
+          "line": 357
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Non affecte",
+          "line": 464
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Serveur",
+          "line": 516
+        }
+      ]
+    },
+    {
+      "file": "app/events/[eventId]/participate/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Billets, capacite supervisee — paiement Stripe ou au restaurant.",
+          "line": 226
+        },
+        {
+          "kind": "jsx-text",
+          "text": "COMPLET — utilisez la liste d&apos;attente.",
+          "line": 263
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Nombre de personnes",
+          "line": 311
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Total EUR (TVA selon votre regle commerce)",
+          "line": 430
+        }
+      ]
+    },
+    {
+      "file": "app/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:title",
+          "text": "Google Maps — avis et fiche",
+          "line": 1523
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Image précédente",
+          "line": 1653
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Sélecteur d'image",
+          "line": 1670
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "${rating} sur 5",
+          "line": 1450
+        }
+      ]
+    },
+    {
+      "file": "app/signup/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Creez votre compte client",
+          "line": 116
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Un e-mail de confirmation vous a ete envoye.",
+          "line": 126
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ouvrez le message et suivez le lien pour activer votre compte.",
+          "line": 127
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aller a la connexion",
+          "line": 151
+        }
+      ]
+    },
+    {
+      "file": "components/admin/AdminPortalShell.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Déconnexion",
+          "line": 251
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Modules regroupés par domaine",
+          "line": 298
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Ouvrir le menu",
+          "line": 172
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Déconnexion",
+          "line": 248
+        }
+      ]
+    },
+    {
+      "file": "components/caisse/SortiesJourTable.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Aucune sortie ou annulation enregistrée pour cette date.",
+          "line": 82
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Bénéficiaire",
+          "line": 91
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Rôle",
+          "line": 92
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Validé par",
+          "line": 94
+        }
+      ]
+    },
+    {
+      "file": "components/chat/ChatWidget.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "FR / EN / AR / DE",
+          "line": 123
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Le bot ecrit...",
+          "line": 149
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Fermer le chat",
+          "line": 127
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Pose ta question...",
+          "line": 156
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/forecast/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "sur 100",
+          "line": 101
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Heures de pointe",
+          "line": 199
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Erreur de chargement",
+          "line": 321
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/marketing/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Historique des campagnes",
+          "line": 250
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Erreur de chargement",
+          "line": 280
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Redigez votre message...",
+          "line": 242
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Systeme de sante",
+          "line": 432
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Etat global de la plateforme AI",
+          "line": 433
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Score de sante global",
+          "line": 440
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/sentiment/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Nuage de mots",
+          "line": 167
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Erreur de chargement",
+          "line": 272
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Collez un avis ou ecrivez un texte a analyser...",
+          "line": 222
+        }
+      ]
+    },
+    {
+      "file": "app/admin/events/[id]/participants/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Liste, paiement et check-in",
+          "line": 116
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune demande ou table absente.",
+          "line": 175
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune reservation.",
+          "line": 203
+        }
+      ]
+    },
+    {
+      "file": "app/admin/insights/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Connectez Supabase pour activer les agrégats.",
+          "line": 69
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Pas encore d’insight (données insuffisantes).",
+          "line": 112
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Top produits (période)",
+          "line": 130
+        }
+      ]
+    },
+    {
+      "file": "app/admin/supplier-intelligence/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Voir rapports (bloc fournisseur)",
+          "line": 53
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Échantillon récent",
+          "line": 58
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune donnée ou Supabase désactivée.",
+          "line": 86
+        }
+      ]
+    },
+    {
+      "file": "app/admin/taxes/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Gestion des taxes TVA",
+          "line": 70
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Règle de calcul configurable",
+          "line": 80
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Mode de base fiscal (TVA suivie pour « taxes à payer »)",
+          "line": 85
+        }
+      ]
+    },
+    {
+      "file": "app/auth/confirm/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Votre compte a ete confirme avec succes.",
+          "line": 307
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Redirection vers la connexion…",
+          "line": 308
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aller a la connexion",
+          "line": 324
+        }
+      ]
+    },
+    {
+      "file": "app/events/tickets/[code]/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Votre ticket",
+          "line": 74
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Presentez ce QR code a l'entree.",
+          "line": 75
+        },
+        {
+          "kind": "attr:alt",
+          "text": "QR du ticket",
+          "line": 94
+        }
+      ]
+    },
+    {
+      "file": "app/pos/tables/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Table",
+          "line": 176
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Table...",
+          "line": 135
+        },
+        {
+          "kind": "attr:title",
+          "text": "Ignorer la demande",
+          "line": 261
+        }
+      ]
+    },
+    {
+      "file": "app/table/[tableId]/menu/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Menu",
+          "line": 167
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Voir le panier",
+          "line": 288
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Ajoutez des plats pour commencer",
+          "line": 318
+        }
+      ]
+    },
+    {
+      "file": "components/account/AccountAIConcierge.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Maj+Entrée pour une nouvelle ligne.",
+          "line": 472
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Posez votre question… (Entrée pour envoyer)",
+          "line": 453
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Envoyer le message",
+          "line": 463
+        }
+      ]
+    },
+    {
+      "file": "components/account/PortalProfileForm.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "L&apos;e-mail ne peut pas être modifié ici.",
+          "line": 99
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Prénom",
+          "line": 102
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Téléphone",
+          "line": 110
+        }
+      ]
+    },
+    {
+      "file": "components/caisse/CaisseEventTicketsPanel.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Chargement des tickets evenements…",
+          "line": 53
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucun evenement programme a cette date.",
+          "line": 59
+        },
+        {
+          "kind": "jsx-text",
+          "text": "A payer sur place",
+          "line": 124
+        }
+      ]
+    },
+    {
+      "file": "components/workspace/StaffWorkspaceShell.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Déconnexion",
+          "line": 140
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Espace équipe",
+          "line": 158
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Navigation espace équipe",
+          "line": 41
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/anomalies/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Aucune anomalie active",
+          "line": 234
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Erreur de chargement",
+          "line": 282
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/vision/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Plan du restaurant",
+          "line": 352
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Occupation par zone",
+          "line": 378
+        }
+      ]
+    },
+    {
+      "file": "app/admin/inventory/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:placeholder",
+          "text": "Rechercher un produit...",
+          "line": 285
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ex: Réception fournisseur, casse...",
+          "line": 673
+        }
+      ]
+    },
+    {
+      "file": "app/admin/settings/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Ajouter un parametre",
+          "line": 226
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Rechercher une cle ou description...",
+          "line": 217
+        }
+      ]
+    },
+    {
+      "file": "app/table/[tableId]/bill/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Récapitulatif",
+          "line": 89
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Aucune commande sur cette table.",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "file": "app/table/[tableId]/order/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Commande annulée",
+          "line": 135
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Chargement de la commande…",
+          "line": 217
+        }
+      ]
+    },
+    {
+      "file": "components/account/PortalNotificationsPanel.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Mes notifications",
+          "line": 167
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Filtrer les notifications",
+          "line": 177
+        }
+      ]
+    },
+    {
+      "file": "components/caisse/CaisseFloorPlan.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Gérer QR",
+          "line": 283
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Payé",
+          "line": 492
+        }
+      ]
+    },
+    {
+      "file": "components/caisse/CaisseMovementAttachmentUploader.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Pièce jointe (ticket / capture)",
+          "line": 176
+        },
+        {
+          "kind": "attr:alt",
+          "text": "Aperçu",
+          "line": 234
+        }
+      ]
+    },
+    {
+      "file": "components/server/SplitBillDialog.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Table concernée",
+          "line": 212
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Nom de la personne ${idx + 1} (ex. Sami)",
+          "line": 275
+        }
+      ]
+    },
+    {
+      "file": "components/site/AICopilot.tsx",
+      "hits": [
+        {
+          "kind": "attr:aria-label",
+          "text": "Ouvrir le copilote IA",
+          "line": 90
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Posez une question...",
+          "line": 142
+        }
+      ]
+    },
+    {
+      "file": "components/site/EmptyState.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Réinitialiser",
+          "line": 27
+        },
+        {
+          "kind": "attr:title",
+          "text": "Aucun plat ne correspond",
+          "line": 25
+        }
+      ]
+    },
+    {
+      "file": "components/site/InvoicePDF.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Client",
+          "line": 47
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Validée",
+          "line": 91
+        }
+      ]
+    },
+    {
+      "file": "app/403/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "refusé",
+          "line": 43
+        }
+      ]
+    },
+    {
+      "file": "app/account/loyalty/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:title",
+          "text": "Programme fidélité",
+          "line": 129
+        }
+      ]
+    },
+    {
+      "file": "app/account/notifications/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:aria-label",
+          "text": "Filtrer les notifications",
+          "line": 182
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/auto-decisions/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:title",
+          "text": "Agent Décision automatique",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/kitchen/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Erreur de chargement",
+          "line": 304
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/learning/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:title",
+          "text": "Auto-Learning & modèles",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/loyalty/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Taux de deblocage",
+          "line": 553
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/menu-engineering/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:title",
+          "text": "Menu Engineering",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/pricing/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Erreur de chargement",
+          "line": 299
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/quality/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Score de conformite",
+          "line": 326
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/realtime-ops/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:title",
+          "text": "Optimisation temps réel",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "file": "app/admin/ai/reservation/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Toutes zones",
+          "line": 389
+        }
+      ]
+    },
+    {
+      "file": "app/admin/copilot/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:placeholder",
+          "text": "Votre question…",
+          "line": 117
+        }
+      ]
+    },
+    {
+      "file": "app/admin/events/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Aucun evenement publie.",
+          "line": 70
+        }
+      ]
+    },
+    {
+      "file": "app/admin/events/[id]/scan/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:placeholder",
+          "text": "BLD-XXXX-YYYYYY ou bloudan-ticket:...",
+          "line": 104
+        }
+      ]
+    },
+    {
+      "file": "app/admin/finance/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Depenses par categorie",
+          "line": 399
+        }
+      ]
+    },
+    {
+      "file": "app/admin/purchases/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Ingrédient",
+          "line": 896
+        }
+      ]
+    },
+    {
+      "file": "app/events/not-found.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "événement",
+          "line": 38
+        }
+      ]
+    },
+    {
+      "file": "app/login/loading.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Chargement de la page de connexion…",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "file": "app/menu/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:title",
+          "text": "Menu",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "file": "app/pos/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:placeholder",
+          "text": "Rechercher un produit...",
+          "line": 216
+        }
+      ]
+    },
+    {
+      "file": "components/admin/ai/TechnicalPayloadCollapsible.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "JSON brut — débogage uniquement.",
+          "line": 44
+        }
+      ]
+    },
+    {
+      "file": "components/ai/AIAgentBadge.tsx",
+      "hits": [
+        {
+          "kind": "attr:placeholder",
+          "text": "Posez une question…",
+          "line": 382
+        }
+      ]
+    },
+    {
+      "file": "components/auth/RequireAuth.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Vérification de la session...",
+          "line": 45
+        }
+      ]
+    },
+    {
+      "file": "components/caisse/CashRegisterMovementForm.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Personne ayant prélevé (optionnel)",
+          "line": 150
+        }
+      ]
+    },
+    {
+      "file": "components/site/BloudanLogoMark.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Bloudan — relief et forêts",
+          "line": 116
+        }
+      ]
+    },
+    {
+      "file": "components/site/NotificationCenter.tsx",
+      "hits": [
+        {
+          "kind": "attr:title",
+          "text": "Vue administrateur — toutes les notifications de tous les rôles",
+          "line": 50
+        }
+      ]
+    },
+    {
+      "file": "components/site/PromoBanner.tsx",
+      "hits": [
+        {
+          "kind": "attr:aria-label",
+          "text": "Fermer la bannière",
+          "line": 154
+        }
+      ]
+    },
+    {
+      "file": "components/site/ScrollToTop.tsx",
+      "hits": [
+        {
+          "kind": "attr:aria-label",
+          "text": "Remonter en haut de la page",
+          "line": 56
+        }
+      ]
+    }
+  ],
+  "totalStrings": 669,
+  "totalFiles": 107
+}

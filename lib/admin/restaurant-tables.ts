@@ -1,10 +1,22 @@
-/** Métadonnées zones / plan pour l’admin Tables QR (aligné migration 24 + UX). */
+/** Métadonnées zones / plan pour l'admin Tables QR — Jannat Bloudan (64 tables). */
 
-export const TABLE_BUSINESS_ZONES = ["salle", "terrasse", "interieur", "vip", "evenement"] as const
+import { JANNAT_ZONE_LABELS, type JannatZone, menuQrUrl } from "@/lib/admin/jannat-tables-data"
+import { getClientPublicSiteUrl } from "@/lib/site/public-url"
+
+/** Zones réelles du restaurant (plan 64 tables). */
+export const JANNAT_TABLE_ZONES = ["terrasse", "nofra", "central"] as const
+export type JannatTableZone = (typeof JANNAT_TABLE_ZONES)[number]
+
+/** Zones métier historiques (compat migrations antérieures). */
+export const LEGACY_BUSINESS_ZONES = ["salle", "interieur", "vip", "evenement"] as const
+
+export const TABLE_BUSINESS_ZONES = [...JANNAT_TABLE_ZONES, ...LEGACY_BUSINESS_ZONES] as const
 export type TableBusinessZone = (typeof TABLE_BUSINESS_ZONES)[number]
 
-export const TABLE_PLAN_ZONES = ["terrasse", "salle", "interieur"] as const
+export const TABLE_PLAN_ZONES = [...JANNAT_TABLE_ZONES] as const
 export type TablePlanZone = (typeof TABLE_PLAN_ZONES)[number]
+
+export const TABLE_CAPACITIES = [2, 4, 6, 10] as const
 
 /** Statuts éditables côté admin (complète le workflow FREE…PAID côté service). */
 export const TABLE_ADMIN_STATUSES = [
@@ -23,19 +35,17 @@ export const TABLE_ADMIN_STATUSES = [
 export type TableAdminStatus = (typeof TABLE_ADMIN_STATUSES)[number]
 
 export const ZONE_LABELS_FR: Record<string, string> = {
+  ...JANNAT_ZONE_LABELS,
+  // legacy
   salle: "Salle",
-  terrasse: "Terrasse",
   interieur: "Intérieur",
   vip: "VIP",
   evenement: "Événement",
-  // legacy
   gaming: "Événement",
 }
 
 export const PLAN_ZONE_LABELS_FR: Record<string, string> = {
-  terrasse: "Plan — Terrasse",
-  salle: "Plan — Salle",
-  interieur: "Plan — Intérieur",
+  ...JANNAT_ZONE_LABELS,
 }
 
 export const STATUS_LABELS_FR: Record<string, string> = {
@@ -45,54 +55,55 @@ export const STATUS_LABELS_FR: Record<string, string> = {
   CLEANING: "Nettoyage",
   DISABLED: "Désactivée (voir interrupteur)",
   ORDERING: "Commande en cours",
-  IN_KITCHEN: "En cuisine",
-  READY: "Prêt",
+  IN_KITCHEN: "En préparation",
+  READY: "Prête à servir",
   SERVED: "Servi",
-  PAYMENT_REQUESTED: "Addition demandée",
+  PAYMENT_REQUESTED: "Demande addition",
   PAID: "Payée",
-  CALL_SERVER: "Appel serveur",
+  CALL_SERVER: "Demande serveur",
 }
 
-import { getClientPublicSiteUrl } from "@/lib/site/public-url"
+export function isJannatZone(z: string): z is JannatZone {
+  return (JANNAT_TABLE_ZONES as readonly string[]).includes(z)
+}
 
 export function publicTableUrl(siteUrl: string, tableCode: string) {
   const base = siteUrl.replace(/\/$/, "")
   return `${base}/table/${encodeURIComponent(tableCode)}`
 }
 
+/** URL QR client : menu digital direct (spec Jannat). */
+export function publicTableMenuUrl(siteUrl: string, tableCode: string) {
+  return menuQrUrl(tableCode, siteUrl)
+}
+
 /**
- * Image QR (api.qrserver.com). Le param `version` (cache-buster) est ajouté
- * uniquement quand demandé : utile pour le bouton « Regénérer QR » qui force
- * un re-fetch des images côté navigateur.
+ * Image QR (api.qrserver.com). Pointe vers /table/{code}/menu par défaut.
  */
 export function qrImageUrlForTable(
   siteUrl: string,
   tableCode: string,
   size = 220,
   version?: string | number,
+  target: "menu" | "landing" = "menu",
 ) {
-  const target = publicTableUrl(siteUrl, tableCode)
+  const link =
+    target === "menu" ? publicTableMenuUrl(siteUrl, tableCode) : publicTableUrl(siteUrl, tableCode)
   const v = version ? `&v=${encodeURIComponent(String(version))}` : ""
-  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(target)}${v}`
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(link)}${v}`
 }
 
 /**
- * Calcule l'URL publique « vue client » à partir d'un objet table partiel
- * (table_code de préférence, sinon table_number numérique).
- * Utilisable côté client comme côté serveur.
- *
- * Stratégie :
- *  - `table_code` (slug)         → /table/{code}
- *  - `table_number` numérique    → /table/{number} (résolu côté public)
- *  - `id`                        → fallback `t{id}`
- *
- * Base URL : déléguée à `getClientPublicSiteUrl()` (helper central).
+ * Calcule l'URL publique « vue client » à partir d'un objet table partiel.
  */
-export function resolveClientPreviewUrl(table: {
-  id?: number | null
-  table_code?: string | null
-  table_number?: number | string | null
-}): string {
+export function resolveClientPreviewUrl(
+  table: {
+    id?: number | null
+    table_code?: string | null
+    table_number?: number | string | null
+  },
+  target: "menu" | "landing" = "menu",
+): string {
   const code = (table.table_code && String(table.table_code).trim()) || ""
   let ref = code
   if (!ref) {
@@ -105,6 +116,6 @@ export function resolveClientPreviewUrl(table: {
   }
   if (!ref) return ""
   const base = getClientPublicSiteUrl()
-  if (!base) return `/table/${encodeURIComponent(ref)}`
-  return publicTableUrl(base, ref)
+  if (!base) return `/table/${encodeURIComponent(ref)}${target === "menu" ? "/menu" : ""}`
+  return target === "menu" ? publicTableMenuUrl(base, ref) : publicTableUrl(base, ref)
 }

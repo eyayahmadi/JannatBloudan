@@ -7,6 +7,9 @@ const { Translate } = googleTranslatePkg.v2
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { resolveTranslationRuntime, type TranslationRuntime } from "@/lib/server/env-providers"
 import { shouldBypassMachineTranslation } from "@/lib/server/translation-guards"
+import { getSeedDictionary } from "@/lib/i18n/seed-dictionary"
+import { translateWithMyMemory } from "@/lib/server/mymemory-translate"
+import type { Locale } from "@/lib/i18n/config"
 
 const CHUNK = 72
 
@@ -127,15 +130,34 @@ async function translateChunkDeepL(
   return arr.map((x) => x.text)
 }
 
+export type TranslateStringsOptions = {
+  /**
+   * Activer le fallback MyMemory si le fournisseur principal échoue / renvoie
+   * la chaîne d'origine. Désactivé par défaut pour les appels massifs
+   * (typiquement le namespace messages.fr complet) afin de ne pas brûler la
+   * quota anonyme de MyMemory. À activer côté routes de traduction page
+   * (`/api/translate-page`) qui traitent des lots plus petits et plus visibles.
+   */
+  enableMyMemoryFallback?: boolean
+}
+
 /**
  * Traduit une liste de chaînes FR → locale cible, avec cache Postgres (service role).
  * En cas d’échec partiel ou d’API absente, renvoie le texte source pour les entrées concernées.
+ *
+ * Ordre des résolutions :
+ *   1. Dictionnaire seed (instantané, hors-ligne)
+ *   2. Cache Postgres (translation_cache) si disponible
+ *   3. Fournisseur principal (DeepL / Google / Google Cloud)
+ *   4. (Optionnel) Fallback MyMemory si `enableMyMemoryFallback=true`
  */
 export async function translateStrings(
   inputs: readonly string[],
   targetLanguage: string,
   sourceLanguage = "fr",
+  options: TranslateStringsOptions = {},
 ): Promise<string[]> {
+  const { enableMyMemoryFallback = false } = options
   const src = sourceLanguage.slice(0, 5).toLowerCase()
   const tgtNorm = targetLanguage.trim().toLowerCase()
   const tgt = GOOGLE_TARGET[tgtNorm] ?? tgtNorm
@@ -144,7 +166,21 @@ export async function translateStrings(
   if (src === tgt || inputs.length === 0) return out
 
   const rt = resolveTranslationRuntime()
-  if (!rt.ok) return out
+
+  // Seed-only path : si AUCUN provider n'est configuré, on applique au moins
+  // le dictionnaire statique avant de rendre la main. Cela garantit que les
+  // chaînes UI critiques sont toujours traduites, même hors API distante.
+  if (!rt.ok) {
+    const seedOnly = getSeedDictionary(tgt as Locale)
+    if (Object.keys(seedOnly).length === 0) return out
+    for (let i = 0; i < inputs.length; i++) {
+      const raw = inputs[i]
+      if (typeof raw !== "string") continue
+      const seeded = seedOnly[raw] ?? seedOnly[raw.trim()]
+      if (typeof seeded === "string" && seeded.length > 0) out[i] = seeded
+    }
+    return out
+  }
 
   const placeholders: Array<{ idx: number; text: string; hash: string }> = []
   for (let i = 0; i < inputs.length; i++) {
@@ -200,9 +236,24 @@ export async function translateStrings(
   }
 
   const translatedByOriginal = new Map<string, string>()
+
+  // ── 1. SEED dictionary : zéro appel API pour les chaînes connues ────────
+  const seed = getSeedDictionary(tgt as Locale)
+  const stillToFetch: string[] = []
+  for (const orig of uniqOrder) {
+    const seeded = seed[orig] ?? seed[orig.trim()]
+    if (typeof seeded === "string" && seeded.length > 0) {
+      translatedByOriginal.set(orig, seeded)
+    } else {
+      stillToFetch.push(orig)
+    }
+  }
+
+  // ── 2. Fournisseur principal (DeepL / Google / Google Cloud) ────────────
+  let primaryFailed = false
   try {
-    for (let i = 0; i < uniqOrder.length; i += CHUNK) {
-      const slice = uniqOrder.slice(i, i + CHUNK)
+    for (let i = 0; i < stillToFetch.length; i += CHUNK) {
+      const slice = stillToFetch.slice(i, i + CHUNK)
       const part =
         rt.provider === "deepl"
           ? await translateChunkDeepL(rt.endpoint, rt.apiKey, slice, src, tgt)
@@ -213,8 +264,38 @@ export async function translateStrings(
         translatedByOriginal.set(orig, part[k] ?? orig)
       })
     }
-  } catch {
-    return out
+  } catch (err) {
+    primaryFailed = true
+    console.warn(
+      `[translation-service] primary provider ${rt.provider} failed:`,
+      err instanceof Error ? err.message : err,
+    )
+  }
+
+  // ── 3. (Optionnel) Fallback MyMemory pour les entrées restées en source.
+  //       Désactivé sur les gros lots (namespace messages complet) afin de
+  //       préserver la quota anonyme. Activé sur /api/translate-page (lots
+  //       petits, visibles, déjà filtrés par AutoTranslateDom).
+  if (enableMyMemoryFallback) {
+    const stillFr: string[] = []
+    for (const orig of stillToFetch) {
+      const t = translatedByOriginal.get(orig)
+      if (primaryFailed || !t || t === orig) stillFr.push(orig)
+    }
+    if (stillFr.length > 0) {
+      try {
+        const fb = await translateWithMyMemory(stillFr, tgt, src)
+        stillFr.forEach((orig, k) => {
+          const v = fb[k]
+          if (v && v !== orig) translatedByOriginal.set(orig, v)
+        })
+      } catch (err) {
+        console.warn(
+          "[translation-service] mymemory fallback failed:",
+          err instanceof Error ? err.message : err,
+        )
+      }
+    }
   }
 
   const upsertMap = new Map<

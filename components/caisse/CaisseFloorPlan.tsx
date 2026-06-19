@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { JANNAT_TABLE_ZONES, ZONE_LABELS_FR } from "@/lib/admin/restaurant-tables"
 import { cn } from "@/lib/utils"
 
 export type FloorTable = {
@@ -202,7 +203,9 @@ export function CaisseFloorPlan({
     for (const t of tables) {
       if (t.zone) set.add(String(t.zone))
     }
-    return Array.from(set).sort()
+    const ordered = JANNAT_TABLE_ZONES.filter((z) => set.has(z))
+    const rest = Array.from(set).filter((z) => !ordered.includes(z as (typeof JANNAT_TABLE_ZONES)[number])).sort()
+    return [...ordered, ...rest]
   }, [tables])
 
   const counters = useMemo(() => {
@@ -332,7 +335,7 @@ export function CaisseFloorPlan({
               </span>
               <Chip label="Toutes" active={zoneFilter === "ALL"} onClick={() => setZoneFilter("ALL")} />
               {zones.map((z) => (
-                <Chip key={z} label={z} active={zoneFilter === z} onClick={() => setZoneFilter(z)} />
+                <Chip key={z} label={ZONE_LABELS_FR[z] ?? z} active={zoneFilter === z} onClick={() => setZoneFilter(z)} />
               ))}
             </div>
           ) : null}
@@ -425,7 +428,7 @@ function TableCard({
             <span className="text-[9px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
               Table
             </span>
-            <span className="-mt-0.5 text-lg font-bold leading-none">{t.table_number}</span>
+            <span className="-mt-0.5 text-lg font-bold leading-none">{t.table_code ?? t.table_number}</span>
           </div>
           <div className="flex flex-col gap-1">
             {t.zone ? (
@@ -433,7 +436,7 @@ function TableCard({
                 variant="outline"
                 className="w-fit gap-1 border-neutral-300/70 bg-white/80 px-2 py-0 text-[10px] font-medium uppercase tracking-wide text-neutral-700 dark:border-neutral-700 dark:bg-neutral-800/80 dark:text-neutral-200"
               >
-                {t.zone}
+                {ZONE_LABELS_FR[t.zone] ?? t.zone}
               </Badge>
             ) : null}
             {t.display_name ? (

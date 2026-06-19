@@ -35,9 +35,17 @@ export function LanguageSwitcher({ className }: { className?: string }) {
       <DropdownMenuTrigger
         className={cn(navTriggerClass, className)}
         aria-label={t("common.language", "Langue")}
+        translate="no"
+        data-no-translate
       >
         <Globe className="h-4 w-4 shrink-0 text-amber-800/90 dark:text-amber-200/90" aria-hidden />
-        <span className="min-w-[1.75rem] tabular-nums tracking-tight">{code}</span>
+        <span
+          className="min-w-[1.75rem] tabular-nums tracking-tight"
+          translate="no"
+          data-no-translate
+        >
+          {code}
+        </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"

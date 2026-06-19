@@ -14,8 +14,9 @@ import {
 import type { Locale } from "@/lib/i18n/config"
 import { translatePage } from "@/lib/client/translate-page"
 import { useI18n } from "@/lib/i18n/context"
+import { getSeedDictionary } from "@/lib/i18n/seed-dictionary"
 
-const CACHE_PREFIX = "i18n_mt_ui_v1"
+const CACHE_PREFIX = "i18n_mt_ui_v2"
 const DEBOUNCE_MS = 90
 
 type MachineTranslateCtx = {
@@ -61,7 +62,13 @@ export function MachineTranslateProvider({ children }: { children: ReactNode }) 
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    setMap(locale === "fr" ? {} : loadCache(locale))
+    if (locale === "fr") {
+      setMap({})
+      return
+    }
+    // SEED écrase le cache local pour les clés connues afin de garantir la
+    // cohérence des libellés UI critiques même si DeepL renvoie autre chose.
+    setMap({ ...loadCache(locale), ...getSeedDictionary(locale) })
   }, [locale])
 
   const pendingRef = useRef(new Set<string>())

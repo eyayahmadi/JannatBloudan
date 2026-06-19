@@ -37,10 +37,13 @@ import {
   TABLE_ADMIN_STATUSES,
   TABLE_BUSINESS_ZONES,
   TABLE_PLAN_ZONES,
+  TABLE_CAPACITIES,
+  JANNAT_TABLE_ZONES,
   ZONE_LABELS_FR,
   qrImageUrlForTable,
-  publicTableUrl,
+  publicTableMenuUrl,
 } from "@/lib/admin/restaurant-tables"
+import { TablesQrPrintCenter } from "@/components/admin/TablesQrPrintCenter"
 import { getClientPublicSiteUrl } from "@/lib/site/public-url"
 import { cn } from "@/lib/utils"
 
@@ -74,6 +77,8 @@ export default function AdminTablesQRPage() {
   const [siteUrl, setSiteUrl] = useState("")
   const [siteUrlSource, setSiteUrlSource] = useState<SiteUrlSource>("none")
   const [qrVersion, setQrVersion] = useState<number | null>(null)
+  const [zoneFilter, setZoneFilter] = useState<string>("ALL")
+  const [capFilter, setCapFilter] = useState<string>("ALL")
 
   const [form, setForm] = useState({
     table_number: "",
@@ -216,11 +221,11 @@ export default function AdminTablesQRPage() {
     if (t.public_url && t.qr_image_url) {
       return { code, img: t.qr_image_url, url: t.public_url }
     }
-    const base = siteUrl || getClientPublicSiteUrl() || "http://localhost:3000"
+    const base = siteUrl || getClientPublicSiteUrl() || "https://jannat-bloudan.vercel.app"
     return {
       code,
-      img: qrImageUrlForTable(base, code, 200, qrVersion ?? undefined),
-      url: publicTableUrl(base, code),
+      img: qrImageUrlForTable(base, code, 200, qrVersion ?? undefined, "menu"),
+      url: publicTableMenuUrl(base, code),
     }
   }
 
@@ -244,16 +249,44 @@ export default function AdminTablesQRPage() {
 
   const printAll = () => window.print()
 
+  const filteredTables = useMemo(() => {
+    return tables.filter((t) => {
+      const z = String(t.plan_zone || t.zone || "")
+      if (zoneFilter !== "ALL" && z !== zoneFilter) return false
+      if (capFilter !== "ALL" && String(t.capacity ?? "") !== capFilter) return false
+      return true
+    })
+  }, [tables, zoneFilter, capFilter])
+
+  const groupedByZone = useMemo(() => {
+    const buckets: Record<string, RestaurantTable[]> = {}
+    for (const z of JANNAT_TABLE_ZONES) buckets[z] = []
+    for (const t of filteredTables) {
+      const z = String(t.plan_zone || t.zone || "terrasse")
+      if (!buckets[z]) buckets[z] = []
+      buckets[z].push(t)
+    }
+    for (const k of Object.keys(buckets)) {
+      buckets[k].sort((a, b) => String(a.table_code).localeCompare(String(b.table_code)))
+    }
+    return buckets
+  }, [filteredTables])
+
   const planBuckets = useMemo(() => {
     const active = tables.filter((t) => t.is_active !== false)
-    const bucket: Record<string, RestaurantTable[]> = { terrasse: [], salle: [], interieur: [] }
+    const bucket: Record<string, RestaurantTable[]> = { terrasse: [], nofra: [], central: [] }
     for (const t of active) {
-      const p = (t.plan_zone as string) || "salle"
-      const key = p in bucket ? p : "salle"
+      const p = (t.plan_zone as string) || (t.zone as string) || "terrasse"
+      const key = p in bucket ? p : "terrasse"
       bucket[key].push(t)
     }
     for (const k of Object.keys(bucket)) {
-      bucket[k].sort((a, b) => (a.position_y ?? 0) - (b.position_y ?? 0) || (a.position_x ?? 0) - (b.position_x ?? 0))
+      bucket[k].sort(
+        (a, b) =>
+          (a.position_y ?? 0) - (b.position_y ?? 0) ||
+          (a.position_x ?? 0) - (b.position_x ?? 0) ||
+          String(a.table_code).localeCompare(String(b.table_code)),
+      )
     }
     return bucket
   }, [tables])
@@ -262,7 +295,7 @@ export default function AdminTablesQRPage() {
     <RequireAuth roles={["ADMIN", "STAFF"]}>
       <AdminPageFrame
         title="Tables QR"
-        subtitle="Créez les tables, organisez le plan (terrasse / salle / intérieur), générez les QR vers le menu et l’expérience client. La caisse gère déjà split invités, transfert, hospitalité et promos."
+        subtitle="Plan réel Jannat Bloudan — 64 tables (Terrasse T01–T40, Nofra N01–N14, Central C01–C10). QR → menu digital."
         trailing={
           <div className="flex flex-wrap gap-2 print:hidden">
             <Button type="button" variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
@@ -298,6 +331,10 @@ export default function AdminTablesQRPage() {
               <List className="h-4 w-4" />
               Liste & QR
             </TabsTrigger>
+            <TabsTrigger value="print" className="gap-1.5">
+              <Printer className="h-4 w-4" />
+              Centre QR
+            </TabsTrigger>
             <TabsTrigger value="plan" className="gap-1.5">
               <Grid3x3 className="h-4 w-4" />
               Plan de salle
@@ -305,11 +342,47 @@ export default function AdminTablesQRPage() {
           </TabsList>
 
           <TabsContent value="liste" className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 print:hidden">
+              <FilterPill label="Toutes zones" active={zoneFilter === "ALL"} onClick={() => setZoneFilter("ALL")} />
+              {JANNAT_TABLE_ZONES.map((z) => (
+                <FilterPill
+                  key={z}
+                  label={ZONE_LABELS_FR[z] ?? z}
+                  active={zoneFilter === z}
+                  onClick={() => setZoneFilter(z)}
+                />
+              ))}
+              <span className="mx-2 h-4 w-px bg-amber-900/15" />
+              <FilterPill label="Toutes cap." active={capFilter === "ALL"} onClick={() => setCapFilter("ALL")} />
+              {TABLE_CAPACITIES.map((c) => (
+                <FilterPill
+                  key={c}
+                  label={`${c} pers.`}
+                  active={capFilter === String(c)}
+                  onClick={() => setCapFilter(String(c))}
+                />
+              ))}
+              <Badge variant="outline" className="ml-auto">
+                {filteredTables.length} / {tables.length} tables
+              </Badge>
+            </div>
             {loading ? (
               <p className="text-sm text-amber-900/60">Chargement…</p>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {tables.map((t) => {
+              JANNAT_TABLE_ZONES.map((zone) => {
+                const zoneTables =
+                  zoneFilter === "ALL" || zoneFilter === zone ? groupedByZone[zone] ?? [] : []
+                if (!zoneTables.length) return null
+                return (
+                  <section key={zone} className="space-y-3">
+                    <h3 className="font-display text-base font-semibold text-amber-950">
+                      {PLAN_ZONE_LABELS_FR[zone] ?? zone}
+                      <Badge variant="secondary" className="ml-2">
+                        {zoneTables.length}
+                      </Badge>
+                    </h3>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {zoneTables.map((t) => {
                   const { img, url, code } = qrFor(t)
                   const inactive = t.is_active === false
                   return (
@@ -325,7 +398,7 @@ export default function AdminTablesQRPage() {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-display text-lg font-semibold text-amber-950 dark:text-amber-50">
-                                Table {t.table_number}
+                                {t.table_code ?? `Table ${t.table_number}`}
                               </span>
                               {inactive ? (
                                 <Badge variant="secondary">Désactivée</Badge>
@@ -385,8 +458,24 @@ export default function AdminTablesQRPage() {
                       </CardContent>
                     </Card>
                   )
-                })}
-              </div>
+                      })}
+                    </div>
+                  </section>
+                )
+              })
+            )}
+          </TabsContent>
+
+          <TabsContent value="print" className="space-y-4">
+            {loading ? (
+              <p className="text-sm text-amber-900/60">Chargement…</p>
+            ) : (
+              <TablesQrPrintCenter
+                tables={tables}
+                siteUrl={siteUrl || "https://jannat-bloudan.vercel.app"}
+                qrVersion={qrVersion}
+                onDownload={(t) => void downloadQr(t)}
+              />
             )}
           </TabsContent>
 
@@ -417,8 +506,7 @@ export default function AdminTablesQRPage() {
                             <img src={img} alt="" width={56} height={56} className="h-14 w-14 shrink-0 rounded-lg border" />
                             <div className="min-w-0">
                               <div className="font-semibold text-amber-950 dark:text-amber-50">
-                                Table {t.table_number}
-                                <span className="ml-2 text-[10px] font-normal text-amber-800/60">{code}</span>
+                                {t.table_code ?? `Table ${t.table_number}`}
                               </div>
                               <div className="text-[11px] text-amber-900/65">
                                 {ZONE_LABELS_FR[t.zone] ?? t.zone} · cap. {t.capacity ?? "—"}
@@ -554,6 +642,31 @@ export default function AdminTablesQRPage() {
         </Dialog>
       </AdminPageFrame>
     </RequireAuth>
+  )
+}
+
+function FilterPill({
+  label,
+  active,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-full border px-3 py-1 text-xs font-medium transition",
+        active
+          ? "border-[color:var(--lux-bordeaux)] bg-[color:var(--lux-bordeaux)] text-white"
+          : "border-amber-900/15 bg-white/80 text-amber-900/80 hover:border-amber-900/30",
+      )}
+    >
+      {label}
+    </button>
   )
 }
 

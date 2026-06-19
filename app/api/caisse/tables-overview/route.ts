@@ -20,7 +20,7 @@ export async function GET() {
     const supabase = createServiceRoleClient()
     const { data: tables, error: tErr } = await supabase
       .from("restaurant_tables")
-      .select("id, table_number, table_code, display_name, zone, status, capacity, current_session_id, is_active")
+      .select("id, table_number, table_code, display_name, zone, plan_zone, status, capacity, current_session_id, is_active")
       .order("table_number")
 
     if (tErr) return NextResponse.json({ tables: [], error: tErr.message })

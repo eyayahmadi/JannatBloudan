@@ -31,5 +31,6 @@ export async function POST(req: Request) {
     configured: result.configured,
     ...(result.hint ? { hint: result.hint } : {}),
     ...(result.error ? { error: result.error } : {}),
+    ...(result.stats ? { stats: result.stats } : {}),
   })
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useState, type ElementType } from "react"
+import { useCallback, useEffect, useMemo, useState, type ElementType } from "react"
 import Link from "next/link"
 import {
   BellRing,
@@ -47,30 +47,35 @@ import {
   TONE_BADGE,
   TONE_CARD,
 } from "@/lib/table-status"
+import { JANNAT_TABLES } from "@/lib/admin/jannat-tables-data"
+import { JANNAT_TABLE_ZONES, ZONE_LABELS_FR } from "@/lib/admin/restaurant-tables"
+import { useFloorPlanTables, type FloorPlanTable } from "@/lib/hooks/useFloorPlanTables"
 
 const ZONES: Record<string, { label: string; color: string }> = {
-  interieur: { label: "Interieur", color: "text-blue-600 dark:text-blue-400" },
   terrasse: { label: "Terrasse", color: "text-amber-600 dark:text-amber-400" },
+  nofra: { label: "Nofra", color: "text-blue-600 dark:text-blue-400" },
+  central: { label: "Salle centrale", color: "text-purple-600 dark:text-purple-400" },
+  // legacy
+  salle: { label: "Salle", color: "text-slate-600 dark:text-slate-400" },
+  interieur: { label: "Intérieur", color: "text-slate-600 dark:text-slate-400" },
   vip: { label: "VIP", color: "text-purple-600 dark:text-purple-400" },
+  evenement: { label: "Événement", color: "text-rose-600 dark:text-rose-400" },
   gaming: { label: "Gaming", color: "text-rose-600 dark:text-rose-400" },
 }
 
-function getZone(tableId: number): string {
-  if (tableId <= 8) return "interieur"
-  if (tableId <= 14) return "terrasse"
-  if (tableId <= 17) return "vip"
-  return "gaming"
+function zoneForTable(tableNumber: number, rows: FloorPlanTable[]): string {
+  const row = rows.find((t) => Number(t.table_number) === tableNumber)
+  return String(row?.plan_zone || row?.zone || "terrasse")
 }
 
-const TABLE_IDS = Array.from({ length: 20 }, (_, i) => i + 1)
-
-type OverviewTable = {
-  table_id?: number
-  table_number?: number
-  is_active?: boolean
-  session?: { id?: string } | null
-  payment_status_code?: string
+function tableCodeFor(tableNumber: number, rows: FloorPlanTable[]): string {
+  const row = rows.find((t) => Number(t.table_number) === tableNumber)
+  return (row?.table_code && String(row.table_code).trim()) || String(tableNumber)
 }
+
+const FALLBACK_TABLE_NUMBERS = JANNAT_TABLES.map((t) => t.table_number)
+
+type OverviewTable = FloorPlanTable
 
 export type ServerFloorPlanProps = {
   /** Intégré dans StaffWorkspaceShell : pas de PageShell ni SiteHeader externes */
@@ -101,10 +106,28 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
   const [mergeReason, setMergeReason] = useState("")
   const [mergeSubmitting, setMergeSubmitting] = useState(false)
 
+  const { tables: floorTables, loading: floorLoading, reload: reloadFloor } = useFloorPlanTables(8000)
+  const [zoneFilter, setZoneFilter] = useState<string>("ALL")
+
+  const tableNumbers = useMemo(() => {
+    if (floorTables.length > 0) {
+      return floorTables
+        .map((t) => Number(t.table_number))
+        .filter((n) => Number.isFinite(n) && n > 0)
+        .sort((a, b) => a - b)
+    }
+    return FALLBACK_TABLE_NUMBERS
+  }, [floorTables])
+
   const snapshots = useMemo(
-    () => TABLE_IDS.map((id) => computeTableSnapshot(id, orders, alerts)),
-    [orders, alerts],
+    () => tableNumbers.map((id) => computeTableSnapshot(id, orders, alerts)),
+    [tableNumbers, orders, alerts],
   )
+
+  const visibleSnapshots = useMemo(() => {
+    if (zoneFilter === "ALL") return snapshots
+    return snapshots.filter((s) => zoneForTable(s.tableId, floorTables) === zoneFilter)
+  }, [snapshots, zoneFilter, floorTables])
 
   const counters = useMemo(() => {
     const c = { libres: 0, actives: 0, aServir: 0, alertes: 0 }
@@ -120,6 +143,7 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
   const loadOverview = useCallback(async () => {
     setOverviewLoading(true)
     try {
+      await reloadFloor()
       const res = await fetch("/api/caisse/tables-overview")
       const j = await res.json()
       setOverview(Array.isArray(j.tables) ? j.tables : [])
@@ -129,7 +153,11 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
     } finally {
       setOverviewLoading(false)
     }
-  }, [])
+  }, [reloadFloor])
+
+  useEffect(() => {
+    void loadOverview()
+  }, [loadOverview])
 
   const occupiedSnapshots = useMemo(
     () => snapshots.filter((s) => s.status !== "FREE"),
@@ -463,7 +491,7 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
                 ) : (
                   freeSnapshots.map((s) => (
                     <option key={s.tableId} value={s.tableId}>
-                      Table {s.tableId} · {ZONES[getZone(s.tableId)].label}
+                      Table {tableCodeFor(s.tableId, floorTables)} · {ZONES[zoneForTable(s.tableId, floorTables)]?.label ?? ""}
                     </option>
                   ))
                 )}
@@ -515,9 +543,9 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
               value={callTableNum}
               onChange={(e) => setCallTableNum(Number(e.target.value))}
             >
-              {TABLE_IDS.map((n) => (
+              {tableNumbers.map((n) => (
                 <option key={n} value={n}>
-                  Table {n}
+                  Table {tableCodeFor(n, floorTables)}
                 </option>
               ))}
             </select>
@@ -738,9 +766,28 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
         })}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {snapshots.map((snap) => {
-          const zone = ZONES[getZone(snap.tableId)]
+      <div className="mb-4 flex flex-wrap gap-2">
+        <ZoneTab label="Toutes" active={zoneFilter === "ALL"} onClick={() => setZoneFilter("ALL")} />
+        {JANNAT_TABLE_ZONES.map((z) => (
+          <ZoneTab
+            key={z}
+            label={ZONE_LABELS_FR[z] ?? z}
+            active={zoneFilter === z}
+            onClick={() => setZoneFilter(z)}
+          />
+        ))}
+        {floorLoading ? (
+          <span className="ml-auto text-[11px] text-muted-foreground">Sync tables…</span>
+        ) : (
+          <span className="ml-auto text-[11px] text-muted-foreground">{tableNumbers.length} tables actives</span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        {visibleSnapshots.map((snap) => {
+          const zoneKey = zoneForTable(snap.tableId, floorTables)
+          const zone = ZONES[zoneKey] ?? ZONES.terrasse
+          const code = tableCodeFor(snap.tableId, floorTables)
           // Si la table fait partie d'un groupe fusionné, on présente le groupe
           // comme une seule unité : la principale détient les commandes ; les
           // membres affichent un miroir et redirigent vers la principale.
@@ -755,7 +802,7 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
           const canRelease = displaySnap.status === "PAID" && !isMember
           const targetHref = isMember
             ? `/server/${group?.mainTable ?? snap.tableId}`
-            : `/server/${snap.tableId}`
+            : `/server/${code}`
           const groupedRing = group
             ? "ring-2 ring-violet-300 dark:ring-violet-700/70 ring-offset-1 ring-offset-white/40 dark:ring-offset-slate-950/40"
             : ""
@@ -770,8 +817,14 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
                   groupedRing,
                 )}
               >
-                <span className="text-2xl font-bold text-slate-900 dark:text-white">{snap.tableId}</span>
+                <span className="text-2xl font-bold text-slate-900 dark:text-white">{code}</span>
                 <span className={cn("text-xs font-medium", zone.color)}>{zone.label}</span>
+                {(() => {
+                  const cap = floorTables.find((t) => Number(t.table_number) === snap.tableId)?.capacity
+                  return cap ? (
+                    <span className="text-[10px] text-slate-500">{cap} pers.</span>
+                  ) : null
+                })()}
                 <span
                   className={cn(
                     "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
@@ -896,6 +949,31 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
       </div>
       <AIAgentBadge context="server" />
     </PageShell>
+  )
+}
+
+function ZoneTab({
+  label,
+  active,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-full border px-3 py-1 text-xs font-medium transition",
+        active
+          ? "border-slate-800 bg-slate-800 text-white dark:border-white dark:bg-white dark:text-slate-900"
+          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
+      )}
+    >
+      {label}
+    </button>
   )
 }
 
