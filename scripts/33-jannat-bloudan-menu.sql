@@ -153,6 +153,16 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
+VALUES ('Manakish', 'manakish', 'Manakish', 'food', 90, true, '🫓', 'المناقيش')
+ON CONFLICT (slug) DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  section = EXCLUDED.section,
+  display_order = EXCLUDED.display_order,
+  is_active = EXCLUDED.is_active,
+  icon_emoji = EXCLUDED.icon_emoji,
+  name_ar = EXCLUDED.name_ar;
+INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
 VALUES ('Waffeln', 'waffeln', 'Waffeln', 'desserts', 10, true, '🧇', 'وافل')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
@@ -373,6 +383,7 @@ DECLARE
   cat_pizza UUID;
   cat_burgers UUID;
   cat_sandwiches UUID;
+  cat_manakish UUID;
   cat_waffeln UUID;
   cat_crepes UUID;
   cat_pancakes UUID;
@@ -406,6 +417,7 @@ BEGIN
   SELECT id INTO cat_pizza FROM categories WHERE slug = 'pizza';
   SELECT id INTO cat_burgers FROM categories WHERE slug = 'burgers';
   SELECT id INTO cat_sandwiches FROM categories WHERE slug = 'sandwiches';
+  SELECT id INTO cat_manakish FROM categories WHERE slug = 'manakish';
   SELECT id INTO cat_waffeln FROM categories WHERE slug = 'waffeln';
   SELECT id INTO cat_crepes FROM categories WHERE slug = 'crepes';
   SELECT id INTO cat_pancakes FROM categories WHERE slug = 'pancakes';
@@ -2069,6 +2081,606 @@ BEGIN
     '/placeholder.svg', 15, false, false, false,
     false, false, true, 100,
     NULL, 'كبدة غنم', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Manakish à la Souradia', 'manakish-a-la-souradia', 'Manakish à la Souradia', 10, cat_manakish,
+    '/placeholder.svg', 15, true, false, false,
+    false, false, true, 100,
+    NULL, 'مناقيش سورية', 'KITCHEN', '["popular"]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Toshka', 'manakish-toshka', 'Toshka', 4.5, cat_manakish,
+    '/placeholder.svg', 15, false, false, false,
+    false, false, true, 100,
+    NULL, 'توشكا', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Fleischstreifen auf Teig', 'manakish-fleischstreifen-auf-teig', 'Fleischstreifen auf Teig', 6, cat_manakish,
+    '/placeholder.svg', 15, false, false, false,
+    false, false, true, 100,
+    NULL, 'شرحات على العجين', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Lamm Stückchen auf Teig', 'manakish-lamm-stueckchen-auf-teig', 'Lamm Stückchen auf Teig', 4.5, cat_manakish,
+    '/placeholder.svg', 15, false, false, false,
+    false, false, true, 100,
+    NULL, 'محرّمشة على العجين', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Schisch Tawouk', 'manakish-schisch-tawouk', 'Schisch Tawouk auf Teig', 4.5, cat_manakish,
+    '/placeholder.svg', 15, false, false, false,
+    false, false, true, 100,
+    NULL, 'شيش طاووق', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Za''atar', 'manakish-zaatar', 'Za''atar', 2.5, cat_manakish,
+    '/placeholder.svg', 15, false, true, true,
+    false, false, true, 100,
+    NULL, 'زعتر', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Za''atar mit Käse', 'manakish-zaatar-mit-kaese', 'Za''atar mit Käse', 3, cat_manakish,
+    '/placeholder.svg', 15, false, true, false,
+    false, false, true, 100,
+    NULL, 'زعتر مع جبنة', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Käse Pide', 'manakish-kaese-pide', 'Käse Pide', 3, cat_manakish,
+    '/placeholder.svg', 15, false, true, false,
+    false, false, true, 100,
+    NULL, 'جبنة مدورة', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Calazoni', 'manakish-calazoni', 'Calazoni', 4, cat_manakish,
+    '/placeholder.svg', 15, false, true, false,
+    false, false, true, 100,
+    NULL, 'قشقوان', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Muhammara mit Kaschkawal', 'manakish-muhammara-kaschkawal', 'Muhammara mit Kaschkawal', 4, cat_manakish,
+    '/placeholder.svg', 15, false, true, false,
+    false, false, true, 100,
+    NULL, 'محمرة بقشقوان', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Spinat Dreieckig', 'manakish-spinat-dreieckig', 'Spinat Dreieckig', 3, cat_manakish,
+    '/placeholder.svg', 15, false, true, true,
+    false, false, true, 100,
+    NULL, 'سبانخ', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Sucuk Calzone', 'manakish-sucuk-calzone', 'Sucuk Calzone', 4, cat_manakish,
+    '/placeholder.svg', 15, false, false, false,
+    false, false, true, 100,
+    NULL, 'سجق', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Lammacun', 'manakish-lammacun', 'Lammacun', 4, cat_manakish,
+    '/placeholder.svg', 15, false, false, false,
+    false, false, true, 100,
+    NULL, 'لحمة بالعجين', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Lammacun Syrisch', 'manakish-lammacun-syrisch', 'Lammacun Syrisch', 4, cat_manakish,
+    '/placeholder.svg', 15, false, false, false,
+    false, false, true, 100,
+    NULL, 'صفيحة شامية', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Lammacun mit Joghurt', 'manakish-lammacun-mit-joghurt', 'Lammacun mit Joghurt', 4, cat_manakish,
+    '/placeholder.svg', 15, false, false, false,
+    false, false, true, 100,
+    NULL, 'صفيحة باللبن', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Sanfura', 'manakish-sanfura', 'Sanfura', 3.5, cat_manakish,
+    '/placeholder.svg', 15, false, false, false,
+    false, false, true, 100,
+    NULL, 'سنفورة', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Kartoffel Ecke', 'manakish-kartoffel-ecke', 'Kartoffel Ecke', 2.5, cat_manakish,
+    '/placeholder.svg', 15, false, true, true,
+    false, false, true, 100,
+    NULL, 'بطاطا', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Oliven', 'manakish-oliven', 'Oliven', 3, cat_manakish,
+    '/placeholder.svg', 15, false, true, true,
+    false, false, true, 100,
+    NULL, 'زيتون', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Chicken mit Käse', 'manakish-chicken-mit-kaese', 'Chicken mit Käse', 4, cat_manakish,
+    '/placeholder.svg', 15, false, false, false,
+    false, false, true, 100,
+    NULL, 'دجاج بالجبنة', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Mexican Chicken', 'manakish-mexican-chicken', 'Mexican Chicken', 4, cat_manakish,
+    '/placeholder.svg', 15, false, false, false,
+    false, false, true, 100,
+    'épicé', 'دجاج مكسيكي', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Muhamara mit Oliven', 'manakish-muhamara-mit-oliven', 'Muhamara mit Oliven', 3, cat_manakish,
+    '/placeholder.svg', 15, false, true, false,
+    false, false, true, 100,
+    NULL, 'محمرة بالزيتون', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Muhammara mit Nüsse', 'manakish-muhammara-mit-nuesse', 'Muhammara mit Nüsse', 2.5, cat_manakish,
+    '/placeholder.svg', 15, false, true, false,
+    false, false, true, 100,
+    NULL, 'محمرة بالجوز', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Libanesischer Käse', 'manakish-libanesischer-kaese', 'Libanesischer Käse', 3, cat_manakish,
+    '/placeholder.svg', 15, false, true, false,
+    false, false, true, 100,
+    NULL, 'جبنة لبنانية', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Akkawi-Käse', 'manakish-akkawi-kaese', 'Akkawi-Käse', 3, cat_manakish,
+    '/placeholder.svg', 15, false, true, false,
+    false, false, true, 100,
+    NULL, 'جبنة عكاوي', 'KITCHEN', '[]'::jsonb
+  ) ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    category_id = EXCLUDED.category_id,
+    name_ar = EXCLUDED.name_ar,
+    station = EXCLUDED.station,
+    is_popular = EXCLUDED.is_popular,
+    is_vegetarian = EXCLUDED.is_vegetarian,
+    is_vegan = EXCLUDED.is_vegan,
+    is_chef_choice = EXCLUDED.is_chef_choice,
+    is_recommended = EXCLUDED.is_recommended,
+    tags = EXCLUDED.tags,
+    image_url = EXCLUDED.image_url;
+  INSERT INTO products (
+    name, slug, description, price, category_id, image_url,
+    preparation_time, is_popular, is_vegetarian, is_vegan,
+    is_chef_choice, is_recommended, is_available, stock_quantity,
+    spice_level, name_ar, station, tags
+  ) VALUES (
+    'Spezial Bloudan', 'manakish-spezial-bloudan', 'Spezial Bloudan — Haus-Spezialität', 16, cat_manakish,
+    '/placeholder.svg', 15, true, false, false,
+    true, false, true, 100,
+    NULL, 'منقوشة بلودان', 'KITCHEN', '["popular"]'::jsonb
   ) ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
