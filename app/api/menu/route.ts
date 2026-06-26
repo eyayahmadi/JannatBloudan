@@ -239,21 +239,21 @@ async function localizeProducts(
   items: EnrichedProduct[],
   locale: Locale,
 ): Promise<EnrichedProduct[]> {
-  if (locale === "fr") return items
+  // Official product names (DE + name_ar) are never machine-translated.
+  // Only descriptions and category labels (UI) are localized.
+  if (locale === "de") return items
   const texts: string[] = []
   for (const it of items) {
-    texts.push(it.name)
     texts.push(it.description)
     texts.push(it.categoryName)
   }
-  const translated = await translateStrings(texts, locale, "fr")
+  const translated = await translateStrings(texts, locale, "de")
   return items.map((it, idx) => {
-    const base = idx * 3
+    const base = idx * 2
     return {
       ...it,
-      name: translated[base] ?? it.name,
-      description: translated[base + 1] ?? it.description,
-      categoryName: translated[base + 2] ?? it.categoryName,
+      description: translated[base] ?? it.description,
+      categoryName: translated[base + 1] ?? it.categoryName,
     }
   })
 }

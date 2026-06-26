@@ -1,19 +1,19 @@
 {
   "meta": {
-    "title": "Bloudan — structure de carte (exemple, non consommé par le build)",
+    "title": "Jannat Bloudan — structure de carte",
     "locale": "de",
-    "note": "Les catégories et produits réels proviennent de la base (scripts/13 + admin). Utilisez ce JSON comme modèle d’import manuel."
+    "note": "Les catégories et produits réels proviennent de la base (scripts/33 + admin). Ce JSON documente la structure officielle."
   },
   "sections": {
     "food": {
       "label_de": "Speisen",
       "categories": [
-        "Vorspeisen",
-        "Salate",
-        "Suppen",
-        "Manakish",
+        "Entrées",
+        "Salades",
+        "Plats",
+        "Shawarma",
+        "Grillades",
         "Pizza",
-        "Gerichte",
         "Burgers",
         "Sandwiches"
       ]
@@ -21,37 +21,76 @@
     "desserts": {
       "label_de": "Desserts",
       "categories": [
-        "Waffel",
-        "Crepes",
-        "Kuchen",
-        "Ice Cream",
+        "Waffeln",
+        "Crêpes",
         "Pancakes",
-        "Fruits salad"
+        "Fruit Salads",
+        "Ice Cream",
+        "Cheesecakes",
+        "Cakes",
+        "Snacks"
       ]
     },
     "drinks": {
       "label_de": "Getränke",
       "categories": [
-        "Soft drinks",
+        "Water",
         "Juices",
+        "Soft Drinks",
+        "Ice Tea",
+        "Cocktails",
         "Smoothies",
         "Milkshakes",
-        "Cocktails",
+        "Banana Milk Cocktails",
         "Coffee",
-        "Tea"
+        "Tea",
+        "Iced Coffee"
       ]
     },
     "special": {
       "label_de": "Shisha & Lounge",
-      "categories": ["Shisha"]
+      "categories": ["Shisha", "Imperator"]
     }
   },
+  "qrFilters": [
+    "all",
+    "popular",
+    "entrees",
+    "salades",
+    "plats",
+    "shawarma",
+    "grillades",
+    "pizza",
+    "burgers",
+    "sandwiches",
+    "desserts",
+    "drinks",
+    "shisha"
+  ],
+  "customizableProducts": {
+    "baseItems": ["Waffle Nature", "Crêpe Nature", "Pancake Nature"],
+    "extras": [
+      "Nutella",
+      "Oreo",
+      "Lotus",
+      "Kinder",
+      "White Chocolate",
+      "Brownie",
+      "Pistachio",
+      "Banana",
+      "Strawberry",
+      "Vanilla Ice Cream",
+      "Chocolate Ice Cream",
+      "Extra Chocolate Sauce"
+    ]
+  },
   "itemSchema": {
-    "name": "string",
-    "name_ar": "string | null",
+    "name": "string (German — official, never auto-translated)",
+    "name_ar": "string (Arabic — official, never auto-translated)",
     "category": "slug de categories",
     "price": 0.0,
-    "description": "string",
-    "tags": ["popular", "new", "spicy", "vegetarian"]
+    "description": "string (German)",
+    "station": "KITCHEN | BAR | SHISHA",
+    "tags": ["popular", "new", "spicy", "vegetarian", "customizable"]
   }
 }

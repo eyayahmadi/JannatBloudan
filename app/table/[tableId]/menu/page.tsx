@@ -3,13 +3,18 @@
 import { useState, useMemo, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, Minus, ShoppingCart, X, ChevronRight, UtensilsCrossed, ArrowLeft } from "lucide-react"
+import { Plus, Minus, ShoppingCart, X, ChevronRight, ArrowLeft } from "lucide-react"
 import { PageShell } from "@/components/site/PageShell"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { OrderStatus } from "@/lib/hooks/useRealtimeOrders"
 import { useRealtimeOrders } from "@/lib/hooks/useRealtimeOrders"
 import { useResolvedRestaurantTable } from "@/lib/hooks/useResolvedRestaurantTable"
+import {
+  buildQrTableCategoryChips,
+  filterQrTableMenuItems,
+  type QrTableCategoryChip,
+} from "@/lib/menu/qr-table-category-chips"
 
 function mapQrApiStatus(raw: string | undefined): OrderStatus {
   const s = (raw ?? "").toLowerCase()
@@ -21,18 +26,20 @@ function mapQrApiStatus(raw: string | undefined): OrderStatus {
   return "received"
 }
 
-const categories = [
-  { id: "all", label: "Tout", icon: "🍽️" },
-  { id: "shawarma", label: "Shawarma", icon: "🌯" },
-  { id: "pizza", label: "Pizzas", icon: "🍕" },
-  { id: "burger", label: "Burgers", icon: "🍔" },
-  { id: "hot-dishes", label: "Plats", icon: "🍲" },
-  { id: "mezze", label: "Mezzés", icon: "🥗" },
-  { id: "dessert", label: "Desserts", icon: "🍰" },
-  { id: "drink", label: "Boissons", icon: "🥤" },
-]
 
-type CartEntry = { id: number; name: string; price: number; quantity: number }
+type MenuItem = {
+  id: string
+  name: string
+  description: string
+  price: number
+  image: string
+  category: string
+  section: string
+  isPopular: boolean
+  isAvailable: boolean
+}
+
+type CartEntry = { id: string; name: string; price: number; quantity: number }
 
 export default function TableMenuPage() {
   const { tableId } = useParams<{ tableId: string }>()
@@ -40,37 +47,45 @@ export default function TableMenuPage() {
   const { addOrder } = useRealtimeOrders()
   const { effectiveNumber, displayLabel } = useResolvedRestaurantTable(tableId)
 
-  const [menuItems, setMenuItems] = useState<any[]>([])
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [categoryChips, setCategoryChips] = useState<QrTableCategoryChip[]>([
+    { id: "all", label: "Tout", icon: "🍽️" },
+  ])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState("all")
   const [cart, setCart] = useState<CartEntry[]>([])
   const [cartOpen, setCartOpen] = useState(false)
 
   useEffect(() => {
-    fetch("/api/products")
+    fetch("/api/menu?include_unavailable=0")
       .then((res) => res.json())
       .then((data) => {
-        const products = (data.products || []).map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          description: p.description || "",
-          price: typeof p.price === "number" ? p.price : parseFloat(p.price) || 0,
-          image: p.image_url || "/placeholder.svg",
-          category: p.categories?.slug || p.categories?.name?.toLowerCase() || "other",
-          isAvailable: p.is_available !== false,
+        const chips = buildQrTableCategoryChips(data.categories ?? [])
+        setCategoryChips(chips.length > 0 ? chips : [{ id: "all", label: "Tout", icon: "🍽️" }])
+
+        const products = (data.items ?? []).map((p: Record<string, unknown>) => ({
+          id: String(p.id),
+          name: String(p.name ?? ""),
+          description: String(p.description ?? ""),
+          price: typeof p.price === "number" ? p.price : parseFloat(String(p.price)) || 0,
+          image: (p.image_url as string) || "/placeholder.svg",
+          category: String(p.category ?? "other"),
+          section: String(p.section ?? "food"),
+          isPopular: !!p.is_popular,
+          isAvailable: p.can_order !== false,
         }))
-        setMenuItems(products.filter((p: any) => p.isAvailable))
+        setMenuItems(products.filter((p: MenuItem) => p.isAvailable))
       })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
   const filtered = useMemo(
-    () => (activeCategory === "all" ? menuItems : menuItems.filter((i: any) => i.category === activeCategory)),
+    () => filterQrTableMenuItems(menuItems, activeCategory),
     [activeCategory, menuItems],
   )
 
-  const addToCart = (item: any) => {
+  const addToCart = (item: MenuItem) => {
     setCart((prev) => {
       const existing = prev.find((c) => c.id === item.id)
       if (existing) return prev.map((c) => (c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c))
@@ -78,10 +93,10 @@ export default function TableMenuPage() {
     })
   }
 
-  const increment = (id: number) =>
+  const increment = (id: string) =>
     setCart((prev) => prev.map((c) => (c.id === id ? { ...c, quantity: c.quantity + 1 } : c)))
 
-  const decrement = (id: number) =>
+  const decrement = (id: string) =>
     setCart((prev) => {
       const item = prev.find((c) => c.id === id)
       if (item && item.quantity > 1) return prev.map((c) => (c.id === id ? { ...c, quantity: c.quantity - 1 } : c))
@@ -190,7 +205,7 @@ export default function TableMenuPage() {
 
       <div className="sticky top-14 z-40 border-b border-amber-200/30 bg-white/70 backdrop-blur-md dark:border-amber-900/20 dark:bg-neutral-900/70">
         <div className="mx-auto flex max-w-2xl gap-2 overflow-x-auto px-4 py-3">
-          {categories.map((cat) => (
+          {categoryChips.map((cat) => (
             <Button
               key={cat.id}
               type="button"
