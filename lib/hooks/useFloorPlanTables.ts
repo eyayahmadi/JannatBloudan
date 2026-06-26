@@ -4,6 +4,12 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
+import {
+  mapOverviewToUnifiedStatus,
+  UNIFIED_TABLE_STATUS_META,
+  type UnifiedTableStatus,
+} from "@/lib/table-status/unified"
 
 export type FloorPlanTable = {
   table_id?: number
@@ -17,6 +23,8 @@ export type FloorPlanTable = {
   restaurant_status?: string | null
   payment_status_code?: string
   payment_status_label?: string
+  unified_status?: UnifiedTableStatus
+  unified_status_label?: string
   session?: {
     id?: string
     total?: number
@@ -26,7 +34,9 @@ export type FloorPlanTable = {
   } | null
 }
 
-export function useFloorPlanTables(pollMs = 8000) {
+export { UNIFIED_TABLE_STATUS_META, mapOverviewToUnifiedStatus }
+
+export function useFloorPlanTables(pollMs = 4000) {
   const [tables, setTables] = useState<FloorPlanTable[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -40,7 +50,17 @@ export function useFloorPlanTables(pollMs = 8000) {
         return
       }
       const rows = Array.isArray(j.tables) ? j.tables : []
-      setTables(rows.filter((t: FloorPlanTable) => t.is_active !== false))
+      const enriched = rows
+        .filter((t: FloorPlanTable) => t.is_active !== false)
+        .map((t: FloorPlanTable) => {
+          const unified_status = mapOverviewToUnifiedStatus(t)
+          return {
+            ...t,
+            unified_status,
+            unified_status_label: UNIFIED_TABLE_STATUS_META[unified_status].label,
+          }
+        })
+      setTables(enriched)
       setError(null)
     } catch {
       setError("Réseau indisponible")
@@ -52,7 +72,13 @@ export function useFloorPlanTables(pollMs = 8000) {
   useEffect(() => {
     void reload()
     const id = window.setInterval(() => void reload(), pollMs)
-    return () => window.clearInterval(id)
+    const unsub = onRealtimeRefresh((scope) => {
+      if (scopeMatches("tables", scope)) void reload()
+    })
+    return () => {
+      window.clearInterval(id)
+      unsub()
+    }
   }, [reload, pollMs])
 
   return { tables, loading, error, reload }

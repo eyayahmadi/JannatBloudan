@@ -30,6 +30,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
+import { syncOrderInvoice } from "@/lib/caisse/sync-order-invoice"
 import type { Station, ItemStatus } from "@/lib/stations/config"
 import {
   isRefusalReasonCode,
@@ -249,6 +250,20 @@ export async function POST(
     },
   })
 
+  // Réconcilie la facture : l'original devient non facturable, le remplacement
+  // (nouvel order_item de la même commande) est ajouté comme ligne facturable.
+  const sync = await syncOrderInvoice(supabase, {
+    orderId: String(original.order_id),
+    reason: "item_replace",
+    actorId: guard.user.id,
+    actorEmail: guard.user.email ?? null,
+    metadata: {
+      original_item_id: String(original.id),
+      replacement_item_id: String(created.id),
+      station: originalStation,
+    },
+  })
+
   return NextResponse.json({
     ok: true,
     original: {
@@ -257,5 +272,6 @@ export async function POST(
       to: "replaced" as ItemStatus,
     },
     replacement: created,
+    invoice_sync: sync,
   })
 }

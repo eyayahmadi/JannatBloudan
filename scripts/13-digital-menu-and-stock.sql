@@ -97,15 +97,35 @@ $$;
 COMMENT ON FUNCTION public.decrement_stock_for_order IS
   'Décrémente ingrédients (recette) ou produits.stock_quantity ; mouvements liés order';
 
--- Exemple de structure (Allemand) : à adapter / dupliquer pour chaque ligne réelle
+-- Exemple de structure (Allemand) : à adapter / dupliquer pour chaque ligne réelle.
+-- Idempotent et sûr à rejouer : `categories` possède DEUX contraintes uniques
+-- (name → categories_name_key, slug → categories_slug_key). Un simple
+-- ON CONFLICT (slug) ne couvre pas un doublon sur `name` et provoque l'erreur
+-- « duplicate key value violates unique constraint "categories_name_key" ».
+-- On met donc à jour les catégories déjà présentes (clé = name) et on n'insère
+-- que celles dont NI le name NI le slug n'existent encore — les IDs existants
+-- sont préservés.
+WITH seed(name, slug, description, section, display_order, is_active, icon_emoji) AS (
+  VALUES
+    ('Vorspeisen',  'vorspeisen',  'Starters',     'food',     10, true, '🥗'),
+    ('Pizza',       'pizza-de',    'Pizza & Ofen', 'food',     40, true, '🍕'),
+    ('Waffel',      'waffel',      'Dessert',      'desserts', 10, true, '🧇'),
+    ('Soft drinks', 'soft-drinks', 'Softs',        'drinks',   10, true, '🥤'),
+    ('Shisha',      'shisha',      'Lounge',       'special',   1, true, '💨')
+),
+upd AS (
+  UPDATE categories c SET
+    section       = s.section,
+    display_order = s.display_order,
+    icon_emoji    = s.icon_emoji,
+    slug          = COALESCE(NULLIF(c.slug, ''), s.slug)
+  FROM seed s
+  WHERE c.name = s.name
+  RETURNING c.name
+)
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji)
-VALUES
-  ('Vorspeisen', 'vorspeisen', 'Starters', 'food', 10, true, '🥗'),
-  ('Pizza', 'pizza-de', 'Pizza & Ofen', 'food', 40, true, '🍕'),
-  ('Waffel', 'waffel', 'Dessert', 'desserts', 10, true, '🧇'),
-  ('Soft drinks', 'soft-drinks', 'Softs', 'drinks', 10, true, '🥤'),
-  ('Shisha', 'shisha', 'Lounge', 'special', 1, true, '💨')
-ON CONFLICT (slug) DO UPDATE SET
-  section = EXCLUDED.section,
-  display_order = EXCLUDED.display_order,
-  icon_emoji = EXCLUDED.icon_emoji;
+SELECT s.name, s.slug, s.description, s.section, s.display_order, s.is_active, s.icon_emoji
+FROM seed s
+WHERE NOT EXISTS (
+  SELECT 1 FROM categories c WHERE c.name = s.name OR c.slug = s.slug
+);

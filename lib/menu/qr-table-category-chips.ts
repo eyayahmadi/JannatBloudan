@@ -1,4 +1,10 @@
-/** Catégorie renvoyée par GET /api/menu */
+import {
+  DRINKS_CATEGORY_GROUPS,
+  DESSERTS_CATEGORY_GROUPS,
+} from "@/lib/menu/menu-category-groups"
+
+const DRINK_CATEGORY_SLUGS = new Set<string>(DRINKS_CATEGORY_GROUPS.map((g) => g.slug))
+const DESSERT_CATEGORY_SLUGS = new Set<string>(DESSERTS_CATEGORY_GROUPS.map((g) => g.slug))
 export type QrMenuCategoryRow = {
   id: string
   name: string
@@ -60,6 +66,12 @@ export function filterQrTableMenuItems<T extends QrTableMenuItemFilterable>(
   if (activeCategory === "popular") return items.filter((i) => i.isPopular)
   if (activeCategory.startsWith("section:")) {
     const section = activeCategory.slice("section:".length)
+    if (section === "drinks") {
+      return items.filter((i) => i.section === "drinks" || DRINK_CATEGORY_SLUGS.has(i.category))
+    }
+    if (section === "desserts") {
+      return items.filter((i) => i.section === "desserts" || DESSERT_CATEGORY_SLUGS.has(i.category))
+    }
     return items.filter((i) => i.section === section)
   }
   return items.filter((i) => i.category === activeCategory)

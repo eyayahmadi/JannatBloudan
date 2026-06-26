@@ -18,6 +18,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
+import { syncOrderInvoice } from "@/lib/caisse/sync-order-invoice"
 import { STATIONS, type Station } from "@/lib/stations/config"
 import {
   isRefusalReasonCode,
@@ -91,6 +92,33 @@ export async function POST(
 
   const supabase = createServiceRoleClient()
 
+  // Capture les commandes impactées AVANT le refus, pour resync facture après.
+  let affectedOrderIds: string[] = []
+  {
+    let q = supabase
+      .from("order_items")
+      .select("order_id")
+      .eq("station", station)
+      .in("station_status", ["new", "accepted"])
+    if (orderId) q = q.eq("order_id", orderId)
+    const { data: affected } = await q
+    affectedOrderIds = Array.from(
+      new Set((affected ?? []).map((r) => String((r as { order_id?: string }).order_id ?? "")).filter(Boolean)),
+    )
+  }
+
+  const syncAffectedInvoices = async () => {
+    for (const oid of affectedOrderIds) {
+      await syncOrderInvoice(supabase, {
+        orderId: oid,
+        reason: "bulk_refuse",
+        actorId: guard.user.id,
+        actorEmail: guard.user.email ?? null,
+        metadata: { station, bulk: true },
+      })
+    }
+  }
+
   // On utilise la fonction RPC créée dans la migration 29 pour atomicité.
   const rpc = await supabase.rpc("refuse_order_items_bulk", {
     p_station: station,
@@ -131,6 +159,7 @@ export async function POST(
       },
       metadata: { role: guard.role },
     })
+    await syncAffectedInvoices()
     return NextResponse.json({
       ok: true,
       refused_count: fallback.count,
@@ -157,6 +186,8 @@ export async function POST(
     },
     metadata: { role: guard.role },
   })
+
+  await syncAffectedInvoices()
 
   return NextResponse.json({ ok: true, refused_count: refusedCount, method: "rpc" })
 }

@@ -34,7 +34,37 @@ CREATE TABLE IF NOT EXISTS product_modifiers (
 CREATE INDEX IF NOT EXISTS idx_product_modifier_groups_product ON product_modifier_groups(product_id);
 CREATE INDEX IF NOT EXISTS idx_product_modifiers_group ON product_modifiers(group_id);
 
+-- Tables pour les variantes de taille (Salades, Eau, Thé)
+CREATE TABLE IF NOT EXISTS product_variant_groups (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  name_de VARCHAR(100) NOT NULL DEFAULT 'Größe',
+  name_ar VARCHAR(100),
+  min_selections INT NOT NULL DEFAULT 1,
+  max_selections INT NOT NULL DEFAULT 1,
+  display_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS product_variants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id UUID NOT NULL REFERENCES product_variant_groups(id) ON DELETE CASCADE,
+  slug VARCHAR(100) NOT NULL,
+  name_de VARCHAR(100) NOT NULL,
+  name_ar VARCHAR(100),
+  price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  display_order INT NOT NULL DEFAULT 0,
+  is_available BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (group_id, slug)
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_variant_groups_product ON product_variant_groups(product_id);
+CREATE INDEX IF NOT EXISTS idx_product_variants_group ON product_variants(group_id);
+
 -- Nettoyage des anciennes données démo
+DELETE FROM product_variants;
+DELETE FROM product_variant_groups;
 DELETE FROM product_modifiers;
 DELETE FROM product_modifier_groups;
 DELETE FROM product_ingredients;
@@ -366,6 +396,7 @@ DECLARE
   cat_imperator UUID;
   prod_id UUID;
   grp_id UUID;
+  var_grp_id UUID;
 BEGIN
   SELECT id INTO cat_entrees FROM categories WHERE slug = 'entrees';
   SELECT id INTO cat_salades FROM categories WHERE slug = 'salades';
@@ -690,10 +721,10 @@ BEGIN
     is_chef_choice, is_recommended, is_available, stock_quantity,
     spice_level, name_ar, station, tags
   ) VALUES (
-    'Rucola Salat Small', 'rucola-salat-small', 'Frischer Rucola-Salat — kleine Portion', 6, cat_salades,
+    'Rucola-Salat', 'rucola-salat', 'Frischer Rucola-Salat', 6, cat_salades,
     '/placeholder.svg', 15, false, true, false,
     false, false, true, 100,
-    NULL, 'سلطة جرجير صغيرة', 'KITCHEN', '[]'::jsonb
+    NULL, 'سلطة الجرجير', 'KITCHEN', '["has_variants"]'::jsonb
   ) ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
@@ -714,10 +745,10 @@ BEGIN
     is_chef_choice, is_recommended, is_available, stock_quantity,
     spice_level, name_ar, station, tags
   ) VALUES (
-    'Rucola Salat Large', 'rucola-salat-large', 'Frischer Rucola-Salat — große Portion', 10, cat_salades,
+    'Tabbouleh', 'tabbouleh', 'Klassische Tabbouleh', 6, cat_salades,
     '/placeholder.svg', 15, false, true, false,
     false, false, true, 100,
-    NULL, 'سلطة جرجير كبيرة', 'KITCHEN', '[]'::jsonb
+    NULL, 'تبولة', 'KITCHEN', '["has_variants"]'::jsonb
   ) ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
@@ -738,10 +769,10 @@ BEGIN
     is_chef_choice, is_recommended, is_available, stock_quantity,
     spice_level, name_ar, station, tags
   ) VALUES (
-    'Tabbouleh Small', 'tabbouleh-small', 'Klassische Tabbouleh — kleine Portion', 6, cat_salades,
+    'Fattoush', 'fattoush', 'Knackiger Fattoush-Salat', 6, cat_salades,
     '/placeholder.svg', 15, false, true, false,
     false, false, true, 100,
-    NULL, 'تبولة صغيرة', 'KITCHEN', '[]'::jsonb
+    NULL, 'فتوش', 'KITCHEN', '["has_variants"]'::jsonb
   ) ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
@@ -762,106 +793,10 @@ BEGIN
     is_chef_choice, is_recommended, is_available, stock_quantity,
     spice_level, name_ar, station, tags
   ) VALUES (
-    'Tabbouleh Large', 'tabbouleh-large', 'Klassische Tabbouleh — große Portion', 10, cat_salades,
+    'Salat', 'salat', 'Frischer grüner Salat', 5, cat_salades,
     '/placeholder.svg', 15, false, true, false,
     false, false, true, 100,
-    NULL, 'تبولة كبيرة', 'KITCHEN', '[]'::jsonb
-  ) ON CONFLICT (slug) DO UPDATE SET
-    name = EXCLUDED.name,
-    description = EXCLUDED.description,
-    price = EXCLUDED.price,
-    category_id = EXCLUDED.category_id,
-    name_ar = EXCLUDED.name_ar,
-    station = EXCLUDED.station,
-    is_popular = EXCLUDED.is_popular,
-    is_vegetarian = EXCLUDED.is_vegetarian,
-    is_vegan = EXCLUDED.is_vegan,
-    is_chef_choice = EXCLUDED.is_chef_choice,
-    is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
-  INSERT INTO products (
-    name, slug, description, price, category_id, image_url,
-    preparation_time, is_popular, is_vegetarian, is_vegan,
-    is_chef_choice, is_recommended, is_available, stock_quantity,
-    spice_level, name_ar, station, tags
-  ) VALUES (
-    'Fattoush Small', 'fattoush-small', 'Knackiger Fattoush-Salat — kleine Portion', 6, cat_salades,
-    '/placeholder.svg', 15, false, true, false,
-    false, false, true, 100,
-    NULL, 'فتوش صغير', 'KITCHEN', '[]'::jsonb
-  ) ON CONFLICT (slug) DO UPDATE SET
-    name = EXCLUDED.name,
-    description = EXCLUDED.description,
-    price = EXCLUDED.price,
-    category_id = EXCLUDED.category_id,
-    name_ar = EXCLUDED.name_ar,
-    station = EXCLUDED.station,
-    is_popular = EXCLUDED.is_popular,
-    is_vegetarian = EXCLUDED.is_vegetarian,
-    is_vegan = EXCLUDED.is_vegan,
-    is_chef_choice = EXCLUDED.is_chef_choice,
-    is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
-  INSERT INTO products (
-    name, slug, description, price, category_id, image_url,
-    preparation_time, is_popular, is_vegetarian, is_vegan,
-    is_chef_choice, is_recommended, is_available, stock_quantity,
-    spice_level, name_ar, station, tags
-  ) VALUES (
-    'Fattoush Large', 'fattoush-large', 'Knackiger Fattoush-Salat — große Portion', 9, cat_salades,
-    '/placeholder.svg', 15, false, true, false,
-    false, false, true, 100,
-    NULL, 'فتوش كبير', 'KITCHEN', '[]'::jsonb
-  ) ON CONFLICT (slug) DO UPDATE SET
-    name = EXCLUDED.name,
-    description = EXCLUDED.description,
-    price = EXCLUDED.price,
-    category_id = EXCLUDED.category_id,
-    name_ar = EXCLUDED.name_ar,
-    station = EXCLUDED.station,
-    is_popular = EXCLUDED.is_popular,
-    is_vegetarian = EXCLUDED.is_vegetarian,
-    is_vegan = EXCLUDED.is_vegan,
-    is_chef_choice = EXCLUDED.is_chef_choice,
-    is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
-  INSERT INTO products (
-    name, slug, description, price, category_id, image_url,
-    preparation_time, is_popular, is_vegetarian, is_vegan,
-    is_chef_choice, is_recommended, is_available, stock_quantity,
-    spice_level, name_ar, station, tags
-  ) VALUES (
-    'Grüner Salat Small', 'gruener-salat-small', 'Frischer grüner Salat — kleine Portion', 5, cat_salades,
-    '/placeholder.svg', 15, false, true, false,
-    false, false, true, 100,
-    NULL, 'سلطة خضراء صغيرة', 'KITCHEN', '[]'::jsonb
-  ) ON CONFLICT (slug) DO UPDATE SET
-    name = EXCLUDED.name,
-    description = EXCLUDED.description,
-    price = EXCLUDED.price,
-    category_id = EXCLUDED.category_id,
-    name_ar = EXCLUDED.name_ar,
-    station = EXCLUDED.station,
-    is_popular = EXCLUDED.is_popular,
-    is_vegetarian = EXCLUDED.is_vegetarian,
-    is_vegan = EXCLUDED.is_vegan,
-    is_chef_choice = EXCLUDED.is_chef_choice,
-    is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
-  INSERT INTO products (
-    name, slug, description, price, category_id, image_url,
-    preparation_time, is_popular, is_vegetarian, is_vegan,
-    is_chef_choice, is_recommended, is_available, stock_quantity,
-    spice_level, name_ar, station, tags
-  ) VALUES (
-    'Grüner Salat Large', 'gruener-salat-large', 'Frischer grüner Salat — große Portion', 9, cat_salades,
-    '/placeholder.svg', 15, false, true, false,
-    false, false, true, 100,
-    NULL, 'سلطة خضراء كبيرة', 'KITCHEN', '[]'::jsonb
+    NULL, 'سلطة', 'KITCHEN', '["has_variants"]'::jsonb
   ) ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
@@ -2586,10 +2521,10 @@ BEGIN
     is_chef_choice, is_recommended, is_available, stock_quantity,
     spice_level, name_ar, station, tags
   ) VALUES (
-    'Still Water 0.25L', 'still-water-025', 'Stilles Wasser 0,25 L', 2.5, cat_water,
+    'Stillwasser', 'stillwasser', 'Stilles Wasser', 2.5, cat_water,
     '/placeholder.svg', 15, false, false, false,
     false, false, true, 100,
-    NULL, 'مياه طبيعية صغيرة', 'BAR', '[]'::jsonb
+    NULL, 'مياه معدنية', 'BAR', '["has_variants"]'::jsonb
   ) ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
@@ -2610,58 +2545,10 @@ BEGIN
     is_chef_choice, is_recommended, is_available, stock_quantity,
     spice_level, name_ar, station, tags
   ) VALUES (
-    'Still Water 0.75L', 'still-water-075', 'Stilles Wasser 0,75 L', 4, cat_water,
+    'Mineralwasser', 'mineralwasser', 'Mineralwasser', 2.5, cat_water,
     '/placeholder.svg', 15, false, false, false,
     false, false, true, 100,
-    NULL, 'مياه طبيعية كبيرة', 'BAR', '[]'::jsonb
-  ) ON CONFLICT (slug) DO UPDATE SET
-    name = EXCLUDED.name,
-    description = EXCLUDED.description,
-    price = EXCLUDED.price,
-    category_id = EXCLUDED.category_id,
-    name_ar = EXCLUDED.name_ar,
-    station = EXCLUDED.station,
-    is_popular = EXCLUDED.is_popular,
-    is_vegetarian = EXCLUDED.is_vegetarian,
-    is_vegan = EXCLUDED.is_vegan,
-    is_chef_choice = EXCLUDED.is_chef_choice,
-    is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
-  INSERT INTO products (
-    name, slug, description, price, category_id, image_url,
-    preparation_time, is_popular, is_vegetarian, is_vegan,
-    is_chef_choice, is_recommended, is_available, stock_quantity,
-    spice_level, name_ar, station, tags
-  ) VALUES (
-    'Mineral Water 0.25L', 'mineral-water-025', 'Mineralwasser 0,25 L', 2.5, cat_water,
-    '/placeholder.svg', 15, false, false, false,
-    false, false, true, 100,
-    NULL, 'مياه غازية صغيرة', 'BAR', '[]'::jsonb
-  ) ON CONFLICT (slug) DO UPDATE SET
-    name = EXCLUDED.name,
-    description = EXCLUDED.description,
-    price = EXCLUDED.price,
-    category_id = EXCLUDED.category_id,
-    name_ar = EXCLUDED.name_ar,
-    station = EXCLUDED.station,
-    is_popular = EXCLUDED.is_popular,
-    is_vegetarian = EXCLUDED.is_vegetarian,
-    is_vegan = EXCLUDED.is_vegan,
-    is_chef_choice = EXCLUDED.is_chef_choice,
-    is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
-  INSERT INTO products (
-    name, slug, description, price, category_id, image_url,
-    preparation_time, is_popular, is_vegetarian, is_vegan,
-    is_chef_choice, is_recommended, is_available, stock_quantity,
-    spice_level, name_ar, station, tags
-  ) VALUES (
-    'Mineral Water 0.75L', 'mineral-water-075', 'Mineralwasser 0,75 L', 4, cat_water,
-    '/placeholder.svg', 15, false, false, false,
-    false, false, true, 100,
-    NULL, 'مياه غازية كبيرة', 'BAR', '[]'::jsonb
+    NULL, 'مياه غازية', 'BAR', '["has_variants"]'::jsonb
   ) ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
@@ -3858,10 +3745,10 @@ BEGIN
     is_chef_choice, is_recommended, is_available, stock_quantity,
     spice_level, name_ar, station, tags
   ) VALUES (
-    'Black Tea', 'black-tea', 'Schwarzer Tee', 3, cat_tea,
+    'Schwarzer Tee', 'schwarzer-tee', 'Schwarzer Tee', 3, cat_tea,
     '/placeholder.svg', 15, false, false, false,
     false, false, true, 100,
-    NULL, 'شاي أسود', 'BAR', '[]'::jsonb
+    NULL, 'شاي أسود', 'BAR', '["has_variants"]'::jsonb
   ) ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
@@ -3882,10 +3769,10 @@ BEGIN
     is_chef_choice, is_recommended, is_available, stock_quantity,
     spice_level, name_ar, station, tags
   ) VALUES (
-    'Black Tea Pot', 'black-tea-pot', 'Schwarzer Tee — Teekanne', 8, cat_tea,
+    'Grün Tee', 'gruen-tee', 'Grüner Tee', 3, cat_tea,
     '/placeholder.svg', 15, false, false, false,
     false, false, true, 100,
-    NULL, 'إبريق شاي أسود', 'BAR', '[]'::jsonb
+    NULL, 'شاي أخضر', 'BAR', '["has_variants"]'::jsonb
   ) ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
@@ -3906,10 +3793,10 @@ BEGIN
     is_chef_choice, is_recommended, is_available, stock_quantity,
     spice_level, name_ar, station, tags
   ) VALUES (
-    'Green Tea', 'green-tea', 'Grüner Tee', 3, cat_tea,
+    'Ingwer Zitrone', 'ingwer-zitrone', 'Ingwer-Zitronen-Tee', 3, cat_tea,
     '/placeholder.svg', 15, false, false, false,
     false, false, true, 100,
-    NULL, 'شاي أخضر', 'BAR', '[]'::jsonb
+    NULL, 'زنجبيل وليمون', 'BAR', '["has_variants"]'::jsonb
   ) ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
@@ -3930,106 +3817,10 @@ BEGIN
     is_chef_choice, is_recommended, is_available, stock_quantity,
     spice_level, name_ar, station, tags
   ) VALUES (
-    'Green Tea Pot', 'green-tea-pot', 'Grüner Tee — Teekanne', 8, cat_tea,
+    'Kamille Tee', 'kamille-tee', 'Kamillentee', 3, cat_tea,
     '/placeholder.svg', 15, false, false, false,
     false, false, true, 100,
-    NULL, 'إبريق شاي أخضر', 'BAR', '[]'::jsonb
-  ) ON CONFLICT (slug) DO UPDATE SET
-    name = EXCLUDED.name,
-    description = EXCLUDED.description,
-    price = EXCLUDED.price,
-    category_id = EXCLUDED.category_id,
-    name_ar = EXCLUDED.name_ar,
-    station = EXCLUDED.station,
-    is_popular = EXCLUDED.is_popular,
-    is_vegetarian = EXCLUDED.is_vegetarian,
-    is_vegan = EXCLUDED.is_vegan,
-    is_chef_choice = EXCLUDED.is_chef_choice,
-    is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
-  INSERT INTO products (
-    name, slug, description, price, category_id, image_url,
-    preparation_time, is_popular, is_vegetarian, is_vegan,
-    is_chef_choice, is_recommended, is_available, stock_quantity,
-    spice_level, name_ar, station, tags
-  ) VALUES (
-    'Ginger Lemon Tea', 'ginger-lemon-tea', 'Ingwer-Zitronen-Tee', 3, cat_tea,
-    '/placeholder.svg', 15, false, false, false,
-    false, false, true, 100,
-    NULL, 'شاي زنجبيل وليمون', 'BAR', '[]'::jsonb
-  ) ON CONFLICT (slug) DO UPDATE SET
-    name = EXCLUDED.name,
-    description = EXCLUDED.description,
-    price = EXCLUDED.price,
-    category_id = EXCLUDED.category_id,
-    name_ar = EXCLUDED.name_ar,
-    station = EXCLUDED.station,
-    is_popular = EXCLUDED.is_popular,
-    is_vegetarian = EXCLUDED.is_vegetarian,
-    is_vegan = EXCLUDED.is_vegan,
-    is_chef_choice = EXCLUDED.is_chef_choice,
-    is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
-  INSERT INTO products (
-    name, slug, description, price, category_id, image_url,
-    preparation_time, is_popular, is_vegetarian, is_vegan,
-    is_chef_choice, is_recommended, is_available, stock_quantity,
-    spice_level, name_ar, station, tags
-  ) VALUES (
-    'Ginger Lemon Tea Pot', 'ginger-lemon-tea-pot', 'Ingwer-Zitronen-Tee — Teekanne', 8, cat_tea,
-    '/placeholder.svg', 15, false, false, false,
-    false, false, true, 100,
-    NULL, 'إبريق شاي زنجبيل وليمون', 'BAR', '[]'::jsonb
-  ) ON CONFLICT (slug) DO UPDATE SET
-    name = EXCLUDED.name,
-    description = EXCLUDED.description,
-    price = EXCLUDED.price,
-    category_id = EXCLUDED.category_id,
-    name_ar = EXCLUDED.name_ar,
-    station = EXCLUDED.station,
-    is_popular = EXCLUDED.is_popular,
-    is_vegetarian = EXCLUDED.is_vegetarian,
-    is_vegan = EXCLUDED.is_vegan,
-    is_chef_choice = EXCLUDED.is_chef_choice,
-    is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
-  INSERT INTO products (
-    name, slug, description, price, category_id, image_url,
-    preparation_time, is_popular, is_vegetarian, is_vegan,
-    is_chef_choice, is_recommended, is_available, stock_quantity,
-    spice_level, name_ar, station, tags
-  ) VALUES (
-    'Chamomile Tea', 'chamomile-tea', 'Kamillentee', 3, cat_tea,
-    '/placeholder.svg', 15, false, false, false,
-    false, false, true, 100,
-    NULL, 'شاي بابونج', 'BAR', '[]'::jsonb
-  ) ON CONFLICT (slug) DO UPDATE SET
-    name = EXCLUDED.name,
-    description = EXCLUDED.description,
-    price = EXCLUDED.price,
-    category_id = EXCLUDED.category_id,
-    name_ar = EXCLUDED.name_ar,
-    station = EXCLUDED.station,
-    is_popular = EXCLUDED.is_popular,
-    is_vegetarian = EXCLUDED.is_vegetarian,
-    is_vegan = EXCLUDED.is_vegan,
-    is_chef_choice = EXCLUDED.is_chef_choice,
-    is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
-  INSERT INTO products (
-    name, slug, description, price, category_id, image_url,
-    preparation_time, is_popular, is_vegetarian, is_vegan,
-    is_chef_choice, is_recommended, is_available, stock_quantity,
-    spice_level, name_ar, station, tags
-  ) VALUES (
-    'Chamomile Tea Pot', 'chamomile-tea-pot', 'Kamillentee — Teekanne', 8, cat_tea,
-    '/placeholder.svg', 15, false, false, false,
-    false, false, true, 100,
-    NULL, 'إبريق شاي بابونج', 'BAR', '[]'::jsonb
+    NULL, 'بابونج', 'BAR', '["has_variants"]'::jsonb
   ) ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
@@ -4580,23 +4371,23 @@ BEGIN
     VALUES (prod_id, 'Extras', 'إضافات', 0, 12, 0)
     RETURNING id INTO grp_id;
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-nutella', 'Nutella', 'نوتيلا', 2, 1);
+    VALUES (grp_id, 'extra-nutella', 'Nutella', 'نوتيلا', 1.5, 1);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-oreo', 'Oreo', 'أوريو', 2, 2);
+    VALUES (grp_id, 'extra-oreo', 'Oreo', 'أوريو', 1.5, 2);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-lotus', 'Lotus', 'لوتس', 2, 3);
+    VALUES (grp_id, 'extra-lotus', 'Lotus', 'لوتس', 1.5, 3);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
     VALUES (grp_id, 'extra-kinder', 'Kinder', 'كيندر', 2, 4);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-white-chocolate', 'White Chocolate', 'شوكولاتة بيضاء', 2, 5);
+    VALUES (grp_id, 'extra-white-chocolate', 'White Chocolate', 'شوكولاتة بيضاء', 1.5, 5);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-brownie', 'Brownie', 'براوني', 2.5, 6);
+    VALUES (grp_id, 'extra-brownie', 'Brownie', 'براوني', 2, 6);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-pistachio', 'Pistachio', 'فستق', 2.5, 7);
+    VALUES (grp_id, 'extra-pistachio', 'Pistachio', 'فستق', 2, 7);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-banana', 'Banana', 'موز', 1.5, 8);
+    VALUES (grp_id, 'extra-banana', 'Banana', 'موز', 1, 8);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-strawberry', 'Strawberry', 'فراولة', 1.5, 9);
+    VALUES (grp_id, 'extra-strawberry', 'Strawberry', 'فراولة', 1, 9);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
     VALUES (grp_id, 'extra-vanilla-ice-cream', 'Vanilla Ice Cream', 'آيس كريم فانيليا', 2, 10);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
@@ -4610,23 +4401,23 @@ BEGIN
     VALUES (prod_id, 'Extras', 'إضافات', 0, 12, 0)
     RETURNING id INTO grp_id;
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-nutella', 'Nutella', 'نوتيلا', 2, 1);
+    VALUES (grp_id, 'extra-nutella', 'Nutella', 'نوتيلا', 1.5, 1);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-oreo', 'Oreo', 'أوريو', 2, 2);
+    VALUES (grp_id, 'extra-oreo', 'Oreo', 'أوريو', 1.5, 2);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-lotus', 'Lotus', 'لوتس', 2, 3);
+    VALUES (grp_id, 'extra-lotus', 'Lotus', 'لوتس', 1.5, 3);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
     VALUES (grp_id, 'extra-kinder', 'Kinder', 'كيندر', 2, 4);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-white-chocolate', 'White Chocolate', 'شوكولاتة بيضاء', 2, 5);
+    VALUES (grp_id, 'extra-white-chocolate', 'White Chocolate', 'شوكولاتة بيضاء', 1.5, 5);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-brownie', 'Brownie', 'براوني', 2.5, 6);
+    VALUES (grp_id, 'extra-brownie', 'Brownie', 'براوني', 2, 6);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-pistachio', 'Pistachio', 'فستق', 2.5, 7);
+    VALUES (grp_id, 'extra-pistachio', 'Pistachio', 'فستق', 2, 7);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-banana', 'Banana', 'موز', 1.5, 8);
+    VALUES (grp_id, 'extra-banana', 'Banana', 'موز', 1, 8);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-strawberry', 'Strawberry', 'فراولة', 1.5, 9);
+    VALUES (grp_id, 'extra-strawberry', 'Strawberry', 'فراولة', 1, 9);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
     VALUES (grp_id, 'extra-vanilla-ice-cream', 'Vanilla Ice Cream', 'آيس كريم فانيليا', 2, 10);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
@@ -4640,29 +4431,131 @@ BEGIN
     VALUES (prod_id, 'Extras', 'إضافات', 0, 12, 0)
     RETURNING id INTO grp_id;
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-nutella', 'Nutella', 'نوتيلا', 2, 1);
+    VALUES (grp_id, 'extra-nutella', 'Nutella', 'نوتيلا', 1.5, 1);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-oreo', 'Oreo', 'أوريو', 2, 2);
+    VALUES (grp_id, 'extra-oreo', 'Oreo', 'أوريو', 1.5, 2);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-lotus', 'Lotus', 'لوتس', 2, 3);
+    VALUES (grp_id, 'extra-lotus', 'Lotus', 'لوتس', 1.5, 3);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
     VALUES (grp_id, 'extra-kinder', 'Kinder', 'كيندر', 2, 4);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-white-chocolate', 'White Chocolate', 'شوكولاتة بيضاء', 2, 5);
+    VALUES (grp_id, 'extra-white-chocolate', 'White Chocolate', 'شوكولاتة بيضاء', 1.5, 5);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-brownie', 'Brownie', 'براوني', 2.5, 6);
+    VALUES (grp_id, 'extra-brownie', 'Brownie', 'براوني', 2, 6);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-pistachio', 'Pistachio', 'فستق', 2.5, 7);
+    VALUES (grp_id, 'extra-pistachio', 'Pistachio', 'فستق', 2, 7);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-banana', 'Banana', 'موز', 1.5, 8);
+    VALUES (grp_id, 'extra-banana', 'Banana', 'موز', 1, 8);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (grp_id, 'extra-strawberry', 'Strawberry', 'فراولة', 1.5, 9);
+    VALUES (grp_id, 'extra-strawberry', 'Strawberry', 'فراولة', 1, 9);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
     VALUES (grp_id, 'extra-vanilla-ice-cream', 'Vanilla Ice Cream', 'آيس كريم فانيليا', 2, 10);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
     VALUES (grp_id, 'extra-chocolate-ice-cream', 'Chocolate Ice Cream', 'آيس كريم شوكولاتة', 2, 11);
     INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
     VALUES (grp_id, 'extra-chocolate-sauce', 'Extra Chocolate Sauce', 'صوص شوكولاتة إضافي', 1, 12);
+  END IF;
+
+  -- Variantes de taille (Salades, Eau, Thé)
+  SELECT id INTO prod_id FROM products WHERE slug = 'rucola-salat';
+  IF prod_id IS NOT NULL THEN
+    INSERT INTO product_variant_groups (product_id, name_de, name_ar, min_selections, max_selections, display_order)
+    VALUES (prod_id, 'Größe', 'الحجم', 1, 1, 0)
+    RETURNING id INTO var_grp_id;
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'klein', 'Klein', 'صغير', 6, 1);
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'gross', 'Groß', 'كبير', 10, 2);
+  END IF;
+  SELECT id INTO prod_id FROM products WHERE slug = 'tabbouleh';
+  IF prod_id IS NOT NULL THEN
+    INSERT INTO product_variant_groups (product_id, name_de, name_ar, min_selections, max_selections, display_order)
+    VALUES (prod_id, 'Größe', 'الحجم', 1, 1, 0)
+    RETURNING id INTO var_grp_id;
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'klein', 'Klein', 'صغير', 6, 1);
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'gross', 'Groß', 'كبير', 10, 2);
+  END IF;
+  SELECT id INTO prod_id FROM products WHERE slug = 'fattoush';
+  IF prod_id IS NOT NULL THEN
+    INSERT INTO product_variant_groups (product_id, name_de, name_ar, min_selections, max_selections, display_order)
+    VALUES (prod_id, 'Größe', 'الحجم', 1, 1, 0)
+    RETURNING id INTO var_grp_id;
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'klein', 'Klein', 'صغير', 6, 1);
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'gross', 'Groß', 'كبير', 9, 2);
+  END IF;
+  SELECT id INTO prod_id FROM products WHERE slug = 'salat';
+  IF prod_id IS NOT NULL THEN
+    INSERT INTO product_variant_groups (product_id, name_de, name_ar, min_selections, max_selections, display_order)
+    VALUES (prod_id, 'Größe', 'الحجم', 1, 1, 0)
+    RETURNING id INTO var_grp_id;
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'klein', 'Klein', 'صغير', 5, 1);
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'gross', 'Groß', 'كبير', 9, 2);
+  END IF;
+  SELECT id INTO prod_id FROM products WHERE slug = 'stillwasser';
+  IF prod_id IS NOT NULL THEN
+    INSERT INTO product_variant_groups (product_id, name_de, name_ar, min_selections, max_selections, display_order)
+    VALUES (prod_id, 'Größe', 'الحجم', 1, 1, 0)
+    RETURNING id INTO var_grp_id;
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, '025l', '0.25L', '0.25 لتر', 2.5, 1);
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, '075l', '0.75L', '0.75 لتر', 4, 2);
+  END IF;
+  SELECT id INTO prod_id FROM products WHERE slug = 'mineralwasser';
+  IF prod_id IS NOT NULL THEN
+    INSERT INTO product_variant_groups (product_id, name_de, name_ar, min_selections, max_selections, display_order)
+    VALUES (prod_id, 'Größe', 'الحجم', 1, 1, 0)
+    RETURNING id INTO var_grp_id;
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, '025l', '0.25L', '0.25 لتر', 2.5, 1);
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, '075l', '0.75L', '0.75 لتر', 4, 2);
+  END IF;
+  SELECT id INTO prod_id FROM products WHERE slug = 'schwarzer-tee';
+  IF prod_id IS NOT NULL THEN
+    INSERT INTO product_variant_groups (product_id, name_de, name_ar, min_selections, max_selections, display_order)
+    VALUES (prod_id, 'Größe', 'الحجم', 1, 1, 0)
+    RETURNING id INTO var_grp_id;
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'glas', 'Glas', 'كأس', 3, 1);
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'kanne', 'Kanne', 'إبريق', 8, 2);
+  END IF;
+  SELECT id INTO prod_id FROM products WHERE slug = 'gruen-tee';
+  IF prod_id IS NOT NULL THEN
+    INSERT INTO product_variant_groups (product_id, name_de, name_ar, min_selections, max_selections, display_order)
+    VALUES (prod_id, 'Größe', 'الحجم', 1, 1, 0)
+    RETURNING id INTO var_grp_id;
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'glas', 'Glas', 'كأس', 3, 1);
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'kanne', 'Kanne', 'إبريق', 8, 2);
+  END IF;
+  SELECT id INTO prod_id FROM products WHERE slug = 'ingwer-zitrone';
+  IF prod_id IS NOT NULL THEN
+    INSERT INTO product_variant_groups (product_id, name_de, name_ar, min_selections, max_selections, display_order)
+    VALUES (prod_id, 'Größe', 'الحجم', 1, 1, 0)
+    RETURNING id INTO var_grp_id;
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'glas', 'Glas', 'كأس', 3, 1);
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'kanne', 'Kanne', 'إبريق', 8, 2);
+  END IF;
+  SELECT id INTO prod_id FROM products WHERE slug = 'kamille-tee';
+  IF prod_id IS NOT NULL THEN
+    INSERT INTO product_variant_groups (product_id, name_de, name_ar, min_selections, max_selections, display_order)
+    VALUES (prod_id, 'Größe', 'الحجم', 1, 1, 0)
+    RETURNING id INTO var_grp_id;
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'glas', 'Glas', 'كأس', 3, 1);
+    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, 'kanne', 'Kanne', 'إبريق', 8, 2);
   END IF;
 END $$;
 

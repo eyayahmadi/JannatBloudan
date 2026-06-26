@@ -1,12 +1,10 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
-import Link from "next/link"
-import { Plus, Minus, ShoppingCart, X, ChevronRight, ArrowLeft } from "lucide-react"
+import { AnimatePresence, motion } from "framer-motion"
 import { PageShell } from "@/components/site/PageShell"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { PremiumBackdrop } from "@/components/site/PremiumBackdrop"
 import type { OrderStatus } from "@/lib/hooks/useRealtimeOrders"
 import { useRealtimeOrders } from "@/lib/hooks/useRealtimeOrders"
 import { useResolvedRestaurantTable } from "@/lib/hooks/useResolvedRestaurantTable"
@@ -15,6 +13,34 @@ import {
   filterQrTableMenuItems,
   type QrTableCategoryChip,
 } from "@/lib/menu/qr-table-category-chips"
+import {
+  groupMenuItemsByCategory,
+  resolveGroupedSection,
+  type GroupedMenuItems,
+} from "@/lib/menu/menu-category-groups"
+import { MenuSubcategoryHeader } from "@/components/menu/MenuSubcategoryHeader"
+import { QrMenuHero } from "@/components/menu/qr/QrMenuHero"
+import { QrMenuSearch } from "@/components/menu/qr/QrMenuSearch"
+import { QrCategoryChips } from "@/components/menu/qr/QrCategoryChips"
+import { QrAttributeFilterChips } from "@/components/menu/qr/QrAttributeFilterChips"
+import { QrMenuProductCard } from "@/components/menu/qr/QrMenuProductCard"
+import { QrProductDetailSheet } from "@/components/menu/qr/QrProductDetailSheet"
+import { QrMenuCartSheet, QrMenuFloatingBar } from "@/components/menu/qr/QrMenuCartSheet"
+import { QrMenuEmptyState, QrMenuCardSkeleton } from "@/components/menu/qr/QrMenuEmptyState"
+import { QrMenuQuickSections } from "@/components/menu/qr/QrMenuQuickSections"
+import { matchesMenuSearch } from "@/lib/menu/menu-display"
+import { filterProductsByAttributeTag, type QrAttributeFilterId } from "@/lib/menu/product-attributes"
+import { mapApiToQrMenuItem } from "@/lib/menu/qr-menu-helpers"
+import { getQrFavorites, getQrRecentlyOrdered, pushQrRecentlyOrdered, toggleQrFavorite } from "@/lib/menu/qr-guest-prefs"
+import type { QrCartEntry, QrMenuItem } from "@/lib/menu/qr-menu-types"
+import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
+import type { StationAvailability } from "@/lib/stations/availability"
+import {
+  buildCartLineId,
+  formatKitchenTicketNotes,
+  type CartExtra,
+  type CartVariant,
+} from "@/lib/menu/cart-line"
 
 function mapQrApiStatus(raw: string | undefined): OrderStatus {
   const s = (raw ?? "").toLowerCase()
@@ -26,107 +52,248 @@ function mapQrApiStatus(raw: string | undefined): OrderStatus {
   return "received"
 }
 
-
-type MenuItem = {
-  id: string
-  name: string
-  description: string
-  price: number
-  image: string
-  category: string
-  section: string
-  isPopular: boolean
-  isAvailable: boolean
-}
-
-type CartEntry = { id: string; name: string; price: number; quantity: number }
-
 export default function TableMenuPage() {
   const { tableId } = useParams<{ tableId: string }>()
   const router = useRouter()
-  const { addOrder } = useRealtimeOrders()
+  const { addOrder, orders } = useRealtimeOrders()
   const { effectiveNumber, displayLabel } = useResolvedRestaurantTable(tableId)
 
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [menuItems, setMenuItems] = useState<QrMenuItem[]>([])
+  const [oftenOrderedWith, setOftenOrderedWith] = useState<Record<string, string[]>>({})
   const [categoryChips, setCategoryChips] = useState<QrTableCategoryChip[]>([
-    { id: "all", label: "Tout", icon: "🍽️" },
+    { id: "all", label: "Alle", icon: "🍽️" },
   ])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [offline, setOffline] = useState(false)
   const [activeCategory, setActiveCategory] = useState("all")
-  const [cart, setCart] = useState<CartEntry[]>([])
+  const [attributeFilter, setAttributeFilter] = useState<QrAttributeFilterId>("all")
+  const [search, setSearch] = useState("")
+  const [cart, setCart] = useState<QrCartEntry[]>([])
   const [cartOpen, setCartOpen] = useState(false)
+  const [detailItem, setDetailItem] = useState<QrMenuItem | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([])
+  const [recentIds, setRecentIds] = useState<string[]>([])
+  const [stationAvailability, setStationAvailability] = useState<StationAvailability[]>([])
 
   useEffect(() => {
-    fetch("/api/menu?include_unavailable=0")
-      .then((res) => res.json())
+    setFavoriteIds(getQrFavorites())
+    setRecentIds(getQrRecentlyOrdered(String(tableId)))
+  }, [tableId])
+
+  const loadMenu = useCallback(() => {
+    setLoading(true)
+    setLoadError(false)
+    setOffline(!navigator.onLine)
+
+    fetch("/api/menu?include_unavailable=1")
+      .then((res) => {
+        if (!res.ok) throw new Error("menu fetch failed")
+        return res.json()
+      })
       .then((data) => {
         const chips = buildQrTableCategoryChips(data.categories ?? [])
-        setCategoryChips(chips.length > 0 ? chips : [{ id: "all", label: "Tout", icon: "🍽️" }])
+        setCategoryChips(chips.length > 0 ? chips : [{ id: "all", label: "Alle", icon: "🍽️" }])
+        setOftenOrderedWith((data.often_ordered_with as Record<string, string[]>) ?? {})
+        setStationAvailability((data.station_availability as StationAvailability[]) ?? [])
 
-        const products = (data.items ?? []).map((p: Record<string, unknown>) => ({
-          id: String(p.id),
-          name: String(p.name ?? ""),
-          description: String(p.description ?? ""),
-          price: typeof p.price === "number" ? p.price : parseFloat(String(p.price)) || 0,
-          image: (p.image_url as string) || "/placeholder.svg",
-          category: String(p.category ?? "other"),
-          section: String(p.section ?? "food"),
-          isPopular: !!p.is_popular,
-          isAvailable: p.can_order !== false,
-        }))
-        setMenuItems(products.filter((p: MenuItem) => p.isAvailable))
+        const stations = (data.station_availability as StationAvailability[]) ?? []
+        const products = (data.items ?? []).map((p: Record<string, unknown>) =>
+          mapApiToQrMenuItem(p, stations),
+        )
+        setMenuItems(products)
       })
-      .catch(() => {})
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    loadMenu()
+    const id = window.setInterval(loadMenu, 20_000)
+    return () => window.clearInterval(id)
+  }, [loadMenu])
+
+  useEffect(() => {
+    const onOnline = () => setOffline(false)
+    const onOffline = () => setOffline(true)
+    window.addEventListener("online", onOnline)
+    window.addEventListener("offline", onOffline)
+    return () => {
+      window.removeEventListener("online", onOnline)
+      window.removeEventListener("offline", onOffline)
+    }
+  }, [])
+
+  const activeOrder = useMemo(() => {
+    if (effectiveNumber == null) return null
+    return orders.find(
+      (o) =>
+        String(o.table_number) === String(effectiveNumber) &&
+        o.status !== "completed" &&
+        o.status !== "cancelled",
+    )
+  }, [orders, effectiveNumber])
 
   const filtered = useMemo(
     () => filterQrTableMenuItems(menuItems, activeCategory),
     [activeCategory, menuItems],
   )
 
-  const addToCart = (item: MenuItem) => {
-    setCart((prev) => {
-      const existing = prev.find((c) => c.id === item.id)
-      if (existing) return prev.map((c) => (c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c))
-      return [...prev, { id: item.id, name: item.name, price: item.price, quantity: 1 }]
+  const searched = useMemo(() => {
+    const q = search.trim()
+    let list = filtered
+    if (q) list = list.filter((item) => matchesMenuSearch(item, q))
+    return filterProductsByAttributeTag(list, attributeFilter)
+  }, [filtered, search, attributeFilter])
+
+  const displayed = useMemo(() => {
+    if (activeCategory !== "all" || search.trim()) return searched
+    return [...searched].sort(
+      (a, b) => Number(b.isPopular) - Number(a.isPopular) || a.name.localeCompare(b.name, "de"),
+    )
+  }, [activeCategory, search, searched])
+
+  const favoriteItems = useMemo(() => {
+    const set = new Set(favoriteIds)
+    return menuItems.filter((p) => set.has(p.id))
+  }, [menuItems, favoriteIds])
+
+  const recentItems = useMemo(() => {
+    const byId = new Map(menuItems.map((p) => [p.id, p]))
+    return recentIds.map((id) => byId.get(id)).filter((p): p is QrMenuItem => !!p)
+  }, [menuItems, recentIds])
+
+  const handleToggleFavorite = useCallback((productId: string) => {
+    setFavoriteIds(toggleQrFavorite(productId))
+  }, [])
+
+  const groupedSection = useMemo(() => resolveGroupedSection(activeCategory), [activeCategory])
+
+  const getInCartQty = useCallback(
+    (item: QrMenuItem) => {
+      if (item.isCustomizable || item.hasVariants) {
+        return cart.filter((c) => c.productId === item.id).reduce((s, c) => s + c.quantity, 0)
+      }
+      const line = cart.find((c) => c.lineId === buildCartLineId(item.id, [], null))
+      return line?.quantity ?? 0
+    },
+    [cart],
+  )
+
+  const groupedItems = useMemo((): GroupedMenuItems<QrMenuItem>[] | null => {
+    if (!groupedSection) return null
+    return groupMenuItemsByCategory(displayed, groupedSection)
+  }, [displayed, groupedSection])
+
+  const addLineToCart = useCallback(
+    (payload: {
+      productId: string
+      name: string
+      name_ar?: string | null
+      image: string
+      basePrice: number
+      unitPrice: number
+      variant: CartVariant | null
+      extras: CartExtra[]
+      quantity: number
+      note?: string
+    }) => {
+      if (menuItems.find((p) => p.id === payload.productId)?.soldOut) return
+      const lineId = buildCartLineId(payload.productId, payload.extras, payload.variant, payload.note)
+      setCart((prev) => {
+        const existing = prev.find((c) => c.lineId === lineId)
+        if (existing) {
+          return prev.map((c) =>
+            c.lineId === lineId ? { ...c, quantity: c.quantity + payload.quantity } : c,
+          )
+        }
+        return [
+          ...prev,
+          {
+            lineId,
+            productId: payload.productId,
+            name: payload.name,
+            name_ar: payload.name_ar,
+            image: payload.image,
+            basePrice: payload.basePrice,
+            price: payload.unitPrice,
+            variant: payload.variant,
+            extras: payload.extras,
+            quantity: payload.quantity,
+            note: payload.note,
+          },
+        ]
+      })
+    },
+    [menuItems],
+  )
+
+  const handleQuickAdd = (item: QrMenuItem) => {
+    if (!item.canOrder) return
+    addLineToCart({
+      productId: item.id,
+      name: item.name,
+      name_ar: item.name_ar,
+      image: item.image,
+      basePrice: item.price,
+      unitPrice: item.price,
+      variant: null,
+      extras: [],
+      quantity: 1,
     })
   }
 
-  const increment = (id: string) =>
-    setCart((prev) => prev.map((c) => (c.id === id ? { ...c, quantity: c.quantity + 1 } : c)))
+  const openDetail = (item: QrMenuItem) => setDetailItem(item)
 
-  const decrement = (id: string) =>
+  const increment = (lineId: string) =>
+    setCart((prev) => prev.map((c) => (c.lineId === lineId ? { ...c, quantity: c.quantity + 1 } : c)))
+
+  const decrement = (lineId: string) =>
     setCart((prev) => {
-      const item = prev.find((c) => c.id === id)
-      if (item && item.quantity > 1) return prev.map((c) => (c.id === id ? { ...c, quantity: c.quantity - 1 } : c))
-      return prev.filter((c) => c.id !== id)
+      const item = prev.find((c) => c.lineId === lineId)
+      if (item && item.quantity > 1) {
+        return prev.map((c) => (c.lineId === lineId ? { ...c, quantity: c.quantity - 1 } : c))
+      }
+      return prev.filter((c) => c.lineId !== lineId)
     })
 
   const cartCount = cart.reduce((s, c) => s + c.quantity, 0)
   const cartTotal = cart.reduce((s, c) => s + c.price * c.quantity, 0)
 
   const submitOrder = async () => {
-    if (cart.length === 0) return
+    if (cart.length === 0 || submitting) return
     if (effectiveNumber == null) {
-      alert("Table introuvable ou en cours de chargement.")
+      alert("Tisch nicht gefunden. Bitte warten oder den Service rufen.")
       return
     }
+    setSubmitting(true)
     const localId = `ORD-${Date.now()}`
     const orderNumber = `T${effectiveNumber}-${String(Math.floor(1000 + Math.random() * 9000))}`
     const items = cart.map((c) => ({
-      productId: String(c.id),
+      productId: c.productId,
       name: c.name,
       quantity: c.quantity,
       unitPrice: c.price,
+      notes: formatKitchenTicketNotes(c.extras, c.variant, c.note),
     }))
 
     let resolvedId = localId
+    type QrOrderItem = {
+      id?: string
+      name: string
+      quantity: number
+      unitPrice?: number
+      notes?: string
+      station?: string
+      item_status?: string
+    }
     type QrOrderPayload = {
       id?: string
       order_number?: string
       total?: number
       status?: string
+      items?: QrOrderItem[]
     }
     let serverOrder: QrOrderPayload | null = null
 
@@ -144,7 +311,7 @@ export default function TableMenuPage() {
       })
       const json = (await res.json()) as { order?: QrOrderPayload; error?: string }
       if (!res.ok) {
-        alert(json.error ?? "Impossible d'envoyer la commande. Réessayez ou appelez le serveur.")
+        alert(json.error ?? "Bestellung fehlgeschlagen. Bitte erneut versuchen.")
         return
       }
       if (json?.order?.id) {
@@ -152,248 +319,203 @@ export default function TableMenuPage() {
         serverOrder = json.order
       }
     } catch {
-      alert("Connexion impossible. Vérifiez le réseau ou appelez le serveur.")
+      alert("Keine Verbindung. Bitte Netzwerk prüfen oder den Service rufen.")
       return
+    } finally {
+      setSubmitting(false)
     }
 
+    const apiItems = serverOrder?.items ?? []
     addOrder({
       id: resolvedId,
       order_number: serverOrder?.order_number ?? orderNumber,
       table_number: effectiveNumber,
       order_type: "qr_self_service",
       status: mapQrApiStatus(serverOrder?.status),
-      items: items.map((i) => ({ name: i.name, quantity: i.quantity })),
+      items:
+        apiItems.length > 0
+          ? apiItems.map((it, idx) => ({
+              id: it.id ?? `${resolvedId}-${idx}`,
+              name: it.name,
+              quantity: it.quantity,
+              notes: it.notes,
+              unit_price: it.unitPrice,
+              station: it.station,
+              item_status: (it.item_status as "new") ?? "new",
+            }))
+          : items.map((i, idx) => ({ id: `${resolvedId}-${idx}`, name: i.name, quantity: i.quantity })),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      customer_name: `Client Table ${effectiveNumber}`,
+      customer_name: `Gast Tisch ${effectiveNumber}`,
       total: typeof serverOrder?.total === "number" ? serverOrder.total : cartTotal,
     })
+
+    pushQrRecentlyOrdered(
+      String(tableId),
+      cart.map((c) => c.productId),
+    )
+    setRecentIds(getQrRecentlyOrdered(String(tableId)))
 
     router.push(`/table/${tableId}/order?oid=${encodeURIComponent(resolvedId)}`)
   }
 
-  return (
-    <PageShell className="dark:bg-neutral-950">
-      <header className="sticky top-0 z-50 border-b border-amber-200/40 bg-white/80 shadow-sm backdrop-blur-xl dark:border-amber-900/30 dark:bg-neutral-900/80">
-        <div className="mx-auto flex h-14 max-w-2xl items-center justify-between px-4">
-          <Link
-            href={`/table/${tableId}`}
-            className="flex items-center gap-2 text-amber-900 dark:text-amber-200"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <div className="leading-tight">
-              <p className="text-xs font-medium uppercase tracking-widest text-amber-700 dark:text-amber-400">
-                Table {displayLabel}
-              </p>
-              <p className="text-sm font-semibold">Menu</p>
-            </div>
-          </Link>
-          <button
-            type="button"
-            onClick={() => setCartOpen(true)}
-            className="relative flex items-center gap-1.5 rounded-full border border-amber-200 bg-white px-3 py-2 text-sm font-medium text-amber-950 shadow-sm transition hover:shadow-md dark:border-amber-800 dark:bg-neutral-800 dark:text-white"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            {cartCount > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-600 px-1 text-[10px] font-bold text-white">
-                {cartCount}
-              </span>
-            )}
-          </button>
-        </div>
-      </header>
+  const renderProductCard = (item: QrMenuItem, index: number) => {
+    const line = item.isCustomizable || item.hasVariants
+      ? null
+      : cart.find((c) => c.lineId === buildCartLineId(item.id, [], null))
+    const customQty =
+      item.isCustomizable || item.hasVariants
+        ? cart.filter((c) => c.productId === item.id).reduce((s, c) => s + c.quantity, 0)
+        : 0
+    const inCartQty = line?.quantity ?? customQty
 
-      <div className="sticky top-14 z-40 border-b border-amber-200/30 bg-white/70 backdrop-blur-md dark:border-amber-900/20 dark:bg-neutral-900/70">
-        <div className="mx-auto flex max-w-2xl gap-2 overflow-x-auto px-4 py-3">
-          {categoryChips.map((cat) => (
-            <Button
-              key={cat.id}
-              type="button"
-              variant={activeCategory === cat.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveCategory(cat.id)}
-              className={cn(
-                "shrink-0 gap-1.5 rounded-full px-4 py-2 text-sm font-medium",
-                activeCategory !== cat.id &&
-                  "border-amber-900/10 bg-white/90 text-amber-950 hover:border-amber-400 dark:border-amber-800 dark:bg-neutral-800 dark:text-amber-100",
-              )}
-            >
-              <span>{cat.icon}</span>
-              <span>{cat.label}</span>
-            </Button>
-          ))}
+    return (
+      <QrMenuProductCard
+        key={item.id}
+        item={item}
+        index={index}
+        inCartQty={inCartQty}
+        isFavorite={favoriteIds.includes(item.id)}
+        onToggleFavorite={() => handleToggleFavorite(item.id)}
+        showLineControls={!item.isCustomizable && !item.hasVariants && !!line}
+        onOpen={() => openDetail(item)}
+        onQuickAdd={() => handleQuickAdd(item)}
+        onIncrement={line ? () => increment(line.lineId) : undefined}
+        onDecrement={line ? () => decrement(line.lineId) : undefined}
+      />
+    )
+  }
+
+  const renderGrid = (items: QrMenuItem[], offset = 0) => (
+    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+      {items.map((item, i) => renderProductCard(item, offset + i))}
+    </div>
+  )
+
+  return (
+    <PageShell className="relative dark:bg-neutral-950">
+      <PremiumBackdrop variant="cream" />
+
+      <QrMenuHero
+        tableId={String(tableId)}
+        tableLabel={displayLabel}
+        cartCount={cartCount}
+        onCartOpen={() => setCartOpen(true)}
+        activeOrder={
+          activeOrder
+            ? { order_number: activeOrder.order_number, status: activeOrder.status }
+            : null
+        }
+      />
+
+      <div className="mx-auto max-w-2xl px-4 pt-3">
+        <StationStatusBanner className="mb-1" />
+      </div>
+
+      <div className="sticky top-0 z-40 border-b border-amber-200/30 bg-white/85 shadow-sm backdrop-blur-xl dark:border-amber-900/20 dark:bg-neutral-950/85">
+        <div className="mx-auto max-w-2xl space-y-3 px-4 py-3">
+          <QrMenuSearch value={search} onChange={setSearch} resultCount={search.trim() || attributeFilter !== "all" ? displayed.length : undefined} />
+          <QrAttributeFilterChips activeId={attributeFilter} onSelect={setAttributeFilter} />
+          <QrCategoryChips chips={categoryChips} activeId={activeCategory} onSelect={setActiveCategory} />
         </div>
       </div>
 
-      <main className="mx-auto max-w-2xl flex-1 px-4 py-6">
-        {loading ? (
-          <p className="text-center text-amber-800/70">Chargement...</p>
+      <main className="mx-auto max-w-2xl flex-1 px-4 py-5 pb-28">
+        {offline && !loading ? (
+          <QrMenuEmptyState variant="offline" onRetry={loadMenu} />
+        ) : loading ? (
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <QrMenuCardSkeleton key={i} index={i} />
+            ))}
+          </div>
+        ) : loadError ? (
+          <QrMenuEmptyState variant="error" onRetry={loadMenu} />
+        ) : displayed.length === 0 ? (
+          <QrMenuEmptyState
+            variant={search.trim() ? "search" : "category"}
+            onReset={search.trim() ? () => setSearch("") : undefined}
+          />
         ) : (
-          <>
-            <p className="mb-4 text-sm text-amber-800/70 dark:text-amber-300/70">
-              <span className="font-semibold text-amber-950 dark:text-white">{filtered.length}</span> plat
-              {filtered.length !== 1 ? "s" : ""}
-            </p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}>
+            {!search.trim() && activeCategory === "all" && attributeFilter === "all" ? (
+              <QrMenuQuickSections
+                favorites={favoriteItems}
+                recentlyOrdered={recentItems}
+                favoriteIds={new Set(favoriteIds)}
+                onToggleFavorite={handleToggleFavorite}
+                onOpenProduct={openDetail}
+                onQuickAdd={handleQuickAdd}
+                getInCartQty={getInCartQty}
+              />
+            ) : null}
 
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              {filtered.map((item) => {
-                const inCart = cart.find((c) => c.id === item.id)
-                return (
-                  <div
-                    key={item.id}
-                    className="group overflow-hidden rounded-2xl border border-amber-100 bg-white shadow-sm transition hover:shadow-lg dark:border-amber-900/30 dark:bg-neutral-900"
-                  >
-                    <div className="relative aspect-[4/3] overflow-hidden bg-amber-50 dark:bg-neutral-800">
-                      <img
-                        src={item.image || "/placeholder.svg"}
-                        alt={item.name}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <h3 className="text-sm font-semibold text-amber-950 dark:text-white">{item.name}</h3>
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="text-base font-bold text-amber-700 dark:text-amber-400">
-                          {item.price.toFixed(2)}€
-                        </span>
-                        {inCart ? (
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => decrement(item.id)}
-                              className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-800 transition hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300"
-                            >
-                              <Minus className="h-3.5 w-3.5" />
-                            </button>
-                            <span className="w-5 text-center text-sm font-bold text-amber-950 dark:text-white">
-                              {inCart.quantity}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => increment(item.id)}
-                              className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-600 text-white shadow transition hover:bg-amber-700"
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => addToCart(item)}
-                            className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md transition hover:shadow-lg"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </>
+            {!search.trim() && activeCategory === "all" ? (
+              <p className="mb-4 text-xs font-medium uppercase tracking-widest text-amber-800/45 dark:text-amber-400/45">
+                {displayed.length} Gerichte · Beliebte zuerst
+              </p>
+            ) : (
+              <p className="mb-4 text-sm text-amber-800/60 dark:text-amber-300/60">
+                <span className="font-semibold text-amber-950 dark:text-white">{displayed.length}</span>{" "}
+                {displayed.length === 1 ? "Gericht" : "Gerichte"}
+              </p>
+            )}
+
+            {groupedItems ? (
+              <div className="space-y-10">
+                {groupedItems.map((group, gi) => (
+                  <section key={group.key} className="space-y-4">
+                    <MenuSubcategoryHeader
+                      icon={group.icon}
+                      labelDe={group.labelDe}
+                      labelAr={group.labelAr}
+                      variant="table"
+                      drink={groupedSection === "drinks"}
+                      sweet={groupedSection === "desserts"}
+                      premium
+                    />
+                    {renderGrid(group.items, gi * 10)}
+                  </section>
+                ))}
+              </div>
+            ) : (
+              renderGrid(displayed)
+            )}
+          </motion.div>
         )}
       </main>
 
-      {cartCount > 0 && !cartOpen && (
-        <div className="fixed inset-x-0 bottom-0 z-40 p-4">
-          <button
-            type="button"
-            onClick={() => setCartOpen(true)}
-            className="mx-auto flex w-full max-w-2xl items-center justify-between rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 px-5 py-4 text-white shadow-2xl shadow-amber-600/30 transition hover:shadow-amber-600/50"
-          >
-            <div className="flex items-center gap-3">
-              <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-white/20 px-1.5 text-sm font-bold">
-                {cartCount}
-              </span>
-              <span className="font-semibold">Voir le panier</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-lg font-bold">{cartTotal.toFixed(2)}€</span>
-              <ChevronRight className="h-5 w-5" />
-            </div>
-          </button>
-        </div>
-      )}
+      <QrProductDetailSheet
+        product={detailItem}
+        catalog={menuItems}
+        oftenOrderedWith={oftenOrderedWith}
+        open={!!detailItem}
+        onClose={() => setDetailItem(null)}
+        onOpenProduct={(item) => setDetailItem(item)}
+        onConfirm={(payload) => {
+          addLineToCart(payload)
+          setDetailItem(null)
+        }}
+      />
 
-      {cartOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setCartOpen(false)} />
-          <div className="relative mt-auto flex max-h-[85vh] flex-col rounded-t-3xl bg-white shadow-2xl dark:bg-neutral-900">
-            <div className="flex items-center justify-between border-b border-amber-100 px-5 py-4 dark:border-amber-900/30">
-              <h2 className="text-lg font-bold text-amber-950 dark:text-white">
-                Votre commande — Table {displayLabel}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setCartOpen(false)}
-                className="rounded-full p-1.5 text-amber-800 transition hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      <AnimatePresence>
+        {!cartOpen && cartCount > 0 ? (
+          <QrMenuFloatingBar cartCount={cartCount} cartTotal={cartTotal} onOpen={() => setCartOpen(true)} />
+        ) : null}
+      </AnimatePresence>
 
-            {cart.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 p-10 text-center">
-                <ShoppingCart className="h-12 w-12 text-amber-300 dark:text-amber-700" />
-                <p className="text-amber-800 dark:text-amber-400">Ajoutez des plats pour commencer</p>
-              </div>
-            ) : (
-              <>
-                <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
-                  {cart.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3 dark:bg-neutral-800"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-amber-950 dark:text-white">{item.name}</p>
-                        <p className="text-sm text-amber-700 dark:text-amber-400">{item.price.toFixed(2)}€</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => decrement(item.id)}
-                          className="flex h-7 w-7 items-center justify-center rounded-full border border-amber-200 text-amber-700 transition hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300"
-                        >
-                          <Minus className="h-3.5 w-3.5" />
-                        </button>
-                        <span className="w-5 text-center text-sm font-bold text-amber-950 dark:text-white">
-                          {item.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => increment(item.id)}
-                          className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-600 text-white transition hover:bg-amber-700"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                      <p className="ml-4 w-16 text-right text-sm font-bold text-amber-950 dark:text-white">
-                        {(item.price * item.quantity).toFixed(2)}€
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="border-t border-amber-100 px-5 py-4 dark:border-amber-900/30">
-                  <div className="mb-4 flex items-center justify-between">
-                    <span className="text-base font-semibold text-amber-800 dark:text-amber-300">Total</span>
-                    <span className="text-xl font-bold text-amber-950 dark:text-white">{cartTotal.toFixed(2)}€</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={submitOrder}
-                    className="w-full rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 py-4 text-center text-lg font-bold text-white shadow-lg transition hover:shadow-xl active:scale-[0.98]"
-                  >
-                    Commander — {cartTotal.toFixed(2)}€
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      <QrMenuCartSheet
+        open={cartOpen}
+        tableLabel={displayLabel}
+        cart={cart}
+        cartCount={cartCount}
+        cartTotal={cartTotal}
+        onClose={() => setCartOpen(false)}
+        onIncrement={increment}
+        onDecrement={decrement}
+        onSubmit={submitOrder}
+        submitting={submitting}
+      />
     </PageShell>
   )
 }

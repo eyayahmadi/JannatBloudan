@@ -2,12 +2,38 @@ import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireAdmin } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
+import { normalizeProductTags, syncLegacyFieldsFromTags } from "@/lib/menu/product-attributes"
 
 type Ctx = { params: Promise<{ id: string }> }
 
 function serializeRow<R extends Record<string, unknown>>(row: R): Record<string, unknown> {
   return JSON.parse(JSON.stringify(row)) as Record<string, unknown>
 }
+
+const ALLOWED = [
+  "name",
+  "slug",
+  "description",
+  "price",
+  "category_id",
+  "image_url",
+  "stock_quantity",
+  "is_available",
+  "is_archived",
+  "display_order",
+  "is_popular",
+  "is_new",
+  "is_vegetarian",
+  "is_vegan",
+  "is_halal",
+  "is_gluten_free",
+  "is_chef_choice",
+  "is_recommended",
+  "spice_level",
+  "name_ar",
+  "station",
+  "tags",
+] as const
 
 export async function PATCH(request: Request, ctx: Ctx) {
   const guard = await requireAdmin()
@@ -20,37 +46,22 @@ export async function PATCH(request: Request, ctx: Ctx) {
   const supabase = createServiceRoleClient()
 
   const { data: before, error: beforeErr } = await supabase.from("products").select("*").eq("id", id).maybeSingle()
-
   if (beforeErr || !before) {
     return NextResponse.json({ error: "Produit introuvable" }, { status: 404 })
   }
 
-  const allowed = [
-    "name",
-    "slug",
-    "description",
-    "price",
-    "category_id",
-    "image_url",
-    "stock_quantity",
-    "is_available",
-    "is_popular",
-    "is_new",
-    "is_vegetarian",
-    "is_chef_choice",
-    "is_recommended",
-    "spice_level",
-    "name_ar",
-    "station",
-    "tags",
-  ] as const
   const update: Record<string, unknown> = {}
-  for (const k of allowed) {
-    if (body[k] !== undefined) update[k] = body[k]
+  if (body.tags !== undefined) {
+    const tags = normalizeProductTags(body.tags)
+    Object.assign(update, syncLegacyFieldsFromTags(tags))
+  }
+  for (const k of ALLOWED) {
+    if (body[k] !== undefined && k !== "tags") update[k] = body[k]
   }
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "Rien à mettre à jour" }, { status: 400 })
   }
+
   const { data, error } = await supabase.from("products").update(update).eq("id", id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

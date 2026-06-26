@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
 
 export type TableAlertType = "call_server" | "request_bill" | "help" | "payment_done" | "call_cashier"
 
@@ -14,7 +15,7 @@ export type TableAlert = {
 }
 
 const STORAGE_KEY = "jb-table-alerts"
-const POLL_INTERVAL_MS = 10_000
+const POLL_INTERVAL_MS = 4_000
 
 function load(): TableAlert[] {
   if (typeof window === "undefined") return []
@@ -92,9 +93,13 @@ export function useTableAlerts() {
     }
     sync()
     const timer = setInterval(sync, POLL_INTERVAL_MS)
+    const unsub = onRealtimeRefresh((scope) => {
+      if (scopeMatches("alerts", scope)) void sync()
+    })
     return () => {
       cancelled = true
       clearInterval(timer)
+      unsub()
     }
   }, [])
 

@@ -17,7 +17,6 @@ import {
   Split,
   Users,
   Wallet,
-  Wifi,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -26,6 +25,7 @@ import { Progress } from "@/components/ui/progress"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { JANNAT_TABLE_ZONES, ZONE_LABELS_FR } from "@/lib/admin/restaurant-tables"
 import { cn } from "@/lib/utils"
+import { RealtimeIndicator } from "@/components/realtime/RealtimeIndicator"
 
 export type FloorTable = {
   table_id?: number
@@ -269,9 +269,7 @@ export function CaisseFloorPlan({
               />
             </div>
             <div className="hidden flex-wrap items-center gap-3 text-[11px] text-muted-foreground sm:flex">
-              <span className="inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 dark:bg-neutral-900">
-                <Wifi className="h-3 w-3 text-emerald-500" /> Temps réel · 8s
-              </span>
+              <RealtimeIndicator />
               <span className="inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 dark:bg-neutral-900">
                 <Banknote className="h-3 w-3 text-emerald-600" />
                 <strong className="text-neutral-800 dark:text-neutral-100">{nf(totalRevenue)} €</strong> en salle

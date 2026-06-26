@@ -3,6 +3,7 @@
 import type { ReactNode } from "react"
 import { AuthProvider } from "@/lib/context/AuthContext"
 import { SupabaseAuthUrlListener } from "@/components/supabase-auth-url-listener"
+import { RealtimeSyncProvider } from "@/components/realtime/RealtimeSyncProvider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { I18nProvider } from "@/lib/i18n/context"
 import { MachineTranslateProvider } from "@/lib/i18n/machine-translate"
@@ -19,8 +20,10 @@ export function Providers({ children }: ProvidersProps) {
         <MachineTranslateProvider>
           <AuthProvider>
             <SupabaseAuthUrlListener />
-            <AutoTranslateDom />
-            {children}
+            <RealtimeSyncProvider>
+              <AutoTranslateDom />
+              {children}
+            </RealtimeSyncProvider>
           </AuthProvider>
         </MachineTranslateProvider>
       </I18nProvider>

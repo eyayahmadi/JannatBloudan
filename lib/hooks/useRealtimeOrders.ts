@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from "react"
+import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
 import {
   isBillableItemStatus,
   type Station,
@@ -89,7 +90,7 @@ const LIVE_SYNC_MS = 4000
 /** Routes staff où les commandes QR doivent remonter depuis Supabase. */
 function shouldSyncOrdersFromServer(): boolean {
   if (typeof window === "undefined") return false
-  return /^\/(kitchen|bar|shisha|server|pos|caisse|admin)(\/|$)/.test(window.location.pathname)
+  return /^\/(kitchen|bar|shisha|server|pos|caisse|admin|table)(\/|$)/.test(window.location.pathname)
 }
 
 function mergeLocalAndServerOrders(local: KitchenOrder[], server: KitchenOrder[]): KitchenOrder[] {
@@ -175,7 +176,7 @@ function aggregateOrderStatus(items: OrderItem[]): OrderStatus {
   )
   if (active.length === 0) return "cancelled"
   if (active.every((it) => it.item_status === "served" || it.item_status === "ready")) return "ready"
-  if (active.some((it) => it.item_status === "preparing")) return "preparing"
+  if (active.some((it) => it.item_status === "preparing" || it.item_status === "accepted")) return "preparing"
   return "received"
 }
 
@@ -231,9 +232,13 @@ export function useRealtimeOrders() {
 
     void pull()
     const id = window.setInterval(() => void pull(), LIVE_SYNC_MS)
+    const unsub = onRealtimeRefresh((scope) => {
+      if (scopeMatches("orders", scope)) void pull()
+    })
     return () => {
       cancelled = true
       window.clearInterval(id)
+      unsub()
     }
   }, [])
 

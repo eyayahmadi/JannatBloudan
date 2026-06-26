@@ -58,7 +58,37 @@ CREATE TABLE IF NOT EXISTS product_modifiers (
 CREATE INDEX IF NOT EXISTS idx_product_modifier_groups_product ON product_modifier_groups(product_id);
 CREATE INDEX IF NOT EXISTS idx_product_modifiers_group ON product_modifiers(group_id);
 
+-- Tables pour les variantes de taille (Salades, Eau, Thé)
+CREATE TABLE IF NOT EXISTS product_variant_groups (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  name_de VARCHAR(100) NOT NULL DEFAULT 'Größe',
+  name_ar VARCHAR(100),
+  min_selections INT NOT NULL DEFAULT 1,
+  max_selections INT NOT NULL DEFAULT 1,
+  display_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS product_variants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id UUID NOT NULL REFERENCES product_variant_groups(id) ON DELETE CASCADE,
+  slug VARCHAR(100) NOT NULL,
+  name_de VARCHAR(100) NOT NULL,
+  name_ar VARCHAR(100),
+  price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  display_order INT NOT NULL DEFAULT 0,
+  is_available BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (group_id, slug)
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_variant_groups_product ON product_variant_groups(product_id);
+CREATE INDEX IF NOT EXISTS idx_product_variants_group ON product_variants(group_id);
+
 -- Nettoyage des anciennes données démo
+DELETE FROM product_variants;
+DELETE FROM product_variant_groups;
 DELETE FROM product_modifiers;
 DELETE FROM product_modifier_groups;
 DELETE FROM product_ingredients;
@@ -91,6 +121,7 @@ for (const c of menu.categories) {
 }
 lines.push(`  prod_id UUID;`)
 lines.push(`  grp_id UUID;`)
+lines.push(`  var_grp_id UUID;`)
 lines.push(`BEGIN`)
 
 for (const c of menu.categories) {
@@ -148,6 +179,27 @@ for (const slug of menu.customizableProductSlugs) {
     extraOrder++
     lines.push(`    INSERT INTO product_modifiers (group_id, slug, name_de, name_ar, price, display_order)
     VALUES (grp_id, '${esc(ex.slug)}', '${esc(ex.name)}', '${esc(ex.name_ar)}', ${ex.price}, ${extraOrder});`)
+  }
+  lines.push(`  END IF;`)
+}
+
+lines.push(`
+  -- Variantes de taille (Salades, Eau, Thé)`)
+
+for (const p of menu.products) {
+  if (!Array.isArray(p.variants) || p.variants.length === 0) continue
+  const groupNameDe = p.category === "tea" ? "Größe" : p.category === "water" ? "Größe" : "Größe"
+  const groupNameAr = p.category === "tea" ? "الحجم" : p.category === "water" ? "الحجم" : "الحجم"
+  lines.push(`  SELECT id INTO prod_id FROM products WHERE slug = '${esc(p.slug)}';
+  IF prod_id IS NOT NULL THEN
+    INSERT INTO product_variant_groups (product_id, name_de, name_ar, min_selections, max_selections, display_order)
+    VALUES (prod_id, '${esc(groupNameDe)}', '${esc(groupNameAr)}', 1, 1, 0)
+    RETURNING id INTO var_grp_id;`)
+  let varOrder = 0
+  for (const v of p.variants) {
+    varOrder++
+    lines.push(`    INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
+    VALUES (var_grp_id, '${esc(v.slug)}', '${esc(v.name)}', '${esc(v.name_ar)}', ${v.price}, ${varOrder});`)
   }
   lines.push(`  END IF;`)
 }

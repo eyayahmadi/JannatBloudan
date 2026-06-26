@@ -73,7 +73,7 @@ export const AVAILABILITY_META: Record<StationAvailabilityStatus, StationAvailab
     i18nKey: "stations.availability.paused",
     badgeI18nKey: "stations.availability.pausedBadge",
     acceptingOrders: false,
-    hideInMenu: true,
+    hideInMenu: false,
     tone: "muted",
   },
   CLOSING_SOON: {
@@ -87,7 +87,7 @@ export const AVAILABILITY_META: Record<StationAvailabilityStatus, StationAvailab
     i18nKey: "stations.availability.closed",
     badgeI18nKey: "stations.availability.closedBadge",
     acceptingOrders: false,
-    hideInMenu: true,
+    hideInMenu: false,
     tone: "danger",
   },
 }

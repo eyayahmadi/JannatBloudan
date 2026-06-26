@@ -1,13 +1,11 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useCallback } from "react"
 import {
   Plus,
   Minus,
   Trash2,
   ShoppingCart,
-  UtensilsCrossed,
-  Search,
   CheckCircle2,
   PackageOpen,
   Lock,
@@ -29,46 +27,12 @@ import { useNotifications } from "@/lib/hooks/useNotifications"
 import {
   audienceForStationsFromItems,
 } from "@/lib/notifications/audience"
+import { useMenuCatalog } from "@/lib/hooks/useMenuCatalog"
+import { StaffMenuPicker } from "@/components/menu/StaffMenuPicker"
+import type { DigitalMenuProduct } from "@/lib/menu/digital-menu-product"
 
-type MenuItem = { id: string; name: string; price: number; category: string }
-type CartLine = { item: MenuItem; quantity: number; note?: string }
+type CartLine = { item: DigitalMenuProduct; quantity: number; note?: string }
 type Channel = "takeaway" | "phone" | "manual"
-
-const CATEGORIES = [
-  "Tout",
-  "Shawarma",
-  "Manakish",
-  "Plats chauds",
-  "Mezzes",
-  "Pizzas",
-  "Burgers",
-  "Desserts",
-  "Boissons",
-]
-
-const MENU: MenuItem[] = [
-  { id: "sw1", name: "Shawarma Poulet", price: 12.0, category: "Shawarma" },
-  { id: "sw2", name: "Shawarma Viande", price: 14.0, category: "Shawarma" },
-  { id: "sw3", name: "Shawarma Mixte", price: 15.0, category: "Shawarma" },
-  { id: "mn1", name: "Manakish Zaatar", price: 6.0, category: "Manakish" },
-  { id: "mn2", name: "Manakish Fromage", price: 8.0, category: "Manakish" },
-  { id: "pc1", name: "Poulet Grille", price: 18.0, category: "Plats chauds" },
-  { id: "pc2", name: "Kafta Grille", price: 16.0, category: "Plats chauds" },
-  { id: "mz1", name: "Houmous", price: 7.0, category: "Mezzes" },
-  { id: "mz2", name: "Fattouch", price: 8.0, category: "Mezzes" },
-  { id: "mz3", name: "Tabboule", price: 7.5, category: "Mezzes" },
-  { id: "pz1", name: "Pizza Margherita", price: 14.0, category: "Pizzas" },
-  { id: "pz2", name: "Pizza Viande", price: 16.0, category: "Pizzas" },
-  { id: "bg1", name: "Burger Classic", price: 13.0, category: "Burgers" },
-  { id: "bg2", name: "Burger Cheese", price: 15.0, category: "Burgers" },
-  { id: "bg3", name: "Burger Double", price: 18.0, category: "Burgers" },
-  { id: "ds1", name: "Baklawa", price: 6.0, category: "Desserts" },
-  { id: "ds2", name: "Knefe", price: 8.0, category: "Desserts" },
-  { id: "ds3", name: "Mhallabieh", price: 5.0, category: "Desserts" },
-  { id: "bv1", name: "Jus d'Orange", price: 4.0, category: "Boissons" },
-  { id: "bv2", name: "Ayran", price: 3.0, category: "Boissons" },
-  { id: "bv3", name: "Cafe Turc", price: 3.5, category: "Boissons" },
-]
 
 const CHANNEL_LABEL: Record<Channel, string> = {
   takeaway: "À emporter",
@@ -79,30 +43,19 @@ const CHANNEL_LABEL: Record<Channel, string> = {
 export default function ServerWalkInPage() {
   const { addOrder } = useRealtimeOrders()
   const { add: addNotification } = useNotifications()
+  const { catalog, data: menuData, loading: menuLoading } = useMenuCatalog({ pollMs: 15_000 })
 
   const [channel, setChannel] = useState<Channel>("takeaway")
   const [customerName, setCustomerName] = useState("")
   const [customerPhone, setCustomerPhone] = useState("")
   const [generalNote, setGeneralNote] = useState("")
-  const [category, setCategory] = useState("Tout")
-  const [search, setSearch] = useState("")
   const [cart, setCart] = useState<CartLine[]>([])
   const [toast, setToast] = useState<string | null>(null)
-
-  const filteredMenu = useMemo(() => {
-    let items = MENU
-    if (category !== "Tout") items = items.filter((m) => m.category === category)
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      items = items.filter((m) => m.name.toLowerCase().includes(q))
-    }
-    return items
-  }, [category, search])
 
   const total = cart.reduce((s, l) => s + l.item.price * l.quantity, 0)
   const cartCount = cart.reduce((s, l) => s + l.quantity, 0)
 
-  const addToCart = useCallback((item: MenuItem) => {
+  const addToCart = useCallback((item: DigitalMenuProduct) => {
     setCart((prev) => {
       const existing = prev.find((l) => l.item.id === item.id)
       if (existing)
@@ -133,7 +86,7 @@ export default function ServerWalkInPage() {
     )
   }, [])
 
-  const submitOrder = useCallback(() => {
+  const submitOrder = useCallback(async () => {
     if (cart.length === 0) return
     const cleanName = customerName.trim()
     if (!cleanName) {
@@ -145,44 +98,86 @@ export default function ServerWalkInPage() {
     const orderNumber = String(1000 + Math.floor(Math.random() * 9000))
     const phone = customerPhone.trim()
     const customerLabel = `${CHANNEL_LABEL[channel]} · ${cleanName}${phone ? ` · ${phone}` : ""}`
-    const annotatedItems = cart.map((l) => {
+    const payloadItems = cart.map((l) => {
       const baseNote = l.note?.trim()
       const generalLabel = generalNote.trim() ? `[${generalNote.trim()}]` : ""
       const finalNote = [baseNote, generalLabel].filter(Boolean).join(" — ") || undefined
       return {
+        productId: l.item.id,
         name: l.item.name,
         quantity: l.quantity,
+        unitPrice: l.item.price,
         notes: finalNote,
       }
     })
 
-    const order: KitchenOrderInput = {
-      id: crypto.randomUUID(),
-      order_number: orderNumber,
-      table_number: null,
-      order_type: "pos",
-      status: "received",
-      items: annotatedItems,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      customer_name: customerLabel,
-      total: Math.round(total * 100) / 100,
-    }
+    try {
+      const res = await fetch("/api/orders/walk-in", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderNumber,
+          customerName: customerLabel,
+          channel: CHANNEL_LABEL[channel],
+          items: payloadItems,
+          total: Math.round(total * 100) / 100,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setToast(json.error ?? "Échec envoi commande")
+        setTimeout(() => setToast(null), 4000)
+        return
+      }
 
-    addOrder(order)
-    setCart([])
-    setGeneralNote("")
-    setToast(`Commande #${orderNumber} envoyée en cuisine !`)
-    setTimeout(() => setToast(null), 3000)
-    // Audience : stations effectivement présentes dans la commande + caisse
-    // (encaissement à venir) + admin. Pas de bruit pour les stations vides.
-    const stationAudience = audienceForStationsFromItems(annotatedItems)
-    addNotification({
-      type: "new_order",
-      title: "Nouvelle commande sans table",
-      message: `Commande ${orderNumber} — ${CHANNEL_LABEL[channel]} — ${cleanName}`,
-      audience: [...new Set([...stationAudience, "CASHIER" as const])],
-    })
+      const o = json.order
+      const order: KitchenOrderInput = {
+        id: o.id,
+        order_number: o.order_number,
+        table_number: null,
+        order_type: "pos",
+        status: "received",
+        items: (o.items ?? []).map(
+          (it: {
+            id: string
+            name: string
+            quantity: number
+            unit_price?: number
+            notes?: string
+            station?: string
+            item_status?: string
+          }) => ({
+            id: it.id,
+            name: it.name,
+            quantity: it.quantity,
+            notes: it.notes,
+            unit_price: it.unit_price,
+            station: it.station,
+            item_status: it.item_status ?? "new",
+          }),
+        ),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        customer_name: customerLabel,
+        total: Number(o.total ?? total),
+      }
+
+      addOrder(order)
+      setCart([])
+      setGeneralNote("")
+      setToast(`Commande #${o.order_number} envoyée en cuisine !`)
+      setTimeout(() => setToast(null), 3000)
+      const stationAudience = audienceForStationsFromItems(order.items)
+      addNotification({
+        type: "new_order",
+        title: "Nouvelle commande sans table",
+        message: `Commande ${o.order_number} — ${CHANNEL_LABEL[channel]} — ${cleanName}`,
+        audience: [...new Set([...stationAudience, "CASHIER" as const])],
+      })
+    } catch {
+      setToast("Erreur réseau — commande non enregistrée")
+      setTimeout(() => setToast(null), 4000)
+    }
   }, [cart, channel, customerName, customerPhone, generalNote, total, addOrder, addNotification])
 
   return (
@@ -288,63 +283,13 @@ export default function ServerWalkInPage() {
 
             <div className="flex flex-col gap-4 lg:flex-row">
               <div className="flex-1">
-                <div className="mb-3 relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    placeholder="Rechercher un produit..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-
-                <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setCategory(cat)}
-                      className={cn(
-                        "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition",
-                        category === cat
-                          ? "bg-amber-600 text-white shadow-md"
-                          : "bg-white text-slate-600 hover:bg-amber-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
-                      )}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                  {filteredMenu.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => addToCart(item)}
-                      className={cn(
-                        "flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition",
-                        "hover:border-amber-300 hover:shadow-md active:scale-[0.97]",
-                        "dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-amber-600",
-                      )}
-                    >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40">
-                        <UtensilsCrossed className="h-6 w-6 text-amber-700 dark:text-amber-300" />
-                      </div>
-                      <span className="text-center text-sm font-medium text-slate-800 dark:text-slate-200">
-                        {item.name}
-                      </span>
-                      <span className="text-sm font-bold text-amber-700 dark:text-amber-400">
-                        {item.price.toFixed(2)} DT
-                      </span>
-                    </button>
-                  ))}
-                  {filteredMenu.length === 0 && (
-                    <div className="col-span-full py-12 text-center text-sm text-slate-400">
-                      Aucun produit trouvé
-                    </div>
-                  )}
-                </div>
+                <StaffMenuPicker
+                  catalog={catalog}
+                  categories={menuData?.categories ?? []}
+                  stationAvailability={menuData?.station_availability ?? []}
+                  loading={menuLoading}
+                  onAdd={addToCart}
+                />
               </div>
 
               <div className="w-full rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:w-96">
@@ -384,7 +329,7 @@ export default function ServerWalkInPage() {
                                 {line.item.name}
                               </p>
                               <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {line.item.price.toFixed(2)} DT
+                                {line.item.price.toFixed(2)} €
                               </p>
                             </div>
                             <div className="flex items-center gap-1">

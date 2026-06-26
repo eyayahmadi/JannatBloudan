@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
+import { releaseTablesForSession } from "@/lib/table-sessions/ensure-session"
 
 const ALLOW = ["ADMIN", "CASHIER"] as const
 
@@ -131,12 +132,7 @@ export async function POST(request: Request) {
 
   if (closeErr) return NextResponse.json({ error: closeErr.message }, { status: 500 })
 
-  if (sess.table_id) {
-    await supabase
-      .from("restaurant_tables")
-      .update({ status: "FREE", current_session_id: null })
-      .eq("id", Number(sess.table_id))
-  }
+  await releaseTablesForSession(supabase, sessionId)
 
   await insertCaisseAudit(supabase, {
     userId: guard.user.id,

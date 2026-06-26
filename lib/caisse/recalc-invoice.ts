@@ -9,12 +9,20 @@ export function round2(n: number) {
   return Math.round(n * 100) / 100
 }
 
-/** Somme des sous-taxes lignes encore actives */
+/** Statuts de ligne facture exclus du montant facturable. */
+export const NON_BILLABLE_LINE_STATUSES = new Set([
+  "cancelled",
+  "waste",
+  "refused",
+  "replaced",
+])
+
+/** Somme des sous-taxes lignes encore actives (facturables) */
 export function sumActiveSubtotal(items: InvoiceItemRow[]) {
   let s = 0
   for (const row of items) {
     const st = String(row.line_status ?? "").toLowerCase()
-    if (st === "cancelled" || st === "waste") continue
+    if (NON_BILLABLE_LINE_STATUSES.has(st)) continue
     const sub = Number((row as { subtotal?: unknown }).subtotal ?? 0)
     if (Number.isFinite(sub)) s += sub
   }

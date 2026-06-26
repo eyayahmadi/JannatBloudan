@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import {
+  mapOverviewToUnifiedStatus,
+  UNIFIED_TABLE_STATUS_META,
+} from "@/lib/table-status/unified"
 
 const ROLES = ["ADMIN", "CASHIER", "SERVER"] as const
 
@@ -231,7 +235,7 @@ export async function GET() {
         paymentStatusCode = "ORDER_IN_PROGRESS"
       }
 
-      return {
+      const row = {
         table_id: t.id,
         table_number: t.table_number,
         table_code: (t as { table_code?: string | null }).table_code ?? null,
@@ -268,6 +272,12 @@ export async function GET() {
               updated_at: (sess as { updated_at?: string | null }).updated_at ?? null,
             }
           : null,
+      }
+      const unified_status = mapOverviewToUnifiedStatus(row)
+      return {
+        ...row,
+        unified_status,
+        unified_status_label: UNIFIED_TABLE_STATUS_META[unified_status].label,
       }
     })
 

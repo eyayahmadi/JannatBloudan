@@ -6,7 +6,7 @@ import { buildOftenOrderedWith } from "@/lib/menu/build-pairs"
 import { MENU_POPULAR_ORDER_MIN } from "@/lib/menu/menu-constants"
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/config"
 import { translateStrings } from "@/lib/server/translation-service"
-import type { MenuSortId, DigitalMenuProduct } from "@/lib/menu/digital-menu-product"
+import type { MenuSortId, DigitalMenuProduct, ProductModifier, ProductVariant } from "@/lib/menu/digital-menu-product"
 import { sortMenuProducts } from "@/lib/menu/filter-menu-client"
 import { STATIONS, type Station } from "@/lib/stations/config"
 import {
@@ -150,8 +150,28 @@ async function loadMenuCategories(supabase: Awaited<ReturnType<typeof createClie
   return { rows, error: null as string | null }
 }
 
+async function loadAdminRecommendations(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<Record<string, string[]>> {
+  const out: Record<string, string[]> = {}
+  try {
+    const { data } = await supabase
+      .from("product_recommendations")
+      .select("product_id, recommended_product_id, display_order")
+      .order("display_order", { ascending: true })
+    for (const r of data ?? []) {
+      const pid = String(r.product_id)
+      if (!out[pid]) out[pid] = []
+      out[pid].push(String(r.recommended_product_id))
+    }
+  } catch {
+    // migration 34 optionnelle
+  }
+  return out
+}
+
 async function loadMenuProducts(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const first = await supabase.from("products").select(PRODUCTS_SELECT_FULL).order("name")
+  const first = await supabase.from("products").select(PRODUCTS_SELECT_FULL).order("display_order").order("name")
   if (!first.error) {
     return { rows: (first.data ?? []) as unknown as ProductRow[], error: null as string | null }
   }
@@ -190,7 +210,113 @@ async function loadMenuProducts(supabase: Awaited<ReturnType<typeof createClient
   return { rows, error: null as string | null }
 }
 
-function enrich(p: ProductRow, sectionByCategoryId: Map<string, string>) {
+type ModifierGroupRow = { id: string; product_id: string }
+type ModifierRow = {
+  id: string
+  slug: string
+  name_de: string
+  name_ar: string | null
+  price: number | string
+  group_id: string
+  display_order: number
+}
+
+async function loadProductModifiers(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<Map<string, ProductModifier[]>> {
+  const out = new Map<string, ProductModifier[]>()
+  try {
+    const groupsRes = await supabase.from("product_modifier_groups").select("id, product_id")
+    if (groupsRes.error) return out
+
+    const modsRes = await supabase
+      .from("product_modifiers")
+      .select("id, slug, name_de, name_ar, price, group_id, display_order")
+      .eq("is_available", true)
+      .order("display_order", { ascending: true })
+    if (modsRes.error) return out
+
+    const groupToProduct = new Map<string, string>()
+    for (const g of (groupsRes.data ?? []) as ModifierGroupRow[]) {
+      groupToProduct.set(g.id, g.product_id)
+    }
+
+    for (const m of (modsRes.data ?? []) as ModifierRow[]) {
+      const productId = groupToProduct.get(m.group_id)
+      if (!productId) continue
+      const list = out.get(productId) ?? []
+      list.push({
+        id: m.id,
+        slug: m.slug,
+        name: m.name_de,
+        name_ar: m.name_ar,
+        price: Number(m.price) || 0,
+      })
+      out.set(productId, list)
+    }
+  } catch {
+    // Tables optionnelles (migration 33)
+  }
+  return out
+}
+
+type VariantGroupRow = { id: string; product_id: string }
+type VariantRow = {
+  id: string
+  slug: string
+  name_de: string
+  name_ar: string | null
+  price: number | string
+  group_id: string
+  display_order: number
+}
+
+async function loadProductVariants(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<Map<string, ProductVariant[]>> {
+  const out = new Map<string, ProductVariant[]>()
+  try {
+    const groupsRes = await supabase.from("product_variant_groups").select("id, product_id")
+    if (groupsRes.error) return out
+
+    const varsRes = await supabase
+      .from("product_variants")
+      .select("id, slug, name_de, name_ar, price, group_id, display_order")
+      .eq("is_available", true)
+      .order("display_order", { ascending: true })
+    if (varsRes.error) return out
+
+    const groupToProduct = new Map<string, string>()
+    for (const g of (groupsRes.data ?? []) as VariantGroupRow[]) {
+      groupToProduct.set(g.id, g.product_id)
+    }
+
+    for (const v of (varsRes.data ?? []) as VariantRow[]) {
+      const productId = groupToProduct.get(v.group_id)
+      if (!productId) continue
+      const list = out.get(productId) ?? []
+      list.push({
+        id: v.id,
+        slug: v.slug,
+        name: v.name_de,
+        name_ar: v.name_ar,
+        price: Number(v.price) || 0,
+      })
+      out.set(productId, list)
+    }
+  } catch {
+    // Tables optionnelles (migration 33)
+  }
+  return out
+}
+
+function enrich(
+  p: ProductRow,
+  sectionByCategoryId: Map<string, string>,
+  categoryOrderBySlug: Map<string, number>,
+  modifiersByProductId: Map<string, ProductModifier[]>,
+  variantsByProductId: Map<string, ProductVariant[]>,
+) {
   const stock = Number(p.stock_quantity) || 0
   const recipe = p.product_ingredients
   const { availability, maxOrderable, limitedReason } = computeMaxServings(recipe, stock)
@@ -202,18 +328,26 @@ function enrich(p: ProductRow, sectionByCategoryId: Map<string, string>) {
     typeof createdRaw === "string" ? createdRaw : createdRaw ? String(createdRaw) : null
   const catId = p.categories?.id
   const secFromMap = catId ? sectionByCategoryId.get(catId) : undefined
+  const catSlug = p.categories?.slug ?? "other"
+  const modifiers = modifiersByProductId.get(p.id) ?? []
+  const variants = variantsByProductId.get(p.id) ?? []
+  const basePrice = Number(p.price) || 0
+  const displayPrice =
+    variants.length > 0 ? Math.min(...variants.map((v) => v.price)) : basePrice
   return {
     id: p.id,
+    slug: String((p as { slug?: string }).slug ?? ""),
     name: p.name,
     name_ar: p.name_ar ?? null,
     description:
       p.description && String(p.description).trim()
         ? String(p.description)
         : `Découvrez notre ${p.name} — préparé sur place avec des ingrédients sélectionnés.`,
-    category: p.categories?.slug ?? "other",
+    category: catSlug,
     categoryName: p.categories?.name ?? "",
+    category_display_order: categoryOrderBySlug.get(catSlug) ?? 0,
     section: secFromMap ?? p.categories?.section ?? "food",
-    price: Number(p.price) || 0,
+    price: displayPrice,
     image_url: p.image_url ?? null,
     station: p.station ?? "KITCHEN",
     /** Recalculé après agrégation commandes */
@@ -230,6 +364,11 @@ function enrich(p: ProductRow, sectionByCategoryId: Map<string, string>) {
     can_order: canOrder,
     created_at,
     order_count: 0,
+    modifiers,
+    variants,
+    has_variants: variants.length > 0 || tags.includes("has_variants"),
+    is_customizable:
+      modifiers.length > 0 || variants.length > 0 || tags.includes("customizable"),
   }
 }
 
@@ -302,22 +441,28 @@ function applyServerParams(list: EnrichedProduct[], sp: URLSearchParams): Enrich
   }
 
   if (parseBool(sp.get("popular"))) {
-    filtered = filtered.filter((p) => p.is_popular)
+    filtered = filtered.filter((p) => p.tags.includes("popular") || p.tags.includes("best_seller"))
   }
   if (parseBool(sp.get("new"))) {
-    filtered = filtered.filter((p) => p.is_new)
+    filtered = filtered.filter((p) => p.tags.includes("new"))
   }
   if (parseBool(sp.get("vegetarian"))) {
-    filtered = filtered.filter(
-      (p) => p.is_vegetarian || p.tags.some((t) => t.toLowerCase().includes("veget")),
-    )
+    filtered = filtered.filter((p) => p.tags.includes("vegetarian") || p.tags.includes("vegan"))
   }
   if (parseBool(sp.get("spicy"))) {
-    filtered = filtered.filter((p) => {
-      const sl = (p.spice_level ?? "").toLowerCase()
-      const tagSp = p.tags.some((t) => /spicy|épic|epic/i.test(t))
-      return tagSp || (sl !== "" && sl !== "doux")
-    })
+    filtered = filtered.filter((p) => p.tags.includes("spicy"))
+  }
+  if (parseBool(sp.get("not_spicy"))) {
+    filtered = filtered.filter((p) => p.tags.includes("not_spicy"))
+  }
+  if (parseBool(sp.get("vegan"))) {
+    filtered = filtered.filter((p) => p.tags.includes("vegan"))
+  }
+  if (parseBool(sp.get("kids"))) {
+    filtered = filtered.filter((p) => p.tags.includes("kids_friendly"))
+  }
+  if (parseBool(sp.get("chef"))) {
+    filtered = filtered.filter((p) => p.tags.includes("chef_recommendation"))
   }
 
   const station = sp.get("station")?.toUpperCase().trim()
@@ -393,11 +538,13 @@ export async function GET(request: NextRequest) {
     }
 
     const sectionByCategoryId = new Map<string, string>()
+    const categoryOrderBySlug = new Map<string, number>()
     for (const c of categoryRowsNormalized) {
       sectionByCategoryId.set(c.id, c.section ?? "food")
+      categoryOrderBySlug.set(c.slug, c.display_order ?? 0)
     }
 
-    const [{ rows: productRows, error: productsErr }, { data: oi }, { data: availRows }] =
+    const [{ rows: productRows, error: productsErr }, { data: oi }, { data: availRows }, modifiersByProductId, variantsByProductId, adminRecommendations] =
       await Promise.all([
         loadMenuProducts(supabase),
         supabase
@@ -408,6 +555,9 @@ export async function GET(request: NextRequest) {
         supabase
           .from("station_availability")
           .select("station, status, reason, estimated_wait_minutes, closes_at, updated_at"),
+        loadProductModifiers(supabase),
+        loadProductVariants(supabase),
+        loadAdminRecommendations(supabase),
       ])
 
     if (productsErr) {
@@ -440,9 +590,9 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const rows = productRows
+    const rows = productRows.filter((r) => !(r as { is_archived?: boolean }).is_archived)
     const enrichedRows = rows.map((r) => {
-      const base = enrich(r, sectionByCategoryId)
+      const base = enrich(r, sectionByCategoryId, categoryOrderBySlug, modifiersByProductId, variantsByProductId)
       const stationKey = (base.station as Station) ?? "KITCHEN"
       const avail = stationAvailMap.get(stationKey)
       const meta = avail ? AVAILABILITY_META[avail.status] : null
@@ -453,9 +603,7 @@ export async function GET(request: NextRequest) {
         station_status: avail?.status ?? ("OPEN" as StationAvailabilityStatus),
         station_accepting_orders: accepting,
         station_hidden: hide,
-        // Si station fermée → indisponible / non commandable
-        availability: hide ? ("out" as const) : base.availability,
-        can_order: hide ? false : base.can_order && accepting,
+        can_order: base.can_order && accepting,
       }
     })
     const localized = locale === "fr" ? enrichedRows : await localizeProducts(enrichedRows, locale)
@@ -470,10 +618,14 @@ export async function GET(request: NextRequest) {
     }
 
     const withStats = mergeOrderStats(localized, sold)
-    const often_ordered_with = buildOftenOrderedWith(
+    const coOccurrence = buildOftenOrderedWith(
       (oi ?? []) as { order_id: string | null; product_id: string | null }[],
       6,
     )
+    const often_ordered_with: Record<string, string[]> = { ...coOccurrence }
+    for (const [pid, ids] of Object.entries(adminRecommendations)) {
+      if (ids.length > 0) often_ordered_with[pid] = ids
+    }
 
     const baseList = includeUnavailable ? withStats : withStats.filter((p) => p.can_order)
 

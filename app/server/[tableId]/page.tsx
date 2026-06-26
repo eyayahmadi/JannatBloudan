@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useCallback } from "react"
 import { useParams } from "next/navigation"
-import { Plus, Minus, Trash2, ShoppingCart, UtensilsCrossed, Search, CheckCircle2, HandPlatter, Receipt, BellRing, ChevronDown, ChevronRight } from "lucide-react"
+import { Plus, Minus, Trash2, ShoppingCart, UtensilsCrossed, CheckCircle2, HandPlatter, Receipt, BellRing, ChevronDown, ChevronRight } from "lucide-react"
 import { RequireAuth } from "@/components/auth/RequireAuth"
 import { StaffWorkspaceShell } from "@/components/workspace/StaffWorkspaceShell"
 import { PageShell } from "@/components/site/PageShell"
@@ -25,45 +25,12 @@ import {
 } from "@/lib/notifications/audience"
 import Link from "next/link"
 import { Combine } from "lucide-react"
+import { useMenuCatalog } from "@/lib/hooks/useMenuCatalog"
+import { StaffMenuPicker } from "@/components/menu/StaffMenuPicker"
+import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
+import type { DigitalMenuProduct } from "@/lib/menu/digital-menu-product"
 
-type MenuItem = { id: string; name: string; price: number; category: string }
-type CartLine = { item: MenuItem; quantity: number; note?: string }
-
-const CATEGORIES = [
-  "Tout",
-  "Shawarma",
-  "Manakish",
-  "Plats chauds",
-  "Mezzes",
-  "Pizzas",
-  "Burgers",
-  "Desserts",
-  "Boissons",
-]
-
-const MENU: MenuItem[] = [
-  { id: "sw1", name: "Shawarma Poulet", price: 12.0, category: "Shawarma" },
-  { id: "sw2", name: "Shawarma Viande", price: 14.0, category: "Shawarma" },
-  { id: "sw3", name: "Shawarma Mixte", price: 15.0, category: "Shawarma" },
-  { id: "mn1", name: "Manakish Zaatar", price: 6.0, category: "Manakish" },
-  { id: "mn2", name: "Manakish Fromage", price: 8.0, category: "Manakish" },
-  { id: "pc1", name: "Poulet Grille", price: 18.0, category: "Plats chauds" },
-  { id: "pc2", name: "Kafta Grille", price: 16.0, category: "Plats chauds" },
-  { id: "mz1", name: "Houmous", price: 7.0, category: "Mezzes" },
-  { id: "mz2", name: "Fattouch", price: 8.0, category: "Mezzes" },
-  { id: "mz3", name: "Tabboule", price: 7.5, category: "Mezzes" },
-  { id: "pz1", name: "Pizza Margherita", price: 14.0, category: "Pizzas" },
-  { id: "pz2", name: "Pizza Viande", price: 16.0, category: "Pizzas" },
-  { id: "bg1", name: "Burger Classic", price: 13.0, category: "Burgers" },
-  { id: "bg2", name: "Burger Cheese", price: 15.0, category: "Burgers" },
-  { id: "bg3", name: "Burger Double", price: 18.0, category: "Burgers" },
-  { id: "ds1", name: "Baklawa", price: 6.0, category: "Desserts" },
-  { id: "ds2", name: "Knefe", price: 8.0, category: "Desserts" },
-  { id: "ds3", name: "Mhallabieh", price: 5.0, category: "Desserts" },
-  { id: "bv1", name: "Jus d'Orange", price: 4.0, category: "Boissons" },
-  { id: "bv2", name: "Ayran", price: 3.0, category: "Boissons" },
-  { id: "bv3", name: "Cafe Turc", price: 3.5, category: "Boissons" },
-]
+type CartLine = { item: DigitalMenuProduct; quantity: number; note?: string }
 
 const STATUS_LABEL_FR: Record<OrderStatus, string> = {
   received: "Reçue",
@@ -92,9 +59,9 @@ export default function ServerTableOrderPage() {
     (o) => String(o.table_number) === effectiveTableId && o.status !== "cancelled",
   )
 
+  const { catalog, data: menuData, loading: menuLoading } = useMenuCatalog({ pollMs: 15_000 })
+
   const [orderMode, setOrderMode] = useState<"qr_self_service" | "server" | "pos">("server")
-  const [category, setCategory] = useState("Tout")
-  const [search, setSearch] = useState("")
   const [cart, setCart] = useState<CartLine[]>([])
   const [toast, setToast] = useState<string | null>(null)
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set())
@@ -108,26 +75,16 @@ export default function ServerTableOrderPage() {
     })
   }, [])
 
-  const filteredMenu = useMemo(() => {
-    let items = MENU
-    if (category !== "Tout") items = items.filter((m) => m.category === category)
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      items = items.filter((m) => m.name.toLowerCase().includes(q))
-    }
-    return items
-  }, [category, search])
-
-  const total = cart.reduce((s, l) => s + l.item.price * l.quantity, 0)
-  const cartCount = cart.reduce((s, l) => s + l.quantity, 0)
-
-  const addToCart = useCallback((item: MenuItem) => {
+  const addToCart = useCallback((item: DigitalMenuProduct) => {
     setCart((prev) => {
       const existing = prev.find((l) => l.item.id === item.id)
       if (existing) return prev.map((l) => (l.item.id === item.id ? { ...l, quantity: l.quantity + 1 } : l))
       return [...prev, { item, quantity: 1 }]
     })
   }, [])
+
+  const total = cart.reduce((s, l) => s + l.item.price * l.quantity, 0)
+  const cartCount = cart.reduce((s, l) => s + l.quantity, 0)
 
   const updateQty = useCallback((itemId: string, delta: number) => {
     setCart((prev) =>
@@ -246,41 +203,83 @@ export default function ServerTableOrderPage() {
     [updateOrderItem],
   )
 
-  const submitOrder = useCallback(() => {
+  const submitOrder = useCallback(async () => {
     if (cart.length === 0) return
 
     const orderNumber = String(1000 + Math.floor(Math.random() * 9000))
-    const order: KitchenOrderInput = {
-      id: crypto.randomUUID(),
-      order_number: orderNumber,
-      table_number: Number(effectiveTableId),
-      order_type: "server",
-      status: "received",
+    const payload = {
+      tableRef: String(tableId),
+      orderNumber,
       items: cart.map((l) => ({
+        productId: l.item.id,
         name: l.item.name,
         quantity: l.quantity,
+        unitPrice: l.item.price,
         notes: l.note?.trim() || undefined,
-        unit_price: l.item.price,
       })),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      customer_name: "Serveur",
       total: Math.round(total * 100) / 100,
     }
 
-    addOrder(order)
-    setCart([])
-    setToast(`Commande #${orderNumber} envoyee!`)
-    setTimeout(() => setToast(null), 3000)
-    // Notifie uniquement les stations effectivement présentes dans la commande
-    // + admin. Une commande "tout cuisine" ne réveille pas BAR/SHISHA.
-    addNotification({
-      type: "new_order",
-      title: "Nouvelle commande",
-      message: `Commande ${orderNumber} — Table ${tableId} envoyée en cuisine`,
-      audience: audienceForStationsFromItems(order.items),
-    })
-  }, [cart, tableId, total, addOrder, addNotification])
+    try {
+      const res = await fetch("/api/orders/server", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setToast(json.error ?? "Échec envoi commande")
+        setTimeout(() => setToast(null), 4000)
+        return
+      }
+
+      const o = json.order
+      const order: KitchenOrderInput = {
+        id: o.id,
+        order_number: o.order_number,
+        table_number: Number(o.table_number ?? effectiveTableId),
+        order_type: "server",
+        status: "received",
+        items: (o.items ?? []).map(
+          (it: {
+            id: string
+            name: string
+            quantity: number
+            unit_price?: number
+            notes?: string
+            station?: string
+            item_status?: string
+          }) => ({
+            id: it.id,
+            name: it.name,
+            quantity: it.quantity,
+            notes: it.notes,
+            unit_price: it.unit_price,
+            station: it.station,
+            item_status: it.item_status ?? "new",
+          }),
+        ),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        customer_name: "Serveur",
+        total: Number(o.total ?? total),
+      }
+
+      addOrder(order)
+      setCart([])
+      setToast(`Commande #${o.order_number} envoyée!`)
+      setTimeout(() => setToast(null), 3000)
+      addNotification({
+        type: "new_order",
+        title: "Nouvelle commande",
+        message: `Commande ${o.order_number} — Table ${tableId} envoyée`,
+        audience: audienceForStationsFromItems(order.items),
+      })
+    } catch {
+      setToast("Erreur réseau — commande non enregistrée")
+      setTimeout(() => setToast(null), 4000)
+    }
+  }, [cart, tableId, effectiveTableId, total, addOrder, addNotification])
 
   return (
     <RequireAuth roles={["ADMIN", "SERVER"]}>
@@ -550,66 +549,20 @@ export default function ServerTableOrderPage() {
             </div>
           )}
 
+          <div className="mb-4">
+            <StationStatusBanner />
+          </div>
+
           <div className="flex flex-col gap-4 lg:flex-row">
             {/* Menu panel */}
             <div className="flex-1">
-              <div className="mb-3 relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input
-                  placeholder="Rechercher un produit..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-
-              <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setCategory(cat)}
-                    className={cn(
-                      "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition",
-                      category === cat
-                        ? "bg-amber-600 text-white shadow-md"
-                        : "bg-white text-slate-600 hover:bg-amber-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
-                    )}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                {filteredMenu.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => addToCart(item)}
-                    className={cn(
-                      "flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition",
-                      "hover:border-amber-300 hover:shadow-md active:scale-[0.97]",
-                      "dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-amber-600",
-                    )}
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40">
-                      <UtensilsCrossed className="h-6 w-6 text-amber-700 dark:text-amber-300" />
-                    </div>
-                    <span className="text-center text-sm font-medium text-slate-800 dark:text-slate-200">
-                      {item.name}
-                    </span>
-                    <span className="text-sm font-bold text-amber-700 dark:text-amber-400">
-                      {item.price.toFixed(2)} DT
-                    </span>
-                  </button>
-                ))}
-                {filteredMenu.length === 0 && (
-                  <div className="col-span-full py-12 text-center text-sm text-slate-400">
-                    Aucun produit trouve
-                  </div>
-                )}
-              </div>
+              <StaffMenuPicker
+                catalog={catalog}
+                categories={menuData?.categories ?? []}
+                stationAvailability={menuData?.station_availability ?? []}
+                loading={menuLoading}
+                onAdd={addToCart}
+              />
             </div>
 
             {/* Cart panel */}
@@ -645,7 +598,7 @@ export default function ServerTableOrderPage() {
                               {line.item.name}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {line.item.price.toFixed(2)} DT
+                              {line.item.price.toFixed(2)} €
                             </p>
                           </div>
                           <div className="flex items-center gap-1">
@@ -681,7 +634,7 @@ export default function ServerTableOrderPage() {
               <div className="border-t border-slate-200 px-4 py-3 dark:border-slate-800">
                 <div className="mb-3 flex items-center justify-between text-lg font-bold text-slate-900 dark:text-white">
                   <span>Total</span>
-                  <span>{total.toFixed(2)} DT</span>
+                  <span>{total.toFixed(2)} €</span>
                 </div>
                 <Button
                   onClick={submitOrder}

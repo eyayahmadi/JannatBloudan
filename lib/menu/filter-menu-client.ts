@@ -1,4 +1,9 @@
 import type { DigitalMenuProduct, MenuClientFilters, MenuSortId } from "@/lib/menu/digital-menu-product"
+import { attributeSearchHaystack } from "@/lib/menu/product-attributes"
+import { DRINKS_CATEGORY_GROUPS, DESSERTS_CATEGORY_GROUPS } from "@/lib/menu/menu-category-groups"
+
+const DRINK_CATEGORY_SLUGS = new Set<string>(DRINKS_CATEGORY_GROUPS.map((g) => g.slug))
+const DESSERT_CATEGORY_SLUGS = new Set<string>(DESSERTS_CATEGORY_GROUPS.map((g) => g.slug))
 
 function norm(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -14,6 +19,7 @@ function matchesSearch(p: DigitalMenuProduct, q: string): boolean {
     p.categoryName,
     p.category,
     ...p.tags,
+    attributeSearchHaystack(p.tags),
   ]
     .join(" ")
     .toLowerCase()
@@ -21,10 +27,7 @@ function matchesSearch(p: DigitalMenuProduct, q: string): boolean {
 }
 
 function isSpicy(p: DigitalMenuProduct): boolean {
-  const t = p.tags.map((x) => norm(x))
-  if (t.includes("spicy") || t.includes("epice") || t.includes("épicé")) return true
-  const sl = (p.spice_level ?? "").toLowerCase()
-  return sl !== "" && sl !== "doux"
+  return (p.tags ?? []).includes("spicy")
 }
 
 /**
@@ -33,15 +36,17 @@ function isSpicy(p: DigitalMenuProduct): boolean {
 export function filterMenuProducts(items: DigitalMenuProduct[], f: MenuClientFilters): DigitalMenuProduct[] {
   return items.filter((p) => {
     if (!matchesSearch(p, f.search)) return false
-    if (f.section !== "all" && p.section !== f.section) return false
+    if (f.section !== "all" && f.section !== "drinks" && f.section !== "desserts" && p.section !== f.section) return false
+    if (f.section === "drinks" && p.section !== "drinks" && !DRINK_CATEGORY_SLUGS.has(p.category)) return false
+    if (f.section === "desserts" && p.section !== "desserts" && !DESSERT_CATEGORY_SLUGS.has(p.category)) return false
     if (f.categorySlug !== "all" && p.category !== f.categorySlug) return false
     if (f.priceMin != null && Number.isFinite(f.priceMin) && p.price < f.priceMin) return false
     if (f.priceMax != null && Number.isFinite(f.priceMax) && p.price > f.priceMax) return false
     if (f.availableOnly && !p.can_order) return false
-    if (f.popularOnly && !p.is_popular) return false
-    if (f.newOnly && !p.is_new) return false
+    if (f.popularOnly && !(p.tags ?? []).some((t) => t === "popular" || t === "best_seller")) return false
+    if (f.newOnly && !(p.tags ?? []).includes("new")) return false
     if (f.spicyOnly && !isSpicy(p)) return false
-    if (f.vegetarianOnly && !(p.is_vegetarian || p.tags.some((t) => norm(t).includes("veget")))) return false
+    if (f.vegetarianOnly && !(p.tags ?? []).some((t) => t === "vegetarian" || t === "vegan")) return false
     if (f.station !== "all" && (p.station ?? "KITCHEN") !== f.station) return false
     return true
   })

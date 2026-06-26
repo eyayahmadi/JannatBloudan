@@ -19,7 +19,7 @@ export default function MenuOnlyPage() {
           imageAlt="Mezzés syriens — la carte de Jannat Bloudan"
           kicker="Notre carte"
           title="Menu"
-          subtitle="Mezzes, grillades, manakish, desserts orientaux — préparés chaque jour avec des ingrédients frais."
+          subtitle="Syrisch-libanesische Küche in Bloudan — Entrées, Grillades, Shawarma, Pizza, Desserts, Getränke & Shisha."
           height="sm"
         />
         <div className="flex-1 py-8">

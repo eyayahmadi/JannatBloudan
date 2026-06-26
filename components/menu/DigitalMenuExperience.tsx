@@ -33,9 +33,17 @@ import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n/context"
 import type { DigitalMenuProduct, MenuClientFilters, MenuSortId } from "@/lib/menu/digital-menu-product"
+import { formatMenuPriceLabel } from "@/lib/menu/menu-display"
 import { filterMenuProducts, similarProducts, sortMenuProducts } from "@/lib/menu/filter-menu-client"
+import { filterProductsByAttributeTag, QR_MENU_ATTRIBUTE_FILTERS, attributeBadgeLabel, type QrAttributeFilterId } from "@/lib/menu/product-attributes"
+import { ProductAttributeBadges } from "@/components/menu/ProductAttributeBadges"
+import { QrAttributeFilterChips } from "@/components/menu/qr/QrAttributeFilterChips"
 import type { Station } from "@/lib/stations/config"
 import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
+import { groupMenuItemsByCategory } from "@/lib/menu/menu-category-groups"
+import { MenuSubcategoryHeader } from "@/components/menu/MenuSubcategoryHeader"
+import { ProductCustomizationModal } from "@/components/menu/ProductCustomizationModal"
+import { formatKitchenTicketNotes, formatVariantLabel } from "@/lib/menu/cart-line"
 
 type CatalogCategoryRow = {
   id: string
@@ -82,9 +90,11 @@ export function DigitalMenuExperience() {
   const [newOnly, setNewOnly] = useState(false)
   const [spicyOnly, setSpicyOnly] = useState(false)
   const [vegetarianOnly, setVegetarianOnly] = useState(false)
+  const [attributeFilter, setAttributeFilter] = useState<QrAttributeFilterId>("all")
   const [stationFilter, setStationFilter] = useState<"all" | Station>("all")
   const [sortBy, setSortBy] = useState<MenuSortId>("name")
   const [placing, setPlacing] = useState(false)
+  const [customizeItem, setCustomizeItem] = useState<DigitalMenuProduct | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -122,6 +132,18 @@ export function DigitalMenuExperience() {
 
   const tagMeta = useCallback(
     (tag: string) => {
+      const badge = attributeBadgeLabel(tag)
+      if (badge) {
+        const text = locale === "ar" ? badge.ar : badge.de
+        if (tag === "popular") return { text, className: "bg-amber-500/20 text-amber-900" }
+        if (tag === "new") return { text, className: "bg-emerald-500/20 text-emerald-900" }
+        if (tag === "spicy") return { text, className: "bg-rose-500/20 text-rose-900" }
+        if (tag === "vegetarian" || tag === "vegan")
+          return { text, className: "bg-lime-500/20 text-lime-900" }
+        if (tag === "kids") return { text, className: "bg-sky-500/20 text-sky-900" }
+        if (tag === "chef_recommendation") return { text, className: "bg-violet-500/20 text-violet-900" }
+        return { text, className: "bg-slate-500/10 text-slate-700" }
+      }
       if (tag === "popular" || tag === "populaire")
         return { text: t("menu.tagPopular"), className: "bg-amber-500/20 text-amber-900" }
       if (tag === "new" || tag === "nouveau")
@@ -132,7 +154,7 @@ export function DigitalMenuExperience() {
         return { text: t("menu.tagVegetarian"), className: "bg-lime-500/20 text-lime-900" }
       return { text: tag, className: "bg-slate-500/10 text-slate-700" }
     },
-    [t],
+    [t, locale],
   )
 
   const categoriesForSection = useMemo(() => {
@@ -159,7 +181,8 @@ export function DigitalMenuExperience() {
       station: stationFilter,
     }
     const list = filterMenuProducts(data.catalog as DigitalMenuProduct[], f)
-    return sortMenuProducts(list, sortBy)
+    const tagged = filterProductsByAttributeTag(list, attributeFilter)
+    return sortMenuProducts(tagged, sortBy)
   }, [
     data,
     q,
@@ -174,7 +197,36 @@ export function DigitalMenuExperience() {
     vegetarianOnly,
     stationFilter,
     sortBy,
+    attributeFilter,
   ])
+
+  const groupedSection = useMemo(() => {
+    if (categorySlug !== "all") return null
+    if (section === "drinks" || section === "desserts") return section
+    return null
+  }, [section, categorySlug])
+
+  const groupedItems = useMemo(() => {
+    if (!groupedSection) return null
+    return groupMenuItemsByCategory(filtered, groupedSection)
+  }, [filtered, groupedSection])
+
+  const handleAddProduct = useCallback(
+    (item: DigitalMenuProduct) => {
+      if (item.is_customizable) {
+        setCustomizeItem(item)
+        return
+      }
+      add({
+        productId: item.id,
+        name: item.name,
+        basePrice: item.price,
+        price: item.price,
+        maxOrderable: item.max_orderable,
+      })
+    },
+    [add],
+  )
 
   const catalogById = useMemo(() => new Map(data?.catalog.map((p) => [p.id, p]) ?? []), [data])
 
@@ -189,6 +241,7 @@ export function DigitalMenuExperience() {
     setNewOnly(false)
     setSpicyOnly(false)
     setVegetarianOnly(false)
+    setAttributeFilter("all")
     setStationFilter("all")
     setSortBy("name")
   }, [])
@@ -202,6 +255,7 @@ export function DigitalMenuExperience() {
     !newOnly &&
     !spicyOnly &&
     !vegetarianOnly &&
+    attributeFilter === "all" &&
     stationFilter === "all" &&
     sortBy === "name" &&
     priceMin === "" &&
@@ -238,6 +292,14 @@ export function DigitalMenuExperience() {
         label: t("menu.filterVegetarianShort"),
         onClear: () => setVegetarianOnly(false),
       })
+    if (attributeFilter !== "all") {
+      const chip = QR_MENU_ATTRIBUTE_FILTERS.find((c) => c.id === attributeFilter)
+      chips.push({
+        key: "attr",
+        label: chip?.labelDe ?? attributeFilter,
+        onClear: () => setAttributeFilter("all"),
+      })
+    }
     if (stationFilter !== "all") {
       chips.push({
         key: "station",
@@ -263,6 +325,7 @@ export function DigitalMenuExperience() {
     newOnly,
     spicyOnly,
     vegetarianOnly,
+    attributeFilter,
     stationFilter,
     sortBy,
     data?.categories,
@@ -281,11 +344,12 @@ export function DigitalMenuExperience() {
         tax: 0,
         total: subtotal,
         items: items.map((i) => ({
-          productId: i.id,
+          productId: i.productId,
           productName: i.name,
           quantity: i.quantity,
           unitPrice: i.price,
           subtotal: i.price * i.quantity,
+          specialInstructions: formatKitchenTicketNotes(i.extras, i.variant) ?? undefined,
         })),
       }
       const res = await fetch("/api/orders", {
@@ -358,6 +422,8 @@ export function DigitalMenuExperience() {
               </Button>
             </div>
           </div>
+
+          <QrAttributeFilterChips activeId={attributeFilter} onSelect={setAttributeFilter} />
 
           <div className="flex w-full gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {SECTION_IDS.map((sid) => {
@@ -513,7 +579,7 @@ export function DigitalMenuExperience() {
                   catalog={data.catalog}
                   oftenOrderedWith={data.often_ordered_with[item.id]}
                   onSuggestSearch={(name) => setQ(name)}
-                  onAdd={add}
+                  onAdd={handleAddProduct}
                   tagMeta={tagMeta}
                 />
               ))}
@@ -533,7 +599,7 @@ export function DigitalMenuExperience() {
                   catalog={data.catalog}
                   oftenOrderedWith={data.often_ordered_with[item.id]}
                   onSuggestSearch={(name) => setQ(name)}
-                  onAdd={add}
+                  onAdd={handleAddProduct}
                   tagMeta={tagMeta}
                 />
               ))}
@@ -553,7 +619,7 @@ export function DigitalMenuExperience() {
                   catalog={data.catalog}
                   oftenOrderedWith={data.often_ordered_with[item.id]}
                   onSuggestSearch={(name) => setQ(name)}
-                  onAdd={add}
+                  onAdd={handleAddProduct}
                   tagMeta={tagMeta}
                 />
               ))}
@@ -583,26 +649,60 @@ export function DigitalMenuExperience() {
               : t("menu.categoryFallback")}
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((item, i) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.02 }}
-            >
-              <MenuCard
-                item={item}
-                catalog={data.catalog}
-                oftenOrderedWith={data.often_ordered_with[item.id]}
-                onSuggestSearch={(name) => setQ(name)}
-                onAdd={add}
-                tagMeta={tagMeta}
-                dark={section === "special"}
-                sweet={section === "desserts"}
-                drink={section === "drinks"}
-              />
-            </motion.div>
-          ))}
+          {groupedItems
+            ? groupedItems.map((group) => (
+                <div key={group.key} className="contents">
+                  <div className="col-span-full">
+                    <MenuSubcategoryHeader
+                      icon={group.icon}
+                      labelDe={group.labelDe}
+                      labelAr={group.labelAr}
+                      drink={groupedSection === "drinks"}
+                      sweet={groupedSection === "desserts"}
+                    />
+                  </div>
+                  {group.items.map((item, i) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.02 }}
+                    >
+                      <MenuCard
+                        item={item}
+                        catalog={data.catalog}
+                        oftenOrderedWith={data.often_ordered_with[item.id]}
+                        onSuggestSearch={(name) => setQ(name)}
+                        onAdd={handleAddProduct}
+                        tagMeta={tagMeta}
+                        dark={section === "special"}
+                        sweet={section === "desserts"}
+                        drink={section === "drinks"}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              ))
+            : filtered.map((item, i) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.02 }}
+                >
+                  <MenuCard
+                    item={item}
+                    catalog={data.catalog}
+                    oftenOrderedWith={data.often_ordered_with[item.id]}
+                    onSuggestSearch={(name) => setQ(name)}
+                    onAdd={handleAddProduct}
+                    tagMeta={tagMeta}
+                    dark={section === "special"}
+                    sweet={section === "desserts"}
+                    drink={section === "drinks"}
+                  />
+                </motion.div>
+              ))}
         </div>
         {filtered.length === 0 && (
           <p className="py-8 text-center text-sm font-medium text-muted-foreground">{t("menu.noResults")}</p>
@@ -642,11 +742,19 @@ export function DigitalMenuExperience() {
                 ) : (
                   items.map((i) => (
                     <div
-                      key={i.id}
+                      key={i.lineId}
                       className="flex items-center justify-between gap-2 rounded-xl border p-2 text-sm"
                     >
                       <div>
                         <p className="font-medium">{i.name}</p>
+                        {i.variant ? (
+                          <p className="text-xs text-muted-foreground">{formatVariantLabel(i.variant)}</p>
+                        ) : null}
+                        {i.extras.length > 0 ? (
+                          <p className="text-xs text-muted-foreground">
+                            {i.extras.map((e) => `+ ${e.name}`).join(", ")}
+                          </p>
+                        ) : null}
                         <p className="text-xs text-muted-foreground">
                           {(i.price * i.quantity).toFixed(2)} €
                         </p>
@@ -657,7 +765,7 @@ export function DigitalMenuExperience() {
                           size="icon"
                           variant="secondary"
                           className="h-8 w-8"
-                          onClick={() => setQty(i.id, i.quantity - 1)}
+                          onClick={() => setQty(i.lineId, i.quantity - 1)}
                         >
                           <Minus className="h-4 w-4" />
                         </Button>
@@ -667,7 +775,7 @@ export function DigitalMenuExperience() {
                           size="icon"
                           variant="secondary"
                           className="h-8 w-8"
-                          onClick={() => setQty(i.id, i.quantity + 1)}
+                          onClick={() => setQty(i.lineId, i.quantity + 1)}
                           disabled={i.quantity >= i.maxOrderable}
                         >
                           <Plus className="h-4 w-4" />
@@ -694,6 +802,37 @@ export function DigitalMenuExperience() {
           </motion.aside>
         )}
       </AnimatePresence>
+
+      <ProductCustomizationModal
+        open={!!customizeItem}
+        product={
+          customizeItem
+            ? {
+                id: customizeItem.id,
+                name: customizeItem.name,
+                name_ar: customizeItem.name_ar,
+                price: customizeItem.price,
+                modifiers: customizeItem.modifiers,
+                variants: customizeItem.variants,
+              }
+            : null
+        }
+        onClose={() => setCustomizeItem(null)}
+        addLabel={t("menu.addToCart")}
+        onConfirm={(payload) => {
+          add({
+            productId: payload.productId,
+            name: payload.name,
+            basePrice: payload.basePrice,
+            price: payload.unitPrice,
+            maxOrderable: customizeItem?.max_orderable ?? 99,
+            variant: payload.variant,
+            extras: payload.extras,
+            quantity: payload.quantity,
+          })
+          setCustomizeItem(null)
+        }}
+      />
     </div>
   )
 }
@@ -742,7 +881,7 @@ function MenuCard({
   oftenOrderedWith?: string[] | undefined
   onSuggestSearch: (name: string) => void
   tagMeta: (tag: string) => { text: string; className: string }
-  onAdd: (p: { id: string; name: string; price: number; maxOrderable: number }) => void
+  onAdd: (item: DigitalMenuProduct) => void
   dark?: boolean
   sweet?: boolean
   drink?: boolean
@@ -788,12 +927,21 @@ function MenuCard({
             {t("menu.unavailableBadge")}
           </span>
         ) : null}
-        {can && item.is_popular ? (
+        {can && item.is_customizable && !item.tags.includes("popular") && !item.tags.includes("best_seller") && !item.tags.includes("new") ? (
+          <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-amber-900 shadow dark:bg-zinc-800/90 dark:text-amber-200">
+            {item.has_variants && item.modifiers.length > 0
+              ? "Wahl"
+              : item.has_variants
+                ? "Größe"
+                : "Extras"}
+          </span>
+        ) : null}
+        {can && (item.tags.includes("popular") || item.tags.includes("best_seller")) ? (
           <span className="absolute left-2 top-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-xs font-medium text-white">
             {t("menu.tagPopular")}
           </span>
         ) : null}
-        {can && item.is_new ? (
+        {can && item.tags.includes("new") ? (
           <span className="absolute left-2 top-10 rounded-full bg-emerald-600/90 px-2 py-0.5 text-[10px] font-semibold text-white">
             {t("menu.tagNew")}
           </span>
@@ -805,16 +953,7 @@ function MenuCard({
         ) : null}
       </div>
       <div className="flex flex-1 flex-col p-3">
-        <div className="mb-1 flex flex-wrap gap-1">
-          {item.tags.slice(0, 4).map((tagStr) => {
-            const meta = tagMeta(tagStr)
-            return (
-              <Badge key={`${tagStr}-${meta.text}`} className={cn("text-xs font-normal", meta.className)} variant="secondary">
-                {meta.text}
-              </Badge>
-            )
-          })}
-        </div>
+        <ProductAttributeBadges tags={item.tags} locale={locale} max={6} size="xs" className="mb-1" />
         <h3 className={cn("font-semibold leading-tight", dark && "text-zinc-50")}>{item.name}</h3>
         {item.name_ar && locale !== "ar" && (
           <p className="text-sm text-muted-foreground" dir="rtl">
@@ -864,22 +1003,21 @@ function MenuCard({
           </div>
         )}
         <div className="mt-3 flex items-center justify-between gap-2">
-          <span className={cn("text-lg font-bold", drink && "text-cyan-900", sweet && "text-rose-900")}>
-            {item.price.toFixed(2)} €
+          <span className={cn("text-lg font-bold tabular-nums", drink && "text-cyan-900", sweet && "text-rose-900")}>
+            {formatMenuPriceLabel({
+              price: item.price,
+              hasVariants: item.has_variants,
+              variants: item.variants,
+              isCustomizable: item.is_customizable && !item.has_variants,
+              currency: " €",
+            })}
           </span>
           <Button
             type="button"
             size="sm"
             className="transition active:scale-95"
             disabled={!can}
-            onClick={() =>
-              onAdd({
-                id: item.id,
-                name: item.name,
-                price: item.price,
-                maxOrderable: item.max_orderable,
-              })
-            }
+            onClick={() => onAdd(item)}
           >
             {can ? t("menu.addToCart") : t("menu.unavailableShort")}
           </Button>

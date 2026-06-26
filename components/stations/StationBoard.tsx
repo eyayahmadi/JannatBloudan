@@ -53,6 +53,7 @@ import { AIAgentBadge, type AgentContext } from "@/components/ai/AIAgentBadge"
 import { SPRING_SOFT } from "@/lib/ui/motion"
 import { StationAvailabilityControl } from "@/components/stations/StationAvailabilityControl"
 import { ItemRefuseDialog } from "@/components/stations/ItemRefuseDialog"
+import { RealtimeIndicator } from "@/components/realtime/RealtimeIndicator"
 
 const STATION_TO_AGENT: Record<Station, AgentContext> = {
   KITCHEN: "kitchen",
@@ -662,6 +663,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
           hideMainNav
           trailing={
             <div className="flex items-center gap-2">
+              <RealtimeIndicator />
               <Badge
                 variant="secondary"
                 className={cn(

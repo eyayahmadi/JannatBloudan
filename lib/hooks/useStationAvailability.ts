@@ -10,6 +10,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
 import {
   AVAILABILITY_META,
   defaultStationAvailability,
@@ -154,9 +155,13 @@ export function useStationAvailability(): UseStationAvailabilityResult {
     aliveRef.current = true
     void refresh()
     const iv = setInterval(refresh, POLL_MS)
+    const unsub = onRealtimeRefresh((scope) => {
+      if (scopeMatches(["stations", "menu"], scope)) void refresh()
+    })
     return () => {
       aliveRef.current = false
       clearInterval(iv)
+      unsub()
     }
   }, [refresh])
 

@@ -26,6 +26,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
+import { syncOrderInvoice } from "@/lib/caisse/sync-order-invoice"
 import {
   isRefusalReasonCode,
   type RefusalReasonCode,
@@ -169,9 +170,18 @@ export async function POST(
     },
   })
 
+  const sync = await syncOrderInvoice(supabase, {
+    orderId: String(current.order_id),
+    reason: markWaste ? "item_waste" : "item_refuse",
+    actorId: guard.user.id,
+    actorEmail: guard.user.email ?? null,
+    metadata: { order_item_id: String(current.id), station: itemStation },
+  })
+
   return NextResponse.json({
     ok: true,
     item: updated,
     transition: { from: previousStatus, to: targetStatus },
+    invoice_sync: sync,
   })
 }

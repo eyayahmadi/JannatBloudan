@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, useMemo } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { RequireAuth } from "@/components/auth/RequireAuth"
 import { PageShell } from "@/components/site/PageShell"
 import { AIAgentBadge } from "@/components/ai/AIAgentBadge"
@@ -26,17 +26,12 @@ import { CashRegisterMovementForm } from "@/components/caisse/CashRegisterMoveme
 import { useRealtimeOrders, type KitchenOrderInput } from "@/lib/hooks/useRealtimeOrders"
 import { useNotifications } from "@/lib/hooks/useNotifications"
 import { cashierAudience } from "@/lib/notifications/audience"
-
-type MenuItem = {
-  id: string
-  name: string
-  price: number
-  category: string
-  image?: string
-}
+import { useMenuCatalog } from "@/lib/hooks/useMenuCatalog"
+import { StaffMenuPicker } from "@/components/menu/StaffMenuPicker"
+import type { DigitalMenuProduct } from "@/lib/menu/digital-menu-product"
 
 type TicketLine = {
-  item: MenuItem
+  item: DigitalMenuProduct
   quantity: number
 }
 
@@ -46,42 +41,6 @@ type DailySummary = {
   cardTotal: number
   orderCount: number
 }
-
-const CATEGORIES = [
-  "Tout",
-  "Shawarma",
-  "Manakish",
-  "Plats chauds",
-  "Mezzes",
-  "Pizzas",
-  "Burgers",
-  "Desserts",
-  "Boissons",
-]
-
-const MENU: MenuItem[] = [
-  { id: "sw1", name: "Shawarma Poulet", price: 12.0, category: "Shawarma" },
-  { id: "sw2", name: "Shawarma Viande", price: 14.0, category: "Shawarma" },
-  { id: "sw3", name: "Shawarma Mixte", price: 15.0, category: "Shawarma" },
-  { id: "mn1", name: "Manakish Zaatar", price: 6.0, category: "Manakish" },
-  { id: "mn2", name: "Manakish Fromage", price: 8.0, category: "Manakish" },
-  { id: "pc1", name: "Poulet Grille", price: 18.0, category: "Plats chauds" },
-  { id: "pc2", name: "Kafta Grille", price: 16.0, category: "Plats chauds" },
-  { id: "mz1", name: "Houmous", price: 7.0, category: "Mezzes" },
-  { id: "mz2", name: "Fattouch", price: 8.0, category: "Mezzes" },
-  { id: "mz3", name: "Tabboule", price: 7.5, category: "Mezzes" },
-  { id: "pz1", name: "Pizza Margherita", price: 14.0, category: "Pizzas" },
-  { id: "pz2", name: "Pizza Viande", price: 16.0, category: "Pizzas" },
-  { id: "bg1", name: "Burger Classic", price: 13.0, category: "Burgers" },
-  { id: "bg2", name: "Burger Cheese", price: 15.0, category: "Burgers" },
-  { id: "bg3", name: "Burger Double", price: 18.0, category: "Burgers" },
-  { id: "ds1", name: "Baklawa", price: 6.0, category: "Desserts" },
-  { id: "ds2", name: "Knefe", price: 8.0, category: "Desserts" },
-  { id: "ds3", name: "Mhallabieh", price: 5.0, category: "Desserts" },
-  { id: "bv1", name: "Jus d'Orange", price: 4.0, category: "Boissons" },
-  { id: "bv2", name: "Ayran", price: 3.0, category: "Boissons" },
-  { id: "bv3", name: "Cafe Turc", price: 3.5, category: "Boissons" },
-]
 
 const TVA_RATE = 0.19
 const DAILY_KEY = "jb-pos-daily"
@@ -106,9 +65,8 @@ function saveDaily(d: DailySummary) {
 export default function PosPage() {
   const { addOrder } = useRealtimeOrders()
   const { add: addNotification } = useNotifications()
+  const { catalog, data: menuData, loading: menuLoading } = useMenuCatalog({ pollMs: 15_000 })
 
-  const [category, setCategory] = useState("Tout")
-  const [search, setSearch] = useState("")
   const [ticket, setTicket] = useState<TicketLine[]>([])
   const [ticketNumber, setTicketNumber] = useState(() =>
     Math.floor(1000 + Math.random() * 9000),
@@ -121,21 +79,11 @@ export default function PosPage() {
     saveDaily(daily)
   }, [daily])
 
-  const filteredMenu = useMemo(() => {
-    let items = MENU
-    if (category !== "Tout") items = items.filter((m) => m.category === category)
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      items = items.filter((m) => m.name.toLowerCase().includes(q))
-    }
-    return items
-  }, [category, search])
-
   const subtotal = ticket.reduce((s, l) => s + l.item.price * l.quantity, 0)
   const tva = subtotal * TVA_RATE
   const total = subtotal + tva
 
-  const addToTicket = useCallback((item: MenuItem) => {
+  const addToTicket = useCallback((item: DigitalMenuProduct) => {
     setTicket((prev) => {
       const existing = prev.find((l) => l.item.id === item.id)
       if (existing) return prev.map((l) => (l.item.id === item.id ? { ...l, quantity: l.quantity + 1 } : l))
@@ -161,21 +109,70 @@ export default function PosPage() {
   }, [])
 
   const handlePayment = useCallback(
-    (method: "cash" | "card" | "mixed") => {
+    async (method: "cash" | "card" | "mixed") => {
       if (ticket.length === 0) return
 
-      const order: KitchenOrderInput = {
-        id: crypto.randomUUID(),
-        order_number: String(ticketNumber),
-        table_number: null,
-        order_type: "pos",
-        status: "received",
-        items: ticket.map((l) => ({ name: l.item.name, quantity: l.quantity })),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        total: Math.round(total * 100) / 100,
+      const customerLabel = `POS · Ticket #${ticketNumber}`
+      const payloadItems = ticket.map((l) => ({
+        productId: l.item.id,
+        name: l.item.name,
+        quantity: l.quantity,
+        unitPrice: l.item.price,
+      }))
+
+      try {
+        const res = await fetch("/api/orders/walk-in", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderNumber: String(ticketNumber),
+            customerName: customerLabel,
+            channel: "POS",
+            items: payloadItems,
+            total: Math.round(total * 100) / 100,
+          }),
+        })
+        const json = await res.json()
+        if (!res.ok) {
+          setToast(json.error ?? "Échec envoi commande")
+          setTimeout(() => setToast(null), 4000)
+          return
+        }
+
+        const o = json.order
+        const order: KitchenOrderInput = {
+          id: o.id,
+          order_number: o.order_number,
+          table_number: null,
+          order_type: "pos",
+          status: "received",
+          items: (o.items ?? []).map(
+            (it: {
+              id: string
+              name: string
+              quantity: number
+              unit_price?: number
+              station?: string
+              item_status?: string
+            }) => ({
+              id: it.id,
+              name: it.name,
+              quantity: it.quantity,
+              unit_price: it.unit_price,
+              station: it.station,
+              item_status: it.item_status ?? "new",
+            }),
+          ),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          total: Number(o.total ?? total),
+        }
+        addOrder(order)
+      } catch {
+        setToast("Erreur réseau — commande non enregistrée")
+        setTimeout(() => setToast(null), 4000)
+        return
       }
-      addOrder(order)
 
       setDaily((prev) => {
         const updated = { ...prev, orderCount: prev.orderCount + 1 }
@@ -207,72 +204,15 @@ export default function PosPage() {
   const ticketCount = ticket.reduce((s, l) => s + l.quantity, 0)
 
   const menuPanel = (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      {/* Search */}
-      <div className="border-b border-slate-200 p-3 dark:border-slate-800">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            placeholder="Rechercher un produit..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-      </div>
-
-      {/* Categories */}
-      <div className="flex gap-2 overflow-x-auto border-b border-slate-200 px-3 py-2 dark:border-slate-800">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            type="button"
-            onClick={() => setCategory(cat)}
-            className={cn(
-              "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition",
-              category === cat
-                ? "bg-amber-600 text-white shadow-md"
-                : "bg-white text-slate-600 hover:bg-amber-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
-            )}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Product grid */}
-      <div className="flex-1 overflow-y-auto p-3">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredMenu.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => addToTicket(item)}
-              className={cn(
-                "flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition",
-                "hover:border-amber-300 hover:shadow-md active:scale-[0.97]",
-                "dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-amber-600",
-              )}
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40">
-                <UtensilsCrossed className="h-6 w-6 text-amber-700 dark:text-amber-300" />
-              </div>
-              <span className="text-center text-sm font-medium text-slate-800 dark:text-slate-200">
-                {item.name}
-              </span>
-              <span className="text-sm font-bold text-amber-700 dark:text-amber-400">
-                {item.price.toFixed(2)} DT
-              </span>
-            </button>
-          ))}
-
-          {filteredMenu.length === 0 && (
-            <div className="col-span-full py-12 text-center text-sm text-slate-400">
-              Aucun produit trouve
-            </div>
-          )}
-        </div>
-      </div>
+    <div className="flex flex-1 flex-col overflow-hidden p-3">
+      <StaffMenuPicker
+        catalog={catalog}
+        categories={menuData?.categories ?? []}
+        stationAvailability={menuData?.station_availability ?? []}
+        loading={menuLoading}
+        onAdd={addToTicket}
+        className="h-full"
+      />
     </div>
   )
 

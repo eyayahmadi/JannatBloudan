@@ -172,6 +172,11 @@ CREATE TRIGGER trg_sync_order_from_items
 -- 7. Vue v_station_queue
 -- ------------------------------
 -- File d'attente par station. Chaque ligne = 1 item a traiter.
+-- DROP préalable : ces vues sont redéfinies en 29 et 35 avec un autre jeu de
+-- colonnes ; CREATE OR REPLACE VIEW ne peut ni renommer ni supprimer une colonne
+-- existante (« cannot drop columns from view »). On supprime donc d'abord la vue
+-- pour rendre la migration rejouable sans casser 29/35 (qui la recréent).
+DROP VIEW IF EXISTS v_station_queue CASCADE;
 CREATE OR REPLACE VIEW v_station_queue AS
 SELECT
   oi.id              AS item_id,
@@ -217,6 +222,7 @@ COMMENT ON VIEW v_station_queue IS
 -- ------------------------------
 -- 8. Vue v_station_stats — metriques performance
 -- ------------------------------
+DROP VIEW IF EXISTS v_station_stats CASCADE;
 CREATE OR REPLACE VIEW v_station_stats AS
 SELECT
   oi.station,

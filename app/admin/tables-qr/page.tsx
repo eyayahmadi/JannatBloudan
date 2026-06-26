@@ -79,6 +79,7 @@ export default function AdminTablesQRPage() {
   const [qrVersion, setQrVersion] = useState<number | null>(null)
   const [zoneFilter, setZoneFilter] = useState<string>("ALL")
   const [capFilter, setCapFilter] = useState<string>("ALL")
+  const [liveStatusByTable, setLiveStatusByTable] = useState<Record<number, string>>({})
 
   const [form, setForm] = useState({
     table_number: "",
@@ -115,6 +116,28 @@ export default function AdminTablesQRPage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    const pullLive = async () => {
+      try {
+        const res = await fetch("/api/caisse/tables-overview", { cache: "no-store" })
+        if (!res.ok) return
+        const j = await res.json()
+        const map: Record<number, string> = {}
+        for (const row of j.tables ?? []) {
+          const n = Number(row.table_number)
+          const label = String(row.unified_status_label ?? "")
+          if (Number.isFinite(n) && label && label !== "Libre") map[n] = label
+        }
+        setLiveStatusByTable(map)
+      } catch {
+        /* ignore */
+      }
+    }
+    void pullLive()
+    const id = window.setInterval(() => void pullLive(), 6000)
+    return () => window.clearInterval(id)
+  }, [])
 
   const openCreate = () => {
     setEditing(null)
@@ -403,9 +426,16 @@ export default function AdminTablesQRPage() {
                               {inactive ? (
                                 <Badge variant="secondary">Désactivée</Badge>
                               ) : (
-                                <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
-                                  {STATUS_LABELS_FR[String(t.status ?? "FREE")] ?? t.status}
-                                </Badge>
+                                <>
+                                  <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+                                    {STATUS_LABELS_FR[String(t.status ?? "FREE")] ?? t.status}
+                                  </Badge>
+                                  {liveStatusByTable[t.table_number] ? (
+                                    <Badge className="bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                                      {liveStatusByTable[t.table_number]}
+                                    </Badge>
+                                  ) : null}
+                                </>
                               )}
                             </div>
                             {t.display_name ? (

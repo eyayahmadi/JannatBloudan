@@ -13,6 +13,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
+import { syncOrderInvoice } from "@/lib/caisse/sync-order-invoice"
 import type { Station, ItemStatus } from "@/lib/stations/config"
 import { normalizeRole, type AppRole } from "@/lib/auth/roles"
 
@@ -107,9 +108,18 @@ export async function POST(
     },
   })
 
+  const sync = await syncOrderInvoice(supabase, {
+    orderId: String(current.order_id),
+    reason: "item_accept",
+    actorId: guard.user.id,
+    actorEmail: guard.user.email ?? null,
+    metadata: { order_item_id: String(current.id), station: itemStation },
+  })
+
   return NextResponse.json({
     ok: true,
     item: updated,
     transition: { from: previousStatus, to: "accepted" },
+    invoice_sync: sync,
   })
 }

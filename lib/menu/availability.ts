@@ -59,17 +59,8 @@ export function computeMaxServings(
 
 export function productTags(
   p: {
-    is_popular?: boolean | null
-    is_new?: boolean | null
-    is_vegetarian?: boolean | null
-    spice_level?: string | null
     tags?: string[] | null
   },
 ): string[] {
-  const out = new Set<string>(Array.isArray(p.tags) ? p.tags : [])
-  if (p.is_popular) out.add("popular")
-  if (p.is_new) out.add("new")
-  if (p.is_vegetarian) out.add("vegetarian")
-  if (p.spice_level && p.spice_level !== "doux" && p.spice_level !== "") out.add("spicy")
-  return Array.from(out)
+  return Array.isArray(p.tags) ? [...new Set(p.tags.map(String))] : []
 }

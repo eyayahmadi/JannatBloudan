@@ -2,13 +2,12 @@ import { NextResponse } from "next/server"
 import { createServiceRoleClient } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { resolveRestaurantTableFromRef } from "@/lib/restaurant/resolve-table"
+import { createTableOrder } from "@/lib/orders/create-table-order"
 
 type QrOrderInput = {
   id?: string
   orderNumber?: string
-  /** @deprecated Préférer tableRef — peut être confondu id / numéro */
   tableId?: number
-  /** Segment d’URL /table/{tableRef} (nombre, code, etc.) */
   tableRef?: string
   items: Array<{
     productId?: string
@@ -54,19 +53,17 @@ export async function POST(request: Request) {
       tableRowId = n
       tableNumberForOrder = n
     } else {
-      return NextResponse.json({ error: "Sans base, utilisez un numéro de table numérique dans l’URL" }, { status: 400 })
+      return NextResponse.json({ error: "Sans base, utilisez un numéro de table numérique dans l'URL" }, { status: 400 })
     }
 
-    const total =
-      typeof body.total === "number"
-        ? body.total
-        : items.reduce((s, it) => s + (it.unitPrice ?? 0) * it.quantity, 0)
-
-    const orderNumber =
-      body.orderNumber ||
-      `T${tableNumberForOrder}-${String(Math.floor(1000 + Math.random() * 9000))}`
-
     if (!hasServerSupabaseEnv()) {
+      const orderNumber =
+        body.orderNumber ||
+        `T${tableNumberForOrder}-${String(Math.floor(1000 + Math.random() * 9000))}`
+      const total =
+        typeof body.total === "number"
+          ? body.total
+          : items.reduce((s, it) => s + (it.unitPrice ?? 0) * it.quantity, 0)
       return NextResponse.json(
         {
           order: {
@@ -86,91 +83,43 @@ export async function POST(request: Request) {
     }
 
     const supabase = createServiceRoleClient()
-
-    // Ouvrir ou recuperer une session pour la table
-    let sessionId: string | null = null
-    try {
-      const { data: existing } = await supabase
-        .from("table_sessions")
-        .select("id")
-        .eq("table_id", tableRowId)
-        .is("closed_at", null)
-        .maybeSingle()
-
-      if (existing?.id) {
-        sessionId = existing.id
-      } else {
-        const { data: created } = await supabase
-          .from("table_sessions")
-          .insert({ table_id: tableRowId })
-          .select("id")
-          .single()
-        sessionId = created?.id ?? null
-      }
-    } catch (err) {
-      console.warn("[orders/qr] session lookup failed", err)
-    }
-
-    const { data: order, error } = await supabase
-      .from("orders")
-      .insert({
-        order_number: orderNumber,
-        customer_name: body.customerName ?? `Client Table ${tableNumberForOrder}`,
-        order_type: "qr_self_service",
-        source: "qr_self_service",
-        table_id: tableRowId,
-        table_number: tableNumberForOrder,
-        session_id: sessionId,
-        subtotal: total,
-        total,
-        status: "pending",
-        notes: body.notes ?? null,
-      })
-      .select("*")
-      .single()
-
-    if (error || !order) {
-      console.error("[orders/qr] insert order error", error)
-      return NextResponse.json(
-        { error: error?.message ?? "Impossible d'enregistrer la commande QR" },
-        { status: 500 },
-      )
-    }
-
-    // Inserer les order_items (best-effort)
-    const rows = items.map((it) => ({
-      order_id: order.id,
-      ...(it.productId ? { product_id: it.productId } : {}),
-      product_name: it.name,
-      quantity: it.quantity,
-      unit_price: it.unitPrice ?? 0,
-      subtotal: (it.unitPrice ?? 0) * it.quantity,
-      special_instructions: it.notes ?? null,
-    }))
-    const { error: itemsErr } = await supabase.from("order_items").insert(rows)
-    if (itemsErr) {
-      console.warn("[orders/qr] insert items warning", itemsErr)
-      await supabase.from("orders").delete().eq("id", order.id)
-      return NextResponse.json({ error: itemsErr.message }, { status: 500 })
-    }
-
-    await supabase
-      .from("restaurant_tables")
-      .update({ status: "ORDERING", last_activity: new Date().toISOString() })
-      .eq("id", tableRowId)
+    const result = await createTableOrder(supabase, {
+      tableRowId,
+      tableNumber: tableNumberForOrder,
+      items: items.map((it) => ({
+        productId: it.productId,
+        name: it.name,
+        quantity: it.quantity,
+        unitPrice: it.unitPrice,
+        notes: it.notes ?? null,
+      })),
+      total: body.total,
+      orderNumber: body.orderNumber,
+      customerName: body.customerName ?? `Client Table ${tableNumberForOrder}`,
+      notes: body.notes ?? null,
+      source: "qr_self_service",
+    })
 
     return NextResponse.json(
       {
         order: {
-          id: order.id,
-          order_number: order.order_number,
+          id: result.orderId,
+          order_number: result.orderNumber,
           table_number: tableNumberForOrder,
           order_type: "qr_self_service",
-          status: order.status ?? "received",
-          items,
-          total: Number(order.total ?? total),
-          created_at: order.created_at,
-          session_id: sessionId,
+          status: result.status,
+          items: result.items.map((it) => ({
+            id: it.id,
+            productId: it.productId,
+            name: it.name,
+            quantity: it.quantity,
+            unitPrice: it.unitPrice,
+            notes: it.notes,
+            station: it.station,
+            item_status: it.station_status,
+          })),
+          total: result.total,
+          session_id: result.sessionId,
           source: "supabase",
         },
       },
@@ -178,6 +127,9 @@ export async function POST(request: Request) {
     )
   } catch (err) {
     console.error("[orders/qr] exception", err)
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Erreur serveur" },
+      { status: 500 },
+    )
   }
 }

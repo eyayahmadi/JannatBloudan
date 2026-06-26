@@ -449,6 +449,78 @@ Generate sales report.
 - `endDate` (required)
 - `groupBy`: day, week, month
 
+### Menu CMS (Next.js `/api/admin/*`)
+
+Admin menu management endpoints used by `/admin/menu/*`. All require **ADMIN** or **STAFF** session (see `requireAdmin`).
+
+#### GET /api/admin/catalog
+Full menu catalog for the admin CMS: categories, products (with nested `product_ingredients`), ingredients, recommendations map, modifier/variant groups and items.
+
+**Response (200):**
+\`\`\`json
+{
+  "categories": [],
+  "products": [],
+  "ingredients": [],
+  "recommendations": { "product-uuid": ["recommended-uuid"] },
+  "modifier_groups": [],
+  "modifiers": [],
+  "variant_groups": [],
+  "variants": []
+}
+\`\`\`
+
+#### POST /api/admin/products
+Create product. Body supports `name`, `name_ar`, `description`, `price`, `category_id`, `image_url`, `stock_quantity`, `station`, `display_order`, `is_available`, `is_archived`, `tags` (attribute tags sync legacy booleans).
+
+#### PATCH /api/admin/products/{id}
+Update product (same fields as POST).
+
+#### DELETE /api/admin/products/{id}
+Delete product.
+
+#### POST /api/admin/products/{id}/duplicate
+Duplicate product including extras, variants, and recommendations.
+
+#### POST /api/admin/products/reorder
+Body: `{ "items": [{ "id": "uuid", "display_order": 0 }] }`
+
+#### POST /api/admin/categories
+Create category.
+
+#### PATCH /api/admin/categories/{id}
+Update category (`name`, `name_ar`, `section`, `icon_emoji`, `is_active`, …).
+
+#### DELETE /api/admin/categories/{id}
+Delete category.
+
+#### POST /api/admin/categories/reorder
+Body: `{ "items": [{ "id": "uuid", "display_order": 0 }] }`
+
+#### GET/POST /api/admin/modifiers
+List modifiers (grouped) or create extra for a product (`product_id`, `name_de`, `name_ar`, `price`).
+
+#### PATCH/DELETE /api/admin/modifiers/{id}
+Update or delete an extra.
+
+#### GET/POST /api/admin/variants
+List variants or create variant for a product.
+
+#### PATCH/DELETE /api/admin/variants/{id}
+Update or delete a variant.
+
+#### PUT /api/admin/product-recommendations/{productId}
+Replace admin “Passt dazu” links. Body: `{ "recommended_product_ids": ["uuid", …] }`
+
+#### PUT /api/admin/product-ingredients/{productId}
+Replace recipe lines. Body: `{ "lines": [{ "ingredient_id": "uuid", "quantity": 1.5 }] }`
+
+#### POST /api/admin/products/upload-image
+Multipart image upload for product photos (Supabase Storage).
+
+#### GET /api/menu (public)
+Customer menu API — respects `display_order`, hides `is_archived` products, includes `slug`, `tags`, variants, extras, and merged `often_ordered_with` recommendations.
+
 ---
 
 ## Event Service

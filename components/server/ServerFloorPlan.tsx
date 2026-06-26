@@ -106,7 +106,7 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
   const [mergeReason, setMergeReason] = useState("")
   const [mergeSubmitting, setMergeSubmitting] = useState(false)
 
-  const { tables: floorTables, loading: floorLoading, reload: reloadFloor } = useFloorPlanTables(8000)
+  const { tables: floorTables, loading: floorLoading, reload: reloadFloor } = useFloorPlanTables(4000)
   const [zoneFilter, setZoneFilter] = useState<string>("ALL")
 
   const tableNumbers = useMemo(() => {

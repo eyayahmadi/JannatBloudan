@@ -43,788 +43,11 @@ import { useRecommendations, trackItemView } from "@/lib/hooks/useRecommendation
 import { track } from "@/lib/hooks/useTrack"
 import { toast } from "sonner"
 
-// Mock Data
-const categories = [
-  { id: "all", name: "Tout", icon: "🍽️" },
-  { id: "popular", name: "Populaire", icon: "🔥" },
-  { id: "shawarma", name: "Shawarma", icon: "🌯" },
-  { id: "manakish", name: "Manakish", icon: "🥙" },
-  { id: "pizza", name: "Pizzas", icon: "🍕" },
-  { id: "burger", name: "Burgers", icon: "🍔" },
-  { id: "hot-dishes", name: "Plats chauds", icon: "🍲" },
-  { id: "mezze", name: "Mezzés", icon: "🥗" },
-  { id: "dessert", name: "Desserts", icon: "🍰" },
-  { id: "drink", name: "Boissons", icon: "🥤" },
-]
-
-const menuItems = [
-  // Shawarma
-  {
-    id: 1,
-    name: "Shawarma Poulet",
-    description: "Poulet mariné, sauce tarator, légumes frais, pain saj",
-    price: 8.5,
-    image: "/syrian-chicken-shawarma-wrap.jpg",
-    category: "shawarma",
-    rating: 4.9,
-    reviews: 187,
-    prepTime: "10-12 min",
-    isPopular: true,
-    isNew: false,
-    allergens: ["gluten", "sésame"],
-    isFeatured: true,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 2,
-    name: "Shawarma Viande",
-    description: "Bœuf mariné, tahini, oignons, tomates, pain saj",
-    price: 9.5,
-    image: "/syrian-beef-shawarma-platter.jpg",
-    category: "shawarma",
-    rating: 4.8,
-    reviews: 156,
-    prepTime: "10-12 min",
-    isPopular: true,
-    isNew: false,
-    allergens: ["gluten", "sésame"],
-    isFeatured: true,
-    isAvailable: true,
-    spiceLevel: "medium", // Added spiceLevel
-  },
-  {
-    id: 3,
-    name: "Shawarma Mixte",
-    description: "Poulet et viande, sauce blanche et rouge, crudités",
-    price: 10.0,
-    image: "/mixed-shawarma-syrian-style.jpg",
-    category: "shawarma",
-    rating: 4.9,
-    reviews: 203,
-    prepTime: "12-15 min",
-    isPopular: true,
-    isNew: false,
-    allergens: ["gluten", "sésame", "lactose"],
-    isFeatured: true,
-    isAvailable: true,
-    spiceLevel: "medium", // Added spiceLevel
-  },
-
-  // Manakish
-  {
-    id: 4,
-    name: "Manakish Zaatar",
-    description: "Pain libanais, zaatar, huile d'olive, tomates",
-    price: 5.5,
-    image: "/manakish-zaatar-lebanese-flatbread.jpg",
-    category: "manakish",
-    rating: 4.7,
-    reviews: 134,
-    prepTime: "8-10 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["gluten", "sésame"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 5,
-    name: "Manakish Fromage",
-    description: "Fromage akkawi, mozzarella, menthe fraîche",
-    price: 6.5,
-    image: "/manakish-cheese-akkawi-flatbread.jpg",
-    category: "manakish",
-    rating: 4.6,
-    reviews: 98,
-    prepTime: "8-10 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["gluten", "lactose"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 6,
-    name: "Manakish Mixte",
-    description: "Zaatar et fromage, combinaison parfaite",
-    price: 7.0,
-    image: "/manakish-mixed-zaatar-cheese.jpg",
-    category: "manakish",
-    rating: 4.8,
-    reviews: 112,
-    prepTime: "8-10 min",
-    isPopular: true,
-    isNew: false,
-    allergens: ["gluten", "lactose", "sésame"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-
-  // Plats chauds
-  {
-    id: 7,
-    name: "Kibbeh",
-    description: "Boulettes de viande hachée, boulgour, pignons de pin",
-    price: 12.0,
-    image: "/syrian-kibbeh-meatballs-bulgur.jpg",
-    category: "hot-dishes",
-    rating: 4.9,
-    reviews: 167,
-    prepTime: "15-18 min",
-    isPopular: true,
-    isNew: false,
-    allergens: ["gluten", "fruits à coque"],
-    isFeatured: true,
-    isAvailable: true,
-    spiceLevel: "medium", // Added spiceLevel
-  },
-  {
-    id: 8,
-    name: "Kebab Halabi",
-    description: "Brochettes d'agneau épicées, riz, grillades",
-    price: 14.5,
-    image: "/kebab-halabi-aleppo-style-lamb.jpg",
-    category: "hot-dishes",
-    rating: 4.9,
-    reviews: 189,
-    prepTime: "18-20 min",
-    isPopular: true,
-    isNew: false,
-    allergens: [],
-    isFeatured: true,
-    isAvailable: true,
-    spiceLevel: "hot", // Added spiceLevel
-  },
-  {
-    id: 9,
-    name: "Riz aux Vermicelles",
-    description: "Riz basmati, vermicelles dorés, amandes grillées",
-    price: 5.0,
-    image: "/syrian-rice-vermicelli-nuts.jpg",
-    category: "hot-dishes",
-    rating: 4.5,
-    reviews: 78,
-    prepTime: "10-12 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["gluten", "fruits à coque"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 10,
-    name: "Falafel Assiette",
-    description: "Boulettes de pois chiches, tahini, pain, salade",
-    price: 9.0,
-    image: "/falafel-plate-chickpea-tahini.jpg",
-    category: "hot-dishes",
-    rating: 4.7,
-    reviews: 143,
-    prepTime: "12-15 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["gluten", "sésame"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 11,
-    name: "Fattoush",
-    description: "Salade libanaise, pain grillé, sumac, grenade",
-    price: 7.5,
-    image: "/fattoush-salad-lebanese-pomegranate.jpg",
-    category: "hot-dishes",
-    rating: 4.6,
-    reviews: 91,
-    prepTime: "8-10 min",
-    isPopular: false,
-    isNew: true,
-    allergens: ["gluten"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-
-  // Mezzés
-  {
-    id: 12,
-    name: "Houmous",
-    description: "Purée de pois chiches, tahini, citron, huile d'olive",
-    price: 5.5,
-    image: "/hummus-chickpea-tahini-dip.jpg",
-    category: "mezze",
-    rating: 4.8,
-    reviews: 156,
-    prepTime: "5 min",
-    isPopular: true,
-    isNew: false,
-    allergens: ["sésame"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 13,
-    name: "Moutabal",
-    description: "Caviar d'aubergines grillées, tahini, ail",
-    price: 6.0,
-    image: "/moutabal-baba-ganoush-eggplant.jpg",
-    category: "mezze",
-    rating: 4.7,
-    reviews: 124,
-    prepTime: "5 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["sésame"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 14,
-    name: "Taboulé",
-    description: "Persil, tomates, boulgour, citron, menthe",
-    price: 6.5,
-    image: "/tabbouleh-parsley-salad-bulgur.jpg",
-    category: "mezze",
-    rating: 4.6,
-    reviews: 102,
-    prepTime: "5 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["gluten"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 15,
-    name: "Mouhammara",
-    description: "Purée de poivrons rouges, noix, grenade",
-    price: 6.5,
-    image: "/muhammara-red-pepper-walnut-dip.jpg",
-    category: "mezze",
-    rating: 4.7,
-    reviews: 87,
-    prepTime: "5 min",
-    isPopular: false,
-    isNew: true,
-    allergens: ["fruits à coque"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "medium", // Added spiceLevel
-  },
-  {
-    id: 16,
-    name: "Fatayer Épinards",
-    description: "Chaussons aux épinards, oignons, sumac",
-    price: 7.0,
-    image: "/fatayer-spinach-triangular-pastries.jpg",
-    category: "mezze",
-    rating: 4.5,
-    reviews: 73,
-    prepTime: "10-12 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["gluten"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 17,
-    name: "Sambousek Fromage",
-    description: "Beignets au fromage feta et menthe",
-    price: 6.5,
-    image: "/sambousek-cheese-fried-pastries.jpg",
-    category: "mezze",
-    rating: 4.6,
-    reviews: 95,
-    prepTime: "10-12 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["gluten", "lactose"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 18,
-    name: "Sambousek Viande",
-    description: "Beignets à la viande hachée épicée",
-    price: 7.0,
-    image: "/sambousek-meat-fried-pastries.jpg",
-    category: "mezze",
-    rating: 4.7,
-    reviews: 108,
-    prepTime: "10-12 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["gluten"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "medium", // Added spiceLevel
-  },
-  {
-    id: 19,
-    name: "Kebbé Nayé",
-    description: "Tartare de viande crue, boulgour, épices",
-    price: 13.0,
-    image: "/kebbe-naye-raw-meat-bulgur-lebanese-tartare.jpg",
-    category: "mezze",
-    rating: 4.9,
-    reviews: 67,
-    prepTime: "8 min",
-    isPopular: false,
-    isNew: true,
-    allergens: ["gluten"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "medium", // Added spiceLevel
-  },
-  {
-    id: 20,
-    name: "Labneh",
-    description: "Yaourt égoutté, huile d'olive, zaatar",
-    price: 5.0,
-    image: "/labneh-yogurt-cheese-olive-oil-zaatar-middle-easte.jpg",
-    category: "mezze",
-    rating: 4.6,
-    reviews: 89,
-    prepTime: "3 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["lactose", "sésame"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 21,
-    name: "Feuilles de Vigne",
-    description: "Feuilles farcies au riz, tomates, épices",
-    price: 6.0,
-    image: "/stuffed-grape-leaves-dolma-middle-eastern.jpg",
-    category: "mezze",
-    rating: 4.5,
-    reviews: 71,
-    prepTime: "5 min",
-    isPopular: false,
-    isNew: false,
-    allergens: [],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-
-  // Desserts
-  {
-    id: 22,
-    name: "Baklava",
-    description: "Pâtisserie aux noix, miel, pâte filo",
-    price: 6.5,
-    image: "/baklava-arabic-pastry-honey-nuts-layers.jpg",
-    category: "dessert",
-    rating: 4.9,
-    reviews: 198,
-    prepTime: "5 min",
-    isPopular: true,
-    isNew: false,
-    allergens: ["gluten", "fruits à coque"],
-    isFeatured: true,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 23,
-    name: "Kunafa",
-    description: "Cheveux d'ange, fromage, sirop de fleur d'oranger",
-    price: 7.0,
-    image: "/kunafa-knafeh-cheese-syrup-orange-blossom-arabic-d.jpg",
-    category: "dessert",
-    rating: 4.8,
-    reviews: 176,
-    prepTime: "5 min",
-    isPopular: true,
-    isNew: false,
-    allergens: ["gluten", "lactose"],
-    isFeatured: true,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 24,
-    name: "Maamoul",
-    description: "Biscuits aux dattes, pistaches ou noix",
-    price: 5.5,
-    image: "/maamoul-cookies-dates-pistachios-arabic-pastry-sem.jpg",
-    category: "dessert",
-    rating: 4.7,
-    reviews: 143,
-    prepTime: "3 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["gluten", "fruits à coque"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 25,
-    name: "Halawet El Jibn",
-    description: "Roulé au fromage, crème, pistaches",
-    price: 6.5,
-    image: "/halawet-el-jibn-cheese-rolls-cream-pistachios-syri.jpg",
-    category: "dessert",
-    rating: 4.8,
-    reviews: 132,
-    prepTime: "5 min",
-    isPopular: false,
-    isNew: true,
-    allergens: ["lactose", "fruits à coque"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 26,
-    name: "Riz au Lait",
-    description: "Crème de riz, eau de rose, pistaches",
-    price: 4.5,
-    image: "/rice-pudding-rose-water-pistachios-middle-eastern-.jpg",
-    category: "dessert",
-    rating: 4.6,
-    reviews: 98,
-    prepTime: "5 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["lactose"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 27,
-    name: "Mouhalabieh",
-    description: "Flan à la fleur d'oranger, pistaches concassées",
-    price: 5.0,
-    image: "/mouhalabieh-muhallebi-milk-pudding-orange-blossom-.jpg",
-    category: "dessert",
-    rating: 4.7,
-    reviews: 112,
-    prepTime: "5 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["lactose"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-
-  // Boissons
-  {
-    id: 28,
-    name: "Thé à la Menthe",
-    description: "Thé noir, menthe fraîche",
-    price: 2.5,
-    image: "/mint-tea-fresh-leaves-arabic-middle-eastern-hot-be.jpg",
-    category: "drink",
-    rating: 4.5,
-    reviews: 167,
-    prepTime: "3 min",
-    isPopular: false,
-    isNew: false,
-    allergens: [],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 29,
-    name: "Café Turc",
-    description: "Café moulu fin, cardamome",
-    price: 3.0,
-    image: "/turkish-coffee-cardamom-traditional-cup-foam.jpg",
-    category: "drink",
-    rating: 4.6,
-    reviews: 143,
-    prepTime: "5 min",
-    isPopular: false,
-    isNew: false,
-    allergens: [],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 30,
-    name: "Ayran",
-    description: "Yaourt salé, menthe",
-    price: 3.5,
-    image: "/ayran-yogurt-drink-mint-salty-middle-eastern-bever.jpg",
-    category: "drink",
-    rating: 4.4,
-    reviews: 89,
-    prepTime: "2 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["lactose"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 31,
-    name: "Jus de Grenade",
-    description: "Grenade fraîche pressée",
-    price: 4.5,
-    image: "/pomegranate-juice-fresh-red-fruit-drink-glass.jpg",
-    category: "drink",
-    rating: 4.7,
-    reviews: 102,
-    prepTime: "3 min",
-    isPopular: false,
-    isNew: true,
-    allergens: [],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  // PIZZAS
-  {
-    id: 32,
-    name: "Pizza Margherita",
-    description: "Tomate, mozzarella, basilic frais",
-    price: 12.99,
-    image: "/pizza-margherita-basil-mozzarella-tomato.jpg",
-    category: "pizza",
-    rating: 4.8,
-    reviews: 124,
-    prepTime: "15-20 min",
-    isPopular: true,
-    isNew: false,
-    allergens: ["gluten", "lactose"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 33,
-    name: "Pizza 4 Fromages",
-    description: "Mozzarella, gorgonzola, chèvre, parmesan",
-    price: 14.99,
-    image: "/four-cheese-pizza-quattro-formaggi-gorgonzola.jpg",
-    category: "pizza",
-    rating: 4.7,
-    reviews: 98,
-    prepTime: "15-20 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["gluten", "lactose"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 34,
-    name: "Pizza Regina",
-    description: "Tomate, mozzarella, jambon, champignons",
-    price: 13.99,
-    image: "/pizza-regina-ham-mushrooms-cheese.jpg",
-    category: "pizza",
-    rating: 4.6,
-    reviews: 87,
-    prepTime: "15-20 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["gluten", "lactose"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 35,
-    name: "Pizza Végétarienne",
-    description: "Tomate, mozzarella, légumes grillés, olives",
-    price: 13.49,
-    image: "/vegetarian-pizza-grilled-vegetables-olives.jpg",
-    category: "pizza",
-    rating: 4.7,
-    reviews: 76,
-    prepTime: "15-20 min",
-    isPopular: false,
-    isNew: true,
-    allergens: ["gluten", "lactose"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 36,
-    name: "Pizza Orientale",
-    description: "Viande hachée, poivrons, oignons, épices syriennes",
-    price: 15.99,
-    image: "/middle-eastern-pizza-spiced-meat-peppers.jpg",
-    category: "pizza",
-    rating: 4.9,
-    reviews: 145,
-    prepTime: "18-22 min",
-    isPopular: true,
-    isNew: false,
-    allergens: ["gluten", "lactose"],
-    isFeatured: true,
-    isAvailable: true,
-    spiceLevel: "hot", // Added spiceLevel
-  },
-
-  // BURGERS
-  {
-    id: 37,
-    name: "Burger Classic",
-    description: "Bœuf angus, cheddar, sauce maison",
-    price: 10.5,
-    image: "/classic-beef-burger-cheddar-cheese-lettuce.jpg",
-    category: "burger",
-    rating: 4.7,
-    reviews: 88,
-    prepTime: "10-15 min",
-    isPopular: true,
-    isNew: false,
-    allergens: ["gluten", "lactose", "eggs"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 38,
-    name: "Burger Poulet Crispy",
-    description: "Poulet pané croustillant, salade, sauce curry",
-    price: 9.99,
-    image: "/crispy-chicken-burger-breaded-curry-sauce.jpg",
-    category: "burger",
-    rating: 4.6,
-    reviews: 102,
-    prepTime: "12-16 min",
-    isPopular: false,
-    isNew: false,
-    allergens: ["gluten", "eggs"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 39,
-    name: "Burger Végétarien",
-    description: "Steak de légumes, avocat, tomate",
-    price: 9.5,
-    image: "/vegetarian-veggie-burger-avocado-tomato.jpg",
-    category: "burger",
-    rating: 4.5,
-    reviews: 67,
-    prepTime: "10-14 min",
-    isPopular: false,
-    isNew: true,
-    allergens: ["gluten"],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 40,
-    name: "Burger Syrien",
-    description: "Viande épicée, houmous, pickles, tahini",
-    price: 11.99,
-    image: "/middle-eastern-burger-hummus-tahini-spiced-meat.jpg",
-    category: "burger",
-    rating: 4.9,
-    reviews: 156,
-    prepTime: "12-16 min",
-    isPopular: true,
-    isNew: false,
-    allergens: ["gluten", "sésame"],
-    isFeatured: true,
-    isAvailable: true,
-    spiceLevel: "hot", // Added spiceLevel
-  },
-
-  {
-    id: 41,
-    name: "Coca-Cola",
-    description: "Boisson gazeuse rafraîchissante 33cl",
-    price: 2.5,
-    image: "/coca-cola-glass-bottle-ice-cold.jpg",
-    category: "drink",
-    rating: 4.5,
-    reviews: 234,
-    prepTime: "1 min",
-    isPopular: true,
-    isNew: false,
-    allergens: [],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 42,
-    name: "Fanta Orange",
-    description: "Boisson gazeuse à l'orange 33cl",
-    price: 2.5,
-    image: "/fanta-orange-soda-bottle-refreshing.jpg",
-    category: "drink",
-    rating: 4.4,
-    reviews: 187,
-    prepTime: "1 min",
-    isPopular: false,
-    isNew: false,
-    allergens: [],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 43,
-    name: "Eau Minérale",
-    description: "Eau minérale naturelle 50cl",
-    price: 1.5,
-    image: "/mineral-water-bottle-natural-fresh.jpg",
-    category: "drink",
-    rating: 4.8,
-    reviews: 312,
-    prepTime: "1 min",
-    isPopular: false,
-    isNew: false,
-    allergens: [],
-    isFeatured: false,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-  {
-    id: 44,
-    name: "Jus d'Orange Frais",
-    description: "Oranges pressées à la minute",
-    price: 4.5,
-    image: "/fresh-orange-juice-glass-pressed-citrus.jpg",
-    category: "drink",
-    rating: 4.9,
-    reviews: 267,
-    prepTime: "3-5 min",
-    isPopular: true,
-    isNew: false,
-    allergens: [],
-    isFeatured: true,
-    isAvailable: true,
-    spiceLevel: "mild", // Added spiceLevel
-  },
-]
+import { useDeliveryMenu } from "@/lib/hooks/useDeliveryMenu"
+import type { DeliveryMenuItem } from "@/lib/menu/delivery-menu-item"
 
 type CartItem = {
-  id: number
+  id: string
   name: string
   price: number
   quantity: number
@@ -836,7 +59,7 @@ type CartItem = {
 }
 
 type CustomizationModal = {
-  item: (typeof menuItems)[0] | null
+  item: DeliveryMenuItem | null
   show: boolean
 }
 
@@ -888,11 +111,12 @@ const sortOptions = [
 ]
 
 export default function DeliveryPage() {
+  const { items: menuItems, categories, loading: menuLoading } = useDeliveryMenu()
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [cart, setCart] = useState<CartItem[]>([])
   const [showCart, setShowCart] = useState(false)
-  const [favorites, setFavorites] = useState<number[]>([])
+  const [favorites, setFavorites] = useState<string[]>([])
   const [dietaryFilters, setDietaryFilters] = useState<string[]>([])
   const [priceRange, setPriceRange] = useState([0, 50])
   const [sortBy, setSortBy] = useState("popularity")
@@ -960,8 +184,8 @@ export default function DeliveryPage() {
     }
   })
 
-  const openCustomizationModal = (item: (typeof menuItems)[0]) => {
-    trackItemView(item.id)
+  const openCustomizationModal = (item: DeliveryMenuItem) => {
+    trackItemView(item.id as unknown as number)
     track("view_item", { item: item.name, price: item.price })
     setCustomizationModal({ item, show: true })
     setSelectedExtras([])
@@ -970,7 +194,7 @@ export default function DeliveryPage() {
     setSpecialInstructions("")
   }
 
-  const handleAddToCart = (item: (typeof menuItems)[0]) => {
+  const handleAddToCart = (item: DeliveryMenuItem) => {
     if (!item.isAvailable) return
 
     const cartItem: CartItem = {
@@ -1028,7 +252,7 @@ export default function DeliveryPage() {
     return customizationModal.item.price + sizeModifier + extrasPrice
   }
 
-  const removeFromCart = (id: number) => {
+  const removeFromCart = (id: string) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.id === id)
       if (existing && existing.quantity > 1) {
@@ -1038,7 +262,7 @@ export default function DeliveryPage() {
     })
   }
 
-  const toggleFavorite = (id: number) => {
+  const toggleFavorite = (id: string) => {
     setFavorites((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]))
   }
 
@@ -1056,7 +280,7 @@ export default function DeliveryPage() {
   const deliveryFee = cartTotal >= 25 ? 0 : 3.9
   const recommendations = useRecommendations(
     menuItems as any,
-    cart.map((item) => item.id),
+    cart.map((item) => item.id) as unknown as number[],
     4,
   )
   const subtotal = cartTotal
@@ -1285,12 +509,15 @@ export default function DeliveryPage() {
             <SmartRecommendations
               items={recommendations}
               onAdd={(item) => {
-                handleAddToCart(menuItems.find((m) => m.id === item.id)!)
+                handleAddToCart(menuItems.find((m) => m.id === String(item.id))!)
                 toast.success(`${item.name} ajoute au panier`)
               }}
             />
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {sortedItems.map((item) => (
+              {menuLoading ? (
+                <MenuCardSkeletonGrid count={6} />
+              ) : (
+              sortedItems.map((item) => (
                 <div
                   key={item.id}
                   className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-[#e8dcc8] hover:border-[#d4af37] animate-fade-up"
@@ -1358,7 +585,7 @@ export default function DeliveryPage() {
                     </div>
                   </CardContent>
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         </div>

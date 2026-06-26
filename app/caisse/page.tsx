@@ -172,7 +172,7 @@ export default function CaisseModulePage() {
   useEffect(() => {
     const id = window.setInterval(() => {
       void loadTables()
-    }, 8000)
+    }, 4000)
     return () => window.clearInterval(id)
   }, [loadTables])
 

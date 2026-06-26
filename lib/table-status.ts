@@ -90,7 +90,17 @@ export function computeTableSnapshot(
     status = "SERVED"
   } else if (active.some((o) => o.status === "ready")) {
     status = "READY"
-  } else if (active.some((o) => o.status === "preparing" || o.status === "received")) {
+  } else if (
+    active.some((o) => o.status === "preparing" || o.status === "received") ||
+    active.some((o) =>
+      o.items.some(
+        (it) =>
+          it.item_status === "preparing" ||
+          it.item_status === "accepted" ||
+          it.item_status === "new",
+      ),
+    )
+  ) {
     status = "IN_KITCHEN"
   } else if (active.every((o) => o.status === "completed")) {
     status = "PAID"
