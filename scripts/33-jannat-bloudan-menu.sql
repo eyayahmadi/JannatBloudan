@@ -2,6 +2,7 @@
 -- 33 — Jannat Bloudan — Carte complète (remplace les données démo)
 -- Généré par scripts/generate-jannat-menu-sql.mjs — ne pas éditer à la main
 -- Source: data/jannat-bloudan-menu.json
+-- ON CONFLICT : image_url n'est jamais écrasé (photos = CMS / Storage).
 -- =============================================================================
 
 BEGIN;
@@ -62,15 +63,14 @@ CREATE TABLE IF NOT EXISTS product_variants (
 CREATE INDEX IF NOT EXISTS idx_product_variant_groups_product ON product_variant_groups(product_id);
 CREATE INDEX IF NOT EXISTS idx_product_variants_group ON product_variants(group_id);
 
--- Nettoyage des anciennes données démo
+-- Nettoyage des anciennes données démo (extras/variantes régénérés ci-dessous).
+-- products + categories : upsert ON CONFLICT uniquement — ne jamais DELETE
+-- (préserve image_url CMS, IDs stables, recommandations).
 DELETE FROM product_variants;
 DELETE FROM product_variant_groups;
 DELETE FROM product_modifiers;
 DELETE FROM product_modifier_groups;
 DELETE FROM product_ingredients;
-DELETE FROM products;
-DELETE FROM categories;
-
 
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
 VALUES ('Entrées', 'entrees', 'Entrées', 'food', 10, true, '🥗', 'المقبلات')
@@ -461,8 +461,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -485,8 +484,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -509,8 +507,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -533,8 +530,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -557,8 +553,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -581,8 +576,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -605,8 +599,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -629,8 +622,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -653,8 +645,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -677,8 +668,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -701,8 +691,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -725,8 +714,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -749,8 +737,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -773,8 +760,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -797,8 +783,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -821,8 +806,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -845,8 +829,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -869,8 +852,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -893,8 +875,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -917,8 +898,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -941,8 +921,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -965,8 +944,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -989,8 +967,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1013,8 +990,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1037,8 +1013,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1061,8 +1036,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1085,8 +1059,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1109,8 +1082,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1133,8 +1105,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1157,8 +1128,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1181,8 +1151,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1205,8 +1174,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1229,8 +1197,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1253,8 +1220,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1277,8 +1243,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1301,8 +1266,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1325,8 +1289,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1349,8 +1312,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1373,8 +1335,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1397,8 +1358,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1421,8 +1381,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1445,8 +1404,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1469,8 +1427,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1493,8 +1450,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1517,8 +1473,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1541,8 +1496,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1565,8 +1519,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1589,8 +1542,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1613,8 +1565,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1637,8 +1588,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1661,8 +1611,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1685,8 +1634,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1709,8 +1657,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1733,8 +1680,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1757,8 +1703,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1781,8 +1726,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1805,8 +1749,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1829,8 +1772,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1853,8 +1795,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1877,8 +1818,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1901,8 +1841,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1925,8 +1864,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1949,8 +1887,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1973,8 +1910,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -1997,8 +1933,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2021,8 +1956,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2045,8 +1979,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2069,8 +2002,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2093,8 +2025,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2117,8 +2048,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2141,8 +2071,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2165,8 +2094,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2189,8 +2117,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2213,8 +2140,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2237,8 +2163,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2261,8 +2186,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2285,8 +2209,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2309,8 +2232,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2333,8 +2255,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2357,8 +2278,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2381,8 +2301,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2405,8 +2324,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2429,8 +2347,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2453,8 +2370,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2477,8 +2393,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2501,8 +2416,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2525,8 +2439,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2549,8 +2462,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2573,8 +2485,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2597,8 +2508,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2621,8 +2531,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2645,8 +2554,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2669,8 +2577,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2693,8 +2600,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2717,8 +2623,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2741,8 +2646,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2765,8 +2669,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2789,8 +2692,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2813,8 +2715,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2837,8 +2738,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2861,8 +2761,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2885,8 +2784,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2909,8 +2807,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2933,8 +2830,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2957,8 +2853,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -2981,8 +2876,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3005,8 +2899,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3029,8 +2922,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3053,8 +2945,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3077,8 +2968,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3101,8 +2991,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3125,8 +3014,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3149,8 +3037,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3173,8 +3060,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3197,8 +3083,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3221,8 +3106,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3245,8 +3129,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3269,8 +3152,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3293,8 +3175,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3317,8 +3198,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3341,8 +3221,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3365,8 +3244,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3389,8 +3267,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3413,8 +3290,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3437,8 +3313,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3461,8 +3336,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3485,8 +3359,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3509,8 +3382,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3533,8 +3405,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3557,8 +3428,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3581,8 +3451,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3605,8 +3474,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3629,8 +3497,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3653,8 +3520,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3677,8 +3543,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3701,8 +3566,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3725,8 +3589,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3749,8 +3612,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3773,8 +3635,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3797,8 +3658,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3821,8 +3681,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3845,8 +3704,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3869,8 +3727,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3893,8 +3750,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3917,8 +3773,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3941,8 +3796,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3965,8 +3819,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -3989,8 +3842,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4013,8 +3865,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4037,8 +3888,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4061,8 +3911,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4085,8 +3934,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4109,8 +3957,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4133,8 +3980,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4157,8 +4003,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4181,8 +4026,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4205,8 +4049,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4229,8 +4072,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4253,8 +4095,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4277,8 +4118,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4301,8 +4141,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4325,8 +4164,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4349,8 +4187,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4373,8 +4210,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4397,8 +4233,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4421,8 +4256,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4445,8 +4279,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4469,8 +4302,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4493,8 +4325,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4517,8 +4348,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4541,8 +4371,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4565,8 +4394,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4589,8 +4417,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4613,8 +4440,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4637,8 +4463,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4661,8 +4486,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4685,8 +4509,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4709,8 +4532,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4733,8 +4555,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4757,8 +4578,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4781,8 +4601,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4805,8 +4624,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4829,8 +4647,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4853,8 +4670,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4877,8 +4693,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4901,8 +4716,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4925,8 +4739,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4949,8 +4762,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
@@ -4973,8 +4785,7 @@ BEGIN
     is_vegan = EXCLUDED.is_vegan,
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
-    tags = EXCLUDED.tags,
-    image_url = EXCLUDED.image_url;
+    tags = EXCLUDED.tags;
 
   -- Extras pour Waffle / Crêpe / Pancake Nature
   SELECT id INTO prod_id FROM products WHERE slug = 'waffle-nature';

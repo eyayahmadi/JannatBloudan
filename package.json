@@ -25,7 +25,8 @@
     "menu:entrees:images": "node --env-file=.env.local scripts/assign-entrees-images.mjs",
     "menu:salades:images": "node --env-file=.env.local scripts/assign-salades-images.mjs",
     "menu:manakish:generate": "node --env-file=.env.local scripts/generate-manakish-images.mjs",
-    "menu:manakish:images": "node --env-file=.env.local scripts/assign-manakish-images.mjs"
+    "menu:manakish:images": "node --env-file=.env.local scripts/assign-manakish-images.mjs",
+    "menu:sync-images": "node --env-file=.env.local scripts/sync-menu-product-image-urls.mjs"
   },
   "dependencies": {
     "@google-cloud/translate": "^9.4.1",

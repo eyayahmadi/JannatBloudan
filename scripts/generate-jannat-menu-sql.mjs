@@ -37,6 +37,8 @@ lines.push(`-- =================================================================
 -- 33 — Jannat Bloudan — Carte complète (remplace les données démo)
 -- Généré par scripts/generate-jannat-menu-sql.mjs — ne pas éditer à la main
 -- Source: data/jannat-bloudan-menu.json
+-- ON CONFLICT : image_url n'est jamais écrasé (photos = CMS / Storage).
+-- products/categories ne sont jamais DELETE (données CMS préservées).
 -- =============================================================================
 
 BEGIN;
@@ -98,13 +100,12 @@ CREATE INDEX IF NOT EXISTS idx_product_variant_groups_product ON product_variant
 CREATE INDEX IF NOT EXISTS idx_product_variants_group ON product_variants(group_id);
 
 -- Nettoyage des anciennes données démo
+-- Nettoyage extras/variantes (régénérés ci-dessous). products + categories : upsert seulement.
 DELETE FROM product_variants;
 DELETE FROM product_variant_groups;
 DELETE FROM product_modifiers;
 DELETE FROM product_modifier_groups;
 DELETE FROM product_ingredients;
-DELETE FROM products;
-DELETE FROM categories;
 
 `)
 
@@ -177,8 +178,7 @@ for (const p of menu.products) {
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
     tags = EXCLUDED.tags,
-    spice_level = EXCLUDED.spice_level,
-    image_url = EXCLUDED.image_url;`)
+    spice_level = EXCLUDED.spice_level;`)
 }
 
 lines.push(`
