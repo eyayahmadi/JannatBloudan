@@ -9,7 +9,7 @@
 import { createClient } from "@supabase/supabase-js"
 
 const BUCKET = "menu-product-images"
-const PREFIXES = ["products/manakish", "products/entrees", "products/salades"]
+const PREFIXES = ["products/manakish", "products/entrees", "products/salades", "products/plats"]
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY

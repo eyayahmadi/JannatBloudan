@@ -26,6 +26,7 @@
     "menu:salades:images": "node --env-file=.env.local scripts/assign-salades-images.mjs",
     "menu:manakish:generate": "node --env-file=.env.local scripts/generate-manakish-images.mjs",
     "menu:manakish:images": "node --env-file=.env.local scripts/assign-manakish-images.mjs",
+    "menu:plats:images": "node --env-file=.env.local scripts/assign-plats-images.mjs",
     "menu:sync-images": "node --env-file=.env.local scripts/sync-menu-product-image-urls.mjs"
   },
   "dependencies": {
