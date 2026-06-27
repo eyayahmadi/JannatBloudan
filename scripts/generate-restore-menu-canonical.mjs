@@ -63,6 +63,23 @@ for (const c of menu.categories) {
   lines.push(`  SELECT id INTO cat_${v} FROM categories WHERE slug = '${esc(c.slug)}';`)
 }
 
+lines.push(`
+  -- Category names, Arabic labels, and display order (29-category canonical layout)
+  UPDATE categories c SET
+    name = o.name,
+    name_ar = o.name_ar,
+    section = o.section,
+    display_order = o.display_order,
+    is_active = COALESCE(o.is_active, true)
+  FROM (VALUES`)
+const catValues = menu.categories.map((c) => {
+  const active = c.is_active === false ? "false" : "true"
+  return `    ('${esc(c.slug)}', '${esc(c.name)}', '${esc(c.name_ar)}', '${esc(c.section)}', ${c.display_order}, ${active})`
+})
+lines.push(catValues.join(",\n"))
+lines.push(`  ) AS o(slug, name, name_ar, section, display_order, is_active)
+  WHERE c.slug = o.slug;`)
+
 for (const p of menu.products) {
   const catVar = p.category.replace(/-/g, "_")
   const tagList = JSON.parse(tagsJson(p))
@@ -82,6 +99,7 @@ for (const p of menu.products) {
     description_ar = ${descAr},
     price = ${p.price},
     category_id = cat_${catVar},
+    display_order = ${p.display_order ?? 0},
     station = '${esc(p.station)}',
     tags = '${esc(tagsJson(p))}'::jsonb,
     is_popular = ${legacy.is_popular},

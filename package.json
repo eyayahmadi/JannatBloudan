@@ -39,7 +39,7 @@
     "menu:audit:content": "node --env-file=.env.local scripts/audit-menu-content.mjs",
     "menu:audit:production": "node --env-file=.env.local scripts/audit-menu-production.mjs",
     "menu:audit:integrity": "node --env-file=.env.local scripts/audit-menu-integrity.mjs",
-    "menu:restore:canonical": "node scripts/generate-restore-menu-canonical.mjs && node --env-file=.env.local scripts/apply-restore-menu-canonical.mjs",
+    "menu:restore:canonical": "node scripts/fix-menu-canonical-data.mjs && node scripts/generate-restore-menu-canonical.mjs && node --env-file=.env.local scripts/apply-restore-menu-canonical.mjs",
     "menu:optimize-image-cache": "node --env-file=.env.local scripts/optimize-menu-image-cache.mjs"
   },
   "dependencies": {

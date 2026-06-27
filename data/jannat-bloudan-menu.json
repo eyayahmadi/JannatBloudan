@@ -103,7 +103,7 @@
     },
     {
       "name": "Ice Tea",
-      "name_ar": "الشاي المثلج",
+      "name_ar": "شاي بارد",
       "slug": "ice-tea",
       "section": "drinks",
       "display_order": 130,
@@ -114,31 +114,32 @@
       "name_ar": "الشاي",
       "slug": "tea",
       "section": "drinks",
-      "display_order": 140,
-      "icon_emoji": "🍵"
+      "display_order": 9999,
+      "icon_emoji": "🍵",
+      "is_active": false
     },
     {
       "name": "Iced Coffee",
-      "name_ar": "القهوة الباردة",
+      "name_ar": "قهوة باردة",
       "slug": "iced-coffee",
       "section": "drinks",
-      "display_order": 150,
+      "display_order": 190,
       "icon_emoji": "🧋"
     },
     {
       "name": "Hot Drinks",
-      "name_ar": "المشروبات الساخنة",
+      "name_ar": "مشروبات ساخنة",
       "slug": "coffee",
       "section": "drinks",
-      "display_order": 160,
+      "display_order": 180,
       "icon_emoji": "☕"
     },
     {
       "name": "Cocktails",
-      "name_ar": "الكوكتيلات",
+      "name_ar": "كوكتيلات",
       "slug": "cocktails",
       "section": "drinks",
-      "display_order": 170,
+      "display_order": 140,
       "icon_emoji": "🍹"
     },
     {
@@ -146,47 +147,47 @@
       "name_ar": "السموذي",
       "slug": "smoothies",
       "section": "drinks",
-      "display_order": 180,
+      "display_order": 150,
       "icon_emoji": "🥤"
     },
     {
       "name": "Milkshakes",
-      "name_ar": "الميلك شيك",
+      "name_ar": "ميلك شيك",
       "slug": "milkshakes",
       "section": "drinks",
-      "display_order": 190,
+      "display_order": 160,
       "icon_emoji": "🥛"
     },
     {
       "name": "Banana Milk Cocktails",
-      "name_ar": "كوكتيلات الموز بالحليب",
+      "name_ar": "كوكتيلات موز وحليب",
       "slug": "banana-milk-cocktails",
       "section": "drinks",
-      "display_order": 200,
+      "display_order": 170,
       "icon_emoji": "🍌"
     },
     {
       "name": "Imperator",
       "name_ar": "إمبراطور",
       "slug": "imperator",
-      "section": "drinks",
-      "display_order": 210,
+      "section": "special",
+      "display_order": 290,
       "icon_emoji": "💨"
     },
     {
-      "name": "Waffeln",
+      "name": "Waffles",
       "name_ar": "وافل",
       "slug": "waffeln",
       "section": "desserts",
-      "display_order": 220,
+      "display_order": 200,
       "icon_emoji": "🧇"
     },
     {
-      "name": "Crêpes",
+      "name": "Crepes",
       "name_ar": "كريب",
       "slug": "crepes",
       "section": "desserts",
-      "display_order": 230,
+      "display_order": 210,
       "icon_emoji": "🥞"
     },
     {
@@ -194,7 +195,7 @@
       "name_ar": "بان كيك",
       "slug": "pancakes",
       "section": "desserts",
-      "display_order": 240,
+      "display_order": 220,
       "icon_emoji": "🥞"
     },
     {
@@ -202,7 +203,7 @@
       "name_ar": "سلطات الفواكه",
       "slug": "fruit-salads",
       "section": "desserts",
-      "display_order": 250,
+      "display_order": 230,
       "icon_emoji": "🍓"
     },
     {
@@ -210,7 +211,7 @@
       "name_ar": "آيس كريم",
       "slug": "ice-cream",
       "section": "desserts",
-      "display_order": 260,
+      "display_order": 250,
       "icon_emoji": "🍨"
     },
     {
@@ -218,15 +219,15 @@
       "name_ar": "تشيز كيك",
       "slug": "cheesecakes",
       "section": "desserts",
-      "display_order": 270,
+      "display_order": 260,
       "icon_emoji": "🍰"
     },
     {
       "name": "Cakes",
-      "name_ar": "كيك",
+      "name_ar": "تورتة",
       "slug": "cakes",
       "section": "desserts",
-      "display_order": 280,
+      "display_order": 270,
       "icon_emoji": "🍫"
     },
     {
@@ -234,7 +235,7 @@
       "name_ar": "سناكات",
       "slug": "snacks",
       "section": "desserts",
-      "display_order": 290,
+      "display_order": 240,
       "icon_emoji": "🥜"
     },
     {
@@ -242,7 +243,7 @@
       "name_ar": "أراكيل",
       "slug": "shisha",
       "section": "special",
-      "display_order": 300,
+      "display_order": 280,
       "icon_emoji": "💨"
     }
   ],
@@ -420,7 +421,8 @@
         "halal",
         "popular"
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/hummus.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/hummus.webp",
+      "display_order": 10
     },
     {
       "name": "Hummus mit Hackfleisch",
@@ -435,7 +437,8 @@
         "halal",
         "popular"
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/hummus-mit-hackfleisch.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/hummus-mit-hackfleisch.webp",
+      "display_order": 20
     },
     {
       "name": "Baba Ghanoug",
@@ -451,7 +454,8 @@
         "vegan",
         "halal"
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/baba-ghanoug.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/baba-ghanoug.webp",
+      "display_order": 30
     },
     {
       "name": "Mutabbal",
@@ -467,7 +471,8 @@
         "halal",
         "contains_milk"
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/mutabbal.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/mutabbal.webp",
+      "display_order": 40
     },
     {
       "name": "Muhammara",
@@ -486,7 +491,8 @@
         "contains_nuts",
         "contains_gluten"
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/muhammara.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/muhammara.webp",
+      "display_order": 50
     },
     {
       "name": "Veganer Weinblätter",
@@ -502,7 +508,8 @@
         "vegan",
         "halal"
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/veganer-weinblaetter.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/veganer-weinblaetter.webp",
+      "display_order": 60
     },
     {
       "name": "Zigarrenburak",
@@ -520,7 +527,8 @@
         "contains_eggs",
         "contains_gluten"
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/zigarrenburak.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/zigarrenburak.webp",
+      "display_order": 70
     },
     {
       "name": "Gewürzter Reis",
@@ -536,7 +544,8 @@
         "vegan",
         "halal"
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/gewuerzter-reis.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/gewuerzter-reis.webp",
+      "display_order": 80
     },
     {
       "name": "Pommes Teller",
@@ -553,7 +562,8 @@
         "halal",
         "kids_friendly"
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/pommes-teller.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/pommes-teller.webp",
+      "display_order": 90
     },
     {
       "name": "Chicken Nuggets + Pommes",
@@ -568,7 +578,8 @@
         "halal",
         "kids_friendly"
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/chicken-nuggets-pommes.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/chicken-nuggets-pommes.webp",
+      "display_order": 100
     },
     {
       "name": "Kebbeh frittiert",
@@ -583,7 +594,8 @@
         "halal",
         "contains_gluten"
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/kebbeh-frittiert.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/kebbeh-frittiert.webp",
+      "display_order": 110
     },
     {
       "name": "Gegrillte Kibbeh",
@@ -599,7 +611,8 @@
         "chef_recommendation",
         "contains_gluten"
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/gegrillte-kibbeh.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/gegrillte-kibbeh.webp",
+      "display_order": 120
     },
     {
       "name": "Rucola-Salat",
@@ -632,7 +645,8 @@
           "price": 10
         }
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/salades/rucola-salat.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/salades/rucola-salat.webp",
+      "display_order": 10
     },
     {
       "name": "Tabbouleh",
@@ -665,7 +679,8 @@
           "price": 10
         }
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/salades/tabbouleh.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/salades/tabbouleh.webp",
+      "display_order": 20
     },
     {
       "name": "Fattoush",
@@ -698,7 +713,8 @@
           "price": 9
         }
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/salades/fattoush.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/salades/fattoush.webp",
+      "display_order": 30
     },
     {
       "name": "Salat",
@@ -730,7 +746,8 @@
           "price": 9
         }
       ],
-      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/salades/salat.webp"
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/salades/salat.webp",
+      "display_order": 40
     },
     {
       "name": "Crispy Chicken Teller",
@@ -739,7 +756,8 @@
       "category": "plats",
       "price": 13,
       "station": "KITCHEN",
-      "description": "Knuspriges Hähnchen mit Beilagen"
+      "description": "Knuspriges Hähnchen mit Beilagen",
+      "display_order": 10
     },
     {
       "name": "Crispy Zinger Teller",
@@ -749,7 +767,8 @@
       "price": 13.5,
       "station": "KITCHEN",
       "is_popular": true,
-      "description": "Scharfes Zinger-Hähnchen mit Beilagen"
+      "description": "Scharfes Zinger-Hähnchen mit Beilagen",
+      "display_order": 20
     },
     {
       "name": "Fajita Teller",
@@ -758,7 +777,8 @@
       "category": "plats",
       "price": 13,
       "station": "KITCHEN",
-      "description": "Fajita-Hähnchen mit Paprika und Zwiebeln"
+      "description": "Fajita-Hähnchen mit Paprika und Zwiebeln",
+      "display_order": 30
     },
     {
       "name": "Mexicano Teller",
@@ -767,7 +787,8 @@
       "category": "plats",
       "price": 13,
       "station": "KITCHEN",
-      "description": "Mexikanisch gewürztes Hähnchengericht"
+      "description": "Mexikanisch gewürztes Hähnchengericht",
+      "display_order": 40
     },
     {
       "name": "Falafel Halloumi Teller",
@@ -777,7 +798,8 @@
       "price": 12,
       "station": "KITCHEN",
       "is_vegetarian": true,
-      "description": "Falafel mit gegrilltem Halloumi"
+      "description": "Falafel mit gegrilltem Halloumi",
+      "display_order": 50
     },
     {
       "name": "Halloumi Teller",
@@ -787,7 +809,8 @@
       "price": 10,
       "station": "KITCHEN",
       "is_vegetarian": true,
-      "description": "Gegrillter Halloumi mit Beilagen"
+      "description": "Gegrillter Halloumi mit Beilagen",
+      "display_order": 60
     },
     {
       "name": "Arabischer Falafel Teller",
@@ -798,7 +821,8 @@
       "station": "KITCHEN",
       "is_vegan": true,
       "is_vegetarian": true,
-      "description": "Hausgemachter Falafel nach arabischer Art"
+      "description": "Hausgemachter Falafel nach arabischer Art",
+      "display_order": 70
     },
     {
       "name": "Chicken Fries",
@@ -807,7 +831,8 @@
       "category": "plats",
       "price": 9.5,
       "station": "KITCHEN",
-      "description": "Hähnchenstreifen mit Pommes frites"
+      "description": "Hähnchenstreifen mit Pommes frites",
+      "display_order": 80
     },
     {
       "name": "Frittierter Fisch Teller",
@@ -816,7 +841,8 @@
       "category": "plats",
       "price": 18,
       "station": "KITCHEN",
-      "description": "Knusprig frittierter Fisch mit Beilagen"
+      "description": "Knusprig frittierter Fisch mit Beilagen",
+      "display_order": 90
     },
     {
       "name": "Shawarma Arabi Teller",
@@ -827,7 +853,8 @@
       "station": "KITCHEN",
       "is_popular": true,
       "is_chef_choice": true,
-      "description": "Arabisches Shawarma mit Reis und Salat"
+      "description": "Arabisches Shawarma mit Reis und Salat",
+      "display_order": 10
     },
     {
       "name": "Shawarma Marina Teller",
@@ -836,7 +863,8 @@
       "category": "shawarma",
       "price": 10,
       "station": "KITCHEN",
-      "description": "Shawarma Marina mit Beilagen"
+      "description": "Shawarma Marina mit Beilagen",
+      "display_order": 20
     },
     {
       "name": "Shawarma Bloudan Teller",
@@ -847,7 +875,8 @@
       "station": "KITCHEN",
       "is_popular": true,
       "is_recommended": true,
-      "description": "Haus-Spezialität Shawarma Bloudan"
+      "description": "Haus-Spezialität Shawarma Bloudan",
+      "display_order": 30
     },
     {
       "name": "Shawarma Frat Teller",
@@ -856,7 +885,8 @@
       "category": "shawarma",
       "price": 13.5,
       "station": "KITCHEN",
-      "description": "Shawarma Frat mit Beilagen"
+      "description": "Shawarma Frat mit Beilagen",
+      "display_order": 40
     },
     {
       "name": "Shawarma Sandwich",
@@ -866,7 +896,8 @@
       "price": 6,
       "station": "KITCHEN",
       "is_popular": true,
-      "description": "Shawarma im frischen Fladenbrot"
+      "description": "Shawarma im frischen Fladenbrot",
+      "display_order": 50
     },
     {
       "name": "Double Shawarma Sandwich",
@@ -875,7 +906,8 @@
       "category": "shawarma",
       "price": 8,
       "station": "KITCHEN",
-      "description": "Doppelportion Shawarma im Sandwich"
+      "description": "Doppelportion Shawarma im Sandwich",
+      "display_order": 60
     },
     {
       "name": "Gemischter Grillteller",
@@ -886,7 +918,8 @@
       "station": "KITCHEN",
       "is_popular": true,
       "is_chef_choice": true,
-      "description": "Auswahl gegrillter Fleischspezialitäten"
+      "description": "Auswahl gegrillter Fleischspezialitäten",
+      "display_order": 10
     },
     {
       "name": "Lamm Teller",
@@ -895,7 +928,8 @@
       "category": "grillades",
       "price": 25,
       "station": "KITCHEN",
-      "description": "Zartes Lammfleisch vom Grill"
+      "description": "Zartes Lammfleisch vom Grill",
+      "display_order": 20
     },
     {
       "name": "Schisch Tawouk Teller",
@@ -905,7 +939,8 @@
       "price": 18,
       "station": "KITCHEN",
       "is_popular": true,
-      "description": "Mariniertes Hähnchenspieß vom Grill"
+      "description": "Mariniertes Hähnchenspieß vom Grill",
+      "display_order": 30
     },
     {
       "name": "Kebab Teller",
@@ -914,7 +949,8 @@
       "category": "grillades",
       "price": 20,
       "station": "KITCHEN",
-      "description": "Gegrillte Kebab-Spieße mit Beilagen"
+      "description": "Gegrillte Kebab-Spieße mit Beilagen",
+      "display_order": 40
     },
     {
       "name": "Leber Teller",
@@ -923,7 +959,8 @@
       "category": "grillades",
       "price": 18,
       "station": "KITCHEN",
-      "description": "Gegrillte Leber mit Gewürzen"
+      "description": "Gegrillte Leber mit Gewürzen",
+      "display_order": 50
     },
     {
       "name": "Halbes Grillhähnchen",
@@ -932,7 +969,8 @@
       "category": "grillades",
       "price": 16,
       "station": "KITCHEN",
-      "description": "Halbes Hähnchen vom Grill"
+      "description": "Halbes Hähnchen vom Grill",
+      "display_order": 60
     },
     {
       "name": "Auberginen Kebab",
@@ -941,7 +979,8 @@
       "category": "grillades",
       "price": 20,
       "station": "KITCHEN",
-      "description": "Kebab mit gegrillter Aubergine"
+      "description": "Kebab mit gegrillter Aubergine",
+      "display_order": 70
     },
     {
       "name": "Lahmacun mit Käse",
@@ -950,7 +989,8 @@
       "category": "grillades",
       "price": 16,
       "station": "KITCHEN",
-      "description": "Türkische Pizza mit Käse"
+      "description": "Türkische Pizza mit Käse",
+      "display_order": 80
     },
     {
       "name": "Gegrillter Fisch Teller",
@@ -959,7 +999,8 @@
       "category": "grillades",
       "price": 23,
       "station": "KITCHEN",
-      "description": "Frischer Fisch vom Grill"
+      "description": "Frischer Fisch vom Grill",
+      "display_order": 90
     },
     {
       "name": "Gegrillter Gemüseteller",
@@ -970,43 +1011,48 @@
       "station": "KITCHEN",
       "is_vegan": true,
       "is_vegetarian": true,
-      "description": "Saisonales Grillgemüse"
+      "description": "Saisonales Grillgemüse",
+      "display_order": 100
     },
     {
-      "name": "Gemischter Grill 1kg",
-      "name_ar": "مشاوي مشكلة ١ كغ",
+      "name": "Gemischter Grill (1kg)",
+      "name_ar": "مشاوي مشكلة (1 كغ)",
       "slug": "gemischter-grill-1kg",
       "category": "grillades",
       "price": 55,
       "station": "KITCHEN",
-      "description": "Gemischte Grillplatte — 1 kg"
+      "description": "Gemischte Grillplatte — 1 kg",
+      "display_order": 110
     },
     {
-      "name": "Kebab 1kg",
-      "name_ar": "كباب ١ كغ",
+      "name": "Kebab (1kg)",
+      "name_ar": "كباب (1 كغ)",
       "slug": "kebab-1kg",
       "category": "grillades",
       "price": 50,
       "station": "KITCHEN",
-      "description": "Kebab — 1 kg"
+      "description": "Kebab — 1 kg",
+      "display_order": 120
     },
     {
-      "name": "Schisch Tawouk 1kg",
-      "name_ar": "شيش طاووق ١ كغ",
+      "name": "Schisch Tawouk (1kg)",
+      "name_ar": "شيش طاووق (1 كغ)",
       "slug": "schisch-tawouk-1kg",
       "category": "grillades",
       "price": 35,
       "station": "KITCHEN",
-      "description": "Schisch Tawouk — 1 kg"
+      "description": "Schisch Tawouk — 1 kg",
+      "display_order": 130
     },
     {
-      "name": "Hähnchenflügel 1kg",
-      "name_ar": "أجنحة دجاج ١ كغ",
+      "name": "Hähnchenflügel (1kg)",
+      "name_ar": "أجنحة دجاج (1 كغ)",
       "slug": "haehnchenfluegel-1kg",
       "category": "grillades",
       "price": 18,
       "station": "KITCHEN",
-      "description": "Gegrillte Hähnchenflügel — 1 kg"
+      "description": "Gegrillte Hähnchenflügel — 1 kg",
+      "display_order": 140
     },
     {
       "name": "Pizza Margherita",
@@ -1017,7 +1063,8 @@
       "station": "KITCHEN",
       "is_popular": true,
       "is_vegetarian": true,
-      "description": "Tomate, Mozzarella, Basilikum"
+      "description": "Tomate, Mozzarella, Basilikum",
+      "display_order": 10
     },
     {
       "name": "Pizza Quattro Stagioni",
@@ -1026,7 +1073,8 @@
       "category": "pizza",
       "price": 13.5,
       "station": "KITCHEN",
-      "description": "Vier Jahreszeiten — Schinken, Pilze, Artischocken, Oliven"
+      "description": "Vier Jahreszeiten — Schinken, Pilze, Artischocken, Oliven",
+      "display_order": 20
     },
     {
       "name": "Pizza Hollandaise",
@@ -1035,7 +1083,8 @@
       "category": "pizza",
       "price": 13.5,
       "station": "KITCHEN",
-      "description": "Mit Sauce Hollandaise und Schinken"
+      "description": "Mit Sauce Hollandaise und Schinken",
+      "display_order": 30
     },
     {
       "name": "Pizza Sucuk & Ei",
@@ -1044,7 +1093,8 @@
       "category": "pizza",
       "price": 12.5,
       "station": "KITCHEN",
-      "description": "Türkische Sucuk-Wurst mit Spiegelei"
+      "description": "Türkische Sucuk-Wurst mit Spiegelei",
+      "display_order": 40
     },
     {
       "name": "Pizza Mozzarella & Tomaten",
@@ -1054,7 +1104,8 @@
       "price": 12.5,
       "station": "KITCHEN",
       "is_vegetarian": true,
-      "description": "Frische Mozzarella und Tomaten"
+      "description": "Frische Mozzarella und Tomaten",
+      "display_order": 50
     },
     {
       "name": "Pizza Vegetarisch",
@@ -1064,7 +1115,8 @@
       "price": 12,
       "station": "KITCHEN",
       "is_vegetarian": true,
-      "description": "Mit frischem Grillgemüse"
+      "description": "Mit frischem Grillgemüse",
+      "display_order": 60
     },
     {
       "name": "Pizza Putenmortadella",
@@ -1073,7 +1125,8 @@
       "category": "pizza",
       "price": 12,
       "station": "KITCHEN",
-      "description": "Mit Putenmortadella"
+      "description": "Mit Putenmortadella",
+      "display_order": 70
     },
     {
       "name": "Pizza Mexikano",
@@ -1082,7 +1135,8 @@
       "category": "pizza",
       "price": 13.5,
       "station": "KITCHEN",
-      "description": "Würzig mit Jalapeños und Mais"
+      "description": "Würzig mit Jalapeños und Mais",
+      "display_order": 80
     },
     {
       "name": "Pizza Salami",
@@ -1091,7 +1145,8 @@
       "category": "pizza",
       "price": 12.5,
       "station": "KITCHEN",
-      "description": "Klassisch mit Salami"
+      "description": "Klassisch mit Salami",
+      "display_order": 90
     },
     {
       "name": "Pizza Tonno",
@@ -1100,7 +1155,8 @@
       "category": "pizza",
       "price": 12.5,
       "station": "KITCHEN",
-      "description": "Mit Thunfisch und Zwiebeln"
+      "description": "Mit Thunfisch und Zwiebeln",
+      "display_order": 100
     },
     {
       "name": "Klassik Burger",
@@ -1109,7 +1165,8 @@
       "category": "burgers",
       "price": 12,
       "station": "KITCHEN",
-      "description": "Rindfleisch-Patty mit frischem Gemüse"
+      "description": "Rindfleisch-Patty mit frischem Gemüse",
+      "display_order": 10
     },
     {
       "name": "Cheeseburger",
@@ -1119,7 +1176,8 @@
       "price": 13.5,
       "station": "KITCHEN",
       "is_popular": true,
-      "description": "Mit geschmolzenem Cheddar"
+      "description": "Mit geschmolzenem Cheddar",
+      "display_order": 20
     },
     {
       "name": "Spicy Cheeseburger",
@@ -1129,7 +1187,8 @@
       "price": 13.5,
       "station": "KITCHEN",
       "spice_level": "épicé",
-      "description": "Scharfer Cheeseburger mit Jalapeños"
+      "description": "Scharfer Cheeseburger mit Jalapeños",
+      "display_order": 30
     },
     {
       "name": "Bloudan Burger",
@@ -1140,7 +1199,8 @@
       "station": "KITCHEN",
       "is_popular": true,
       "is_recommended": true,
-      "description": "Haus-Spezialität Burger Bloudan"
+      "description": "Haus-Spezialität Burger Bloudan",
+      "display_order": 40
     },
     {
       "name": "Crispy Chicken Burger",
@@ -1149,16 +1209,18 @@
       "category": "burgers",
       "price": 12,
       "station": "KITCHEN",
-      "description": "Knuspriges Hähnchen im Burger"
+      "description": "Knuspriges Hähnchen im Burger",
+      "display_order": 50
     },
     {
-      "name": "Crispy Chicken",
-      "name_ar": "دجاج مقرمش",
+      "name": "Crispy Chicken Sandwich",
+      "name_ar": "ساندويش كرسبي تشيكن",
       "slug": "crispy-chicken-sandwich",
       "category": "sandwiches",
       "price": 10,
       "station": "KITCHEN",
-      "description": "Knuspriges Hähnchen-Sandwich"
+      "description": "Knuspriges Hähnchen-Sandwich",
+      "display_order": 10
     },
     {
       "name": "Zinger",
@@ -1167,7 +1229,8 @@
       "category": "sandwiches",
       "price": 10,
       "station": "KITCHEN",
-      "description": "Scharfes Zinger-Sandwich"
+      "description": "Scharfes Zinger-Sandwich",
+      "display_order": 20
     },
     {
       "name": "Fajita",
@@ -1176,7 +1239,8 @@
       "category": "sandwiches",
       "price": 10,
       "station": "KITCHEN",
-      "description": "Fajita-Sandwich mit Paprika"
+      "description": "Fajita-Sandwich mit Paprika",
+      "display_order": 30
     },
     {
       "name": "Mexicano",
@@ -1185,7 +1249,8 @@
       "category": "sandwiches",
       "price": 10,
       "station": "KITCHEN",
-      "description": "Mexikanisch gewürztes Sandwich"
+      "description": "Mexikanisch gewürztes Sandwich",
+      "display_order": 40
     },
     {
       "name": "Falafel",
@@ -1196,7 +1261,8 @@
       "station": "KITCHEN",
       "is_vegan": true,
       "is_vegetarian": true,
-      "description": "Falafel im frischen Brot"
+      "description": "Falafel im frischen Brot",
+      "display_order": 50
     },
     {
       "name": "Schaschlik",
@@ -1205,7 +1271,8 @@
       "category": "sandwiches",
       "price": 10,
       "station": "KITCHEN",
-      "description": "Schaschlik-Spieß im Sandwich"
+      "description": "Schaschlik-Spieß im Sandwich",
+      "display_order": 60
     },
     {
       "name": "Kebab",
@@ -1214,7 +1281,8 @@
       "category": "sandwiches",
       "price": 10,
       "station": "KITCHEN",
-      "description": "Kebab im Fladenbrot"
+      "description": "Kebab im Fladenbrot",
+      "display_order": 70
     },
     {
       "name": "Lammfleisch",
@@ -1223,7 +1291,8 @@
       "category": "sandwiches",
       "price": 12,
       "station": "KITCHEN",
-      "description": "Lammfleisch-Sandwich"
+      "description": "Lammfleisch-Sandwich",
+      "display_order": 80
     },
     {
       "name": "Lammleber",
@@ -1232,7 +1301,8 @@
       "category": "sandwiches",
       "price": 8,
       "station": "KITCHEN",
-      "description": "Lammleber im Sandwich"
+      "description": "Lammleber im Sandwich",
+      "display_order": 90
     },
     {
       "name": "Manakish à la Souradia",
@@ -1242,7 +1312,8 @@
       "price": 10,
       "station": "KITCHEN",
       "is_popular": true,
-      "description": "Manakish à la Souradia"
+      "description": "Manakish à la Souradia",
+      "display_order": 10
     },
     {
       "name": "Toshka",
@@ -1251,7 +1322,8 @@
       "category": "manakish",
       "price": 4.5,
       "station": "KITCHEN",
-      "description": "Toshka"
+      "description": "Toshka",
+      "display_order": 20
     },
     {
       "name": "Fleischstreifen auf Teig",
@@ -1260,7 +1332,8 @@
       "category": "manakish",
       "price": 6,
       "station": "KITCHEN",
-      "description": "Fleischstreifen auf Teig"
+      "description": "Fleischstreifen auf Teig",
+      "display_order": 30
     },
     {
       "name": "Lamm Stückchen auf Teig",
@@ -1269,7 +1342,8 @@
       "category": "manakish",
       "price": 4.5,
       "station": "KITCHEN",
-      "description": "Lamm Stückchen auf Teig"
+      "description": "Lamm Stückchen auf Teig",
+      "display_order": 40
     },
     {
       "name": "Schisch Tawouk",
@@ -1278,7 +1352,8 @@
       "category": "manakish",
       "price": 4.5,
       "station": "KITCHEN",
-      "description": "Schisch Tawouk auf Teig"
+      "description": "Schisch Tawouk auf Teig",
+      "display_order": 50
     },
     {
       "name": "Za'atar",
@@ -1289,7 +1364,8 @@
       "station": "KITCHEN",
       "is_vegetarian": true,
       "is_vegan": true,
-      "description": "Za'atar"
+      "description": "Za'atar",
+      "display_order": 60
     },
     {
       "name": "Za'atar mit Käse",
@@ -1299,7 +1375,8 @@
       "price": 3,
       "station": "KITCHEN",
       "is_vegetarian": true,
-      "description": "Za'atar mit Käse"
+      "description": "Za'atar mit Käse",
+      "display_order": 70
     },
     {
       "name": "Käse Pide",
@@ -1309,7 +1386,8 @@
       "price": 3,
       "station": "KITCHEN",
       "is_vegetarian": true,
-      "description": "Käse Pide"
+      "description": "Käse Pide",
+      "display_order": 80
     },
     {
       "name": "Calazoni",
@@ -1319,7 +1397,8 @@
       "price": 4,
       "station": "KITCHEN",
       "is_vegetarian": true,
-      "description": "Calazoni"
+      "description": "Calazoni",
+      "display_order": 90
     },
     {
       "name": "Muhammara mit Kaschkawal",
@@ -1329,7 +1408,8 @@
       "price": 4,
       "station": "KITCHEN",
       "is_vegetarian": true,
-      "description": "Muhammara mit Kaschkawal"
+      "description": "Muhammara mit Kaschkawal",
+      "display_order": 100
     },
     {
       "name": "Spinat Dreieckig",
@@ -1340,7 +1420,8 @@
       "station": "KITCHEN",
       "is_vegetarian": true,
       "is_vegan": true,
-      "description": "Spinat Dreieckig"
+      "description": "Spinat Dreieckig",
+      "display_order": 110
     },
     {
       "name": "Sucuk Calzone",
@@ -1349,7 +1430,8 @@
       "category": "manakish",
       "price": 4,
       "station": "KITCHEN",
-      "description": "Sucuk Calzone"
+      "description": "Sucuk Calzone",
+      "display_order": 120
     },
     {
       "name": "Lammacun",
@@ -1358,7 +1440,8 @@
       "category": "manakish",
       "price": 4,
       "station": "KITCHEN",
-      "description": "Lammacun"
+      "description": "Lammacun",
+      "display_order": 130
     },
     {
       "name": "Lammacun Syrisch",
@@ -1367,7 +1450,8 @@
       "category": "manakish",
       "price": 4,
       "station": "KITCHEN",
-      "description": "Lammacun Syrisch"
+      "description": "Lammacun Syrisch",
+      "display_order": 140
     },
     {
       "name": "Lammacun mit Joghurt",
@@ -1376,7 +1460,8 @@
       "category": "manakish",
       "price": 4,
       "station": "KITCHEN",
-      "description": "Lammacun mit Joghurt"
+      "description": "Lammacun mit Joghurt",
+      "display_order": 150
     },
     {
       "name": "Sanfura",
@@ -1385,7 +1470,8 @@
       "category": "manakish",
       "price": 3.5,
       "station": "KITCHEN",
-      "description": "Sanfura"
+      "description": "Sanfura",
+      "display_order": 160
     },
     {
       "name": "Kartoffel Ecke",
@@ -1396,7 +1482,8 @@
       "station": "KITCHEN",
       "is_vegetarian": true,
       "is_vegan": true,
-      "description": "Kartoffel Ecke"
+      "description": "Kartoffel Ecke",
+      "display_order": 170
     },
     {
       "name": "Oliven",
@@ -1407,7 +1494,8 @@
       "station": "KITCHEN",
       "is_vegetarian": true,
       "is_vegan": true,
-      "description": "Oliven"
+      "description": "Oliven",
+      "display_order": 180
     },
     {
       "name": "Chicken mit Käse",
@@ -1416,7 +1504,8 @@
       "category": "manakish",
       "price": 4,
       "station": "KITCHEN",
-      "description": "Chicken mit Käse"
+      "description": "Chicken mit Käse",
+      "display_order": 190
     },
     {
       "name": "Mexican Chicken",
@@ -1426,7 +1515,8 @@
       "price": 4,
       "station": "KITCHEN",
       "spice_level": "épicé",
-      "description": "Mexican Chicken"
+      "description": "Mexican Chicken",
+      "display_order": 200
     },
     {
       "name": "Muhamara mit Oliven",
@@ -1436,7 +1526,8 @@
       "price": 3,
       "station": "KITCHEN",
       "is_vegetarian": true,
-      "description": "Muhamara mit Oliven"
+      "description": "Muhamara mit Oliven",
+      "display_order": 210
     },
     {
       "name": "Muhammara mit Nüsse",
@@ -1446,7 +1537,8 @@
       "price": 2.5,
       "station": "KITCHEN",
       "is_vegetarian": true,
-      "description": "Muhammara mit Nüsse"
+      "description": "Muhammara mit Nüsse",
+      "display_order": 220
     },
     {
       "name": "Libanesischer Käse",
@@ -1456,7 +1548,8 @@
       "price": 3,
       "station": "KITCHEN",
       "is_vegetarian": true,
-      "description": "Libanesischer Käse"
+      "description": "Libanesischer Käse",
+      "display_order": 230
     },
     {
       "name": "Akkawi-Käse",
@@ -1466,7 +1559,8 @@
       "price": 3,
       "station": "KITCHEN",
       "is_vegetarian": true,
-      "description": "Akkawi-Käse"
+      "description": "Akkawi-Käse",
+      "display_order": 240
     },
     {
       "name": "Spezial Bloudan",
@@ -1477,7 +1571,8 @@
       "station": "KITCHEN",
       "is_popular": true,
       "is_chef_choice": true,
-      "description": "Spezial Bloudan — Haus-Spezialität"
+      "description": "Spezial Bloudan — Haus-Spezialität",
+      "display_order": 250
     },
     {
       "name": "Waffle Nature",
@@ -1490,7 +1585,8 @@
       "tags": [
         "customizable"
       ],
-      "description": "Frische Waffel — wählen Sie Ihre Extras"
+      "description": "Frische Waffel — wählen Sie Ihre Extras",
+      "display_order": 10
     },
     {
       "name": "Crêpe Nature",
@@ -1502,7 +1598,8 @@
       "tags": [
         "customizable"
       ],
-      "description": "Frischer Crêpe — wählen Sie Ihre Extras"
+      "description": "Frischer Crêpe — wählen Sie Ihre Extras",
+      "display_order": 10
     },
     {
       "name": "Pancake Nature",
@@ -1514,35 +1611,39 @@
       "tags": [
         "customizable"
       ],
-      "description": "Fluffige Pancakes — wählen Sie Ihre Extras"
+      "description": "Fluffige Pancakes — wählen Sie Ihre Extras",
+      "display_order": 10
     },
     {
-      "name": "Bloudan",
-      "name_ar": "بلودان",
+      "name": "Fruchtsalat Bloudan",
+      "name_ar": "سلطة فواكه بلودان",
       "slug": "fruit-salad-bloudan",
       "category": "fruit-salads",
       "price": 15,
       "station": "BAR",
       "is_popular": true,
-      "description": "Fruchtsalat Spezialität Bloudan"
+      "description": "Fruchtsalat Spezialität Bloudan",
+      "display_order": 10
     },
     {
-      "name": "Lotus",
-      "name_ar": "لوتس",
+      "name": "Fruchtsalat Lotus",
+      "name_ar": "سلطة فواكه لوتس",
       "slug": "fruit-salad-lotus",
       "category": "fruit-salads",
       "price": 9,
       "station": "BAR",
-      "description": "Fruchtsalat mit Lotus"
+      "description": "Fruchtsalat mit Lotus",
+      "display_order": 20
     },
     {
-      "name": "Dubai",
-      "name_ar": "دبي",
+      "name": "Fruchtsalat Dubai",
+      "name_ar": "سلطة فواكه دبي",
       "slug": "fruit-salad-dubai",
       "category": "fruit-salads",
       "price": 11,
       "station": "BAR",
-      "description": "Fruchtsalat Dubai Style"
+      "description": "Fruchtsalat Dubai Style",
+      "display_order": 30
     },
     {
       "name": "Coupe Arabe",
@@ -1551,73 +1652,81 @@
       "category": "ice-cream",
       "price": 7,
       "station": "BAR",
-      "description": "Arabisches Eisbecher-Spezial"
+      "description": "Arabisches Eisbecher-Spezial",
+      "display_order": 10
     },
     {
-      "name": "Vanille",
-      "name_ar": "فانيليا",
+      "name": "Vanilleeis",
+      "name_ar": "آيس كريم فانيليا",
       "slug": "eis-vanille",
       "category": "ice-cream",
       "price": 5.5,
       "station": "BAR",
       "is_vegetarian": true,
-      "description": "Vanilleeis"
+      "description": "Vanilleeis",
+      "display_order": 20
     },
     {
-      "name": "Fraise",
-      "name_ar": "فراولة",
+      "name": "Erdbeereis",
+      "name_ar": "آيس كريم فراولة",
       "slug": "eis-fraise",
       "category": "ice-cream",
       "price": 5.5,
       "station": "BAR",
       "is_vegetarian": true,
-      "description": "Erdbeereis"
+      "description": "Erdbeereis",
+      "display_order": 30
     },
     {
-      "name": "Chocolat",
-      "name_ar": "شوكولاتة",
+      "name": "Schokoladeneis",
+      "name_ar": "آيس كريم شوكولاتة",
       "slug": "eis-chocolat",
       "category": "ice-cream",
       "price": 5.5,
       "station": "BAR",
       "is_vegetarian": true,
-      "description": "Schokoladeneis"
+      "description": "Schokoladeneis",
+      "display_order": 40
     },
     {
-      "name": "Bloudan",
-      "name_ar": "بلودان",
+      "name": "Cheesecake Bloudan",
+      "name_ar": "تشيز كيك بلودان",
       "slug": "cheesecake-bloudan",
       "category": "cheesecakes",
       "price": 7.5,
       "station": "BAR",
-      "description": "Cheesecake Spezialität Bloudan"
+      "description": "Cheesecake Spezialität Bloudan",
+      "display_order": 10
     },
     {
-      "name": "Lotus",
-      "name_ar": "لوتس",
+      "name": "Cheesecake Lotus",
+      "name_ar": "تشيز كيك لوتس",
       "slug": "cheesecake-lotus",
       "category": "cheesecakes",
       "price": 6,
       "station": "BAR",
-      "description": "Cheesecake mit Lotus"
+      "description": "Cheesecake mit Lotus",
+      "display_order": 20
     },
     {
-      "name": "Dubai",
-      "name_ar": "دبي",
+      "name": "Cheesecake Dubai",
+      "name_ar": "تشيز كيك دبي",
       "slug": "cheesecake-dubai",
       "category": "cheesecakes",
       "price": 7,
       "station": "BAR",
-      "description": "Cheesecake Dubai Style"
+      "description": "Cheesecake Dubai Style",
+      "display_order": 30
     },
     {
-      "name": "Oreo",
-      "name_ar": "أوريو",
+      "name": "Cheesecake Oreo",
+      "name_ar": "تشيز كيك أوريو",
       "slug": "cheesecake-oreo",
       "category": "cheesecakes",
       "price": 6,
       "station": "BAR",
-      "description": "Cheesecake mit Oreo"
+      "description": "Cheesecake mit Oreo",
+      "display_order": 40
     },
     {
       "name": "Molten Cake",
@@ -1626,7 +1735,8 @@
       "category": "cakes",
       "price": 5.5,
       "station": "BAR",
-      "description": "Warmer Schokoladen-Lavakuchen"
+      "description": "Warmer Schokoladen-Lavakuchen",
+      "display_order": 10
     },
     {
       "name": "Brownie Cake",
@@ -1635,7 +1745,8 @@
       "category": "cakes",
       "price": 6.5,
       "station": "BAR",
-      "description": "Saftiger Brownie-Kuchen"
+      "description": "Saftiger Brownie-Kuchen",
+      "display_order": 20
     },
     {
       "name": "Chips & Noix",
@@ -1644,7 +1755,8 @@
       "category": "snacks",
       "price": 5,
       "station": "BAR",
-      "description": "Chips mit gemischten Nüssen"
+      "description": "Chips mit gemischten Nüssen",
+      "display_order": 10
     },
     {
       "name": "Noix",
@@ -1653,11 +1765,12 @@
       "category": "snacks",
       "price": 6,
       "station": "BAR",
-      "description": "Gemischte Nüsse"
+      "description": "Gemischte Nüsse",
+      "display_order": 20
     },
     {
-      "name": "Stillwasser",
-      "name_ar": "مياه معدنية",
+      "name": "Stilles Wasser",
+      "name_ar": "مياه طبيعية",
       "slug": "stillwasser",
       "category": "water",
       "price": 2.5,
@@ -1665,7 +1778,7 @@
       "tags": [
         "has_variants"
       ],
-      "description": "Stilles Wasser",
+      "description": "Stilles Mineralwasser",
       "variants": [
         {
           "slug": "025l",
@@ -1679,7 +1792,8 @@
           "name_ar": "0.75 لتر",
           "price": 4
         }
-      ]
+      ],
+      "display_order": 10
     },
     {
       "name": "Mineralwasser",
@@ -1691,7 +1805,7 @@
       "tags": [
         "has_variants"
       ],
-      "description": "Mineralwasser",
+      "description": "Mineralwasser mit Kohlensäure",
       "variants": [
         {
           "slug": "025l",
@@ -1705,7 +1819,8 @@
           "name_ar": "0.75 لتر",
           "price": 4
         }
-      ]
+      ],
+      "display_order": 20
     },
     {
       "name": "Ananassaft",
@@ -1714,7 +1829,8 @@
       "category": "juices",
       "price": 4,
       "station": "BAR",
-      "description": "Frischer Ananassaft"
+      "description": "Frischer Ananassaft",
+      "display_order": 10
     },
     {
       "name": "Apfelsaft",
@@ -1723,7 +1839,8 @@
       "category": "juices",
       "price": 4,
       "station": "BAR",
-      "description": "Frischer Apfelsaft"
+      "description": "Frischer Apfelsaft",
+      "display_order": 20
     },
     {
       "name": "Orangensaft",
@@ -1732,7 +1849,8 @@
       "category": "juices",
       "price": 4,
       "station": "BAR",
-      "description": "Frischer Orangensaft"
+      "description": "Frischer Orangensaft",
+      "display_order": 30
     },
     {
       "name": "Mangosaft",
@@ -1741,7 +1859,8 @@
       "category": "juices",
       "price": 4,
       "station": "BAR",
-      "description": "Frischer Mangosaft"
+      "description": "Frischer Mangosaft",
+      "display_order": 40
     },
     {
       "name": "Erdbeersaft",
@@ -1750,7 +1869,8 @@
       "category": "juices",
       "price": 4,
       "station": "BAR",
-      "description": "Frischer Erdbeersaft"
+      "description": "Frischer Erdbeersaft",
+      "display_order": 50
     },
     {
       "name": "Maracujasaft",
@@ -1759,7 +1879,8 @@
       "category": "juices",
       "price": 4,
       "station": "BAR",
-      "description": "Frischer Maracujasaft"
+      "description": "Frischer Maracujasaft",
+      "display_order": 60
     },
     {
       "name": "Kiba (Kirsche & Banane)",
@@ -1768,7 +1889,8 @@
       "category": "juices",
       "price": 4,
       "station": "BAR",
-      "description": "Kiba — Kirsche und Banane"
+      "description": "Kiba — Kirsche und Banane",
+      "display_order": 70
     },
     {
       "name": "Coca-Cola",
@@ -1777,7 +1899,8 @@
       "category": "soft-drinks",
       "price": 4,
       "station": "BAR",
-      "description": "Coca-Cola 0,33 L"
+      "description": "Coca-Cola 0,33 L",
+      "display_order": 10
     },
     {
       "name": "Coca-Cola Zero",
@@ -1786,7 +1909,8 @@
       "category": "soft-drinks",
       "price": 4,
       "station": "BAR",
-      "description": "Coca-Cola Zero 0,33 L"
+      "description": "Coca-Cola Zero 0,33 L",
+      "display_order": 20
     },
     {
       "name": "Fanta",
@@ -1795,7 +1919,8 @@
       "category": "soft-drinks",
       "price": 4,
       "station": "BAR",
-      "description": "Fanta Orange 0,33 L"
+      "description": "Fanta Orange 0,33 L",
+      "display_order": 30
     },
     {
       "name": "Sprite",
@@ -1804,7 +1929,8 @@
       "category": "soft-drinks",
       "price": 4,
       "station": "BAR",
-      "description": "Sprite 0,33 L"
+      "description": "Sprite 0,33 L",
+      "display_order": 40
     },
     {
       "name": "Red Bull",
@@ -1813,7 +1939,8 @@
       "category": "soft-drinks",
       "price": 4,
       "station": "BAR",
-      "description": "Red Bull Energy Drink"
+      "description": "Red Bull Energy Drink",
+      "display_order": 50
     },
     {
       "name": "Red Bull Sugar Free",
@@ -1822,7 +1949,8 @@
       "category": "soft-drinks",
       "price": 4,
       "station": "BAR",
-      "description": "Red Bull Sugarfree"
+      "description": "Red Bull Sugarfree",
+      "display_order": 60
     },
     {
       "name": "Red Bull White Edition",
@@ -1831,7 +1959,8 @@
       "category": "soft-drinks",
       "price": 4,
       "station": "BAR",
-      "description": "Red Bull White Edition"
+      "description": "Red Bull White Edition",
+      "display_order": 70
     },
     {
       "name": "Eistee Pfirsich",
@@ -1840,7 +1969,8 @@
       "category": "ice-tea",
       "price": 4,
       "station": "BAR",
-      "description": "Eistee Pfirsichgeschmack"
+      "description": "Eistee Pfirsichgeschmack",
+      "display_order": 10
     },
     {
       "name": "Eistee Zitrone",
@@ -1849,7 +1979,8 @@
       "category": "ice-tea",
       "price": 4,
       "station": "BAR",
-      "description": "Eistee Zitronengeschmack"
+      "description": "Eistee Zitronengeschmack",
+      "display_order": 20
     },
     {
       "name": "Eistee Wassermelone",
@@ -1858,7 +1989,8 @@
       "category": "ice-tea",
       "price": 4,
       "station": "BAR",
-      "description": "Eistee Wassermelonengeschmack"
+      "description": "Eistee Wassermelonengeschmack",
+      "display_order": 30
     },
     {
       "name": "Mojito",
@@ -1867,7 +1999,8 @@
       "category": "cocktails",
       "price": 7.5,
       "station": "BAR",
-      "description": "Klassischer Mojito"
+      "description": "Klassischer Mojito",
+      "display_order": 10
     },
     {
       "name": "Erdbeer Mojito",
@@ -1876,7 +2009,8 @@
       "category": "cocktails",
       "price": 7.5,
       "station": "BAR",
-      "description": "Mojito mit frischen Erdbeeren"
+      "description": "Mojito mit frischen Erdbeeren",
+      "display_order": 20
     },
     {
       "name": "Maracuja Splash",
@@ -1885,7 +2019,8 @@
       "category": "cocktails",
       "price": 7.5,
       "station": "BAR",
-      "description": "Erfrischender Maracuja-Cocktail"
+      "description": "Erfrischender Maracuja-Cocktail",
+      "display_order": 30
     },
     {
       "name": "Sweet Ananas",
@@ -1894,7 +2029,8 @@
       "category": "cocktails",
       "price": 7.5,
       "station": "BAR",
-      "description": "Süßer Ananas-Cocktail"
+      "description": "Süßer Ananas-Cocktail",
+      "display_order": 40
     },
     {
       "name": "Ipanema",
@@ -1903,7 +2039,8 @@
       "category": "cocktails",
       "price": 7.5,
       "station": "BAR",
-      "description": "Ipanema — alkoholfrei"
+      "description": "Ipanema — alkoholfrei",
+      "display_order": 50
     },
     {
       "name": "Jamaica",
@@ -1912,7 +2049,8 @@
       "category": "cocktails",
       "price": 7.5,
       "station": "BAR",
-      "description": "Jamaica-Cocktail"
+      "description": "Jamaica-Cocktail",
+      "display_order": 60
     },
     {
       "name": "Bloudan Smoothie",
@@ -1922,7 +2060,8 @@
       "price": 8,
       "station": "BAR",
       "is_popular": true,
-      "description": "Haus-Smoothie Bloudan"
+      "description": "Haus-Smoothie Bloudan",
+      "display_order": 10
     },
     {
       "name": "Mango Smoothie",
@@ -1931,7 +2070,8 @@
       "category": "smoothies",
       "price": 6.5,
       "station": "BAR",
-      "description": "Cremiger Mango-Smoothie"
+      "description": "Cremiger Mango-Smoothie",
+      "display_order": 20
     },
     {
       "name": "Erdbeer Smoothie",
@@ -1940,7 +2080,8 @@
       "category": "smoothies",
       "price": 6.5,
       "station": "BAR",
-      "description": "Frischer Erdbeer-Smoothie"
+      "description": "Frischer Erdbeer-Smoothie",
+      "display_order": 30
     },
     {
       "name": "Ananas Smoothie",
@@ -1949,7 +2090,8 @@
       "category": "smoothies",
       "price": 6.5,
       "station": "BAR",
-      "description": "Tropischer Ananas-Smoothie"
+      "description": "Tropischer Ananas-Smoothie",
+      "display_order": 40
     },
     {
       "name": "Polo Smoothie (Zitrone & Minze)",
@@ -1958,7 +2100,8 @@
       "category": "smoothies",
       "price": 7.5,
       "station": "BAR",
-      "description": "Erfrischender Zitrone-Minze-Smoothie"
+      "description": "Erfrischender Zitrone-Minze-Smoothie",
+      "display_order": 50
     },
     {
       "name": "Bloudan Milkshake",
@@ -1967,7 +2110,8 @@
       "category": "milkshakes",
       "price": 9,
       "station": "BAR",
-      "description": "Haus-Milkshake Bloudan"
+      "description": "Haus-Milkshake Bloudan",
+      "display_order": 10
     },
     {
       "name": "Erdbeer Milkshake",
@@ -1976,7 +2120,8 @@
       "category": "milkshakes",
       "price": 7,
       "station": "BAR",
-      "description": "Cremiger Erdbeer-Milkshake"
+      "description": "Cremiger Erdbeer-Milkshake",
+      "display_order": 20
     },
     {
       "name": "Schokoladen Milkshake",
@@ -1985,7 +2130,8 @@
       "category": "milkshakes",
       "price": 7,
       "station": "BAR",
-      "description": "Schokoladen-Milkshake"
+      "description": "Schokoladen-Milkshake",
+      "display_order": 30
     },
     {
       "name": "Oreo Milkshake",
@@ -1994,7 +2140,8 @@
       "category": "milkshakes",
       "price": 7.5,
       "station": "BAR",
-      "description": "Milkshake mit Oreo-Keksen"
+      "description": "Milkshake mit Oreo-Keksen",
+      "display_order": 40
     },
     {
       "name": "Banane, Milch & Avocado",
@@ -2003,7 +2150,8 @@
       "category": "banana-milk-cocktails",
       "price": 7.5,
       "station": "BAR",
-      "description": "Bananen-Milch-Cocktail mit Avocado"
+      "description": "Bananen-Milch-Cocktail mit Avocado",
+      "display_order": 10
     },
     {
       "name": "Banane, Milch & Erdbeere",
@@ -2012,7 +2160,8 @@
       "category": "banana-milk-cocktails",
       "price": 7.5,
       "station": "BAR",
-      "description": "Bananen-Milch-Cocktail mit Erdbeere"
+      "description": "Bananen-Milch-Cocktail mit Erdbeere",
+      "display_order": 20
     },
     {
       "name": "Banane, Milch & Schokolade",
@@ -2021,7 +2170,8 @@
       "category": "banana-milk-cocktails",
       "price": 7.5,
       "station": "BAR",
-      "description": "Bananen-Milch-Cocktail mit Schokolade"
+      "description": "Bananen-Milch-Cocktail mit Schokolade",
+      "display_order": 30
     },
     {
       "name": "Arabic Coffee",
@@ -2030,7 +2180,8 @@
       "category": "coffee",
       "price": 3,
       "station": "BAR",
-      "description": "Traditioneller arabischer Kaffee"
+      "description": "Traditioneller arabischer Kaffee",
+      "display_order": 10
     },
     {
       "name": "Espresso",
@@ -2039,7 +2190,8 @@
       "category": "coffee",
       "price": 3,
       "station": "BAR",
-      "description": "Espresso"
+      "description": "Espresso",
+      "display_order": 20
     },
     {
       "name": "Espresso Macchiato",
@@ -2048,7 +2200,8 @@
       "category": "coffee",
       "price": 3.5,
       "station": "BAR",
-      "description": "Espresso mit Milchschaum"
+      "description": "Espresso mit Milchschaum",
+      "display_order": 30
     },
     {
       "name": "Cappuccino",
@@ -2057,7 +2210,8 @@
       "category": "coffee",
       "price": 4,
       "station": "BAR",
-      "description": "Cappuccino"
+      "description": "Cappuccino",
+      "display_order": 40
     },
     {
       "name": "Latte Macchiato",
@@ -2066,7 +2220,8 @@
       "category": "coffee",
       "price": 4.5,
       "station": "BAR",
-      "description": "Latte Macchiato"
+      "description": "Latte Macchiato",
+      "display_order": 50
     },
     {
       "name": "Chocolate Latte",
@@ -2075,7 +2230,8 @@
       "category": "coffee",
       "price": 5,
       "station": "BAR",
-      "description": "Schokoladen-Latte"
+      "description": "Schokoladen-Latte",
+      "display_order": 60
     },
     {
       "name": "Vanilla Latte",
@@ -2084,7 +2240,8 @@
       "category": "coffee",
       "price": 5,
       "station": "BAR",
-      "description": "Vanille-Latte"
+      "description": "Vanille-Latte",
+      "display_order": 70
     },
     {
       "name": "Caramel Latte",
@@ -2093,7 +2250,8 @@
       "category": "coffee",
       "price": 5,
       "station": "BAR",
-      "description": "Karamell-Latte"
+      "description": "Karamell-Latte",
+      "display_order": 80
     },
     {
       "name": "Al Pacchino",
@@ -2102,7 +2260,8 @@
       "category": "coffee",
       "price": 4.5,
       "station": "BAR",
-      "description": "Al Pacchino — Haus-Spezialität"
+      "description": "Al Pacchino — Haus-Spezialität",
+      "display_order": 90
     },
     {
       "name": "Americano",
@@ -2111,7 +2270,8 @@
       "category": "coffee",
       "price": 3,
       "station": "BAR",
-      "description": "Caffè Americano"
+      "description": "Caffè Americano",
+      "display_order": 100
     },
     {
       "name": "Flat White",
@@ -2120,7 +2280,8 @@
       "category": "coffee",
       "price": 4.5,
       "station": "BAR",
-      "description": "Flat White"
+      "description": "Flat White",
+      "display_order": 110
     },
     {
       "name": "Mocha",
@@ -2129,7 +2290,8 @@
       "category": "coffee",
       "price": 4.5,
       "station": "BAR",
-      "description": "Mocha mit Schokolade"
+      "description": "Mocha mit Schokolade",
+      "display_order": 120
     },
     {
       "name": "Hot Chocolate",
@@ -2138,7 +2300,8 @@
       "category": "coffee",
       "price": 4,
       "station": "BAR",
-      "description": "Heiße Schokolade"
+      "description": "Heiße Schokolade",
+      "display_order": 130
     },
     {
       "name": "Sahlab",
@@ -2147,13 +2310,14 @@
       "category": "coffee",
       "price": 3.5,
       "station": "BAR",
-      "description": "Traditionelles Sahlab-Getränk"
+      "description": "Traditionelles Sahlab-Getränk",
+      "display_order": 140
     },
     {
       "name": "Schwarzer Tee",
       "name_ar": "شاي أسود",
       "slug": "schwarzer-tee",
-      "category": "tea",
+      "category": "coffee",
       "price": 3,
       "station": "BAR",
       "tags": [
@@ -2173,13 +2337,15 @@
           "name_ar": "إبريق",
           "price": 8
         }
-      ]
+      ],
+      "display_order": 150,
+      "imageCategory": "tea"
     },
     {
       "name": "Grün Tee",
       "name_ar": "شاي أخضر",
       "slug": "gruen-tee",
-      "category": "tea",
+      "category": "coffee",
       "price": 3,
       "station": "BAR",
       "tags": [
@@ -2199,13 +2365,15 @@
           "name_ar": "إبريق",
           "price": 8
         }
-      ]
+      ],
+      "display_order": 160,
+      "imageCategory": "tea"
     },
     {
       "name": "Ingwer Zitrone",
       "name_ar": "زنجبيل وليمون",
       "slug": "ingwer-zitrone",
-      "category": "tea",
+      "category": "coffee",
       "price": 3,
       "station": "BAR",
       "tags": [
@@ -2225,13 +2393,15 @@
           "name_ar": "إبريق",
           "price": 8
         }
-      ]
+      ],
+      "display_order": 170,
+      "imageCategory": "tea"
     },
     {
       "name": "Kamille Tee",
       "name_ar": "بابونج",
       "slug": "kamille-tee",
-      "category": "tea",
+      "category": "coffee",
       "price": 3,
       "station": "BAR",
       "tags": [
@@ -2251,25 +2421,31 @@
           "name_ar": "إبريق",
           "price": 8
         }
-      ]
+      ],
+      "display_order": 180,
+      "imageCategory": "tea"
     },
     {
       "name": "Mate",
       "name_ar": "ماتيه",
       "slug": "mate",
-      "category": "tea",
+      "category": "coffee",
       "price": 5.5,
       "station": "BAR",
-      "description": "Mate-Tee"
+      "description": "Mate-Tee",
+      "display_order": 190,
+      "imageCategory": "tea"
     },
     {
-      "name": "Cumin Lemon Tea",
+      "name": "Kreuzkümmel-Zitronen-Tee",
       "name_ar": "شاي كمون وليمون",
       "slug": "cumin-lemon-tea",
-      "category": "tea",
+      "category": "coffee",
       "price": 3.5,
       "station": "BAR",
-      "description": "Kreuzkümmel-Zitronen-Tee"
+      "description": "Tee mit Kreuzkümmel und Zitrone",
+      "display_order": 200,
+      "imageCategory": "tea"
     },
     {
       "name": "Iced Latte Macchiato",
@@ -2278,7 +2454,8 @@
       "category": "iced-coffee",
       "price": 6,
       "station": "BAR",
-      "description": "Eiskalter Latte Macchiato"
+      "description": "Eiskalter Latte Macchiato",
+      "display_order": 10
     },
     {
       "name": "Iced Latte Chocolate",
@@ -2287,7 +2464,8 @@
       "category": "iced-coffee",
       "price": 6.5,
       "station": "BAR",
-      "description": "Eiskalter Schokoladen-Latte"
+      "description": "Eiskalter Schokoladen-Latte",
+      "display_order": 20
     },
     {
       "name": "Iced Latte Vanilla",
@@ -2296,7 +2474,8 @@
       "category": "iced-coffee",
       "price": 6.5,
       "station": "BAR",
-      "description": "Eiskalter Vanille-Latte"
+      "description": "Eiskalter Vanille-Latte",
+      "display_order": 30
     },
     {
       "name": "Iced Latte Caramel",
@@ -2305,7 +2484,8 @@
       "category": "iced-coffee",
       "price": 6.5,
       "station": "BAR",
-      "description": "Eiskalter Karamell-Latte"
+      "description": "Eiskalter Karamell-Latte",
+      "display_order": 40
     },
     {
       "name": "Frappuccino",
@@ -2314,7 +2494,8 @@
       "category": "iced-coffee",
       "price": 7,
       "station": "BAR",
-      "description": "Frappuccino"
+      "description": "Frappuccino",
+      "display_order": 50
     },
     {
       "name": "Iced Mocha",
@@ -2323,36 +2504,40 @@
       "category": "iced-coffee",
       "price": 6.5,
       "station": "BAR",
-      "description": "Eiskalter Mocha"
+      "description": "Eiskalter Mocha",
+      "display_order": 60
     },
     {
-      "name": "Bloudan",
-      "name_ar": "بلودان",
+      "name": "Shisha Bloudan",
+      "name_ar": "شيشة بلودان",
       "slug": "shisha-bloudan",
       "category": "shisha",
       "price": 20,
       "station": "SHISHA",
       "is_popular": true,
-      "description": "Shisha Spezialität Bloudan"
+      "description": "Shisha Spezialität Bloudan",
+      "display_order": 10
     },
     {
-      "name": "Double Apple",
+      "name": "Doppel-Apfel",
       "name_ar": "تفاحتين",
       "slug": "shisha-double-apple",
       "category": "shisha",
       "price": 15,
       "station": "SHISHA",
       "is_popular": true,
-      "description": "Klassisches Doppel-Apfel-Aroma"
+      "description": "Klassisches Doppel-Apfel-Aroma",
+      "display_order": 20
     },
     {
-      "name": "Grape Mint",
+      "name": "Traube Minze",
       "name_ar": "عنب ونعناع",
       "slug": "shisha-grape-mint",
       "category": "shisha",
       "price": 15,
       "station": "SHISHA",
-      "description": "Traube mit Minze"
+      "description": "Traube mit Minze",
+      "display_order": 30
     },
     {
       "name": "Love 66",
@@ -2361,7 +2546,8 @@
       "category": "shisha",
       "price": 15,
       "station": "SHISHA",
-      "description": "Love 66 Aroma"
+      "description": "Love 66 Aroma",
+      "display_order": 40
     },
     {
       "name": "Cinderella",
@@ -2370,16 +2556,18 @@
       "category": "shisha",
       "price": 15,
       "station": "SHISHA",
-      "description": "Cinderella Aroma"
+      "description": "Cinderella Aroma",
+      "display_order": 50
     },
     {
-      "name": "Watermelon",
+      "name": "Wassermelone",
       "name_ar": "بطيخ",
       "slug": "shisha-watermelon",
       "category": "shisha",
       "price": 15,
       "station": "SHISHA",
-      "description": "Wassermelonen-Aroma"
+      "description": "Wassermelonen-Aroma",
+      "display_order": 60
     },
     {
       "name": "Raffaello",
@@ -2388,25 +2576,28 @@
       "category": "shisha",
       "price": 20,
       "station": "SHISHA",
-      "description": "Raffaello Aroma"
+      "description": "Raffaello Aroma",
+      "display_order": 70
     },
     {
-      "name": "Fruits",
+      "name": "Früchte Mix",
       "name_ar": "فواكه",
       "slug": "shisha-fruits",
       "category": "shisha",
       "price": 15,
       "station": "SHISHA",
-      "description": "Fruchtmix-Aroma"
+      "description": "Fruchtmix-Aroma",
+      "display_order": 80
     },
     {
-      "name": "Polo",
-      "name_ar": "بولو",
+      "name": "Shisha Polo",
+      "name_ar": "شيشة بولو",
       "slug": "shisha-polo",
       "category": "shisha",
       "price": 15,
       "station": "SHISHA",
-      "description": "Polo Aroma"
+      "description": "Polo Aroma",
+      "display_order": 90
     },
     {
       "name": "Shisha Royale",
@@ -2416,7 +2607,8 @@
       "price": 55,
       "station": "SHISHA",
       "is_chef_choice": true,
-      "description": "Premium Shisha Royale"
+      "description": "Premium Shisha Royale",
+      "display_order": 100
     },
     {
       "name": "Avoca Free",
@@ -2425,7 +2617,8 @@
       "category": "imperator",
       "price": 14,
       "station": "SHISHA",
-      "description": "Imperator Tabak — Avoca Free"
+      "description": "Imperator Tabak — Avoca Free",
+      "display_order": 10
     },
     {
       "name": "Pinastro Flix",
@@ -2434,7 +2627,8 @@
       "category": "imperator",
       "price": 13,
       "station": "SHISHA",
-      "description": "Imperator Tabak — Pinastro Flix"
+      "description": "Imperator Tabak — Pinastro Flix",
+      "display_order": 20
     },
     {
       "name": "X4",
@@ -2443,7 +2637,8 @@
       "category": "imperator",
       "price": 13,
       "station": "SHISHA",
-      "description": "Imperator Tabak — X4"
+      "description": "Imperator Tabak — X4",
+      "display_order": 30
     },
     {
       "name": "Thundermix",
@@ -2452,7 +2647,8 @@
       "category": "imperator",
       "price": 13,
       "station": "SHISHA",
-      "description": "Imperator Tabak — Thundermix"
+      "description": "Imperator Tabak — Thundermix",
+      "display_order": 40
     }
   ]
 }
