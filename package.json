@@ -27,6 +27,12 @@
     "menu:manakish:generate": "node --env-file=.env.local scripts/generate-manakish-images.mjs",
     "menu:manakish:images": "node --env-file=.env.local scripts/assign-manakish-images.mjs",
     "menu:plats:images": "node --env-file=.env.local scripts/assign-plats-images.mjs",
+    "menu:shawarma:images": "node --env-file=.env.local scripts/assign-shawarma-images.mjs",
+    "menu:grillades:images": "node --env-file=.env.local scripts/assign-grillades-images.mjs",
+    "menu:pizza:images": "node --env-file=.env.local scripts/assign-pizza-images.mjs",
+    "menu:burgers:images": "node --env-file=.env.local scripts/assign-burgers-images.mjs",
+    "menu:sandwiches:images": "node --env-file=.env.local scripts/assign-sandwiches-images.mjs",
+    "menu:bar-desserts:images": "node --env-file=.env.local scripts/assign-bar-desserts-images.mjs",
     "menu:sync-images": "node --env-file=.env.local scripts/sync-menu-product-image-urls.mjs"
   },
   "dependencies": {

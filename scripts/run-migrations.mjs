@@ -69,6 +69,17 @@ const NUMBERED_MIGRATIONS = [
   "40-salades-content.sql",
   "41-manakish-content.sql",
   "42-plats-content.sql",
+  "43-shawarma-content.sql",
+  "44-grillades-content.sql",
+  "45-pizza-content.sql",
+  "46-burgers-content.sql",
+  "47-sandwiches-content.sql",
+  "48-cold-drinks-content.sql",
+  "49-cocktails-content.sql",
+  "50-coffee-content.sql",
+  "51-tea-waffles-crepes-content.sql",
+  "52-desserts-content.sql",
+  "53-shisha-content.sql",
 ]
 
 /** Après le schéma : durcissement rôles puis correctif signup / RLS audit (idempotent). */
