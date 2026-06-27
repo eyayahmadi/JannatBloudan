@@ -40,7 +40,7 @@ import { ProductAttributeBadges } from "@/components/menu/ProductAttributeBadges
 import { QrAttributeFilterChips } from "@/components/menu/qr/QrAttributeFilterChips"
 import type { Station } from "@/lib/stations/config"
 import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
-import { groupMenuItemsByCategory } from "@/lib/menu/menu-category-groups"
+import { groupMenuItemsByDbCategories } from "@/lib/menu/menu-category-groups"
 import { MenuSubcategoryHeader } from "@/components/menu/MenuSubcategoryHeader"
 import { HighlightText } from "@/components/menu/HighlightText"
 import { ProductCustomizationModal } from "@/components/menu/ProductCustomizationModal"
@@ -49,9 +49,11 @@ import { formatKitchenTicketNotes, formatVariantLabel } from "@/lib/menu/cart-li
 type CatalogCategoryRow = {
   id: string
   name: string
+  name_ar?: string | null
   slug: string
   section?: string | null
   display_order?: number
+  icon_emoji?: string | null
   description?: string | null
 }
 
@@ -215,22 +217,16 @@ export function DigitalMenuExperience() {
 
   const groupedSection = useMemo(() => {
     if (categorySlug !== "all") return null
-    if (section === "drinks" || section === "desserts") return section
+    if (section === "food" || section === "drinks" || section === "desserts") return section
     return null
   }, [section, categorySlug])
 
   const groupedItems = useMemo(() => {
-    if (!groupedSection) return null
-    const sectionCats = (data?.categories ?? [])
+    if (!groupedSection || !data) return null
+    const sectionCats = data.categories
       .filter((c) => (c.section ?? "food") === groupedSection)
       .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-    const orderedSlugs = sectionCats.map((c) => c.slug)
-    const subtitleBySlug = new Map<string, string>()
-    for (const c of sectionCats) {
-      const d = (c as { description?: string | null }).description
-      if (d && d.trim()) subtitleBySlug.set(c.slug, d.trim())
-    }
-    return groupMenuItemsByCategory(filtered, groupedSection, orderedSlugs, subtitleBySlug)
+    return groupMenuItemsByDbCategories(filtered, sectionCats)
   }, [data, filtered, groupedSection])
 
   const handleAddProduct = useCallback(
@@ -702,20 +698,24 @@ export function DigitalMenuExperience() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {groupedItems
-            ? groupedItems.map((group) => (
-                <div key={group.key} className="contents">
-                  <div className="col-span-full">
-                    <MenuSubcategoryHeader
-                      icon={group.icon}
-                      labelDe={group.labelDe}
-                      labelAr={group.labelAr}
-                      subtitle={group.subtitle}
-                      drink={groupedSection === "drinks"}
-                      sweet={groupedSection === "desserts"}
-                    />
-                  </div>
+        {groupedItems ? (
+          <div className="space-y-10 scroll-smooth">
+            {groupedItems.map((group) => (
+              <section
+                key={group.key}
+                id={`subcat-${group.key}`}
+                className="scroll-mt-36 space-y-4"
+              >
+                <MenuSubcategoryHeader
+                  icon={group.icon}
+                  labelDe={group.labelDe}
+                  labelAr={group.labelAr}
+                  subtitle={group.subtitle}
+                  drink={groupedSection === "drinks"}
+                  sweet={groupedSection === "desserts"}
+                  premium={groupedSection === "food"}
+                />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {group.items.map((item, i) => (
                     <motion.div
                       key={item.id}
@@ -738,8 +738,12 @@ export function DigitalMenuExperience() {
                     </motion.div>
                   ))}
                 </div>
-              ))
-            : filtered.map((item, i) => (
+              </section>
+            ))}
+          </div>
+        ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filtered.map((item, i) => (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 12 }}
@@ -761,6 +765,7 @@ export function DigitalMenuExperience() {
                 </motion.div>
               ))}
         </div>
+        )}
         {filtered.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}

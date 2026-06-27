@@ -22,29 +22,18 @@ export type QrTableCategoryChip = {
 }
 
 const SECTION_CHIPS: Array<{ section: string; id: string; label: string; icon: string }> = [
-  { section: "drinks", id: "section:drinks", label: "Boissons", icon: "🥤" },
+  { section: "food", id: "section:food", label: "Plats", icon: "🍽️" },
   { section: "desserts", id: "section:desserts", label: "Desserts", icon: "🍰" },
-  { section: "special", id: "section:special", label: "Shisha", icon: "💨" },
+  { section: "drinks", id: "section:drinks", label: "Boissons", icon: "🥤" },
+  { section: "special", id: "section:special", label: "Chicha", icon: "💨" },
 ]
 
-/** Construit les chips QR table : Tout, Populaire, catégories food DB, puis sections agrégées. */
-export function buildQrTableCategoryChips(categories: QrMenuCategoryRow[]): QrTableCategoryChip[] {
-  const foodCats = categories
-    .filter((c) => (c.section ?? "food") === "food")
-    .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-
+/** Chips QR table : Tout, Populaire, puis sections Plats / Desserts / Boissons / Chicha. */
+export function buildQrTableCategoryChips(_categories: QrMenuCategoryRow[]): QrTableCategoryChip[] {
   const chips: QrTableCategoryChip[] = [
     { id: "all", label: "Tout", icon: "🍽️" },
     { id: "popular", label: "Populaire", icon: "⭐" },
   ]
-
-  for (const c of foodCats) {
-    chips.push({
-      id: c.slug,
-      label: c.name,
-      icon: c.icon_emoji ?? "🍽️",
-    })
-  }
 
   for (const s of SECTION_CHIPS) {
     chips.push({ id: s.id, label: s.label, icon: s.icon })
@@ -67,6 +56,9 @@ export function filterQrTableMenuItems<T extends QrTableMenuItemFilterable>(
   if (activeCategory === "popular") return items.filter((i) => i.isPopular)
   if (activeCategory.startsWith("section:")) {
     const section = activeCategory.slice("section:".length)
+    if (section === "food") {
+      return items.filter((i) => i.section === "food")
+    }
     if (section === "drinks") {
       return items.filter((i) => i.section === "drinks" || DRINK_CATEGORY_SLUGS.has(i.category))
     }

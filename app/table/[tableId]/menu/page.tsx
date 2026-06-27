@@ -15,7 +15,7 @@ import {
   type QrTableCategoryChip,
 } from "@/lib/menu/qr-table-category-chips"
 import {
-  groupMenuItemsByCategory,
+  groupMenuItemsByDbCategories,
   resolveGroupedSection,
   type GroupedMenuItems,
 } from "@/lib/menu/menu-category-groups"
@@ -206,12 +206,7 @@ export default function TableMenuPage() {
     const sectionCats = categoryRows
       .filter((c) => (c.section ?? "food") === groupedSection)
       .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-    const orderedSlugs = sectionCats.map((c) => c.slug)
-    const subtitleBySlug = new Map<string, string>()
-    for (const c of sectionCats) {
-      if (c.description && c.description.trim()) subtitleBySlug.set(c.slug, c.description.trim())
-    }
-    return groupMenuItemsByCategory(displayed, groupedSection, orderedSlugs, subtitleBySlug)
+    return groupMenuItemsByDbCategories(displayed, sectionCats)
   }, [displayed, groupedSection, categoryRows])
 
   const addLineToCart = useCallback(
@@ -498,9 +493,13 @@ export default function TableMenuPage() {
             )}
 
             {groupedItems ? (
-              <div className="space-y-10">
+              <div className="space-y-10 scroll-smooth">
                 {groupedItems.map((group, gi) => (
-                  <section key={group.key} className="space-y-4">
+                  <section
+                    key={group.key}
+                    id={`subcat-${group.key}`}
+                    className="scroll-mt-36 space-y-4"
+                  >
                     <MenuSubcategoryHeader
                       icon={group.icon}
                       labelDe={group.labelDe}

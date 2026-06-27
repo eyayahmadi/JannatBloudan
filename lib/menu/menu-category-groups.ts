@@ -46,14 +46,85 @@ export type GroupedMenuItems<T extends { category: string }> = {
   items: T[]
 }
 
+export type MenuCategoryRow = {
+  slug: string
+  name: string
+  name_ar?: string | null
+  icon_emoji?: string | null
+  display_order?: number
+  section?: string | null
+  description?: string | null
+}
+
 export function resolveGroupedSection(
   activeCategory: string,
   sectionFilter?: string,
-): "drinks" | "desserts" | null {
+): "food" | "drinks" | "desserts" | null {
+  if (activeCategory === "section:food") return "food"
   if (activeCategory === "section:drinks") return "drinks"
   if (activeCategory === "section:desserts") return "desserts"
-  if (sectionFilter === "drinks" || sectionFilter === "desserts") return sectionFilter
+  if (
+    sectionFilter === "food" ||
+    sectionFilter === "drinks" ||
+    sectionFilter === "desserts"
+  ) {
+    return sectionFilter
+  }
   return null
+}
+
+/**
+ * Regroupe les produits par catégories DB (ordre = categories.display_order).
+ * Libellés, icônes et sous-titres proviennent de la base — aucune liste produit en dur.
+ */
+export function groupMenuItemsByDbCategories<T extends { category: string }>(
+  items: T[],
+  categories: MenuCategoryRow[],
+): GroupedMenuItems<T>[] {
+  const sorted = [...categories].sort(
+    (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0),
+  )
+
+  const byCategory = new Map<string, T[]>()
+  for (const item of items) {
+    const list = byCategory.get(item.category) ?? []
+    list.push(item)
+    byCategory.set(item.category, list)
+  }
+
+  const groups: GroupedMenuItems<T>[] = []
+  const used = new Set<string>()
+
+  for (const cat of sorted) {
+    if (used.has(cat.slug)) continue
+    used.add(cat.slug)
+    const groupItems = byCategory.get(cat.slug) ?? []
+    if (groupItems.length === 0) continue
+    groups.push({
+      key: cat.slug,
+      labelDe: cat.name,
+      labelAr: cat.name_ar ?? "",
+      icon: cat.icon_emoji ?? "🍽️",
+      subtitle: cat.description?.trim() || undefined,
+      items: groupItems,
+    })
+  }
+
+  const orphan: T[] = []
+  for (const [slug, list] of byCategory) {
+    if (!used.has(slug)) orphan.push(...list)
+  }
+  if (orphan.length > 0) {
+    groups.push({
+      key: "other",
+      labelDe: "Weitere",
+      labelAr: "أخرى",
+      icon: "🍽️",
+      items: orphan,
+    })
+  }
+
+  return groups
 }
 
 /**
