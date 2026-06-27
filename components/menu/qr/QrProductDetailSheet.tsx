@@ -53,6 +53,7 @@ export function QrProductDetailSheet({
   const [selectedExtras, setSelectedExtras] = useState<Set<string>>(new Set())
   const [quantity, setQuantity] = useState(1)
   const [customerNote, setCustomerNote] = useState("")
+  const [imgLoaded, setImgLoaded] = useState(false)
 
   const hasVariants = (product?.variants.length ?? 0) > 0
   const hasExtras = (product?.modifiers.length ?? 0) > 0
@@ -63,6 +64,7 @@ export function QrProductDetailSheet({
     setSelectedExtras(new Set())
     setQuantity(1)
     setCustomerNote("")
+    setImgLoaded(false)
   }, [open, product])
 
   const selectedVariant = useMemo((): CartVariant | null => {
@@ -131,18 +133,27 @@ export function QrProductDetailSheet({
           >
             <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-amber-200/80 dark:bg-amber-800" />
 
-            <div className="relative aspect-[16/10] max-h-[220px] w-full shrink-0 overflow-hidden bg-gradient-to-br from-amber-50 to-stone-100 dark:from-neutral-800">
+            <div className="relative aspect-[4/3] max-h-[300px] w-full shrink-0 overflow-hidden bg-gradient-to-br from-amber-50 to-stone-100 dark:from-neutral-800">
               {usePlaceholder ? (
-                <div className="flex h-full items-center justify-center text-7xl">{emoji}</div>
+                <div className="flex h-full items-center justify-center text-8xl">{emoji}</div>
               ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-full w-full object-cover"
-                />
+                <>
+                  {!imgLoaded ? (
+                    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-amber-100/90 to-amber-50/50 dark:from-neutral-800 dark:to-neutral-900" />
+                  ) : null}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    loading="lazy"
+                    decoding="async"
+                    onLoad={() => setImgLoaded(true)}
+                    className={cn(
+                      "h-full w-full object-cover transition-opacity duration-500",
+                      imgLoaded ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                </>
               )}
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
               <button

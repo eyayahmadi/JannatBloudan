@@ -1,11 +1,13 @@
 "use client"
 
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 type MenuSubcategoryHeaderProps = {
   icon: string
   labelDe: string
   labelAr: string
+  subtitle?: string
   variant?: "table" | "default"
   drink?: boolean
   sweet?: boolean
@@ -16,6 +18,7 @@ export function MenuSubcategoryHeader({
   icon,
   labelDe,
   labelAr,
+  subtitle,
   variant = "default",
   drink,
   sweet,
@@ -24,7 +27,11 @@ export function MenuSubcategoryHeader({
   const isTable = variant === "table"
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.6 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       className={cn(
         "col-span-full flex items-center gap-3",
         isTable
@@ -70,7 +77,10 @@ export function MenuSubcategoryHeader({
         <p className="text-xs text-muted-foreground" dir="rtl">
           {labelAr}
         </p>
+        {subtitle ? (
+          <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground/80">{subtitle}</p>
+        ) : null}
       </div>
-    </div>
+    </motion.div>
   )
 }

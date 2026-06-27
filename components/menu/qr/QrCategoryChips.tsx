@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import type { QrTableCategoryChip } from "@/lib/menu/qr-table-category-chips"
@@ -11,6 +12,16 @@ type QrCategoryChipsProps = {
 }
 
 export function QrCategoryChips({ chips, activeId, onSelect }: QrCategoryChipsProps) {
+  const chipRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+
+  // Garde la puce active visible dans la bande horizontale (centrée).
+  useEffect(() => {
+    const el = chipRefs.current[activeId]
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" })
+    }
+  }, [activeId])
+
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {chips.map((cat) => {
@@ -18,6 +29,9 @@ export function QrCategoryChips({ chips, activeId, onSelect }: QrCategoryChipsPr
         return (
           <button
             key={cat.id}
+            ref={(node) => {
+              chipRefs.current[cat.id] = node
+            }}
             type="button"
             onClick={() => onSelect(cat.id)}
             className={cn(

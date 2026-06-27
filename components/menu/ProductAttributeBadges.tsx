@@ -13,6 +13,8 @@ type ProductAttributeBadgesProps = {
   max?: number
   size?: "xs" | "sm"
   className?: string
+  /** Tags à ne pas afficher ici (ex. badges déjà montrés en surimpression). */
+  exclude?: ReadonlySet<string> | string[]
 }
 
 export function ProductAttributeBadges({
@@ -21,8 +23,10 @@ export function ProductAttributeBadges({
   max,
   size = "sm",
   className,
+  exclude,
 }: ProductAttributeBadgesProps) {
-  const visible = visibleProductTags(tags)
+  const ex = Array.isArray(exclude) ? new Set(exclude) : exclude
+  const visible = visibleProductTags(tags).filter((t) => !ex?.has(t))
   const list = max != null ? visible.slice(0, max) : visible
   if (list.length === 0) return null
 

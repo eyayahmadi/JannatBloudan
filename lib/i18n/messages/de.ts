@@ -309,6 +309,7 @@ export const de: Messages = {
     priceMax: "Max. Preis (€)",
     sortLabel: "Sortierung",
     sort: {
+      recommended: "Empfohlen",
       name: "Name (A–Z)",
       price_asc: "Preis aufsteigend",
       price_desc: "Preis absteigend",

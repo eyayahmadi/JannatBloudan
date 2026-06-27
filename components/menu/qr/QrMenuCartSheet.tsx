@@ -53,7 +53,14 @@ export function QrMenuFloatingBar({
           <span className="font-semibold">Warenkorb ansehen</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-lg font-bold tabular-nums">{cartTotal.toFixed(2)} €</span>
+          <motion.span
+            key={cartTotal.toFixed(2)}
+            initial={{ scale: 0.88, opacity: 0.6 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-lg font-bold tabular-nums"
+          >
+            {cartTotal.toFixed(2)} €
+          </motion.span>
           <ChevronRight className="h-5 w-5" />
         </div>
       </button>
@@ -178,24 +185,38 @@ export function QrMenuCartSheet({
                             </div>
                           </div>
                           <div className="flex flex-col items-end justify-between">
-                            <p className="text-sm font-bold tabular-nums text-amber-950 dark:text-white">
+                            <motion.p
+                              key={`${item.lineId}-${(item.price * item.quantity).toFixed(2)}`}
+                              initial={{ scale: 0.85, opacity: 0.5 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              className="text-sm font-bold tabular-nums text-amber-950 dark:text-white"
+                            >
                               {(item.price * item.quantity).toFixed(2)} €
-                            </p>
+                            </motion.p>
                             <div className="flex items-center gap-1.5">
                               <button
                                 type="button"
                                 onClick={() => onDecrement(item.lineId)}
-                                className="flex h-7 w-7 items-center justify-center rounded-full border border-amber-200 text-amber-700 active:scale-90 dark:border-amber-700"
+                                aria-label="Menge verringern"
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-200 text-amber-700 transition active:scale-90 dark:border-amber-700"
                               >
-                                <Minus className="h-3.5 w-3.5" />
+                                <Minus className="h-4 w-4" />
                               </button>
-                              <span className="w-5 text-center text-sm font-bold">{item.quantity}</span>
+                              <motion.span
+                                key={`${item.lineId}-qty-${item.quantity}`}
+                                initial={{ scale: 0.7, opacity: 0.5 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="w-6 text-center text-sm font-bold tabular-nums"
+                              >
+                                {item.quantity}
+                              </motion.span>
                               <button
                                 type="button"
                                 onClick={() => onIncrement(item.lineId)}
-                                className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-600 text-white active:scale-90"
+                                aria-label="Menge erhöhen"
+                                className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-600 text-white transition active:scale-90"
                               >
-                                <Plus className="h-3.5 w-3.5" />
+                                <Plus className="h-4 w-4" />
                               </button>
                             </div>
                           </div>
@@ -209,11 +230,20 @@ export function QrMenuCartSheet({
                   <div className="mb-3 space-y-1 text-sm">
                     <div className="flex justify-between text-amber-800/80 dark:text-amber-300/80">
                       <span>Zwischensumme</span>
-                      <span className="tabular-nums">{subtotal.toFixed(2)} €</span>
+                      <motion.span key={`sub-${subtotal.toFixed(2)}`} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="tabular-nums">
+                        {subtotal.toFixed(2)} €
+                      </motion.span>
                     </div>
                     <div className="flex justify-between font-bold text-amber-950 dark:text-white">
                       <span>Gesamt</span>
-                      <span className="text-xl tabular-nums">{cartTotal.toFixed(2)} €</span>
+                      <motion.span
+                        key={`tot-${cartTotal.toFixed(2)}`}
+                        initial={{ scale: 0.9, opacity: 0.5 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="text-xl tabular-nums"
+                      >
+                        {cartTotal.toFixed(2)} €
+                      </motion.span>
                     </div>
                   </div>
                   <p className="mb-3 text-[11px] text-amber-800/50 dark:text-amber-400/50">

@@ -80,6 +80,12 @@ export function productHasAnyTag(tags: string[] | null | undefined, need: readon
 /** Tags affichables (exclut métadonnées techniques) */
 const HIDDEN_DISPLAY_TAGS = new Set(["customizable", "has_variants"])
 
+/** Tags du groupe "badge" (highlights) — affichés en surimpression sur les cartes,
+ *  donc exclus de la liste d'infos (diet/allergènes) pour éviter les doublons. */
+export const BADGE_GROUP_TAGS: ReadonlySet<string> = new Set(
+  MENU_PRODUCT_ATTRIBUTES.filter((a) => a.group === "badge").map((a) => a.id),
+)
+
 export function visibleProductTags(tags: string[] | null | undefined): string[] {
   return normalizeProductTags(tags).filter((t) => !HIDDEN_DISPLAY_TAGS.has(t))
 }

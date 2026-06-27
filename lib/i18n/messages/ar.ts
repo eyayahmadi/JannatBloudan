@@ -308,6 +308,7 @@ export const ar: Messages = {
     priceMax: "الحد الأقصى للسعر (€)",
     sortLabel: "ترتيب",
     sort: {
+      recommended: "موصى به",
       name: "الاسم (أ–ي)",
       price_asc: "السعر من الأقل للأعلى",
       price_desc: "السعر من الأعلى للأقل",

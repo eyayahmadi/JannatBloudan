@@ -55,6 +55,9 @@ export function filterMenuProducts(items: DigitalMenuProduct[], f: MenuClientFil
 export function sortMenuProducts(items: DigitalMenuProduct[], sort: MenuSortId): DigitalMenuProduct[] {
   const copy = [...items]
   switch (sort) {
+    case "name":
+      copy.sort((a, b) => norm(a.name).localeCompare(norm(b.name)))
+      break
     case "price_asc":
       copy.sort((a, b) => a.price - b.price || norm(a.name).localeCompare(norm(b.name)))
       break
@@ -74,9 +77,15 @@ export function sortMenuProducts(items: DigitalMenuProduct[], sort: MenuSortId):
         return norm(a.name).localeCompare(norm(b.name))
       })
       break
-    case "name":
+    case "recommended":
     default:
-      copy.sort((a, b) => norm(a.name).localeCompare(norm(b.name)))
+      // Ordre de la carte : catégorie (display_order) puis produit (display_order).
+      // Array.sort est stable → display_order manquant (=0) conserve l'ordre courant.
+      copy.sort(
+        (a, b) =>
+          (a.category_display_order || 0) - (b.category_display_order || 0) ||
+          (a.display_order || 0) - (b.display_order || 0),
+      )
   }
   return copy
 }

@@ -310,6 +310,7 @@ export const fr = {
     priceMax: "Prix max (€)",
     sortLabel: "Tri",
     sort: {
+      recommended: "Recommandé",
       name: "Nom (A–Z)",
       price_asc: "Prix croissant",
       price_desc: "Prix décroissant",

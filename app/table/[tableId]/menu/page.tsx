@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useCallback } from "react"
+import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
 import { PageShell } from "@/components/site/PageShell"
@@ -11,6 +11,7 @@ import { useResolvedRestaurantTable } from "@/lib/hooks/useResolvedRestaurantTab
 import {
   buildQrTableCategoryChips,
   filterQrTableMenuItems,
+  type QrMenuCategoryRow,
   type QrTableCategoryChip,
 } from "@/lib/menu/qr-table-category-chips"
 import {
@@ -63,6 +64,7 @@ export default function TableMenuPage() {
   const [categoryChips, setCategoryChips] = useState<QrTableCategoryChip[]>([
     { id: "all", label: "Alle", icon: "🍽️" },
   ])
+  const [categoryRows, setCategoryRows] = useState<QrMenuCategoryRow[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [offline, setOffline] = useState(false)
@@ -76,11 +78,23 @@ export default function TableMenuPage() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const [recentIds, setRecentIds] = useState<string[]>([])
   const [stationAvailability, setStationAvailability] = useState<StationAvailability[]>([])
+  const navRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setFavoriteIds(getQrFavorites())
     setRecentIds(getQrRecentlyOrdered(String(tableId)))
   }, [tableId])
+
+  // Au changement de catégorie/filtre : si l'utilisateur a défilé sous la barre
+  // sticky, on remonte en douceur pour repartir en haut de la nouvelle liste.
+  useEffect(() => {
+    const nav = navRef.current
+    if (!nav) return
+    const navTop = nav.getBoundingClientRect().top + window.scrollY
+    if (window.scrollY > navTop) {
+      window.scrollTo({ top: navTop, behavior: "smooth" })
+    }
+  }, [activeCategory, attributeFilter])
 
   const loadMenu = useCallback(() => {
     setLoading(true)
@@ -93,7 +107,9 @@ export default function TableMenuPage() {
         return res.json()
       })
       .then((data) => {
-        const chips = buildQrTableCategoryChips(data.categories ?? [])
+        const rows = (data.categories ?? []) as QrMenuCategoryRow[]
+        setCategoryRows(rows)
+        const chips = buildQrTableCategoryChips(rows)
         setCategoryChips(chips.length > 0 ? chips : [{ id: "all", label: "Alle", icon: "🍽️" }])
         setOftenOrderedWith((data.often_ordered_with as Record<string, string[]>) ?? {})
         setStationAvailability((data.station_availability as StationAvailability[]) ?? [])
@@ -148,10 +164,14 @@ export default function TableMenuPage() {
   }, [filtered, search, attributeFilter])
 
   const displayed = useMemo(() => {
-    if (activeCategory !== "all" || search.trim()) return searched
-    return [...searched].sort(
-      (a, b) => Number(b.isPopular) - Number(a.isPopular) || a.name.localeCompare(b.name, "de"),
-    )
+    if (search.trim()) return searched
+    // Vue "Tout" : populaires d'abord (UX). Sinon : ordre de la carte (display_order, stable).
+    if (activeCategory === "all") {
+      return [...searched].sort(
+        (a, b) => Number(b.isPopular) - Number(a.isPopular) || a.name.localeCompare(b.name, "de"),
+      )
+    }
+    return [...searched].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
   }, [activeCategory, search, searched])
 
   const favoriteItems = useMemo(() => {
@@ -183,8 +203,16 @@ export default function TableMenuPage() {
 
   const groupedItems = useMemo((): GroupedMenuItems<QrMenuItem>[] | null => {
     if (!groupedSection) return null
-    return groupMenuItemsByCategory(displayed, groupedSection)
-  }, [displayed, groupedSection])
+    const sectionCats = categoryRows
+      .filter((c) => (c.section ?? "food") === groupedSection)
+      .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+    const orderedSlugs = sectionCats.map((c) => c.slug)
+    const subtitleBySlug = new Map<string, string>()
+    for (const c of sectionCats) {
+      if (c.description && c.description.trim()) subtitleBySlug.set(c.slug, c.description.trim())
+    }
+    return groupMenuItemsByCategory(displayed, groupedSection, orderedSlugs, subtitleBySlug)
+  }, [displayed, groupedSection, categoryRows])
 
   const addLineToCart = useCallback(
     (payload: {
@@ -374,6 +402,7 @@ export default function TableMenuPage() {
         key={item.id}
         item={item}
         index={index}
+        query={search}
         inCartQty={inCartQty}
         isFavorite={favoriteIds.includes(item.id)}
         onToggleFavorite={() => handleToggleFavorite(item.id)}
@@ -412,7 +441,7 @@ export default function TableMenuPage() {
         <StationStatusBanner className="mb-1" />
       </div>
 
-      <div className="sticky top-0 z-40 border-b border-amber-200/30 bg-white/85 shadow-sm backdrop-blur-xl dark:border-amber-900/20 dark:bg-neutral-950/85">
+      <div ref={navRef} className="sticky top-0 z-40 border-b border-amber-200/30 bg-white/85 shadow-sm backdrop-blur-xl dark:border-amber-900/20 dark:bg-neutral-950/85">
         <div className="mx-auto max-w-2xl space-y-3 px-4 py-3">
           <QrMenuSearch value={search} onChange={setSearch} resultCount={search.trim() || attributeFilter !== "all" ? displayed.length : undefined} />
           <QrAttributeFilterChips activeId={attributeFilter} onSelect={setAttributeFilter} />
@@ -437,7 +466,14 @@ export default function TableMenuPage() {
             onReset={search.trim() ? () => setSearch("") : undefined}
           />
         ) : (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}>
+          <AnimatePresence mode="wait">
+          <motion.div
+            key={`${activeCategory}|${attributeFilter}`}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+          >
             {!search.trim() && activeCategory === "all" && attributeFilter === "all" ? (
               <QrMenuQuickSections
                 favorites={favoriteItems}
@@ -469,6 +505,7 @@ export default function TableMenuPage() {
                       icon={group.icon}
                       labelDe={group.labelDe}
                       labelAr={group.labelAr}
+                      subtitle={group.subtitle}
                       variant="table"
                       drink={groupedSection === "drinks"}
                       sweet={groupedSection === "desserts"}
@@ -482,6 +519,7 @@ export default function TableMenuPage() {
               renderGrid(displayed)
             )}
           </motion.div>
+          </AnimatePresence>
         )}
       </main>
 

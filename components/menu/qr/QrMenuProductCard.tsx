@@ -8,8 +8,9 @@ import {
   formatMenuPriceLabel,
   isPlaceholderImage,
 } from "@/lib/menu/menu-display"
-import { productHasTag } from "@/lib/menu/product-attributes"
+import { BADGE_GROUP_TAGS, productHasTag } from "@/lib/menu/product-attributes"
 import { ProductAttributeBadges } from "@/components/menu/ProductAttributeBadges"
+import { HighlightText } from "@/components/menu/HighlightText"
 import { isQrItemSpicy, qrDisplayRating } from "@/lib/menu/qr-menu-helpers"
 import type { QrMenuItem } from "@/lib/menu/qr-menu-types"
 import { cn } from "@/lib/utils"
@@ -19,6 +20,7 @@ type QrMenuProductCardProps = {
   inCartQty: number
   index?: number
   isFavorite?: boolean
+  query?: string
   onToggleFavorite?: () => void
   onOpen: () => void
   onQuickAdd: () => void
@@ -32,6 +34,7 @@ export function QrMenuProductCard({
   inCartQty,
   index = 0,
   isFavorite = false,
+  query,
   onToggleFavorite,
   onOpen,
   onQuickAdd,
@@ -105,7 +108,11 @@ export function QrMenuProductCard({
           </span>
         ) : null}
         <div className="absolute left-2 top-2 flex max-w-[85%] flex-wrap gap-1">
-          {item.isPopular ? (
+          {productHasTag(item.tags, "best_seller") ? (
+            <span className="rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow">
+              🏆 Bestseller
+            </span>
+          ) : productHasTag(item.tags, "popular") ? (
             <span className="rounded-full bg-amber-600/95 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow">
               ⭐ Beliebt
             </span>
@@ -149,11 +156,11 @@ export function QrMenuProductCard({
 
       <div className="p-3.5">
         <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-amber-950 dark:text-white">
-          {item.name}
+          <HighlightText text={item.name} query={query} />
         </h3>
         {item.name_ar ? (
           <p className="mt-0.5 line-clamp-1 text-xs text-amber-800/60 dark:text-amber-300/60" dir="rtl">
-            {item.name_ar}
+            <HighlightText text={item.name_ar} query={query} />
           </p>
         ) : null}
         {item.description ? (
@@ -161,7 +168,13 @@ export function QrMenuProductCard({
             {item.description}
           </p>
         ) : null}
-        <ProductAttributeBadges tags={item.tags} max={4} size="xs" className="mt-1.5" />
+        <ProductAttributeBadges
+          tags={item.tags}
+          exclude={BADGE_GROUP_TAGS}
+          max={5}
+          size="xs"
+          className="mt-1.5"
+        />
 
         <div className="mt-3 flex items-end justify-between gap-2">
           <div>
@@ -181,17 +194,24 @@ export function QrMenuProductCard({
               <button
                 type="button"
                 onClick={onDecrement}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-800 transition active:scale-90 dark:bg-amber-900/40 dark:text-amber-300"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-800 transition active:scale-90 dark:bg-amber-900/40 dark:text-amber-300"
               >
-                <Minus className="h-3.5 w-3.5" />
+                <Minus className="h-4 w-4" />
               </button>
-              <span className="w-5 text-center text-sm font-bold">{inCartQty}</span>
+              <motion.span
+                key={inCartQty}
+                initial={{ scale: 0.7, opacity: 0.5 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="w-6 text-center text-sm font-bold tabular-nums"
+              >
+                {inCartQty}
+              </motion.span>
               <button
                 type="button"
                 onClick={onIncrement}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow active:scale-90"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow active:scale-90"
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="h-4 w-4" />
               </button>
             </div>
           ) : (
@@ -204,7 +224,7 @@ export function QrMenuProductCard({
                 if (needsSheet) onOpen()
                 else onQuickAdd()
               }}
-              className="flex h-9 min-w-9 items-center justify-center gap-1 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 px-3 text-white shadow-md transition hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-10 min-w-10 items-center justify-center gap-1 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 px-3 text-white shadow-md transition hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {inCartQty > 0 && !needsSheet ? (
                 <span className="text-xs font-bold">{inCartQty}</span>

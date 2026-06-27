@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { LucideIcon } from "lucide-react"
 import {
@@ -35,13 +35,14 @@ import { useI18n } from "@/lib/i18n/context"
 import type { DigitalMenuProduct, MenuClientFilters, MenuSortId } from "@/lib/menu/digital-menu-product"
 import { formatMenuPriceLabel } from "@/lib/menu/menu-display"
 import { filterMenuProducts, similarProducts, sortMenuProducts } from "@/lib/menu/filter-menu-client"
-import { filterProductsByAttributeTag, QR_MENU_ATTRIBUTE_FILTERS, attributeBadgeLabel, type QrAttributeFilterId } from "@/lib/menu/product-attributes"
+import { filterProductsByAttributeTag, QR_MENU_ATTRIBUTE_FILTERS, attributeBadgeLabel, BADGE_GROUP_TAGS, productHasTag, type QrAttributeFilterId } from "@/lib/menu/product-attributes"
 import { ProductAttributeBadges } from "@/components/menu/ProductAttributeBadges"
 import { QrAttributeFilterChips } from "@/components/menu/qr/QrAttributeFilterChips"
 import type { Station } from "@/lib/stations/config"
 import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
 import { groupMenuItemsByCategory } from "@/lib/menu/menu-category-groups"
 import { MenuSubcategoryHeader } from "@/components/menu/MenuSubcategoryHeader"
+import { HighlightText } from "@/components/menu/HighlightText"
 import { ProductCustomizationModal } from "@/components/menu/ProductCustomizationModal"
 import { formatKitchenTicketNotes, formatVariantLabel } from "@/lib/menu/cart-line"
 
@@ -50,9 +51,11 @@ type CatalogCategoryRow = {
   name: string
   slug: string
   section?: string | null
+  display_order?: number
+  description?: string | null
 }
 
-const SECTION_IDS = ["all", "food", "desserts", "drinks", "special"] as const
+const SECTION_IDS = ["all", "food", "drinks", "desserts", "special"] as const
 type SectionId = (typeof SECTION_IDS)[number]
 
 const SECTION_ICON: Record<SectionId, LucideIcon> = {
@@ -92,9 +95,19 @@ export function DigitalMenuExperience() {
   const [vegetarianOnly, setVegetarianOnly] = useState(false)
   const [attributeFilter, setAttributeFilter] = useState<QrAttributeFilterId>("all")
   const [stationFilter, setStationFilter] = useState<"all" | Station>("all")
-  const [sortBy, setSortBy] = useState<MenuSortId>("name")
+  const [sortBy, setSortBy] = useState<MenuSortId>("recommended")
   const [placing, setPlacing] = useState(false)
   const [customizeItem, setCustomizeItem] = useState<DigitalMenuProduct | null>(null)
+  const navRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const nav = navRef.current
+    if (!nav) return
+    const navTop = nav.getBoundingClientRect().top + window.scrollY
+    if (window.scrollY > navTop) {
+      window.scrollTo({ top: navTop, behavior: "smooth" })
+    }
+  }, [section, categorySlug, attributeFilter])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -208,8 +221,17 @@ export function DigitalMenuExperience() {
 
   const groupedItems = useMemo(() => {
     if (!groupedSection) return null
-    return groupMenuItemsByCategory(filtered, groupedSection)
-  }, [filtered, groupedSection])
+    const sectionCats = (data?.categories ?? [])
+      .filter((c) => (c.section ?? "food") === groupedSection)
+      .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+    const orderedSlugs = sectionCats.map((c) => c.slug)
+    const subtitleBySlug = new Map<string, string>()
+    for (const c of sectionCats) {
+      const d = (c as { description?: string | null }).description
+      if (d && d.trim()) subtitleBySlug.set(c.slug, d.trim())
+    }
+    return groupMenuItemsByCategory(filtered, groupedSection, orderedSlugs, subtitleBySlug)
+  }, [data, filtered, groupedSection])
 
   const handleAddProduct = useCallback(
     (item: DigitalMenuProduct) => {
@@ -243,7 +265,7 @@ export function DigitalMenuExperience() {
     setVegetarianOnly(false)
     setAttributeFilter("all")
     setStationFilter("all")
-    setSortBy("name")
+    setSortBy("recommended")
   }, [])
 
   const showcaseVisible =
@@ -257,7 +279,7 @@ export function DigitalMenuExperience() {
     !vegetarianOnly &&
     attributeFilter === "all" &&
     stationFilter === "all" &&
-    sortBy === "name" &&
+    sortBy === "recommended" &&
     priceMin === "" &&
     priceMax === ""
 
@@ -307,11 +329,11 @@ export function DigitalMenuExperience() {
         onClear: () => setStationFilter("all"),
       })
     }
-    if (sortBy !== "name")
+    if (sortBy !== "recommended")
       chips.push({
         key: "sort",
         label: `${t("menu.sortLabel")}: ${t(`menu.sort.${sortBy}`)}`,
-        onClear: () => setSortBy("name"),
+        onClear: () => setSortBy("recommended"),
       })
     return chips
   }, [
@@ -373,8 +395,31 @@ export function DigitalMenuExperience() {
 
   if (loading && !data) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center text-muted-foreground">
-        {t("menu.loading")}
+      <div className="mx-auto w-full max-w-6xl px-4 py-6" aria-busy="true" aria-label={t("menu.loading")}>
+        <div className="mb-4 h-9 w-44 animate-pulse rounded-xl bg-muted" />
+        <div className="mb-6 flex gap-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-9 w-20 animate-pulse rounded-full bg-muted" />
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm"
+            >
+              <div className="aspect-[4/3] w-full animate-pulse bg-muted" />
+              <div className="space-y-2 p-3">
+                <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-3/5 animate-pulse rounded bg-muted/70" />
+                <div className="flex justify-between pt-1">
+                  <div className="h-5 w-14 animate-pulse rounded bg-muted" />
+                  <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -393,7 +438,7 @@ export function DigitalMenuExperience() {
       <div className="site-container pt-4">
         <StationStatusBanner />
       </div>
-      <div className="sticky top-0 z-40 border-b border-border/60 bg-background/90 backdrop-blur-md">
+      <div ref={navRef} className="sticky top-0 z-40 border-b border-border/60 bg-background/90 backdrop-blur-md">
         <div className="site-container flex flex-col gap-3 py-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="relative max-w-xl flex-1">
@@ -497,6 +542,7 @@ export function DigitalMenuExperience() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="recommended">{t("menu.sort.recommended")}</SelectItem>
                   <SelectItem value="name">{t("menu.sort.name")}</SelectItem>
                   <SelectItem value="price_asc">{t("menu.sort.price_asc")}</SelectItem>
                   <SelectItem value="price_desc">{t("menu.sort.price_desc")}</SelectItem>
@@ -648,6 +694,14 @@ export function DigitalMenuExperience() {
               ? t(`menu.section.${section}`)
               : t("menu.categoryFallback")}
         </h2>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${section}|${categorySlug}|${attributeFilter}`}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+          >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {groupedItems
             ? groupedItems.map((group) => (
@@ -657,6 +711,7 @@ export function DigitalMenuExperience() {
                       icon={group.icon}
                       labelDe={group.labelDe}
                       labelAr={group.labelAr}
+                      subtitle={group.subtitle}
                       drink={groupedSection === "drinks"}
                       sweet={groupedSection === "desserts"}
                     />
@@ -675,6 +730,7 @@ export function DigitalMenuExperience() {
                         onSuggestSearch={(name) => setQ(name)}
                         onAdd={handleAddProduct}
                         tagMeta={tagMeta}
+                        query={q}
                         dark={section === "special"}
                         sweet={section === "desserts"}
                         drink={section === "drinks"}
@@ -697,6 +753,7 @@ export function DigitalMenuExperience() {
                     onSuggestSearch={(name) => setQ(name)}
                     onAdd={handleAddProduct}
                     tagMeta={tagMeta}
+                    query={q}
                     dark={section === "special"}
                     sweet={section === "desserts"}
                     drink={section === "drinks"}
@@ -705,8 +762,30 @@ export function DigitalMenuExperience() {
               ))}
         </div>
         {filtered.length === 0 && (
-          <p className="py-8 text-center text-sm font-medium text-muted-foreground">{t("menu.noResults")}</p>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center gap-3 py-16 text-center"
+          >
+            <motion.span
+              className="text-5xl"
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            >
+              {q.trim() ? "🔍" : "🍽️"}
+            </motion.span>
+            <div className="max-w-xs space-y-1.5">
+              <p className="text-base font-semibold text-foreground">{t("menu.noResults")}</p>
+              <p className="text-sm text-muted-foreground">{t("menu.emptyHint")}</p>
+            </div>
+            <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={resetFilters}>
+              <RotateCcw className="mr-1 h-3.5 w-3.5" />
+              {t("menu.resetFilters")}
+            </Button>
+          </motion.div>
         )}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       <AnimatePresence>
@@ -738,57 +817,85 @@ export function DigitalMenuExperience() {
               </div>
               <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
                 {items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t("menu.cartEmpty")}</p>
+                  <div className="flex flex-col items-center gap-2 py-12 text-center">
+                    <ShoppingCart className="h-12 w-12 text-muted-foreground/40" />
+                    <p className="text-sm text-muted-foreground">{t("menu.cartEmpty")}</p>
+                  </div>
                 ) : (
-                  items.map((i) => (
-                    <div
-                      key={i.lineId}
-                      className="flex items-center justify-between gap-2 rounded-xl border p-2 text-sm"
-                    >
-                      <div>
-                        <p className="font-medium">{i.name}</p>
-                        {i.variant ? (
-                          <p className="text-xs text-muted-foreground">{formatVariantLabel(i.variant)}</p>
-                        ) : null}
-                        {i.extras.length > 0 ? (
-                          <p className="text-xs text-muted-foreground">
-                            {i.extras.map((e) => `+ ${e.name}`).join(", ")}
-                          </p>
-                        ) : null}
-                        <p className="text-xs text-muted-foreground">
-                          {(i.price * i.quantity).toFixed(2)} €
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="secondary"
-                          className="h-8 w-8"
-                          onClick={() => setQty(i.lineId, i.quantity - 1)}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="w-6 text-center">{i.quantity}</span>
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="secondary"
-                          className="h-8 w-8"
-                          onClick={() => setQty(i.lineId, i.quantity + 1)}
-                          disabled={i.quantity >= i.maxOrderable}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))
+                  <AnimatePresence initial={false}>
+                    {items.map((i) => (
+                      <motion.div
+                        key={i.lineId}
+                        layout
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 12, height: 0, marginBottom: 0 }}
+                        className="flex items-center justify-between gap-2 rounded-xl border p-2 text-sm"
+                      >
+                        <div>
+                          <p className="font-medium">{i.name}</p>
+                          {i.variant ? (
+                            <p className="text-xs text-muted-foreground">{formatVariantLabel(i.variant)}</p>
+                          ) : null}
+                          {i.extras.length > 0 ? (
+                            <p className="text-xs text-muted-foreground">
+                              {i.extras.map((e) => `+ ${e.name}`).join(", ")}
+                            </p>
+                          ) : null}
+                          <motion.p
+                            key={(i.price * i.quantity).toFixed(2)}
+                            initial={{ opacity: 0.5 }}
+                            animate={{ opacity: 1 }}
+                            className="text-xs text-muted-foreground"
+                          >
+                            {(i.price * i.quantity).toFixed(2)} €
+                          </motion.p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="secondary"
+                            className="h-9 w-9"
+                            onClick={() => setQty(i.lineId, i.quantity - 1)}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <motion.span
+                            key={`qty-${i.quantity}`}
+                            initial={{ scale: 0.7, opacity: 0.5 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="w-6 text-center tabular-nums"
+                          >
+                            {i.quantity}
+                          </motion.span>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="secondary"
+                            className="h-9 w-9"
+                            onClick={() => setQty(i.lineId, i.quantity + 1)}
+                            disabled={i.quantity >= i.maxOrderable}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 )}
               </div>
               <div className="mt-4 space-y-2 border-t pt-4">
                 <div className="flex justify-between text-sm">
                   <span>{t("menu.total")}</span>
-                  <span className="font-semibold">{subtotal.toFixed(2)} €</span>
+                  <motion.span
+                    key={subtotal.toFixed(2)}
+                    initial={{ scale: 0.9, opacity: 0.5 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="font-semibold tabular-nums"
+                  >
+                    {subtotal.toFixed(2)} €
+                  </motion.span>
                 </div>
                 <Button
                   className="w-full"
@@ -872,6 +979,7 @@ function MenuCard({
   onSuggestSearch,
   onAdd,
   tagMeta,
+  query,
   dark,
   sweet,
   drink,
@@ -882,12 +990,18 @@ function MenuCard({
   onSuggestSearch: (name: string) => void
   tagMeta: (tag: string) => { text: string; className: string }
   onAdd: (item: DigitalMenuProduct) => void
+  query?: string
   dark?: boolean
   sweet?: boolean
   drink?: boolean
 }) {
   const { t, locale } = useI18n()
+  const [imgLoaded, setImgLoaded] = useState(false)
   const can = item.can_order
+
+  useEffect(() => {
+    setImgLoaded(false)
+  }, [item.image_url])
   const often = useMemo(() => {
     const byId = new Map(catalog.map((p) => [p.id, p]))
     return (oftenOrderedWith ?? []).map((id) => byId.get(id)).filter((x): x is DigitalMenuProduct => !!x)
@@ -910,15 +1024,24 @@ function MenuCard({
         )}
       >
         {item.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={item.image_url}
-            alt={item.name}
-            className={cn(
-              "h-full w-full object-cover transition duration-500 group-hover:scale-105",
-              !can && "grayscale-[0.35]",
-            )}
-          />
+          <>
+            {!imgLoaded ? (
+              <div className="absolute inset-0 animate-pulse bg-muted" />
+            ) : null}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={item.image_url}
+              alt={item.name}
+              loading="lazy"
+              decoding="async"
+              onLoad={() => setImgLoaded(true)}
+              className={cn(
+                "h-full w-full object-cover transition duration-500 group-hover:scale-105",
+                !can && "grayscale-[0.35]",
+                imgLoaded ? "opacity-100" : "opacity-0",
+              )}
+            />
+          </>
         ) : (
           <span>{sectionEmoji(item.section)}</span>
         )}
@@ -927,8 +1050,8 @@ function MenuCard({
             {t("menu.unavailableBadge")}
           </span>
         ) : null}
-        {can && item.is_customizable && !item.tags.includes("popular") && !item.tags.includes("best_seller") && !item.tags.includes("new") ? (
-          <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-amber-900 shadow dark:bg-zinc-800/90 dark:text-amber-200">
+        {can && item.is_customizable ? (
+          <span className="absolute left-2 bottom-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-amber-900 shadow dark:bg-zinc-800/90 dark:text-amber-200">
             {item.has_variants && item.modifiers.length > 0
               ? "Wahl"
               : item.has_variants
@@ -936,15 +1059,28 @@ function MenuCard({
                 : "Extras"}
           </span>
         ) : null}
-        {can && (item.tags.includes("popular") || item.tags.includes("best_seller")) ? (
-          <span className="absolute left-2 top-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-xs font-medium text-white">
-            {t("menu.tagPopular")}
-          </span>
-        ) : null}
-        {can && item.tags.includes("new") ? (
-          <span className="absolute left-2 top-10 rounded-full bg-emerald-600/90 px-2 py-0.5 text-[10px] font-semibold text-white">
-            {t("menu.tagNew")}
-          </span>
+        {can ? (
+          <div className="absolute left-2 top-2 flex max-w-[85%] flex-col items-start gap-1">
+            {productHasTag(item.tags, "best_seller") ? (
+              <span className="rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow">
+                {locale === "ar" ? attributeBadgeLabel("best_seller")?.ar : attributeBadgeLabel("best_seller")?.de}
+              </span>
+            ) : item.tags.includes("popular") ? (
+              <span className="rounded-full bg-amber-500/90 px-2 py-0.5 text-xs font-medium text-white">
+                {t("menu.tagPopular")}
+              </span>
+            ) : null}
+            {item.tags.includes("new") ? (
+              <span className="rounded-full bg-emerald-600/90 px-2 py-0.5 text-[10px] font-semibold text-white">
+                {t("menu.tagNew")}
+              </span>
+            ) : null}
+            {productHasTag(item.tags, "chef_recommendation") ? (
+              <span className="rounded-full bg-violet-600/90 px-2 py-0.5 text-[10px] font-semibold text-white">
+                {locale === "ar" ? attributeBadgeLabel("chef_recommendation")?.ar : attributeBadgeLabel("chef_recommendation")?.de}
+              </span>
+            ) : null}
+          </div>
         ) : null}
         {item.availability === "limited" && can ? (
           <span className="absolute bottom-2 right-2 rounded bg-amber-600/90 px-2 py-0.5 text-xs text-white">
@@ -953,11 +1089,13 @@ function MenuCard({
         ) : null}
       </div>
       <div className="flex flex-1 flex-col p-3">
-        <ProductAttributeBadges tags={item.tags} locale={locale} max={6} size="xs" className="mb-1" />
-        <h3 className={cn("font-semibold leading-tight", dark && "text-zinc-50")}>{item.name}</h3>
+        <ProductAttributeBadges tags={item.tags} locale={locale} exclude={BADGE_GROUP_TAGS} max={6} size="xs" className="mb-1" />
+        <h3 className={cn("font-semibold leading-tight", dark && "text-zinc-50")}>
+          <HighlightText text={item.name} query={query} />
+        </h3>
         {item.name_ar && locale !== "ar" && (
           <p className="text-sm text-muted-foreground" dir="rtl">
-            {item.name_ar}
+            <HighlightText text={item.name_ar} query={query} />
           </p>
         )}
         <p
@@ -1015,7 +1153,7 @@ function MenuCard({
           <Button
             type="button"
             size="sm"
-            className="transition active:scale-95"
+            className="min-h-10 px-4 transition active:scale-95 sm:min-h-9"
             disabled={!can}
             onClick={() => onAdd(item)}
           >

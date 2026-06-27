@@ -57,7 +57,7 @@ type ProductRow = Record<string, unknown> & {
 
 /** Jointure produits + catégories + ingrédients (schéma digital menu). */
 const PRODUCTS_SELECT_FULL = `id, name, name_ar, slug, description, price, image_url, is_available, is_popular, is_new,
-           is_chef_choice, is_recommended, is_vegetarian, spice_level, stock_quantity, tags, station, created_at,
+           is_chef_choice, is_recommended, is_vegetarian, spice_level, stock_quantity, tags, station, display_order, created_at,
            categories ( id, name, slug ),
            product_ingredients ( quantity, ingredients ( id, name, unit, stock_quantity, threshold_low, threshold_critical ) )`
 
@@ -89,10 +89,10 @@ function isMissingColumnError(msg: string | undefined): boolean {
 async function loadMenuCategories(supabase: Awaited<ReturnType<typeof createClient>>) {
   const full = await supabase
     .from("categories")
-    .select("id, name, slug, section, display_order, icon_emoji, name_ar")
+    .select("id, name, slug, section, display_order, icon_emoji, name_ar, description")
     .eq("is_active", true)
-    .order("section", { ascending: true })
     .order("display_order", { ascending: true })
+    .order("name", { ascending: true })
 
   if (!full.error) {
     const rows = (full.data ?? []).map((c: Record<string, unknown>) => ({
@@ -103,6 +103,7 @@ async function loadMenuCategories(supabase: Awaited<ReturnType<typeof createClie
       display_order: Number(c.display_order) || 0,
       icon_emoji: c.icon_emoji != null ? String(c.icon_emoji) : null,
       name_ar: c.name_ar != null ? String(c.name_ar) : null,
+      description: c.description != null ? String(c.description) : null,
     }))
     return { rows, error: null as string | null }
   }
@@ -112,9 +113,9 @@ async function loadMenuCategories(supabase: Awaited<ReturnType<typeof createClie
 
   const noActiveFilter = await supabase
     .from("categories")
-    .select("id, name, slug, section, display_order, icon_emoji, name_ar")
-    .order("section", { ascending: true })
+    .select("id, name, slug, section, display_order, icon_emoji, name_ar, description")
     .order("display_order", { ascending: true })
+    .order("name", { ascending: true })
 
   if (!noActiveFilter.error) {
     const rows = (noActiveFilter.data ?? []).map((c: Record<string, unknown>) => ({
@@ -125,6 +126,7 @@ async function loadMenuCategories(supabase: Awaited<ReturnType<typeof createClie
       display_order: Number(c.display_order) || 0,
       icon_emoji: c.icon_emoji != null ? String(c.icon_emoji) : null,
       name_ar: c.name_ar != null ? String(c.name_ar) : null,
+      description: c.description != null ? String(c.description) : null,
     }))
     return { rows, error: null as string | null }
   }
@@ -146,6 +148,7 @@ async function loadMenuCategories(supabase: Awaited<ReturnType<typeof createClie
     display_order: 0,
     icon_emoji: null as string | null,
     name_ar: null as string | null,
+    description: null as string | null,
   }))
   return { rows, error: null as string | null }
 }
@@ -346,6 +349,7 @@ function enrich(
     category: catSlug,
     categoryName: p.categories?.name ?? "",
     category_display_order: categoryOrderBySlug.get(catSlug) ?? 0,
+    display_order: Number((p as { display_order?: number }).display_order) || 0,
     section: secFromMap ?? p.categories?.section ?? "food",
     price: displayPrice,
     image_url: p.image_url ?? null,

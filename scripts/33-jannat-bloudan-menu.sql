@@ -93,7 +93,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Plats', 'plats', 'Plats', 'food', 30, true, '🍽️', 'الوجبات')
+VALUES ('Manakish', 'manakish', 'Manakish', 'food', 30, true, '🫓', 'المناقيش')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -103,7 +103,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Shawarma', 'shawarma', 'Shawarma', 'food', 40, true, '🌯', 'شاورما')
+VALUES ('Plats', 'plats', 'Plats', 'food', 40, true, '🍽️', 'الوجبات')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -113,7 +113,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Grillades', 'grillades', 'Grillades', 'food', 50, true, '🔥', 'مشاوي')
+VALUES ('Shawarma', 'shawarma', 'Shawarma', 'food', 50, true, '🌯', 'الشاورما')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -123,7 +123,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Pizza', 'pizza', 'Pizza', 'food', 60, true, '🍕', 'بيتزا')
+VALUES ('Grillades', 'grillades', 'Grillades', 'food', 60, true, '🔥', 'المشاوي')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -133,7 +133,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Burgers', 'burgers', 'Burgers', 'food', 70, true, '🍔', 'برغر')
+VALUES ('Pizza', 'pizza', 'Pizza', 'food', 70, true, '🍕', 'البيتزا')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -143,7 +143,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Sandwiches', 'sandwiches', 'Sandwiches', 'food', 80, true, '🥪', 'ساندويتش')
+VALUES ('Burgers', 'burgers', 'Burgers', 'food', 80, true, '🍔', 'البرغر')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -153,7 +153,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Manakish', 'manakish', 'Manakish', 'food', 90, true, '🫓', 'المناقيش')
+VALUES ('Sandwiches', 'sandwiches', 'Sandwiches', 'food', 90, true, '🥪', 'الساندويش')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -163,7 +163,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Waffeln', 'waffeln', 'Waffeln', 'desserts', 10, true, '🧇', 'وافل')
+VALUES ('Water', 'water', 'Water', 'drinks', 100, true, '💧', 'المياه')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -173,7 +173,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Crêpes', 'crepes', 'Crêpes', 'desserts', 20, true, '🥞', 'كريب')
+VALUES ('Juices', 'juices', 'Juices', 'drinks', 110, true, '🧃', 'العصائر')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -183,7 +183,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Pancakes', 'pancakes', 'Pancakes', 'desserts', 30, true, '🥞', 'بان كيك')
+VALUES ('Soft Drinks', 'soft-drinks', 'Soft Drinks', 'drinks', 120, true, '🥤', 'المشروبات الغازية')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -193,7 +193,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Fruit Salads', 'fruit-salads', 'Fruit Salads', 'desserts', 40, true, '🍓', 'سلطات فواكه')
+VALUES ('Ice Tea', 'ice-tea', 'Ice Tea', 'drinks', 130, true, '🧊', 'الشاي المثلج')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -203,7 +203,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Ice Cream', 'ice-cream', 'Ice Cream', 'desserts', 50, true, '🍨', 'آيس كريم')
+VALUES ('Tea', 'tea', 'Tea', 'drinks', 140, true, '🍵', 'الشاي')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -213,7 +213,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Cheesecakes', 'cheesecakes', 'Cheesecakes', 'desserts', 60, true, '🍰', 'تشيز كيك')
+VALUES ('Iced Coffee', 'iced-coffee', 'Iced Coffee', 'drinks', 150, true, '🧋', 'القهوة الباردة')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -223,7 +223,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Cakes', 'cakes', 'Cakes', 'desserts', 70, true, '🍫', 'كيك')
+VALUES ('Hot Drinks', 'coffee', 'Hot Drinks', 'drinks', 160, true, '☕', 'المشروبات الساخنة')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -233,7 +233,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Snacks', 'snacks', 'Snacks', 'desserts', 80, true, '🥜', 'سناك')
+VALUES ('Cocktails', 'cocktails', 'Cocktails', 'drinks', 170, true, '🍹', 'الكوكتيلات')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -243,7 +243,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Water', 'water', 'Water', 'drinks', 10, true, '💧', 'مياه')
+VALUES ('Smoothies', 'smoothies', 'Smoothies', 'drinks', 180, true, '🥤', 'السموذي')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -253,7 +253,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Juices', 'juices', 'Juices', 'drinks', 20, true, '🧃', 'عصائر')
+VALUES ('Milkshakes', 'milkshakes', 'Milkshakes', 'drinks', 190, true, '🥛', 'الميلك شيك')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -263,7 +263,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Soft Drinks', 'soft-drinks', 'Soft Drinks', 'drinks', 30, true, '🥤', 'مشروبات غازية')
+VALUES ('Banana Milk Cocktails', 'banana-milk-cocktails', 'Banana Milk Cocktails', 'drinks', 200, true, '🍌', 'كوكتيلات الموز بالحليب')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -273,7 +273,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Ice Tea', 'ice-tea', 'Ice Tea', 'drinks', 40, true, '🧊', 'شاي مثلج')
+VALUES ('Imperator', 'imperator', 'Imperator', 'drinks', 210, true, '💨', 'إمبراطور')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -283,7 +283,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Cocktails', 'cocktails', 'Cocktails', 'drinks', 50, true, '🍹', 'كوكتيلات')
+VALUES ('Waffeln', 'waffeln', 'Waffeln', 'desserts', 220, true, '🧇', 'وافل')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -293,7 +293,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Smoothies', 'smoothies', 'Smoothies', 'drinks', 60, true, '🥤', 'سموذي')
+VALUES ('Crêpes', 'crepes', 'Crêpes', 'desserts', 230, true, '🥞', 'كريب')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -303,7 +303,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Milkshakes', 'milkshakes', 'Milkshakes', 'drinks', 70, true, '🥛', 'ميلك شيك')
+VALUES ('Pancakes', 'pancakes', 'Pancakes', 'desserts', 240, true, '🥞', 'بان كيك')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -313,7 +313,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Banana Milk Cocktails', 'banana-milk-cocktails', 'Banana Milk Cocktails', 'drinks', 80, true, '🍌', 'كوكتيلات موز بالحليب')
+VALUES ('Fruit Salads', 'fruit-salads', 'Fruit Salads', 'desserts', 250, true, '🍓', 'سلطات الفواكه')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -323,7 +323,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Coffee', 'coffee', 'Coffee', 'drinks', 90, true, '☕', 'قهوة')
+VALUES ('Ice Cream', 'ice-cream', 'Ice Cream', 'desserts', 260, true, '🍨', 'آيس كريم')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -333,7 +333,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Tea', 'tea', 'Tea', 'drinks', 100, true, '🍵', 'شاي')
+VALUES ('Cheesecakes', 'cheesecakes', 'Cheesecakes', 'desserts', 270, true, '🍰', 'تشيز كيك')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -343,7 +343,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Iced Coffee', 'iced-coffee', 'Iced Coffee', 'drinks', 110, true, '🧋', 'قهوة مثلجة')
+VALUES ('Cakes', 'cakes', 'Cakes', 'desserts', 280, true, '🍫', 'كيك')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -353,7 +353,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Shisha', 'shisha', 'Shisha', 'special', 10, true, '💨', 'شيشة')
+VALUES ('Snacks', 'snacks', 'Snacks', 'desserts', 290, true, '🥜', 'سناكات')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -363,7 +363,7 @@ ON CONFLICT (slug) DO UPDATE SET
   icon_emoji = EXCLUDED.icon_emoji,
   name_ar = EXCLUDED.name_ar;
 INSERT INTO categories (name, slug, description, section, display_order, is_active, icon_emoji, name_ar)
-VALUES ('Imperator', 'imperator', 'Imperator', 'special', 20, true, '💨', 'إمبيراتور')
+VALUES ('Shisha', 'shisha', 'Shisha', 'special', 300, true, '💨', 'أراكيل')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -377,13 +377,25 @@ DO $$
 DECLARE
   cat_entrees UUID;
   cat_salades UUID;
+  cat_manakish UUID;
   cat_plats UUID;
   cat_shawarma UUID;
   cat_grillades UUID;
   cat_pizza UUID;
   cat_burgers UUID;
   cat_sandwiches UUID;
-  cat_manakish UUID;
+  cat_water UUID;
+  cat_juices UUID;
+  cat_soft_drinks UUID;
+  cat_ice_tea UUID;
+  cat_tea UUID;
+  cat_iced_coffee UUID;
+  cat_coffee UUID;
+  cat_cocktails UUID;
+  cat_smoothies UUID;
+  cat_milkshakes UUID;
+  cat_banana_milk_cocktails UUID;
+  cat_imperator UUID;
   cat_waffeln UUID;
   cat_crepes UUID;
   cat_pancakes UUID;
@@ -392,32 +404,32 @@ DECLARE
   cat_cheesecakes UUID;
   cat_cakes UUID;
   cat_snacks UUID;
-  cat_water UUID;
-  cat_juices UUID;
-  cat_soft_drinks UUID;
-  cat_ice_tea UUID;
-  cat_cocktails UUID;
-  cat_smoothies UUID;
-  cat_milkshakes UUID;
-  cat_banana_milk_cocktails UUID;
-  cat_coffee UUID;
-  cat_tea UUID;
-  cat_iced_coffee UUID;
   cat_shisha UUID;
-  cat_imperator UUID;
   prod_id UUID;
   grp_id UUID;
   var_grp_id UUID;
 BEGIN
   SELECT id INTO cat_entrees FROM categories WHERE slug = 'entrees';
   SELECT id INTO cat_salades FROM categories WHERE slug = 'salades';
+  SELECT id INTO cat_manakish FROM categories WHERE slug = 'manakish';
   SELECT id INTO cat_plats FROM categories WHERE slug = 'plats';
   SELECT id INTO cat_shawarma FROM categories WHERE slug = 'shawarma';
   SELECT id INTO cat_grillades FROM categories WHERE slug = 'grillades';
   SELECT id INTO cat_pizza FROM categories WHERE slug = 'pizza';
   SELECT id INTO cat_burgers FROM categories WHERE slug = 'burgers';
   SELECT id INTO cat_sandwiches FROM categories WHERE slug = 'sandwiches';
-  SELECT id INTO cat_manakish FROM categories WHERE slug = 'manakish';
+  SELECT id INTO cat_water FROM categories WHERE slug = 'water';
+  SELECT id INTO cat_juices FROM categories WHERE slug = 'juices';
+  SELECT id INTO cat_soft_drinks FROM categories WHERE slug = 'soft-drinks';
+  SELECT id INTO cat_ice_tea FROM categories WHERE slug = 'ice-tea';
+  SELECT id INTO cat_tea FROM categories WHERE slug = 'tea';
+  SELECT id INTO cat_iced_coffee FROM categories WHERE slug = 'iced-coffee';
+  SELECT id INTO cat_coffee FROM categories WHERE slug = 'coffee';
+  SELECT id INTO cat_cocktails FROM categories WHERE slug = 'cocktails';
+  SELECT id INTO cat_smoothies FROM categories WHERE slug = 'smoothies';
+  SELECT id INTO cat_milkshakes FROM categories WHERE slug = 'milkshakes';
+  SELECT id INTO cat_banana_milk_cocktails FROM categories WHERE slug = 'banana-milk-cocktails';
+  SELECT id INTO cat_imperator FROM categories WHERE slug = 'imperator';
   SELECT id INTO cat_waffeln FROM categories WHERE slug = 'waffeln';
   SELECT id INTO cat_crepes FROM categories WHERE slug = 'crepes';
   SELECT id INTO cat_pancakes FROM categories WHERE slug = 'pancakes';
@@ -426,19 +438,7 @@ BEGIN
   SELECT id INTO cat_cheesecakes FROM categories WHERE slug = 'cheesecakes';
   SELECT id INTO cat_cakes FROM categories WHERE slug = 'cakes';
   SELECT id INTO cat_snacks FROM categories WHERE slug = 'snacks';
-  SELECT id INTO cat_water FROM categories WHERE slug = 'water';
-  SELECT id INTO cat_juices FROM categories WHERE slug = 'juices';
-  SELECT id INTO cat_soft_drinks FROM categories WHERE slug = 'soft-drinks';
-  SELECT id INTO cat_ice_tea FROM categories WHERE slug = 'ice-tea';
-  SELECT id INTO cat_cocktails FROM categories WHERE slug = 'cocktails';
-  SELECT id INTO cat_smoothies FROM categories WHERE slug = 'smoothies';
-  SELECT id INTO cat_milkshakes FROM categories WHERE slug = 'milkshakes';
-  SELECT id INTO cat_banana_milk_cocktails FROM categories WHERE slug = 'banana-milk-cocktails';
-  SELECT id INTO cat_coffee FROM categories WHERE slug = 'coffee';
-  SELECT id INTO cat_tea FROM categories WHERE slug = 'tea';
-  SELECT id INTO cat_iced_coffee FROM categories WHERE slug = 'iced-coffee';
   SELECT id INTO cat_shisha FROM categories WHERE slug = 'shisha';
-  SELECT id INTO cat_imperator FROM categories WHERE slug = 'imperator';
   INSERT INTO products (
     name, slug, description, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,

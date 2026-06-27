@@ -64,6 +64,7 @@ const NUMBERED_MIGRATIONS = [
   "35-table-session-consistency.sql",
   "36-realtime-publications.sql",
   "37-invoice-order-item-link.sql",
+  "38-category-display-order.sql",
 ]
 
 /** Après le schéma : durcissement rôles puis correctif signup / RLS audit (idempotent). */

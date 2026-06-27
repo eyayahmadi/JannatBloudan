@@ -12,6 +12,7 @@ export type QrMenuCategoryRow = {
   section?: string | null
   display_order?: number
   icon_emoji?: string | null
+  description?: string | null
 }
 
 export type QrTableCategoryChip = {
@@ -21,8 +22,8 @@ export type QrTableCategoryChip = {
 }
 
 const SECTION_CHIPS: Array<{ section: string; id: string; label: string; icon: string }> = [
-  { section: "desserts", id: "section:desserts", label: "Desserts", icon: "🍰" },
   { section: "drinks", id: "section:drinks", label: "Boissons", icon: "🥤" },
+  { section: "desserts", id: "section:desserts", label: "Desserts", icon: "🍰" },
   { section: "special", id: "section:special", label: "Shisha", icon: "💨" },
 ]
 

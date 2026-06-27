@@ -12,6 +12,7 @@ export type QrMenuItem = {
   category: string
   section: string
   station: string
+  displayOrder: number
   tags: string[]
   isPopular: boolean
   isNew: boolean

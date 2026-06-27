@@ -26,6 +26,7 @@ export type DigitalMenuProduct = {
   category: string
   categoryName: string
   category_display_order: number
+  display_order: number
   section: string
   price: number
   image_url: string | null
@@ -58,7 +59,7 @@ export type DigitalMenuProduct = {
 
 export type MenuSectionId = "all" | "food" | "desserts" | "drinks" | "special"
 
-export type MenuSortId = "name" | "price_asc" | "price_desc" | "popular" | "new"
+export type MenuSortId = "recommended" | "name" | "price_asc" | "price_desc" | "popular" | "new"
 
 export type MenuClientFilters = {
   search: string
