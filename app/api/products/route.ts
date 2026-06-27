@@ -1,5 +1,21 @@
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
+import { compareMenuCardOrder } from "@/lib/menu/menu-order"
+
+type ProductRow = Record<string, unknown> & {
+  display_order?: number | null
+  name?: string | null
+  categories?: { display_order?: number | null; slug?: string | null } | null
+}
+
+function menuOrderFields(p: ProductRow) {
+  const cat = p.categories
+  return {
+    category_display_order: cat?.display_order ?? 0,
+    display_order: p.display_order ?? 0,
+    id: String(p.id ?? ""),
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,7 +31,7 @@ export async function GET(request: NextRequest) {
     const isHalal = searchParams.get("isHalal")
     const isPopular = searchParams.get("isPopular")
     const spiceLevel = searchParams.get("spiceLevel")
-    const sortBy = searchParams.get("sortBy") || "name"
+    const sortBy = searchParams.get("sortBy") || "menu-order"
 
     let query = supabase
       .from("products")
@@ -24,7 +40,8 @@ export async function GET(request: NextRequest) {
         categories (
           id,
           name,
-          slug
+          slug,
+          display_order
         )
       `)
       .eq("is_available", true)
@@ -55,30 +72,41 @@ export async function GET(request: NextRequest) {
       query = query.eq("spice_level", spiceLevel)
     }
 
-    // Tri
-    switch (sortBy) {
-      case "price-asc":
-        query = query.order("price", { ascending: true })
-        break
-      case "price-desc":
-        query = query.order("price", { ascending: false })
-        break
-      case "popular":
-        query = query.order("is_popular", { ascending: false })
-        break
-      case "name":
-      default:
-        query = query.order("name", { ascending: true })
-        break
-    }
-
     const { data, error } = await query
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ products: data })
+    let products = (data ?? []) as ProductRow[]
+
+    switch (sortBy) {
+      case "price-asc":
+        products = [...products].sort(
+          (a, b) => Number(a.price) - Number(b.price) || String(a.name).localeCompare(String(b.name)),
+        )
+        break
+      case "price-desc":
+        products = [...products].sort(
+          (a, b) => Number(b.price) - Number(a.price) || String(a.name).localeCompare(String(b.name)),
+        )
+        break
+      case "popular":
+        products = [...products].sort(
+          (a, b) => Number(b.is_popular) - Number(a.is_popular) || String(a.name).localeCompare(String(b.name)),
+        )
+        break
+      case "name":
+        products = [...products].sort((a, b) => String(a.name).localeCompare(String(b.name)))
+        break
+      case "menu-order":
+      case "display_order":
+      default:
+        products = [...products].sort((a, b) => compareMenuCardOrder(menuOrderFields(a), menuOrderFields(b)))
+        break
+    }
+
+    return NextResponse.json({ products })
   } catch (error) {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }

@@ -383,6 +383,25 @@
       "hummus",
       "tabbouleh",
       "schwarzer-tee"
+    ],
+    "rucola-salat": [
+      "gemischter-grillteller",
+      "schisch-tawouk-teller",
+      "mineralwasser"
+    ],
+    "tabbouleh": [
+      "hummus",
+      "baba-ghanoug"
+    ],
+    "fattoush": [
+      "hummus",
+      "muhammara",
+      "coca-cola"
+    ],
+    "salat": [
+      "gemischter-grillteller",
+      "shawarma-arabi-teller",
+      "stillwasser"
     ]
   },
   "products": [
@@ -589,11 +608,16 @@
       "category": "salades",
       "price": 6,
       "station": "KITCHEN",
-      "is_vegetarian": true,
+      "description": "Frischer Rucola mit Tomaten, Zwiebeln, Granatapfelkernen, Zitronensaft und nativem Olivenöl.",
+      "description_ar": "سلطة جرجير طازجة مع الطماطم والبصل وحبوب الرمان وعصير الليمون وزيت الزيتون البكر.",
       "tags": [
+        "vegetarian",
+        "vegan",
+        "halal",
+        "healthy",
+        "chef_recommendation",
         "has_variants"
       ],
-      "description": "Frischer Rucola-Salat",
       "variants": [
         {
           "slug": "klein",
@@ -607,7 +631,8 @@
           "name_ar": "كبير",
           "price": 10
         }
-      ]
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/salades/rucola-salat.webp"
     },
     {
       "name": "Tabbouleh",
@@ -616,11 +641,16 @@
       "category": "salades",
       "price": 6,
       "station": "KITCHEN",
-      "is_vegetarian": true,
+      "description": "Traditioneller orientalischer Petersiliensalat mit feinem Bulgur, Minze, Tomaten, Frühlingszwiebeln, Gurken und frischem Zitronensaft.",
+      "description_ar": "تبولة شرقية تقليدية بالبقدونس الطازج والبرغل الناعم والنعناع والطماطم والبصل الأخضر والخيار وعصير الليمون.",
       "tags": [
+        "vegetarian",
+        "vegan",
+        "halal",
+        "healthy",
+        "popular",
         "has_variants"
       ],
-      "description": "Klassische Tabbouleh",
       "variants": [
         {
           "slug": "klein",
@@ -634,7 +664,8 @@
           "name_ar": "كبير",
           "price": 10
         }
-      ]
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/salades/tabbouleh.webp"
     },
     {
       "name": "Fattoush",
@@ -643,11 +674,16 @@
       "category": "salades",
       "price": 6,
       "station": "KITCHEN",
-      "is_vegetarian": true,
+      "description": "Knackiger orientalischer Salat mit Römersalat, Tomaten, Gurken, Radieschen, Petersilie, Minze, geröstetem Brot und Sumach.",
+      "description_ar": "سلطة فتوش مقرمشة مع الخس والطماطم والخيار والفجل والبقدونس والنعناع والخبز المحمص والسماق.",
       "tags": [
+        "vegetarian",
+        "vegan",
+        "halal",
+        "healthy",
+        "best_seller",
         "has_variants"
       ],
-      "description": "Knackiger Fattoush-Salat",
       "variants": [
         {
           "slug": "klein",
@@ -661,7 +697,8 @@
           "name_ar": "كبير",
           "price": 9
         }
-      ]
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/salades/fattoush.webp"
     },
     {
       "name": "Salat",
@@ -670,11 +707,15 @@
       "category": "salades",
       "price": 5,
       "station": "KITCHEN",
-      "is_vegetarian": true,
+      "description": "Frischer gemischter Salat mit Eisbergsalat, Tomaten, Gurken und Olivenöl.",
+      "description_ar": "سلطة خضراء طازجة مع الخس والطماطم والخيار وزيت الزيتون.",
       "tags": [
+        "vegetarian",
+        "vegan",
+        "halal",
+        "healthy",
         "has_variants"
       ],
-      "description": "Frischer grüner Salat",
       "variants": [
         {
           "slug": "klein",
@@ -688,7 +729,8 @@
           "name_ar": "كبير",
           "price": 9
         }
-      ]
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/salades/salat.webp"
     },
     {
       "name": "Crispy Chicken Teller",

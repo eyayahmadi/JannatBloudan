@@ -7,6 +7,8 @@ export type DeliveryMenuItem = {
   price: number
   image: string
   category: string
+  categoryDisplayOrder: number
+  displayOrder: number
   rating: number
   reviews: number
   prepTime: string
@@ -28,6 +30,8 @@ export function mapApiToDeliveryMenuItem(p: Record<string, unknown>): DeliveryMe
     price: typeof p.price === "number" ? p.price : parseFloat(String(p.price)) || 0,
     image: String(p.image_url || "/placeholder.svg"),
     category: String(p.category ?? "other"),
+    categoryDisplayOrder: Number(p.category_display_order) || 0,
+    displayOrder: Number(p.display_order) || 0,
     rating: Math.round((4.4 + Math.min(0.5, orderCount / 40)) * 10) / 10,
     reviews: orderCount,
     prepTime: "15-20 min",

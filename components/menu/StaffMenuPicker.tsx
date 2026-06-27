@@ -16,7 +16,7 @@ import type { StationAvailability } from "@/lib/stations/availability"
 
 type StaffMenuPickerProps = {
   catalog: DigitalMenuProduct[]
-  categories: Array<{ name: string; slug: string; section?: string }>
+  categories: Array<{ name: string; slug: string; section?: string; display_order?: number }>
   stationAvailability?: StationAvailability[]
   loading?: boolean
   onAdd: (product: DigitalMenuProduct) => void

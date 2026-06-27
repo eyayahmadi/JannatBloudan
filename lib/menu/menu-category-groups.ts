@@ -3,6 +3,8 @@
  * Cet ordre n'est qu'un repli (labels/icônes). L'ordre réel d'affichage est piloté
  * par la base (categories.display_order) via groupMenuItemsByCategory(..., orderedSlugs).
  */
+import { sortByMenuCardOrder } from "@/lib/menu/menu-order"
+
 export const DRINKS_CATEGORY_GROUPS = [
   { slug: "water", labelDe: "Wasser", labelAr: "المياه", icon: "💧" },
   { slug: "juices", labelDe: "Säfte", labelAr: "العصائر", icon: "🧃" },
@@ -107,7 +109,7 @@ export function groupMenuItemsByDbCategories<T extends { category: string }>(
       labelAr: cat.name_ar ?? "",
       icon: cat.icon_emoji ?? "🍽️",
       subtitle: cat.description?.trim() || undefined,
-      items: groupItems,
+      items: sortByMenuCardOrder(groupItems),
     })
   }
 
@@ -121,7 +123,7 @@ export function groupMenuItemsByDbCategories<T extends { category: string }>(
       labelDe: "Weitere",
       labelAr: "أخرى",
       icon: "🍽️",
-      items: orphan,
+      items: sortByMenuCardOrder(orphan),
     })
   }
 
@@ -287,7 +289,7 @@ export function groupMenuItemsByCategory<T extends { category: string }>(
       labelAr: def?.labelAr ?? "",
       icon: def?.icon ?? "🍽️",
       subtitle: subtitleBySlug?.get(slug),
-      items: groupItems,
+      items: sortByMenuCardOrder(groupItems),
     })
   }
 
@@ -302,7 +304,7 @@ export function groupMenuItemsByCategory<T extends { category: string }>(
       labelDe: "Weitere",
       labelAr: "أخرى",
       icon: "🍽️",
-      items: orphan,
+      items: sortByMenuCardOrder(orphan),
     })
   }
 

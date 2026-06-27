@@ -45,6 +45,7 @@ import { toast } from "sonner"
 
 import { useDeliveryMenu } from "@/lib/hooks/useDeliveryMenu"
 import type { DeliveryMenuItem } from "@/lib/menu/delivery-menu-item"
+import { compareMenuCardOrder } from "@/lib/menu/menu-order"
 
 type CartItem = {
   id: string
@@ -103,6 +104,7 @@ const spiceLevels = [
 ]
 
 const sortOptions = [
+  { label: "Ordre du menu", value: "menu-order" },
   { label: "Prix croissant", value: "price-asc" },
   { label: "Prix décroissant", value: "price-desc" },
   { label: "Popularité", value: "popularity" },
@@ -119,7 +121,7 @@ export default function DeliveryPage() {
   const [favorites, setFavorites] = useState<string[]>([])
   const [dietaryFilters, setDietaryFilters] = useState<string[]>([])
   const [priceRange, setPriceRange] = useState([0, 50])
-  const [sortBy, setSortBy] = useState("popularity")
+  const [sortBy, setSortBy] = useState("menu-order")
   const [spiceFilters, setSpiceFilters] = useState<string[]>([])
 
   const [customizationModal, setCustomizationModal] = useState<CustomizationModal>({ item: null, show: false })
@@ -167,6 +169,8 @@ export default function DeliveryPage() {
 
   const sortedItems = [...filteredItems].sort((a, b) => {
     switch (sortBy) {
+      case "menu-order":
+        return compareMenuCardOrder(a, b)
       case "price-asc":
         return a.price - b.price
       case "price-desc":
@@ -180,7 +184,7 @@ export default function DeliveryPage() {
       case "name-asc":
         return a.name.localeCompare(b.name)
       default:
-        return 0
+        return compareMenuCardOrder(a, b)
     }
   })
 

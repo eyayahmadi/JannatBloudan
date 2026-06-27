@@ -32,6 +32,7 @@ import { QrMenuQuickSections } from "@/components/menu/qr/QrMenuQuickSections"
 import { matchesMenuSearch } from "@/lib/menu/menu-display"
 import { filterProductsByAttributeTag, type QrAttributeFilterId } from "@/lib/menu/product-attributes"
 import { mapApiToQrMenuItem } from "@/lib/menu/qr-menu-helpers"
+import { sortByMenuCardOrder } from "@/lib/menu/menu-order"
 import { getQrFavorites, getQrRecentlyOrdered, pushQrRecentlyOrdered, toggleQrFavorite } from "@/lib/menu/qr-guest-prefs"
 import type { QrCartEntry, QrMenuItem } from "@/lib/menu/qr-menu-types"
 import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
@@ -163,16 +164,7 @@ export default function TableMenuPage() {
     return filterProductsByAttributeTag(list, attributeFilter)
   }, [filtered, search, attributeFilter])
 
-  const displayed = useMemo(() => {
-    if (search.trim()) return searched
-    // Vue "Tout" : populaires d'abord (UX). Sinon : ordre de la carte (display_order, stable).
-    if (activeCategory === "all") {
-      return [...searched].sort(
-        (a, b) => Number(b.isPopular) - Number(a.isPopular) || a.name.localeCompare(b.name, "de"),
-      )
-    }
-    return [...searched].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
-  }, [activeCategory, search, searched])
+  const displayed = useMemo(() => sortByMenuCardOrder(searched), [searched])
 
   const favoriteItems = useMemo(() => {
     const set = new Set(favoriteIds)

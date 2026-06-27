@@ -68,12 +68,25 @@ export function stationBlockMessage(station: Station, status: StationAvailabilit
 
 export function staffMenuCategories(
   catalog: DigitalMenuProduct[],
-  apiCategories: Array<{ name: string; slug: string; section?: string }>,
+  apiCategories: Array<{ name: string; slug: string; section?: string; display_order?: number }>,
 ): string[] {
-  const fromApi = apiCategories.map((c) => c.name).filter(Boolean)
-  if (fromApi.length > 0) return ["Tout", ...fromApi]
-  const sections = new Set(catalog.map((p) => p.categoryName || p.category))
-  return ["Tout", ...Array.from(sections).sort()]
+  if (apiCategories.length > 0) {
+    const sorted = [...apiCategories].sort(
+      (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || a.name.localeCompare(b.name),
+    )
+    return ["Tout", ...sorted.map((c) => c.name).filter(Boolean)]
+  }
+  const slugOrder = new Map<string, number>()
+  for (const p of catalog) {
+    if (!slugOrder.has(p.category)) {
+      slugOrder.set(p.category, p.category_display_order ?? 0)
+    }
+  }
+  const sections = Array.from(slugOrder.entries()).sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0]))
+  return ["Tout", ...sections.map(([slug]) => {
+    const match = catalog.find((p) => p.category === slug)
+    return match?.categoryName || slug
+  })]
 }
 
 export function filterStaffMenu(

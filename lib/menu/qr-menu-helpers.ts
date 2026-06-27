@@ -60,6 +60,7 @@ export function mapApiToQrMenuItem(
     section: String(p.section ?? "food"),
     station: String(p.station ?? "KITCHEN"),
     displayOrder: Number(p.display_order) || 0,
+    categoryDisplayOrder: Number(p.category_display_order) || 0,
     tags,
     isPopular: productHasAnyTag(tags, ["popular", "best_seller"]),
     isNew: productHasTag(tags, "new"),

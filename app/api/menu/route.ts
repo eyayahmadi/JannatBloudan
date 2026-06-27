@@ -8,6 +8,7 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/config"
 import { translateStrings } from "@/lib/server/translation-service"
 import type { MenuSortId, DigitalMenuProduct, ProductModifier, ProductVariant } from "@/lib/menu/digital-menu-product"
 import { sortMenuProducts } from "@/lib/menu/filter-menu-client"
+import { sortByMenuCardOrder } from "@/lib/menu/menu-order"
 import { STATIONS, type Station } from "@/lib/stations/config"
 import {
   AVAILABILITY_META,
@@ -182,7 +183,7 @@ async function loadMenuProducts(supabase: Awaited<ReturnType<typeof createClient
     return { rows: [] as ProductRow[], error: first.error.message }
   }
 
-  const noIsNew = await supabase.from("products").select(PRODUCTS_SELECT_NO_IS_NEW).order("name")
+  const noIsNew = await supabase.from("products").select(PRODUCTS_SELECT_NO_IS_NEW).order("display_order").order("name")
   if (!noIsNew.error) {
     return { rows: (noIsNew.data ?? []) as unknown as ProductRow[], error: null as string | null }
   }
@@ -190,7 +191,7 @@ async function loadMenuProducts(supabase: Awaited<ReturnType<typeof createClient
     return { rows: [] as ProductRow[], error: noIsNew.error.message }
   }
 
-  const noNameAr = await supabase.from("products").select(PRODUCTS_SELECT_NO_NAME_AR).order("name")
+  const noNameAr = await supabase.from("products").select(PRODUCTS_SELECT_NO_NAME_AR).order("display_order").order("name")
   if (!noNameAr.error) {
     const rows = (noNameAr.data ?? []).map((raw) => {
       const r = raw as Record<string, unknown>
@@ -202,7 +203,7 @@ async function loadMenuProducts(supabase: Awaited<ReturnType<typeof createClient
     return { rows: [] as ProductRow[], error: noNameAr.error.message }
   }
 
-  const minimal = await supabase.from("products").select(PRODUCTS_SELECT_NO_NAME_AR_NO_IS_NEW).order("name")
+  const minimal = await supabase.from("products").select(PRODUCTS_SELECT_NO_NAME_AR_NO_IS_NEW).order("display_order").order("name")
   if (minimal.error) {
     return { rows: [] as ProductRow[], error: minimal.error.message }
   }
@@ -493,9 +494,11 @@ function applyServerParams(list: EnrichedProduct[], sp: URLSearchParams): Enrich
   }
 
   const sortRaw = sp.get("sort") as MenuSortId | null
-  const sorts: MenuSortId[] = ["name", "price_asc", "price_desc", "popular", "new"]
+  const sorts: MenuSortId[] = ["name", "price_asc", "price_desc", "popular", "new", "recommended"]
   if (sortRaw && sorts.includes(sortRaw)) {
     filtered = sortMenuProducts(filtered as DigitalMenuProduct[], sortRaw) as EnrichedProduct[]
+  } else {
+    filtered = sortByMenuCardOrder(filtered)
   }
 
   return filtered
@@ -640,7 +643,7 @@ export async function GET(request: NextRequest) {
         items = items.filter((p) => p.can_order)
       }
     } else {
-      items = baseList
+      items = sortByMenuCardOrder(baseList)
     }
 
     const mostOrderedIds = [...sold.entries()]

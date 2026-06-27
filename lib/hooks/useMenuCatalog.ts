@@ -7,7 +7,7 @@ import type { StationAvailability } from "@/lib/stations/availability"
 
 export type MenuCatalogData = {
   catalog: DigitalMenuProduct[]
-  categories: Array<{ id: string; name: string; slug: string; section?: string; icon_emoji?: string | null }>
+  categories: Array<{ id: string; name: string; slug: string; section?: string; display_order?: number; icon_emoji?: string | null }>
   station_availability: StationAvailability[]
   often_ordered_with: Record<string, string[]>
 }

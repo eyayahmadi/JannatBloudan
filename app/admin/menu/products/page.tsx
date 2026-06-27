@@ -30,6 +30,7 @@ import {
   type AdminMenuSectionFilter,
 } from "@/lib/menu/menu-category-groups"
 import { tagsFromProductRow, normalizeProductTags, attributeBadgeLabel } from "@/lib/menu/product-attributes"
+import { compareMenuCardOrder } from "@/lib/menu/menu-order"
 import { menuStatusFromRow, rowFromMenuStatus, MENU_STATUS_LABELS } from "@/lib/menu/product-availability-status"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -154,7 +155,20 @@ export default function AdminMenuProductsPage() {
           (p.description ?? "").toLowerCase().includes(q)
         )
       })
-      .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || a.name.localeCompare(b.name))
+      .sort((a, b) =>
+        compareMenuCardOrder(
+          {
+            category_display_order: a.category?.display_order ?? 0,
+            display_order: a.display_order ?? 0,
+            id: a.id,
+          },
+          {
+            category_display_order: b.category?.display_order ?? 0,
+            display_order: b.display_order ?? 0,
+            id: b.id,
+          },
+        ),
+      )
   }, [products, search, catFilter, sectionFilter, showArchived])
 
   const menuBlocks = useMemo(

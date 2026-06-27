@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireAdmin } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import { sortByMenuCardOrder } from "@/lib/menu/menu-order"
 
 /**
  * Données complètes pour Admin > Menu Management.
@@ -49,7 +50,14 @@ export async function GET() {
 
   return NextResponse.json({
     categories: cat.data ?? [],
-    products: prod.data ?? [],
+    products: sortByMenuCardOrder(
+      (prod.data ?? []).map((p: Record<string, unknown> & { categories?: { display_order?: number } | null }) => ({
+        ...p,
+        category_display_order: p.categories?.display_order ?? 0,
+        display_order: Number(p.display_order) || 0,
+        id: String(p.id ?? ""),
+      })),
+    ),
     ingredients: ing.data ?? [],
     recommendations,
     modifier_groups: modGroups.data ?? [],

@@ -4,7 +4,11 @@ import { NextResponse } from "next/server"
 export async function GET() {
   try {
     const supabase = await createClient()
-    const { data, error } = await supabase.from("categories").select("*").order("name", { ascending: true })
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .order("display_order", { ascending: true })
+      .order("name", { ascending: true })
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

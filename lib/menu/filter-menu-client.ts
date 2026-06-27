@@ -1,6 +1,7 @@
 import type { DigitalMenuProduct, MenuClientFilters, MenuSortId } from "@/lib/menu/digital-menu-product"
 import { attributeSearchHaystack } from "@/lib/menu/product-attributes"
 import { DRINKS_CATEGORY_GROUPS, DESSERTS_CATEGORY_GROUPS } from "@/lib/menu/menu-category-groups"
+import { compareMenuCardOrder } from "@/lib/menu/menu-order"
 
 const DRINK_CATEGORY_SLUGS = new Set<string>(DRINKS_CATEGORY_GROUPS.map((g) => g.slug))
 const DESSERT_CATEGORY_SLUGS = new Set<string>(DESSERTS_CATEGORY_GROUPS.map((g) => g.slug))
@@ -79,13 +80,7 @@ export function sortMenuProducts(items: DigitalMenuProduct[], sort: MenuSortId):
       break
     case "recommended":
     default:
-      // Ordre de la carte : catégorie (display_order) puis produit (display_order).
-      // Array.sort est stable → display_order manquant (=0) conserve l'ordre courant.
-      copy.sort(
-        (a, b) =>
-          (a.category_display_order || 0) - (b.category_display_order || 0) ||
-          (a.display_order || 0) - (b.display_order || 0),
-      )
+      copy.sort(compareMenuCardOrder)
   }
   return copy
 }
@@ -98,5 +93,7 @@ export function similarProducts(all: DigitalMenuProduct[], id: string, limit = 4
   const sameCat = all.filter((p) => p.id !== id && p.category === it.category)
   const scoreOf = (p: DigitalMenuProduct) =>
     p.tags.reduce((acc, t) => acc + (tagSet.has(norm(t)) ? 1 : 0), 0)
-  return [...sameCat].sort((a, b) => scoreOf(b) - scoreOf(a) || norm(a.name).localeCompare(norm(b.name))).slice(0, limit)
+  return [...sameCat]
+    .sort((a, b) => scoreOf(b) - scoreOf(a) || compareMenuCardOrder(a, b))
+    .slice(0, limit)
 }
