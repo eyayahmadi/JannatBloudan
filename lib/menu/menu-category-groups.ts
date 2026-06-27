@@ -47,6 +47,7 @@ export type GroupedMenuItems<T extends { category: string }> = {
 }
 
 export type MenuCategoryRow = {
+  id?: string
   slug: string
   name: string
   name_ar?: string | null
@@ -135,6 +136,121 @@ export function groupMenuItemsByDbCategories<T extends { category: string }>(
  * Les libellés/icônes proviennent des définitions ci-dessus (avec repli sur le slug).
  * Sans `orderedSlugs`, on retombe sur l'ordre des définitions.
  */
+/** Sections principales du menu (ordre client / QR / admin). */
+export const ADMIN_MENU_SECTIONS = [
+  { id: "food" as const, labelDe: "Food", labelAr: "مأكولات", icon: "🍽️" },
+  { id: "drinks" as const, labelDe: "Drinks", labelAr: "مشروبات", icon: "🥤" },
+  { id: "desserts" as const, labelDe: "Desserts", labelAr: "حلويات", icon: "🍰" },
+  { id: "special" as const, labelDe: "Shisha", labelAr: "شيشة", icon: "💨" },
+]
+
+export type AdminMenuSectionId = (typeof ADMIN_MENU_SECTIONS)[number]["id"]
+export type AdminMenuSectionFilter = "all" | AdminMenuSectionId
+
+export type AdminMenuSectionBlock<T extends { category: string }> = {
+  section: AdminMenuSectionId
+  labelDe: string
+  labelAr: string
+  icon: string
+  groups: GroupedMenuItems<T>[]
+}
+
+/**
+ * Regroupe les produits admin par section puis sous-catégorie DB (display_order).
+ * Aucune liste produit en dur — piloté par categories.section + categories.display_order.
+ */
+export function groupProductsForAdminMenu<
+  TProduct extends {
+    category?: { slug?: string | null; section?: string | null } | null
+  },
+>(
+  products: TProduct[],
+  categories: MenuCategoryRow[],
+  sectionFilter: AdminMenuSectionFilter,
+): AdminMenuSectionBlock<TProduct & { category: string }>[] {
+  const slugToSection = new Map(categories.map((c) => [c.slug, c.section ?? "food"]))
+
+  const withSlug = products.map((p) => ({
+    ...p,
+    category: p.category?.slug ?? "",
+  }))
+
+  const sectionsToShow: AdminMenuSectionId[] =
+    sectionFilter === "all" ? ADMIN_MENU_SECTIONS.map((s) => s.id) : [sectionFilter]
+
+  const blocks: AdminMenuSectionBlock<TProduct & { category: string }>[] = []
+
+  for (const sectionId of sectionsToShow) {
+    const meta = ADMIN_MENU_SECTIONS.find((s) => s.id === sectionId)
+    if (!meta) continue
+
+    const sectionCats = categories.filter((c) => (c.section ?? "food") === sectionId)
+    const sectionProducts = withSlug.filter((p) => {
+      if (!p.category) return false
+      const sec = slugToSection.get(p.category) ?? "food"
+      return sec === sectionId
+    })
+
+    const groups = groupMenuItemsByDbCategories(sectionProducts, sectionCats)
+    if (groups.length === 0) continue
+
+    blocks.push({
+      section: sectionId,
+      labelDe: meta.labelDe,
+      labelAr: meta.labelAr,
+      icon: meta.icon,
+      groups,
+    })
+  }
+
+  return blocks
+}
+
+/** Catégories admin groupées par section (ordre = categories.display_order). */
+export function groupCategoriesBySectionForAdmin<T extends MenuCategoryRow & { id: string }>(
+  categories: T[],
+  sectionFilter: AdminMenuSectionFilter,
+): Array<{
+  section: AdminMenuSectionId
+  labelDe: string
+  labelAr: string
+  icon: string
+  categories: T[]
+}> {
+  const sorted = [...categories].sort(
+    (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0),
+  )
+
+  const sectionsToShow: AdminMenuSectionId[] =
+    sectionFilter === "all" ? ADMIN_MENU_SECTIONS.map((s) => s.id) : [sectionFilter]
+
+  const blocks: Array<{
+    section: AdminMenuSectionId
+    labelDe: string
+    labelAr: string
+    icon: string
+    categories: T[]
+  }> = []
+
+  for (const sectionId of sectionsToShow) {
+    const meta = ADMIN_MENU_SECTIONS.find((s) => s.id === sectionId)
+    if (!meta) continue
+
+    const sectionCats = sorted.filter((c) => (c.section ?? "food") === sectionId)
+    if (sectionCats.length === 0) continue
+
+    blocks.push({
+      section: sectionId,
+      labelDe: meta.labelDe,
+      labelAr: meta.labelAr,
+      icon: meta.icon,
+      categories: sectionCats,
+    })
+  }
+
+  return blocks
+}
+
 export function groupMenuItemsByCategory<T extends { category: string }>(
   items: T[],
   groupType: "drinks" | "desserts",

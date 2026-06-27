@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,7 +30,7 @@ export type ProductFormState = {
   recommended_ids: string[]
 }
 
-type Category = { id: string; name: string }
+type Category = { id: string; name: string; display_order?: number }
 type ProductOption = { id: string; name: string }
 type Ingredient = { id: string; name: string; unit?: string | null; stock_quantity?: number | null }
 type RecipeLine = { quantity: number; ingredients?: Ingredient | null }
@@ -75,18 +76,51 @@ export function ProductFormModal({
   onSave,
 }: ProductFormModalProps) {
   const [tab, setTab] = useState<TabId>("general")
+  const [mounted, setMounted] = useState(false)
 
-  if (!open) return null
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
-      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+  useEffect(() => {
+    if (open) setTab("general")
+  }, [open, editingId])
+
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [open])
+
+  const sortedCategories = [...categories].sort(
+    (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || a.name.localeCompare(b.name),
+  )
+
+  if (!open || !mounted) return null
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 p-4 backdrop-blur-sm sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="product-form-title"
+      onClick={onClose}
+    >
+      <div
+        className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between border-b px-5 py-4">
           <div>
-            <h2 className="text-lg font-bold">{editingId ? "Produkt bearbeiten" : "Neues Produkt"}</h2>
+            <h2 id="product-form-title" className="text-lg font-bold">
+              {editingId ? "Produkt bearbeiten" : "Neues Produkt"}
+            </h2>
             {editingName ? <p className="text-sm text-slate-500">{editingName}</p> : null}
           </div>
-          <button type="button" onClick={onClose}>
+          <button type="button" onClick={onClose} aria-label="Schließen">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -136,7 +170,7 @@ export function ProductFormModal({
                 <div>
                   <Label>Station</Label>
                   <select
-                    className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-md border px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
                     value={form.station}
                     onChange={(e) => onChange({ station: e.target.value })}
                   >
@@ -149,12 +183,12 @@ export function ProductFormModal({
               <div>
                 <Label>Kategorie</Label>
                 <select
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
                   value={form.category_id}
                   onChange={(e) => onChange({ category_id: e.target.value })}
                 >
                   <option value="">—</option>
-                  {categories.map((c) => (
+                  {sortedCategories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
                     </option>
@@ -188,7 +222,7 @@ export function ProductFormModal({
               <Label>Empfohlene Produkte (Passt dazu)</Label>
               <select
                 multiple
-                className="mt-1 h-48 w-full rounded-md border px-2 py-1 text-sm"
+                className="mt-1 h-48 w-full rounded-md border px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
                 value={form.recommended_ids}
                 onChange={(e) =>
                   onChange({ recommended_ids: Array.from(e.target.selectedOptions).map((o) => o.value) })
@@ -211,6 +245,7 @@ export function ProductFormModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

@@ -17,19 +17,31 @@ import { RequireAuth } from "@/components/auth/RequireAuth"
 import { AdminPageFrame } from "@/components/site/AdminPageFrame"
 import { MenuAdminShell } from "@/components/admin/menu/MenuAdminShell"
 import { AdminDragReorderList } from "@/components/admin/menu/AdminDragReorderList"
+import { AdminMenuSectionHeader } from "@/components/admin/menu/AdminMenuSectionHeader"
 import { ProductFormModal, type ProductFormState } from "@/components/admin/menu/ProductFormModal"
+import { MenuSubcategoryHeader } from "@/components/menu/MenuSubcategoryHeader"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import {
+  ADMIN_MENU_SECTIONS,
+  groupProductsForAdminMenu,
+  type AdminMenuSectionFilter,
+} from "@/lib/menu/menu-category-groups"
 import { tagsFromProductRow, normalizeProductTags, attributeBadgeLabel } from "@/lib/menu/product-attributes"
 import { menuStatusFromRow, rowFromMenuStatus, MENU_STATUS_LABELS } from "@/lib/menu/product-availability-status"
+import { cn } from "@/lib/utils"
 
 type Category = {
   id: string
   name: string
   slug: string
   section?: string
+  display_order?: number
+  name_ar?: string | null
+  icon_emoji?: string | null
+  description?: string | null
 }
 
 type Product = {
@@ -69,6 +81,11 @@ const EMPTY_FORM: ProductFormState = {
   recommended_ids: [],
 }
 
+const SECTION_FILTERS: { id: AdminMenuSectionFilter; label: string }[] = [
+  { id: "all", label: "Alle" },
+  ...ADMIN_MENU_SECTIONS.map((s) => ({ id: s.id as AdminMenuSectionFilter, label: s.labelDe })),
+]
+
 export default function AdminMenuProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -77,6 +94,7 @@ export default function AdminMenuProductsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [catFilter, setCatFilter] = useState("all")
+  const [sectionFilter, setSectionFilter] = useState<AdminMenuSectionFilter>("all")
   const [showArchived, setShowArchived] = useState(false)
   const [reorderMode, setReorderMode] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -85,6 +103,14 @@ export default function AdminMenuProductsPage() {
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<ProductFormState>(EMPTY_FORM)
   const [reorderList, setReorderList] = useState<Product[]>([])
+
+  const sortedCategories = useMemo(
+    () =>
+      [...categories].sort(
+        (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || a.name.localeCompare(b.name),
+      ),
+    [categories],
+  )
 
   const load = useCallback(async () => {
     try {
@@ -114,6 +140,10 @@ export default function AdminMenuProductsPage() {
       .filter((p) => (showArchived ? !!p.is_archived : !p.is_archived))
       .filter((p) => catFilter === "all" || p.category?.id === catFilter)
       .filter((p) => {
+        if (sectionFilter === "all") return true
+        return (p.category?.section ?? "food") === sectionFilter
+      })
+      .filter((p) => {
         if (!q) return true
         return (
           p.name.toLowerCase().includes(q) ||
@@ -122,9 +152,20 @@ export default function AdminMenuProductsPage() {
         )
       })
       .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || a.name.localeCompare(b.name))
-  }, [products, search, catFilter, showArchived])
+  }, [products, search, catFilter, sectionFilter, showArchived])
 
-  const canReorder = !search.trim() && catFilter === "all" && !showArchived
+  const menuBlocks = useMemo(
+    () =>
+      groupProductsForAdminMenu(
+        filtered.map((p) => ({ ...p, category: p.category ?? null })),
+        sortedCategories,
+        sectionFilter,
+      ),
+    [filtered, sortedCategories, sectionFilter],
+  )
+
+  const canReorder =
+    !search.trim() && catFilter === "all" && sectionFilter === "all" && !showArchived
 
   useEffect(() => {
     if (reorderMode && canReorder) setReorderList(filtered)
@@ -134,7 +175,7 @@ export default function AdminMenuProductsPage() {
     setEditing(null)
     setForm({
       ...EMPTY_FORM,
-      category_id: categories[0]?.id ?? "",
+      category_id: sortedCategories[0]?.id ?? "",
       display_order: String(products.length),
     })
     setModalOpen(true)
@@ -206,6 +247,7 @@ export default function AdminMenuProductsPage() {
       }
 
       setModalOpen(false)
+      setEditing(null)
       await load()
     } finally {
       setSaving(false)
@@ -260,6 +302,68 @@ export default function AdminMenuProductsPage() {
 
   const productOptions = products.filter((p) => p.id !== editing?.id).map((p) => ({ id: p.id, name: p.name }))
 
+  const renderProductCard = (p: Product) => {
+    const status = menuStatusFromRow(p)
+    const visibleTags = normalizeProductTags(p.tags)
+
+    return (
+      <Card key={p.id} className="overflow-hidden">
+        <div className="flex aspect-[16/10] items-center justify-center bg-slate-100 dark:bg-slate-800">
+          {p.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={p.image_url} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="text-4xl">🍽️</span>
+          )}
+        </div>
+        <CardContent className="space-y-2 p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="font-semibold">{p.name}</p>
+              {p.name_ar ? (
+                <p className="text-xs text-slate-500" dir="rtl">
+                  {p.name_ar}
+                </p>
+              ) : null}
+              <p className="text-sm font-bold text-amber-700">{p.price.toFixed(2)} €</p>
+            </div>
+            <Badge variant={status === "available" ? "default" : status === "sold_out" ? "secondary" : "outline"}>
+              {MENU_STATUS_LABELS[status].de}
+            </Badge>
+          </div>
+          <p className="text-xs text-slate-500">{p.category?.name ?? "—"}</p>
+          <div className="flex flex-wrap gap-1">
+            {visibleTags.map((t) => {
+              const lbl = attributeBadgeLabel(t)
+              return (
+                <Badge key={t} variant="outline" className="text-[10px]">
+                  {lbl?.de ?? t}
+                </Badge>
+              )
+            })}
+          </div>
+          <div className="flex flex-wrap gap-1 pt-1">
+            <Button type="button" size="sm" variant="outline" aria-label="Bearbeiten" onClick={() => openEdit(p)}>
+              <Edit2 className="h-3.5 w-3.5" />
+            </Button>
+            <Button type="button" size="sm" variant="outline" aria-label="Duplizieren" onClick={() => void duplicate(p)}>
+              <Copy className="h-3.5 w-3.5" />
+            </Button>
+            <Button type="button" size="sm" variant="outline" aria-label="Verfügbarkeit" onClick={() => void toggleAvail(p)}>
+              {p.is_available ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+            </Button>
+            <Button type="button" size="sm" variant="outline" aria-label="Archivieren" onClick={() => void archive(p)}>
+              <Archive className="h-3.5 w-3.5" />
+            </Button>
+            <Button type="button" size="sm" variant="outline" aria-label="Löschen" onClick={() => setDeleteTarget(p)}>
+              <Trash2 className="h-3.5 w-3.5 text-red-600" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <RequireAuth roles={["ADMIN", "STAFF"]}>
       <AdminPageFrame title="Menu Management">
@@ -275,7 +379,7 @@ export default function AdminMenuProductsPage() {
               onChange={(e) => setCatFilter(e.target.value)}
             >
               <option value="all">Alle Kategorien</option>
-              {categories.map((c) => (
+              {sortedCategories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
@@ -313,6 +417,21 @@ export default function AdminMenuProductsPage() {
             </Button>
           </div>
 
+          <div className="mb-5 flex flex-wrap gap-2">
+            {SECTION_FILTERS.map((f) => (
+              <Button
+                key={f.id}
+                type="button"
+                size="sm"
+                variant={sectionFilter === f.id ? "default" : "outline"}
+                className={cn("rounded-full", sectionFilter === f.id && "bg-amber-700 hover:bg-amber-800")}
+                onClick={() => setSectionFilter(f.id)}
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
+
           {loading ? (
             <p className="text-slate-500">Laden…</p>
           ) : reorderMode ? (
@@ -334,71 +453,34 @@ export default function AdminMenuProductsPage() {
                 </div>
               )}
             />
+          ) : menuBlocks.length === 0 ? (
+            <p className="rounded-xl border border-dashed p-8 text-center text-sm text-slate-500">
+              Keine Produkte für diese Filter gefunden.
+            </p>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((p) => (
-                <Card key={p.id} className="overflow-hidden">
-                  <div className="flex aspect-[16/10] items-center justify-center bg-slate-100 dark:bg-slate-800">
-                    {p.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.image_url} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="text-4xl">🍽️</span>
-                    )}
-                  </div>
-                  <CardContent className="space-y-2 p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-semibold">{p.name}</p>
-                        {p.name_ar ? (
-                          <p className="text-xs text-slate-500" dir="rtl">
-                            {p.name_ar}
-                          </p>
-                        ) : null}
-                        <p className="text-sm font-bold text-amber-700">{p.price.toFixed(2)} €</p>
+            <div className="space-y-10">
+              {menuBlocks.map((block) => (
+                <div key={block.section} className="space-y-8">
+                  {sectionFilter === "all" ? (
+                    <AdminMenuSectionHeader icon={block.icon} labelDe={block.labelDe} labelAr={block.labelAr} />
+                  ) : null}
+                  {block.groups.map((group) => (
+                    <section key={group.key} className="space-y-4">
+                      <MenuSubcategoryHeader
+                        icon={group.icon}
+                        labelDe={group.labelDe}
+                        labelAr={group.labelAr}
+                        subtitle={group.subtitle}
+                        drink={block.section === "drinks"}
+                        sweet={block.section === "desserts"}
+                        premium={block.section === "food"}
+                      />
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {group.items.map((p) => renderProductCard(p))}
                       </div>
-                      <Badge
-                        variant={
-                          menuStatusFromRow(p) === "available"
-                            ? "default"
-                            : menuStatusFromRow(p) === "sold_out"
-                              ? "secondary"
-                              : "outline"
-                        }
-                      >
-                        {MENU_STATUS_LABELS[menuStatusFromRow(p)].de}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-slate-500">{p.category?.name ?? "—"}</p>
-                    <div className="flex flex-wrap gap-1">
-                      {(p.tags ?? []).map((t) => {
-                        const lbl = attributeBadgeLabel(t)
-                        return (
-                          <Badge key={t} variant="outline" className="text-[10px]">
-                            {lbl?.de ?? t}
-                          </Badge>
-                        )
-                      })}
-                    </div>
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      <Button type="button" size="sm" variant="outline" onClick={() => openEdit(p)}>
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button type="button" size="sm" variant="outline" onClick={() => void duplicate(p)}>
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button type="button" size="sm" variant="outline" onClick={() => void toggleAvail(p)}>
-                        {p.is_available ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                      </Button>
-                      <Button type="button" size="sm" variant="outline" onClick={() => void archive(p)}>
-                        <Archive className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button type="button" size="sm" variant="outline" onClick={() => setDeleteTarget(p)}>
-                        <Trash2 className="h-3.5 w-3.5 text-red-600" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </section>
+                  ))}
+                </div>
               ))}
             </div>
           )}
@@ -408,19 +490,28 @@ export default function AdminMenuProductsPage() {
             editingId={editing?.id ?? null}
             editingName={editing?.name}
             form={form}
-            categories={categories}
+            categories={sortedCategories}
             productOptions={productOptions}
             ingredients={ingredients}
             recipeLines={editing?.product_ingredients}
             saving={saving}
-            onClose={() => setModalOpen(false)}
+            onClose={() => {
+              setModalOpen(false)
+              setEditing(null)
+            }}
             onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
             onSave={() => void save()}
           />
 
           {deleteTarget ? (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-              <div className="w-full max-w-sm rounded-2xl bg-white p-6 dark:bg-slate-900">
+            <div
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+              onClick={() => setDeleteTarget(null)}
+            >
+              <div
+                className="w-full max-w-sm rounded-2xl bg-white p-6 dark:bg-slate-900"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <p className="font-semibold">« {deleteTarget.name} » endgültig löschen?</p>
                 <div className="mt-4 flex gap-2">
                   <Button type="button" variant="outline" className="flex-1" onClick={() => setDeleteTarget(null)}>
