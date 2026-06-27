@@ -7,10 +7,11 @@ type Props = {
   value: string
   onChange: (nextUrl: string) => void
   disabled?: boolean
+  compact?: boolean
 }
 
 /** Upload photo produit (bucket public, dossier « products ») — aucune saisie d’URL. */
-export function ProductMenuImageUpload({ value, onChange, disabled }: Props) {
+export function ProductMenuImageUpload({ value, onChange, disabled, compact }: Props) {
   return (
     <AdminImageUpload
       scope="products"
@@ -19,6 +20,7 @@ export function ProductMenuImageUpload({ value, onChange, disabled }: Props) {
       value={value}
       onChange={onChange}
       disabled={disabled}
+      compact={compact}
     />
   )
 }

@@ -42,6 +42,8 @@ export type AdminImageUploadProps = {
   label: string
   /** Texte sous le titre (formats, taille, etc.). */
   hint?: string
+  /** Zone plus compacte (modales admin). */
+  compact?: boolean
 }
 
 /** Zone glisser-déposer / fichier — envoi Supabase Storage, pas de champ URL manuel. */
@@ -52,6 +54,7 @@ export function AdminImageUpload({
   disabled,
   label,
   hint,
+  compact = false,
 }: AdminImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -161,24 +164,30 @@ export function AdminImageUpload({
         onDrop={onDrop}
         onClick={openPicker}
         className={cn(
-          "relative flex w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 py-8 text-center transition",
+          "relative flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 text-center transition",
+          compact ? "py-4" : "gap-3 py-8",
           dragOver ? "border-amber-500 bg-amber-50/60 dark:bg-amber-950/25" : "border-slate-300 bg-slate-50/70 dark:border-slate-600 dark:bg-slate-900/45",
           (disabled || uploading) && "pointer-events-none opacity-70",
         )}
       >
         {uploading ? (
           <>
-            <Loader2 className="h-10 w-10 animate-spin text-amber-600" aria-hidden />
+            <Loader2 className={cn("animate-spin text-amber-600", compact ? "h-8 w-8" : "h-10 w-10")} aria-hidden />
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Envoi en cours…</span>
           </>
         ) : displaySrc ? (
-          <div className="relative h-40 w-full max-w-md overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+          <div
+            className={cn(
+              "relative w-full max-w-md overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800",
+              compact ? "h-28" : "h-40",
+            )}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element -- aperçu admin */}
             <img src={displaySrc} alt="" className="h-full w-full object-cover" />
           </div>
         ) : (
           <>
-            <ImageIcon className="h-10 w-10 text-slate-400" aria-hidden />
+            <ImageIcon className={cn("text-slate-400", compact ? "h-8 w-8" : "h-10 w-10")} aria-hidden />
             <span className="text-sm text-slate-600 dark:text-slate-300">
               Déposez une image ici ou cliquez pour parcourir
             </span>

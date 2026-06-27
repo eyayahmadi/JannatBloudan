@@ -18,6 +18,7 @@ import {
   type AdminMenuSectionFilter,
 } from "@/lib/menu/menu-category-groups"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 type Category = {
   id: string
@@ -143,6 +144,7 @@ export default function AdminMenuCategoriesPage() {
       })
       setModalOpen(false)
       setEditing(null)
+      toast.success("Kategorie erfolgreich gespeichert")
     } finally {
       setSaving(false)
     }

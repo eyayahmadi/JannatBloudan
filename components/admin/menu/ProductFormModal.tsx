@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -60,6 +60,14 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"]
 
+function serializeForm(form: ProductFormState): string {
+  return JSON.stringify({
+    ...form,
+    tags: [...form.tags].sort(),
+    recommended_ids: [...form.recommended_ids].sort(),
+  })
+}
+
 export function ProductFormModal({
   open,
   editingId,
@@ -75,10 +83,25 @@ export function ProductFormModal({
   onSave,
 }: ProductFormModalProps) {
   const [tab, setTab] = useState<TabId>("general")
+  const nameInputRef = useRef<HTMLInputElement>(null)
+  const initialSnapshotRef = useRef("")
 
   useEffect(() => {
-    if (open) setTab("general")
+    if (open) {
+      setTab("general")
+      initialSnapshotRef.current = serializeForm(form)
+    }
+    // Snapshot when modal opens for a given product/create session only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingId])
+
+  useEffect(() => {
+    if (!open || tab !== "general") return
+    const timer = window.setTimeout(() => nameInputRef.current?.focus(), 120)
+    return () => window.clearTimeout(timer)
+  }, [open, tab, editingId])
+
+  const isDirty = open && serializeForm(form) !== initialSnapshotRef.current
 
   const sortedCategories = [...categories].sort(
     (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || a.name.localeCompare(b.name),
@@ -91,16 +114,17 @@ export function ProductFormModal({
       title={editingId ? "Produkt bearbeiten" : "Neues Produkt"}
       titleId="product-form-title"
       subtitle={editingName}
-      maxWidth="2xl"
+      size="xl"
+      isDirty={isDirty}
       headerExtra={
-        <div className="flex gap-1 overflow-x-auto border-t px-4 py-2">
+        <div className="flex gap-1.5 overflow-x-auto px-4 py-2.5">
           {TABS.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
               className={cn(
-                "shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition",
+                "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition",
                 tab === t.id ? "bg-amber-600 text-white" : "text-slate-600 hover:bg-slate-100 dark:text-slate-300",
               )}
             >
@@ -115,36 +139,36 @@ export function ProductFormModal({
         </Button>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-7">
         {tab === "general" ? (
           <>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-2">
                 <Label>Name (DE)</Label>
-                <Input value={form.name} onChange={(e) => onChange({ name: e.target.value })} />
+                <Input ref={nameInputRef} value={form.name} onChange={(e) => onChange({ name: e.target.value })} />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label>Name (AR)</Label>
                 <Input value={form.name_ar} onChange={(e) => onChange({ name_ar: e.target.value })} dir="rtl" />
               </div>
             </div>
-            <div>
+            <div className="space-y-2">
               <Label>Beschreibung</Label>
               <Textarea value={form.description} onChange={(e) => onChange({ description: e.target.value })} rows={3} />
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div>
+            <div className="grid gap-6 sm:grid-cols-3">
+              <div className="space-y-2">
                 <Label>Preis (€)</Label>
                 <Input type="number" step="0.01" value={form.price} onChange={(e) => onChange({ price: e.target.value })} />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label>Sortierung</Label>
                 <Input type="number" value={form.display_order} onChange={(e) => onChange({ display_order: e.target.value })} />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label>Station</Label>
                 <select
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+                  className="w-full rounded-md border px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
                   value={form.station}
                   onChange={(e) => onChange({ station: e.target.value })}
                 >
@@ -154,10 +178,10 @@ export function ProductFormModal({
                 </select>
               </div>
             </div>
-            <div>
+            <div className="space-y-2">
               <Label>Kategorie</Label>
               <select
-                className="mt-1 w-full rounded-md border px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+                className="w-full rounded-md border px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
                 value={form.category_id}
                 onChange={(e) => onChange({ category_id: e.target.value })}
               >
@@ -169,9 +193,9 @@ export function ProductFormModal({
                 ))}
               </select>
             </div>
-            <div>
+            <div className="space-y-2">
               <Label>Produktbild</Label>
-              <ProductMenuImageUpload value={form.image_url} onChange={(url) => onChange({ image_url: url })} />
+              <ProductMenuImageUpload compact value={form.image_url} onChange={(url) => onChange({ image_url: url })} />
             </div>
           </>
         ) : null}
@@ -192,11 +216,11 @@ export function ProductFormModal({
         ) : null}
 
         {tab === "recommendations" ? (
-          <div>
+          <div className="space-y-2">
             <Label>Empfohlene Produkte (Passt dazu)</Label>
             <select
               multiple
-              className="mt-1 h-48 w-full rounded-md border px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
+              className="h-48 w-full rounded-md border px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
               value={form.recommended_ids}
               onChange={(e) =>
                 onChange({ recommended_ids: Array.from(e.target.selectedOptions).map((o) => o.value) })
@@ -208,7 +232,7 @@ export function ProductFormModal({
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-slate-500">Strg/Cmd + Klick für Mehrfachauswahl</p>
+            <p className="text-xs text-slate-500">Strg/Cmd + Klick für Mehrfachauswahl</p>
           </div>
         ) : null}
       </div>

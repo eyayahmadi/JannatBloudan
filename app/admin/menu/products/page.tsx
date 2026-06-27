@@ -32,6 +32,7 @@ import {
 import { tagsFromProductRow, normalizeProductTags, attributeBadgeLabel } from "@/lib/menu/product-attributes"
 import { menuStatusFromRow, rowFromMenuStatus, MENU_STATUS_LABELS } from "@/lib/menu/product-availability-status"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 type Category = {
   id: string
@@ -246,9 +247,11 @@ export default function AdminMenuProductsPage() {
         })
       }
 
+      const wasEdit = !!editing
       setModalOpen(false)
       setEditing(null)
       await load()
+      toast.success(wasEdit ? "Produkt erfolgreich gespeichert" : "Produkt erfolgreich erstellt")
     } finally {
       setSaving(false)
     }

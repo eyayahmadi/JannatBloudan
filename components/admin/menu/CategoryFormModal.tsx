@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -26,6 +27,10 @@ type CategoryFormModalProps = {
   onSave: () => void
 }
 
+function serializeCategoryForm(form: CategoryFormState): string {
+  return JSON.stringify(form)
+}
+
 export function CategoryFormModal({
   open,
   editingName,
@@ -35,6 +40,24 @@ export function CategoryFormModal({
   onChange,
   onSave,
 }: CategoryFormModalProps) {
+  const nameInputRef = useRef<HTMLInputElement>(null)
+  const initialSnapshotRef = useRef("")
+
+  useEffect(() => {
+    if (open) {
+      initialSnapshotRef.current = serializeCategoryForm(form)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editingName])
+
+  useEffect(() => {
+    if (!open) return
+    const timer = window.setTimeout(() => nameInputRef.current?.focus(), 120)
+    return () => window.clearTimeout(timer)
+  }, [open, editingName])
+
+  const isDirty = open && serializeCategoryForm(form) !== initialSnapshotRef.current
+
   return (
     <AdminFormModalShell
       open={open}
@@ -42,25 +65,26 @@ export function CategoryFormModal({
       title="Kategorie bearbeiten"
       titleId="category-form-title"
       subtitle={editingName}
-      maxWidth="lg"
+      size="lg"
+      isDirty={isDirty}
       footer={
         <Button type="button" className="w-full" disabled={saving || !form.name.trim()} onClick={onSave}>
           {saving ? "Speichern…" : "Speichern"}
         </Button>
       }
     >
-      <div className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
+      <div className="space-y-7">
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div className="space-y-2">
             <Label>Name (DE)</Label>
-            <Input value={form.name} onChange={(e) => onChange({ name: e.target.value })} />
+            <Input ref={nameInputRef} value={form.name} onChange={(e) => onChange({ name: e.target.value })} />
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>Name (AR)</Label>
             <Input value={form.name_ar} onChange={(e) => onChange({ name_ar: e.target.value })} dir="rtl" />
           </div>
         </div>
-        <div>
+        <div className="space-y-2">
           <Label>Beschreibung (Untertitel Menü)</Label>
           <Textarea
             value={form.description}
@@ -68,12 +92,12 @@ export function CategoryFormModal({
             rows={2}
           />
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div>
+        <div className="grid gap-6 sm:grid-cols-3">
+          <div className="space-y-2">
             <Label>Emoji</Label>
             <Input value={form.icon_emoji} onChange={(e) => onChange({ icon_emoji: e.target.value })} />
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>Sortierung</Label>
             <Input
               type="number"
@@ -81,10 +105,10 @@ export function CategoryFormModal({
               onChange={(e) => onChange({ display_order: e.target.value })}
             />
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>Bereich</Label>
             <select
-              className="mt-1 w-full rounded-md border px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+              className="w-full rounded-md border px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
               value={form.section}
               onChange={(e) => onChange({ section: e.target.value })}
             >
