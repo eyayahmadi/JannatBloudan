@@ -1,12 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createPortal } from "react-dom"
-import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { AdminFormModalShell } from "@/components/admin/menu/AdminFormModalShell"
 import { ProductAttributePicker } from "@/components/admin/menu/ProductAttributePicker"
 import { ProductFormExtrasPanel } from "@/components/admin/menu/ProductFormExtrasPanel"
 import { ProductFormVariantsPanel } from "@/components/admin/menu/ProductFormVariantsPanel"
@@ -76,56 +75,25 @@ export function ProductFormModal({
   onSave,
 }: ProductFormModalProps) {
   const [tab, setTab] = useState<TabId>("general")
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   useEffect(() => {
     if (open) setTab("general")
   }, [open, editingId])
 
-  useEffect(() => {
-    if (!open) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [open])
-
   const sortedCategories = [...categories].sort(
     (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || a.name.localeCompare(b.name),
   )
 
-  if (!open || !mounted) return null
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 p-4 backdrop-blur-sm sm:items-center"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="product-form-title"
-      onClick={onClose}
-    >
-      <div
-        className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b px-5 py-4">
-          <div>
-            <h2 id="product-form-title" className="text-lg font-bold">
-              {editingId ? "Produkt bearbeiten" : "Neues Produkt"}
-            </h2>
-            {editingName ? <p className="text-sm text-slate-500">{editingName}</p> : null}
-          </div>
-          <button type="button" onClick={onClose} aria-label="Schließen">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="flex gap-1 overflow-x-auto border-b px-4 py-2">
+  return (
+    <AdminFormModalShell
+      open={open}
+      onClose={onClose}
+      title={editingId ? "Produkt bearbeiten" : "Neues Produkt"}
+      titleId="product-form-title"
+      subtitle={editingName}
+      maxWidth="2xl"
+      headerExtra={
+        <div className="flex gap-1 overflow-x-auto border-t px-4 py-2">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -140,112 +108,110 @@ export function ProductFormModal({
             </button>
           ))}
         </div>
-
-        <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-          {tab === "general" ? (
-            <>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <Label>Name (DE)</Label>
-                  <Input value={form.name} onChange={(e) => onChange({ name: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Name (AR)</Label>
-                  <Input value={form.name_ar} onChange={(e) => onChange({ name_ar: e.target.value })} dir="rtl" />
-                </div>
+      }
+      footer={
+        <Button type="button" className="w-full" disabled={saving || !form.name.trim()} onClick={onSave}>
+          {saving ? "Speichern…" : "Speichern"}
+        </Button>
+      }
+    >
+      <div className="space-y-4">
+        {tab === "general" ? (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label>Name (DE)</Label>
+                <Input value={form.name} onChange={(e) => onChange({ name: e.target.value })} />
               </div>
               <div>
-                <Label>Beschreibung</Label>
-                <Textarea value={form.description} onChange={(e) => onChange({ description: e.target.value })} rows={3} />
+                <Label>Name (AR)</Label>
+                <Input value={form.name_ar} onChange={(e) => onChange({ name_ar: e.target.value })} dir="rtl" />
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div>
-                  <Label>Preis (€)</Label>
-                  <Input type="number" step="0.01" value={form.price} onChange={(e) => onChange({ price: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Sortierung</Label>
-                  <Input type="number" value={form.display_order} onChange={(e) => onChange({ display_order: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Station</Label>
-                  <select
-                    className="mt-1 w-full rounded-md border px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-                    value={form.station}
-                    onChange={(e) => onChange({ station: e.target.value })}
-                  >
-                    <option value="KITCHEN">KITCHEN</option>
-                    <option value="BAR">BAR</option>
-                    <option value="SHISHA">SHISHA</option>
-                  </select>
-                </div>
+            </div>
+            <div>
+              <Label>Beschreibung</Label>
+              <Textarea value={form.description} onChange={(e) => onChange({ description: e.target.value })} rows={3} />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <Label>Preis (€)</Label>
+                <Input type="number" step="0.01" value={form.price} onChange={(e) => onChange({ price: e.target.value })} />
               </div>
               <div>
-                <Label>Kategorie</Label>
+                <Label>Sortierung</Label>
+                <Input type="number" value={form.display_order} onChange={(e) => onChange({ display_order: e.target.value })} />
+              </div>
+              <div>
+                <Label>Station</Label>
                 <select
                   className="mt-1 w-full rounded-md border px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-                  value={form.category_id}
-                  onChange={(e) => onChange({ category_id: e.target.value })}
+                  value={form.station}
+                  onChange={(e) => onChange({ station: e.target.value })}
                 >
-                  <option value="">—</option>
-                  {sortedCategories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
+                  <option value="KITCHEN">KITCHEN</option>
+                  <option value="BAR">BAR</option>
+                  <option value="SHISHA">SHISHA</option>
                 </select>
               </div>
-              <div>
-                <Label>Produktbild</Label>
-                <ProductMenuImageUpload value={form.image_url} onChange={(url) => onChange({ image_url: url })} />
-              </div>
-            </>
-          ) : null}
-
-          {tab === "attributes" ? (
-            <ProductAttributePicker
-              value={form.tags}
-              onChange={(tags) => onChange({ tags })}
-              menuStatus={form.menu_status}
-              onMenuStatusChange={(menu_status) => onChange({ menu_status })}
-            />
-          ) : null}
-
-          {tab === "variants" ? <ProductFormVariantsPanel productId={editingId} /> : null}
-          {tab === "extras" ? <ProductFormExtrasPanel productId={editingId} /> : null}
-          {tab === "recipe" ? (
-            <ProductFormRecipePanel productId={editingId} ingredients={ingredients} initialLines={recipeLines} />
-          ) : null}
-
-          {tab === "recommendations" ? (
+            </div>
             <div>
-              <Label>Empfohlene Produkte (Passt dazu)</Label>
+              <Label>Kategorie</Label>
               <select
-                multiple
-                className="mt-1 h-48 w-full rounded-md border px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
-                value={form.recommended_ids}
-                onChange={(e) =>
-                  onChange({ recommended_ids: Array.from(e.target.selectedOptions).map((o) => o.value) })
-                }
+                className="mt-1 w-full rounded-md border px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+                value={form.category_id}
+                onChange={(e) => onChange({ category_id: e.target.value })}
               >
-                {productOptions.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
+                <option value="">—</option>
+                {sortedCategories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-slate-500">Strg/Cmd + Klick für Mehrfachauswahl</p>
             </div>
-          ) : null}
-        </div>
+            <div>
+              <Label>Produktbild</Label>
+              <ProductMenuImageUpload value={form.image_url} onChange={(url) => onChange({ image_url: url })} />
+            </div>
+          </>
+        ) : null}
 
-        <div className="border-t px-5 py-4">
-          <Button type="button" className="w-full" disabled={saving || !form.name.trim()} onClick={onSave}>
-            {saving ? "Speichern…" : "Speichern"}
-          </Button>
-        </div>
+        {tab === "attributes" ? (
+          <ProductAttributePicker
+            value={form.tags}
+            onChange={(tags) => onChange({ tags })}
+            menuStatus={form.menu_status}
+            onMenuStatusChange={(menu_status) => onChange({ menu_status })}
+          />
+        ) : null}
+
+        {tab === "variants" ? <ProductFormVariantsPanel productId={editingId} /> : null}
+        {tab === "extras" ? <ProductFormExtrasPanel productId={editingId} /> : null}
+        {tab === "recipe" ? (
+          <ProductFormRecipePanel productId={editingId} ingredients={ingredients} initialLines={recipeLines} />
+        ) : null}
+
+        {tab === "recommendations" ? (
+          <div>
+            <Label>Empfohlene Produkte (Passt dazu)</Label>
+            <select
+              multiple
+              className="mt-1 h-48 w-full rounded-md border px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800"
+              value={form.recommended_ids}
+              onChange={(e) =>
+                onChange({ recommended_ids: Array.from(e.target.selectedOptions).map((o) => o.value) })
+              }
+            >
+              {productOptions.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-slate-500">Strg/Cmd + Klick für Mehrfachauswahl</p>
+          </div>
+        ) : null}
       </div>
-    </div>,
-    document.body,
+    </AdminFormModalShell>
   )
 }
