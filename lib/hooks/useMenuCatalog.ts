@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
+import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
 import type { DigitalMenuProduct } from "@/lib/menu/digital-menu-product"
 import type { StationAvailability } from "@/lib/stations/availability"
 
@@ -25,7 +26,9 @@ export function useMenuCatalog(options: UseMenuCatalogOptions = {}) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent === true
+    if (!silent) setLoading(true)
     try {
       const qs = new URLSearchParams()
       if (includeUnavailable) qs.set("include_unavailable", "1")
@@ -34,28 +37,30 @@ export function useMenuCatalog(options: UseMenuCatalogOptions = {}) {
       const json = await res.json()
       if (!res.ok) {
         setError(typeof json.error === "string" ? json.error : "Erreur menu")
+        logMenuTelemetry("menu_fetch_failed", { status: res.status, silent: options?.silent === true })
         return
       }
-      setData({
+      setData((prev) => ({
         catalog: (json.items ?? []) as DigitalMenuProduct[],
         categories: json.categories ?? [],
         station_availability: json.station_availability ?? [],
         often_ordered_with: json.often_ordered_with ?? {},
-      })
+      }))
       setError(null)
     } catch {
       setError("Réseau indisponible")
+      logMenuTelemetry("menu_poll_failed", { silent: options?.silent === true })
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [includeUnavailable, locale])
 
   useEffect(() => {
     void load()
     if (pollMs <= 0) return
-    const id = window.setInterval(() => void load(), pollMs)
+    const id = window.setInterval(() => void load({ silent: true }), pollMs)
     const unsub = onRealtimeRefresh((scope) => {
-      if (scopeMatches("menu", scope)) void load()
+      if (scopeMatches("menu", scope)) void load({ silent: true })
     })
     return () => {
       window.clearInterval(id)

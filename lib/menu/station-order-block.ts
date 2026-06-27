@@ -98,7 +98,7 @@ export function filterStaffMenu(
   return catalog.filter((p) => {
     if (category !== "Tout" && p.categoryName !== category && p.category !== category) return false
     if (!q) return true
-    const hay = [p.name, p.name_ar ?? "", p.description, p.categoryName].join(" ").toLowerCase()
+    const hay = [p.name, p.name_ar ?? "", p.description, p.description_ar ?? "", p.categoryName].join(" ").toLowerCase()
     return hay.includes(q)
   })
 }

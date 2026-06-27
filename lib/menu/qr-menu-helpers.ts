@@ -22,6 +22,7 @@ export function mapApiToQrMenuItem(
       name: String(p.name ?? ""),
       name_ar: null,
       description: "",
+      description_ar: null,
       category: "",
       categoryName: "",
       category_display_order: 0,
@@ -54,6 +55,10 @@ export function mapApiToQrMenuItem(
     name: String(p.name ?? ""),
     name_ar: p.name_ar != null ? String(p.name_ar) : null,
     description: String(p.description ?? ""),
+    description_ar:
+      p.description_ar != null && String(p.description_ar).trim()
+        ? String(p.description_ar)
+        : null,
     price: typeof p.price === "number" ? p.price : parseFloat(String(p.price)) || 0,
     image: (p.image_url as string) || "/placeholder.svg",
     category: String(p.category ?? "other"),
@@ -77,6 +82,33 @@ export function mapApiToQrMenuItem(
     modifiers: Array.isArray(p.modifiers) ? (p.modifiers as QrMenuItem["modifiers"]) : [],
     variants: Array.isArray(p.variants) ? (p.variants as QrMenuItem["variants"]) : [],
   }
+}
+
+/** Preserve stable item references when polling refreshes unchanged products. */
+export function mergeQrMenuItems(prev: QrMenuItem[], next: QrMenuItem[]): QrMenuItem[] {
+  if (prev.length === 0) return next
+  const byId = new Map(prev.map((item) => [item.id, item]))
+  return next.map((item) => {
+    const old = byId.get(item.id)
+    if (!old) return item
+    if (
+      old.name === item.name &&
+      old.name_ar === item.name_ar &&
+      old.description === item.description &&
+      old.description_ar === item.description_ar &&
+      old.price === item.price &&
+      old.image === item.image &&
+      old.canOrder === item.canOrder &&
+      old.soldOut === item.soldOut &&
+      old.unavailableLabel === item.unavailableLabel &&
+      old.displayOrder === item.displayOrder &&
+      old.categoryDisplayOrder === item.categoryDisplayOrder &&
+      JSON.stringify(old.tags) === JSON.stringify(item.tags)
+    ) {
+      return old
+    }
+    return item
+  })
 }
 
 export function isQrItemSpicy(item: QrMenuItem): boolean {

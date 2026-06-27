@@ -35,12 +35,12 @@ export function formatMenuPriceLabel({
 }
 
 export function matchesMenuSearch(
-  item: { name: string; name_ar?: string | null; description?: string; tags?: string[] },
+  item: { name: string; name_ar?: string | null; description?: string; description_ar?: string | null; tags?: string[] },
   query: string,
 ): boolean {
   const q = query.trim().toLowerCase()
   if (!q) return true
-  const hay = [item.name, item.name_ar ?? "", item.description ?? "", ...(item.tags ?? []), attributeSearchHaystack(item.tags)]
+  const hay = [item.name, item.name_ar ?? "", item.description ?? "", item.description_ar ?? "", ...(item.tags ?? []), attributeSearchHaystack(item.tags)]
     .join(" ")
     .toLowerCase()
   return hay.includes(q)

@@ -40,7 +40,7 @@ export function StaffMenuPicker({
     [catalog, category, search],
   )
 
-  if (loading) {
+  if (loading && catalog.length === 0) {
     return <p className="text-sm text-slate-500">Menu wird geladen…</p>
   }
 
@@ -91,6 +91,14 @@ export function StaffMenuPicker({
                 {p.name_ar ? (
                   <p className="truncate text-xs text-slate-500" dir="rtl">
                     {p.name_ar}
+                  </p>
+                ) : null}
+                {p.description ? (
+                  <p className="line-clamp-2 text-xs text-slate-500">{p.description}</p>
+                ) : null}
+                {p.description_ar ? (
+                  <p className="line-clamp-2 text-[11px] text-slate-400" dir="rtl">
+                    {p.description_ar}
                   </p>
                 ) : null}
                 <p className="text-sm font-bold text-amber-700">{p.price.toFixed(2)} €</p>

@@ -33,7 +33,12 @@
     "menu:burgers:images": "node --env-file=.env.local scripts/assign-burgers-images.mjs",
     "menu:sandwiches:images": "node --env-file=.env.local scripts/assign-sandwiches-images.mjs",
     "menu:bar-desserts:images": "node --env-file=.env.local scripts/assign-bar-desserts-images.mjs",
-    "menu:sync-images": "node --env-file=.env.local scripts/sync-menu-product-image-urls.mjs"
+    "menu:drinks:images": "node --env-file=.env.local scripts/assign-drinks-images.mjs",
+    "menu:sync-images": "node --env-file=.env.local scripts/sync-menu-product-image-urls.mjs",
+    "menu:audit:images": "node --env-file=.env.local scripts/audit-product-images.mjs",
+    "menu:audit:content": "node --env-file=.env.local scripts/audit-menu-content.mjs",
+    "menu:audit:production": "node --env-file=.env.local scripts/audit-menu-production.mjs",
+    "menu:optimize-image-cache": "node --env-file=.env.local scripts/optimize-menu-image-cache.mjs"
   },
   "dependencies": {
     "@google-cloud/translate": "^9.4.1",

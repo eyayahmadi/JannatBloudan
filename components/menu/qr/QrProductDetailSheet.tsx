@@ -1,14 +1,13 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Minus, Plus, X } from "lucide-react"
 import {
-  categoryPlaceholderEmoji,
   formatMenuPriceLabel,
-  isPlaceholderImage,
 } from "@/lib/menu/menu-display"
 import { ProductAttributeBadges } from "@/components/menu/ProductAttributeBadges"
+import { MenuProductImage } from "@/components/menu/MenuProductImage"
 import {
   calcUnitPrice,
   formatVariantLabel,
@@ -53,19 +52,24 @@ export function QrProductDetailSheet({
   const [selectedExtras, setSelectedExtras] = useState<Set<string>>(new Set())
   const [quantity, setQuantity] = useState(1)
   const [customerNote, setCustomerNote] = useState("")
-  const [imgLoaded, setImgLoaded] = useState(false)
+  const resetProductIdRef = useRef<string | null>(null)
 
   const hasVariants = (product?.variants.length ?? 0) > 0
   const hasExtras = (product?.modifiers.length ?? 0) > 0
+  const productId = product?.id ?? null
 
   useEffect(() => {
-    if (!open || !product) return
+    if (!open || !productId || !product) {
+      if (!open) resetProductIdRef.current = null
+      return
+    }
+    if (resetProductIdRef.current === productId) return
+    resetProductIdRef.current = productId
     setSelectedVariantId(product.variants[0]?.id ?? null)
     setSelectedExtras(new Set())
     setQuantity(1)
     setCustomerNote("")
-    setImgLoaded(false)
-  }, [open, product])
+  }, [open, productId, product])
 
   const selectedVariant = useMemo((): CartVariant | null => {
     if (!product || !selectedVariantId) return null
@@ -103,8 +107,6 @@ export function QrProductDetailSheet({
 
   if (!product) return null
 
-  const usePlaceholder = isPlaceholderImage(product.image)
-  const emoji = categoryPlaceholderEmoji(product.section, product.category)
   const priceFrom = formatMenuPriceLabel({
     price: product.price,
     hasVariants: product.hasVariants,
@@ -133,28 +135,15 @@ export function QrProductDetailSheet({
           >
             <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-amber-200/80 dark:bg-amber-800" />
 
-            <div className="relative aspect-[4/3] max-h-[300px] w-full shrink-0 overflow-hidden bg-gradient-to-br from-amber-50 to-stone-100 dark:from-neutral-800">
-              {usePlaceholder ? (
-                <div className="flex h-full items-center justify-center text-8xl">{emoji}</div>
-              ) : (
-                <>
-                  {!imgLoaded ? (
-                    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-amber-100/90 to-amber-50/50 dark:from-neutral-800 dark:to-neutral-900" />
-                  ) : null}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    loading="lazy"
-                    decoding="async"
-                    onLoad={() => setImgLoaded(true)}
-                    className={cn(
-                      "h-full w-full object-cover transition-opacity duration-500",
-                      imgLoaded ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                </>
-              )}
+            <div className="relative aspect-[4/3] max-h-[300px] w-full shrink-0 overflow-hidden">
+              <MenuProductImage
+                src={product.image}
+                alt={product.name}
+                section={product.section}
+                category={product.category}
+                className="h-full w-full"
+                emojiFallback
+              />
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
               <button
                 type="button"
@@ -173,15 +162,22 @@ export function QrProductDetailSheet({
               ) : null}
 
               <div className="mb-4">
-                <h2 className="text-xl font-bold leading-tight text-amber-950 dark:text-white">{product.name}</h2>
+                <h2 className="text-xl font-bold leading-tight text-amber-950 dark:text-white" dir="ltr">
+                  {product.name}
+                </h2>
                 {product.name_ar ? (
                   <p className="mt-1 text-base text-amber-800/65 dark:text-amber-300/65" dir="rtl">
                     {product.name_ar}
                   </p>
                 ) : null}
-                <p className="mt-2 text-sm leading-relaxed text-amber-800/70 dark:text-amber-300/60">
+                <p className="mt-2 text-sm leading-relaxed text-amber-800/70 dark:text-amber-300/60" dir="ltr">
                   {product.description || "Hausgemachte Spezialität von Jannat Bloudan."}
                 </p>
+                {product.description_ar ? (
+                  <p className="mt-2 text-sm leading-relaxed text-amber-800/60 dark:text-amber-300/55" dir="rtl">
+                    {product.description_ar}
+                  </p>
+                ) : null}
                 {product.tags.length > 0 ? (
                   <ProductAttributeBadges tags={product.tags} size="sm" className="mt-3" />
                 ) : null}
@@ -268,13 +264,15 @@ export function QrProductDetailSheet({
                         onClick={() => onOpenProduct(rec)}
                         className="w-28 shrink-0 overflow-hidden rounded-xl border border-amber-100 bg-white text-left shadow-sm transition hover:shadow-md active:scale-[0.97] dark:border-amber-900/30 dark:bg-neutral-900"
                       >
-                        <div className="flex aspect-square items-center justify-center bg-amber-50 text-2xl dark:bg-neutral-800">
-                          {isPlaceholderImage(rec.image) ? (
-                            categoryPlaceholderEmoji(rec.section, rec.category)
-                          ) : (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={rec.image} alt="" className="h-full w-full object-cover" />
-                          )}
+                        <div className="flex aspect-square items-center justify-center overflow-hidden bg-amber-50 dark:bg-neutral-800">
+                          <MenuProductImage
+                            src={rec.image}
+                            alt={rec.name}
+                            section={rec.section}
+                            category={rec.category}
+                            className="h-full w-full"
+                            emojiFallback
+                          />
                         </div>
                         <div className="p-2">
                           <p className="line-clamp-2 text-[10px] font-semibold leading-tight text-amber-950 dark:text-white">

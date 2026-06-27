@@ -1,16 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { memo } from "react"
 import { motion } from "framer-motion"
 import { Flame, Heart, Leaf, Minus, Plus, Sparkles, Star } from "lucide-react"
-import {
-  categoryPlaceholderEmoji,
-  formatMenuPriceLabel,
-  isPlaceholderImage,
-} from "@/lib/menu/menu-display"
+import { formatMenuPriceLabel } from "@/lib/menu/menu-display"
 import { BADGE_GROUP_TAGS, productHasTag } from "@/lib/menu/product-attributes"
 import { ProductAttributeBadges } from "@/components/menu/ProductAttributeBadges"
 import { HighlightText } from "@/components/menu/HighlightText"
+import { MenuProductImage } from "@/components/menu/MenuProductImage"
 import { isQrItemSpicy, qrDisplayRating } from "@/lib/menu/qr-menu-helpers"
 import type { QrMenuItem } from "@/lib/menu/qr-menu-types"
 import { cn } from "@/lib/utils"
@@ -29,10 +26,9 @@ type QrMenuProductCardProps = {
   showLineControls?: boolean
 }
 
-export function QrMenuProductCard({
+function QrMenuProductCardInner({
   item,
   inCartQty,
-  index = 0,
   isFavorite = false,
   query,
   onToggleFavorite,
@@ -42,9 +38,6 @@ export function QrMenuProductCard({
   onDecrement,
   showLineControls,
 }: QrMenuProductCardProps) {
-  const [imgLoaded, setImgLoaded] = useState(false)
-  const usePlaceholder = isPlaceholderImage(item.image)
-  const emoji = categoryPlaceholderEmoji(item.section, item.category)
   const priceLabel = formatMenuPriceLabel({
     price: item.price,
     hasVariants: item.hasVariants,
@@ -58,37 +51,23 @@ export function QrMenuProductCard({
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 14 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.04, 0.35), duration: 0.35 }}
       className={cn(
-        "group cursor-pointer overflow-hidden rounded-2xl border border-amber-100/90 bg-white shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] dark:border-amber-900/25 dark:bg-neutral-900",
+        "group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-amber-100/90 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98] dark:border-amber-900/25 dark:bg-neutral-900",
         disabled && "opacity-60",
       )}
       onClick={onOpen}
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-amber-50 to-stone-100 dark:from-neutral-800 dark:to-neutral-900">
-        {!usePlaceholder && !imgLoaded ? (
-          <div className="absolute inset-0 animate-pulse bg-amber-100/80 dark:bg-neutral-800" />
-        ) : null}
-        {usePlaceholder ? (
-          <div className="flex h-full w-full items-center justify-center text-5xl opacity-90 transition-transform duration-500 group-hover:scale-110">
-            {emoji}
-          </div>
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={item.image}
-            alt={item.name}
-            loading="lazy"
-            decoding="async"
-            onLoad={() => setImgLoaded(true)}
-            className={cn(
-              "h-full w-full object-cover transition-transform duration-500 group-hover:scale-105",
-              imgLoaded ? "opacity-100" : "opacity-0",
-            )}
-          />
-        )}
+      <div className="relative aspect-[4/3] shrink-0 overflow-hidden">
+        <MenuProductImage
+          src={item.image}
+          alt={item.name}
+          section={item.section}
+          category={item.category}
+          className="h-full w-full"
+          emojiFallback
+        />
         {onToggleFavorite ? (
           <button
             type="button"
@@ -154,18 +133,32 @@ export function QrMenuProductCard({
         </div>
       </div>
 
-      <div className="p-3.5">
-        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-amber-950 dark:text-white">
+      <div className="flex flex-1 flex-col p-3.5">
+        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-amber-950 dark:text-white" dir="ltr">
           <HighlightText text={item.name} query={query} />
         </h3>
         {item.name_ar ? (
-          <p className="mt-0.5 line-clamp-1 text-xs text-amber-800/60 dark:text-amber-300/60" dir="rtl">
+          <p
+            className="mt-0.5 line-clamp-2 break-words text-xs leading-snug text-amber-800/60 dark:text-amber-300/60"
+            dir="rtl"
+          >
             <HighlightText text={item.name_ar} query={query} />
           </p>
         ) : null}
         {item.description ? (
-          <p className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-amber-800/50 dark:text-amber-300/45">
+          <p
+            className="mt-1.5 line-clamp-3 text-[11px] leading-relaxed text-amber-800/50 dark:text-amber-300/45"
+            dir="ltr"
+          >
             {item.description}
+          </p>
+        ) : null}
+        {item.description_ar ? (
+          <p
+            className="mt-1 line-clamp-3 text-[10px] leading-relaxed text-amber-800/45 dark:text-amber-300/40"
+            dir="rtl"
+          >
+            {item.description_ar}
           </p>
         ) : null}
         <ProductAttributeBadges
@@ -176,7 +169,7 @@ export function QrMenuProductCard({
           className="mt-1.5"
         />
 
-        <div className="mt-3 flex items-end justify-between gap-2">
+        <div className="mt-auto flex items-end justify-between gap-2 pt-3">
           <div>
             {rating != null ? (
               <p className="mb-0.5 flex items-center gap-0.5 text-[10px] font-medium text-amber-700/80 dark:text-amber-400/80">
@@ -238,3 +231,15 @@ export function QrMenuProductCard({
     </motion.article>
   )
 }
+
+function propsEqual(a: QrMenuProductCardProps, b: QrMenuProductCardProps) {
+  return (
+    a.item === b.item &&
+    a.inCartQty === b.inCartQty &&
+    a.isFavorite === b.isFavorite &&
+    a.query === b.query &&
+    a.showLineControls === b.showLineControls
+  )
+}
+
+export const QrMenuProductCard = memo(QrMenuProductCardInner, propsEqual)

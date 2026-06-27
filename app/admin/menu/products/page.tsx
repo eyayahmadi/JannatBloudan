@@ -353,6 +353,14 @@ export default function AdminMenuProductsPage() {
             </Badge>
           </div>
           <p className="text-xs text-slate-500">{p.category?.name ?? "—"}</p>
+          {p.description ? (
+            <p className="line-clamp-2 text-xs text-slate-600 dark:text-slate-400">{p.description}</p>
+          ) : null}
+          {p.description_ar ? (
+            <p className="line-clamp-2 text-[11px] text-slate-500 dark:text-slate-500" dir="rtl">
+              {p.description_ar}
+            </p>
+          ) : null}
           <div className="flex flex-wrap gap-1">
             {visibleTags.map((t) => {
               const lbl = attributeBadgeLabel(t)

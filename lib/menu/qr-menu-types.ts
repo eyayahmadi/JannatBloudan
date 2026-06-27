@@ -7,6 +7,7 @@ export type QrMenuItem = {
   name: string
   name_ar: string | null
   description: string
+  description_ar: string | null
   price: number
   image: string
   category: string

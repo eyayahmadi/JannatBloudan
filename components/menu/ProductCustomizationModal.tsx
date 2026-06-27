@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Minus, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -52,16 +52,23 @@ export function ProductCustomizationModal({
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
   const [selectedExtras, setSelectedExtras] = useState<Set<string>>(new Set())
   const [quantity, setQuantity] = useState(1)
+  const resetProductIdRef = useRef<string | null>(null)
 
   const hasVariants = (product?.variants.length ?? 0) > 0
   const hasExtras = (product?.modifiers.length ?? 0) > 0
+  const productId = product?.id ?? null
 
   useEffect(() => {
-    if (!open || !product) return
+    if (!open || !productId || !product) {
+      if (!open) resetProductIdRef.current = null
+      return
+    }
+    if (resetProductIdRef.current === productId) return
+    resetProductIdRef.current = productId
     setSelectedVariantId(product.variants[0]?.id ?? null)
     setSelectedExtras(new Set())
     setQuantity(1)
-  }, [open, product])
+  }, [open, productId, product])
 
   const selectedVariant = useMemo((): CartVariant | null => {
     if (!product || !selectedVariantId) return null

@@ -24,7 +24,7 @@ type ProductRow = Record<string, unknown> & {
   price: number
   name_ar?: string | null
   description?: string | null
-  image_url?: string | null
+  description_ar?: string | null
   is_available?: boolean
   is_popular?: boolean
   is_new?: boolean
@@ -57,25 +57,25 @@ type ProductRow = Record<string, unknown> & {
 }
 
 /** Jointure produits + catégories + ingrédients (schéma digital menu). */
-const PRODUCTS_SELECT_FULL = `id, name, name_ar, slug, description, price, image_url, is_available, is_popular, is_new,
+const PRODUCTS_SELECT_FULL = `id, name, name_ar, slug, description, description_ar, price, image_url, is_available, is_popular, is_new,
            is_chef_choice, is_recommended, is_vegetarian, spice_level, stock_quantity, tags, station, display_order, created_at,
            categories ( id, name, slug ),
            product_ingredients ( quantity, ingredients ( id, name, unit, stock_quantity, threshold_low, threshold_critical ) )`
 
 /** Sans is_new (colonne ajoutée dans scripts/13 — parfois absente si migration partielle). */
-const PRODUCTS_SELECT_NO_IS_NEW = `id, name, name_ar, slug, description, price, image_url, is_available, is_popular,
+const PRODUCTS_SELECT_NO_IS_NEW = `id, name, name_ar, slug, description, description_ar, price, image_url, is_available, is_popular,
            is_chef_choice, is_recommended, is_vegetarian, spice_level, stock_quantity, tags, station, created_at,
            categories ( id, name, slug ),
            product_ingredients ( quantity, ingredients ( id, name, unit, stock_quantity, threshold_low, threshold_critical ) )`
 
 /** Même requête sans name_ar (bases n’ayant pas exécuté scripts/13 ou 22). */
-const PRODUCTS_SELECT_NO_NAME_AR = `id, name, slug, description, price, image_url, is_available, is_popular, is_new,
+const PRODUCTS_SELECT_NO_NAME_AR = `id, name, slug, description, description_ar, price, image_url, is_available, is_popular, is_new,
            is_chef_choice, is_recommended, is_vegetarian, spice_level, stock_quantity, tags, station, created_at,
            categories ( id, name, slug ),
            product_ingredients ( quantity, ingredients ( id, name, unit, stock_quantity, threshold_low, threshold_critical ) )`
 
 /** Schéma minimal produits : sans name_ar ni is_new. */
-const PRODUCTS_SELECT_NO_NAME_AR_NO_IS_NEW = `id, name, slug, description, price, image_url, is_available, is_popular,
+const PRODUCTS_SELECT_NO_NAME_AR_NO_IS_NEW = `id, name, slug, description, description_ar, price, image_url, is_available, is_popular,
            is_chef_choice, is_recommended, is_vegetarian, spice_level, stock_quantity, tags, station, created_at,
            categories ( id, name, slug ),
            product_ingredients ( quantity, ingredients ( id, name, unit, stock_quantity, threshold_low, threshold_critical ) )`
@@ -347,6 +347,11 @@ function enrich(
       p.description && String(p.description).trim()
         ? String(p.description)
         : `Découvrez notre ${p.name} — préparé sur place avec des ingrédients sélectionnés.`,
+    description_ar:
+      (p as { description_ar?: string | null }).description_ar &&
+      String((p as { description_ar?: string | null }).description_ar).trim()
+        ? String((p as { description_ar?: string | null }).description_ar)
+        : null,
     category: catSlug,
     categoryName: p.categories?.name ?? "",
     category_display_order: categoryOrderBySlug.get(catSlug) ?? 0,

@@ -86,7 +86,7 @@ BEGIN
     FOREACH rec_slug IN ARRAY rec_slugs LOOP SELECT id INTO rid FROM products WHERE slug = rec_slug; IF rid IS NOT NULL THEN INSERT INTO product_recommendations (product_id, recommended_product_id, display_order) VALUES (pid, rid, ord); ord := ord + 1; END IF; END LOOP;
   END IF;
 
-  rec_slugs := ARRAY['Waffel Schoko', 'cheesecake-oreo', 'shisha-fruits'];
+  rec_slugs := ARRAY['waffle-nature', 'cheesecake-oreo', 'shisha-fruits'];
   SELECT id INTO pid FROM products WHERE slug = 'kamille-tee';
   IF pid IS NOT NULL THEN DELETE FROM product_recommendations WHERE product_id = pid; ord := 0;
     FOREACH rec_slug IN ARRAY rec_slugs LOOP SELECT id INTO rid FROM products WHERE slug = rec_slug; IF rid IS NOT NULL THEN INSERT INTO product_recommendations (product_id, recommended_product_id, display_order) VALUES (pid, rid, ord); ord := ord + 1; END IF; END LOOP;

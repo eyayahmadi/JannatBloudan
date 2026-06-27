@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import type { LucideIcon } from "lucide-react"
 import {
@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n/context"
 import type { DigitalMenuProduct, MenuClientFilters, MenuSortId } from "@/lib/menu/digital-menu-product"
+import { mergeDigitalMenuProducts } from "@/lib/menu/digital-menu-product"
 import { formatMenuPriceLabel } from "@/lib/menu/menu-display"
 import { filterMenuProducts, similarProducts, sortMenuProducts } from "@/lib/menu/filter-menu-client"
 import { filterProductsByAttributeTag, QR_MENU_ATTRIBUTE_FILTERS, attributeBadgeLabel, BADGE_GROUP_TAGS, productHasTag, type QrAttributeFilterId } from "@/lib/menu/product-attributes"
@@ -43,8 +44,11 @@ import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
 import { groupMenuItemsByDbCategories } from "@/lib/menu/menu-category-groups"
 import { MenuSubcategoryHeader } from "@/components/menu/MenuSubcategoryHeader"
 import { HighlightText } from "@/components/menu/HighlightText"
+import { MenuProductImage } from "@/components/menu/MenuProductImage"
 import { ProductCustomizationModal } from "@/components/menu/ProductCustomizationModal"
 import { formatKitchenTicketNotes, formatVariantLabel } from "@/lib/menu/cart-line"
+import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
+import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
 
 type CatalogCategoryRow = {
   id: string
@@ -99,7 +103,7 @@ export function DigitalMenuExperience() {
   const [stationFilter, setStationFilter] = useState<"all" | Station>("all")
   const [sortBy, setSortBy] = useState<MenuSortId>("recommended")
   const [placing, setPlacing] = useState(false)
-  const [customizeItem, setCustomizeItem] = useState<DigitalMenuProduct | null>(null)
+  const [customizeItemId, setCustomizeItemId] = useState<string | null>(null)
   const navRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -111,8 +115,9 @@ export function DigitalMenuExperience() {
     }
   }, [section, categorySlug, attributeFilter])
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent === true
+    if (!silent) setLoading(true)
     try {
       const qs = new URLSearchParams({
         locale,
@@ -121,25 +126,37 @@ export function DigitalMenuExperience() {
       const res = await fetch(`/api/menu?${qs.toString()}`, { cache: "no-store" })
       const j = await res.json()
       if (!res.ok) throw new Error(j.error)
-      setData({
-        catalog: j.items ?? [],
-        by_section: j.by_section ?? {},
-        chef_choice: j.chef_choice ?? [],
-        recommended: j.recommended ?? [],
-        most_popular: j.most_popular ?? [],
-        categories: j.categories ?? [],
-        often_ordered_with: j.often_ordered_with ?? {},
+      setData((prev) => {
+        const catalog = mergeDigitalMenuProducts(prev?.catalog ?? [], j.items ?? [])
+        return {
+          catalog,
+          by_section: j.by_section ?? {},
+          chef_choice: j.chef_choice ?? [],
+          recommended: j.recommended ?? [],
+          most_popular: j.most_popular ?? [],
+          categories: j.categories ?? [],
+          often_ordered_with: j.often_ordered_with ?? {},
+        }
       })
     } catch (e) {
       console.error(e)
-      toast.error(t("menu.errorLoad"))
+      logMenuTelemetry("menu_fetch_failed", { silent: options?.silent === true })
+      if (!options?.silent) toast.error(t("menu.errorLoad"))
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [locale, t])
 
   useEffect(() => {
     void load()
+    const pollId = window.setInterval(() => void load({ silent: true }), 20_000)
+    const unsub = onRealtimeRefresh((scope) => {
+      if (scopeMatches("menu", scope)) void load({ silent: true })
+    })
+    return () => {
+      window.clearInterval(pollId)
+      unsub()
+    }
   }, [load])
 
   const parsedMin = priceMin.trim() === "" ? null : Number(priceMin.replace(",", "."))
@@ -232,7 +249,7 @@ export function DigitalMenuExperience() {
   const handleAddProduct = useCallback(
     (item: DigitalMenuProduct) => {
       if (item.is_customizable) {
-        setCustomizeItem(item)
+        setCustomizeItemId(item.id)
         return
       }
       add({
@@ -247,6 +264,11 @@ export function DigitalMenuExperience() {
   )
 
   const catalogById = useMemo(() => new Map(data?.catalog.map((p) => [p.id, p]) ?? []), [data])
+
+  const customizeItem = useMemo(() => {
+    if (!customizeItemId) return null
+    return catalogById.get(customizeItemId) ?? null
+  }, [customizeItemId, catalogById])
 
   const resetFilters = useCallback(() => {
     setQ("")
@@ -715,14 +737,9 @@ export function DigitalMenuExperience() {
                   sweet={groupedSection === "desserts"}
                   premium={groupedSection === "food"}
                 />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {group.items.map((item, i) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.02 }}
-                    >
+                <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {group.items.map((item) => (
+                    <div key={item.id} className="h-full min-h-0">
                       <MenuCard
                         item={item}
                         catalog={data.catalog}
@@ -735,21 +752,16 @@ export function DigitalMenuExperience() {
                         sweet={section === "desserts"}
                         drink={section === "drinks"}
                       />
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </section>
             ))}
           </div>
         ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((item, i) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.02 }}
-                >
+        <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filtered.map((item) => (
+                <div key={item.id} className="h-full min-h-0">
                   <MenuCard
                     item={item}
                     catalog={data.catalog}
@@ -762,7 +774,7 @@ export function DigitalMenuExperience() {
                     sweet={section === "desserts"}
                     drink={section === "drinks"}
                   />
-                </motion.div>
+                </div>
               ))}
         </div>
         )}
@@ -916,7 +928,7 @@ export function DigitalMenuExperience() {
       </AnimatePresence>
 
       <ProductCustomizationModal
-        open={!!customizeItem}
+        open={!!customizeItemId}
         product={
           customizeItem
             ? {
@@ -929,7 +941,7 @@ export function DigitalMenuExperience() {
               }
             : null
         }
-        onClose={() => setCustomizeItem(null)}
+        onClose={() => setCustomizeItemId(null)}
         addLabel={t("menu.addToCart")}
         onConfirm={(payload) => {
           add({
@@ -942,7 +954,7 @@ export function DigitalMenuExperience() {
             extras: payload.extras,
             quantity: payload.quantity,
           })
-          setCustomizeItem(null)
+          setCustomizeItemId(null)
         }}
       />
     </div>
@@ -977,7 +989,7 @@ function Block({
   )
 }
 
-function MenuCard({
+function MenuCardInner({
   item,
   catalog,
   oftenOrderedWith,
@@ -1001,12 +1013,7 @@ function MenuCard({
   drink?: boolean
 }) {
   const { t, locale } = useI18n()
-  const [imgLoaded, setImgLoaded] = useState(false)
   const can = item.can_order
-
-  useEffect(() => {
-    setImgLoaded(false)
-  }, [item.image_url])
   const often = useMemo(() => {
     const byId = new Map(catalog.map((p) => [p.id, p]))
     return (oftenOrderedWith ?? []).map((id) => byId.get(id)).filter((x): x is DigitalMenuProduct => !!x)
@@ -1022,33 +1029,20 @@ function MenuCard({
         !can && "opacity-80",
       )}
     >
-      <div
-        className={cn(
-          "relative aspect-[4/3] w-full overflow-hidden bg-muted",
-          !item.image_url && "flex items-center justify-center text-4xl",
-        )}
-      >
+      <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden">
         {item.image_url ? (
-          <>
-            {!imgLoaded ? (
-              <div className="absolute inset-0 animate-pulse bg-muted" />
-            ) : null}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={item.image_url}
-              alt={item.name}
-              loading="lazy"
-              decoding="async"
-              onLoad={() => setImgLoaded(true)}
-              className={cn(
-                "h-full w-full object-cover transition duration-500 group-hover:scale-105",
-                !can && "grayscale-[0.35]",
-                imgLoaded ? "opacity-100" : "opacity-0",
-              )}
-            />
-          </>
+          <MenuProductImage
+            src={item.image_url}
+            alt={item.name}
+            section={item.section}
+            category={item.category}
+            className="h-full w-full"
+            imgClassName={cn(!can && "grayscale-[0.35]")}
+          />
         ) : (
-          <span>{sectionEmoji(item.section)}</span>
+          <div className="flex h-full w-full items-center justify-center bg-muted text-4xl">
+            <span>{sectionEmoji(item.section)}</span>
+          </div>
         )}
         {!can ? (
           <span className="absolute right-2 top-2 rounded-full bg-black/75 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
@@ -1095,22 +1089,34 @@ function MenuCard({
       </div>
       <div className="flex flex-1 flex-col p-3">
         <ProductAttributeBadges tags={item.tags} locale={locale} exclude={BADGE_GROUP_TAGS} max={6} size="xs" className="mb-1" />
-        <h3 className={cn("font-semibold leading-tight", dark && "text-zinc-50")}>
+        <h3 className={cn("font-semibold leading-tight", dark && "text-zinc-50")} dir="ltr">
           <HighlightText text={item.name} query={query} />
         </h3>
         {item.name_ar && locale !== "ar" && (
-          <p className="text-sm text-muted-foreground" dir="rtl">
+          <p className="line-clamp-2 break-words text-sm text-muted-foreground" dir="rtl">
             <HighlightText text={item.name_ar} query={query} />
           </p>
         )}
         <p
           className={cn(
-            "mt-1 line-clamp-2 flex-1 text-sm text-muted-foreground",
+            "mt-1 line-clamp-3 flex-1 text-sm text-muted-foreground",
             dark && "text-zinc-300",
           )}
+          dir="ltr"
         >
           {item.description}
         </p>
+        {item.description_ar ? (
+          <p
+            className={cn(
+              "mt-1 line-clamp-3 text-xs text-muted-foreground/80",
+              dark && "text-zinc-400",
+            )}
+            dir="rtl"
+          >
+            {item.description_ar}
+          </p>
+        ) : null}
         {(sim.length > 0 || often.length > 0) && (
           <div className="mt-2 space-y-1.5 border-t border-border/70 pt-2 text-[11px] text-muted-foreground">
             {sim.length > 0 ? (
@@ -1169,6 +1175,14 @@ function MenuCard({
     </div>
   )
 }
+
+const MenuCard = memo(MenuCardInner, (a, b) =>
+  a.item === b.item &&
+  a.query === b.query &&
+  a.dark === b.dark &&
+  a.sweet === b.sweet &&
+  a.drink === b.drink,
+)
 
 function sectionEmoji(s: string) {
   if (s === "desserts") return "🍰"

@@ -23,6 +23,7 @@ export type DigitalMenuProduct = {
   name: string
   name_ar: string | null
   description: string
+  description_ar: string | null
   category: string
   categoryName: string
   category_display_order: number
@@ -75,4 +76,34 @@ export type MenuClientFilters = {
   vegetarianOnly: boolean
   /** "all" ou station */
   station: "all" | Station
+}
+
+/** Preserve stable product references during silent menu polling. */
+export function mergeDigitalMenuProducts(
+  prev: DigitalMenuProduct[],
+  next: DigitalMenuProduct[],
+): DigitalMenuProduct[] {
+  if (!prev.length) return next
+  const byId = new Map(prev.map((p) => [p.id, p]))
+  return next.map((item) => {
+    const old = byId.get(item.id)
+    if (!old) return item
+    if (
+      old.name === item.name &&
+      old.name_ar === item.name_ar &&
+      old.description === item.description &&
+      old.description_ar === item.description_ar &&
+      old.price === item.price &&
+      old.image_url === item.image_url &&
+      old.can_order === item.can_order &&
+      old.availability === item.availability &&
+      old.max_orderable === item.max_orderable &&
+      JSON.stringify(old.tags) === JSON.stringify(item.tags) &&
+      JSON.stringify(old.modifiers) === JSON.stringify(item.modifiers) &&
+      JSON.stringify(old.variants) === JSON.stringify(item.variants)
+    ) {
+      return old
+    }
+    return item
+  })
 }

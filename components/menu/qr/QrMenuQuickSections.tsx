@@ -71,7 +71,7 @@ export function QrMenuQuickSections({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       className={cn("mb-8 space-y-6", className)}
     >

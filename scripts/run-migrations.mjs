@@ -80,6 +80,8 @@ const NUMBERED_MIGRATIONS = [
   "51-tea-waffles-crepes-content.sql",
   "52-desserts-content.sql",
   "53-shisha-content.sql",
+  "54-deprecate-legacy-categories.sql",
+  "55-fix-recommendation-slugs.sql",
 ]
 
 /** Après le schéma : durcissement rôles puis correctif signup / RLS audit (idempotent). */

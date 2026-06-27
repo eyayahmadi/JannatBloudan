@@ -31,7 +31,8 @@ import { QrMenuEmptyState, QrMenuCardSkeleton } from "@/components/menu/qr/QrMen
 import { QrMenuQuickSections } from "@/components/menu/qr/QrMenuQuickSections"
 import { matchesMenuSearch } from "@/lib/menu/menu-display"
 import { filterProductsByAttributeTag, type QrAttributeFilterId } from "@/lib/menu/product-attributes"
-import { mapApiToQrMenuItem } from "@/lib/menu/qr-menu-helpers"
+import { mapApiToQrMenuItem, mergeQrMenuItems } from "@/lib/menu/qr-menu-helpers"
+import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
 import { sortByMenuCardOrder } from "@/lib/menu/menu-order"
 import { getQrFavorites, getQrRecentlyOrdered, pushQrRecentlyOrdered, toggleQrFavorite } from "@/lib/menu/qr-guest-prefs"
 import type { QrCartEntry, QrMenuItem } from "@/lib/menu/qr-menu-types"
@@ -67,6 +68,7 @@ export default function TableMenuPage() {
   ])
   const [categoryRows, setCategoryRows] = useState<QrMenuCategoryRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [offline, setOffline] = useState(false)
   const [activeCategory, setActiveCategory] = useState("all")
@@ -74,7 +76,7 @@ export default function TableMenuPage() {
   const [search, setSearch] = useState("")
   const [cart, setCart] = useState<QrCartEntry[]>([])
   const [cartOpen, setCartOpen] = useState(false)
-  const [detailItem, setDetailItem] = useState<QrMenuItem | null>(null)
+  const [detailItemId, setDetailItemId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const [recentIds, setRecentIds] = useState<string[]>([])
@@ -97,8 +99,13 @@ export default function TableMenuPage() {
     }
   }, [activeCategory, attributeFilter])
 
-  const loadMenu = useCallback(() => {
-    setLoading(true)
+  const loadMenu = useCallback((options?: { silent?: boolean }) => {
+    const silent = options?.silent === true
+    if (!silent) {
+      setLoading(true)
+    } else {
+      setRefreshing(true)
+    }
     setLoadError(false)
     setOffline(!navigator.onLine)
 
@@ -119,15 +126,21 @@ export default function TableMenuPage() {
         const products = (data.items ?? []).map((p: Record<string, unknown>) =>
           mapApiToQrMenuItem(p, stations),
         )
-        setMenuItems(products)
+        setMenuItems((prev) => mergeQrMenuItems(prev, products))
       })
-      .catch(() => setLoadError(true))
-      .finally(() => setLoading(false))
+      .catch(() => {
+        if (!silent) setLoadError(true)
+        logMenuTelemetry("menu_poll_failed", { silent })
+      })
+      .finally(() => {
+        if (!silent) setLoading(false)
+        else setRefreshing(false)
+      })
   }, [])
 
   useEffect(() => {
     loadMenu()
-    const id = window.setInterval(loadMenu, 20_000)
+    const id = window.setInterval(() => loadMenu({ silent: true }), 20_000)
     return () => window.clearInterval(id)
   }, [loadMenu])
 
@@ -165,6 +178,17 @@ export default function TableMenuPage() {
   }, [filtered, search, attributeFilter])
 
   const displayed = useMemo(() => sortByMenuCardOrder(searched), [searched])
+
+  const detailItem = useMemo(() => {
+    if (!detailItemId) return null
+    return menuItems.find((p) => p.id === detailItemId) ?? null
+  }, [detailItemId, menuItems])
+
+  useEffect(() => {
+    if (detailItemId && !detailItem && !loading) {
+      setDetailItemId(null)
+    }
+  }, [detailItemId, detailItem, loading])
 
   const favoriteItems = useMemo(() => {
     const set = new Set(favoriteIds)
@@ -259,7 +283,7 @@ export default function TableMenuPage() {
     })
   }
 
-  const openDetail = (item: QrMenuItem) => setDetailItem(item)
+  const openDetail = useCallback((item: QrMenuItem) => setDetailItemId(item.id), [])
 
   const increment = (lineId: string) =>
     setCart((prev) => prev.map((c) => (c.lineId === lineId ? { ...c, quantity: c.quantity + 1 } : c)))
@@ -403,8 +427,12 @@ export default function TableMenuPage() {
   }
 
   const renderGrid = (items: QrMenuItem[], offset = 0) => (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4">
-      {items.map((item, i) => renderProductCard(item, offset + i))}
+    <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4">
+      {items.map((item, i) => (
+        <div key={item.id} className="h-full min-h-0">
+          {renderProductCard(item, offset + i)}
+        </div>
+      ))}
     </div>
   )
 
@@ -439,7 +467,7 @@ export default function TableMenuPage() {
       <main className="mx-auto max-w-2xl flex-1 px-4 py-5 pb-28">
         {offline && !loading ? (
           <QrMenuEmptyState variant="offline" onRetry={loadMenu} />
-        ) : loading ? (
+        ) : loading && menuItems.length === 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <QrMenuCardSkeleton key={i} index={i} />
@@ -518,12 +546,12 @@ export default function TableMenuPage() {
         product={detailItem}
         catalog={menuItems}
         oftenOrderedWith={oftenOrderedWith}
-        open={!!detailItem}
-        onClose={() => setDetailItem(null)}
-        onOpenProduct={(item) => setDetailItem(item)}
+        open={!!detailItemId}
+        onClose={() => setDetailItemId(null)}
+        onOpenProduct={(item) => setDetailItemId(item.id)}
         onConfirm={(payload) => {
           addLineToCart(payload)
-          setDetailItem(null)
+          setDetailItemId(null)
         }}
       />
 

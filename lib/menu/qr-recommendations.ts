@@ -1,4 +1,5 @@
 import type { QrMenuItem } from "@/lib/menu/qr-menu-types"
+import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
 
 /**
  * Recommandations depuis la base (admin) + co-occurrence API.
@@ -25,9 +26,21 @@ export function getQrRecommendations(
 
   const apiIds = oftenOrderedWith[product.id] ?? []
   if (apiIds.length > 0) {
+    const missing: string[] = []
     const fromApi = apiIds
-      .map((id) => catalog.find((p) => p.id === id))
+      .map((id) => {
+        const hit = catalog.find((p) => p.id === id)
+        if (!hit) missing.push(id)
+        return hit
+      })
       .filter((p): p is QrMenuItem => !!p)
+    if (missing.length > 0) {
+      logMenuTelemetry("recommendation_lookup_failed", {
+        productId: product.id,
+        productSlug: product.slug,
+        missingIds: missing,
+      })
+    }
     if (push(fromApi)) return out
   }
 
