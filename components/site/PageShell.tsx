@@ -9,6 +9,8 @@ type PageShellProps = {
   className?: string
   contentClassName?: string
   grain?: boolean
+  /** Skip min-h-dvh — prevents iOS Safari scroll jumps when the URL bar shows/hides. */
+  stableViewport?: boolean
 }
 
 /**
@@ -20,8 +22,15 @@ type PageShellProps = {
  * Dans le portail admin, le chrome externe est fourni par `AdminPortalShell` :
  * on rend un conteneur léger pour éviter double fond / double min-height.
  */
-export function PageShell({ children, className, contentClassName, grain = true }: PageShellProps) {
+export function PageShell({
+  children,
+  className,
+  contentClassName,
+  grain = true,
+  stableViewport = false,
+}: PageShellProps) {
   const portal = useAdminPortalOptional()
+  const minH = stableViewport ? "min-h-screen" : "min-h-screen min-h-dvh"
 
   if (portal?.suppressPageChrome) {
     return (
@@ -34,7 +43,8 @@ export function PageShell({ children, className, contentClassName, grain = true 
   return (
     <div
       className={cn(
-        "relative min-h-screen min-h-dvh mesh-page-bg overflow-x-hidden",
+        "relative mesh-page-bg overflow-x-hidden",
+        minH,
         grain && "grain-overlay",
         className,
       )}
@@ -43,7 +53,8 @@ export function PageShell({ children, className, contentClassName, grain = true 
         id="main-content"
         tabIndex={-1}
         className={cn(
-          "relative z-[2] flex min-h-screen min-h-dvh flex-col scroll-mt-24 focus:outline-none",
+          "relative z-[2] flex flex-col scroll-mt-24 focus:outline-none",
+          minH,
           contentClassName,
         )}
       >

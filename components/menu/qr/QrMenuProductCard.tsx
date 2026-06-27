@@ -53,13 +53,16 @@ function QrMenuProductCardInner({
     <motion.article
       initial={false}
       animate={{ opacity: 1, y: 0 }}
+      data-menu-product-id={item.id}
+      translate="no"
+      data-no-translate
       className={cn(
         "group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-amber-100/90 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98] dark:border-amber-900/25 dark:bg-neutral-900",
         disabled && "opacity-60",
       )}
       onClick={onOpen}
     >
-      <div className="relative aspect-[4/3] shrink-0 overflow-hidden">
+      <div className="relative aspect-[4/3] shrink-0 overflow-hidden [overflow-anchor:none]">
         <MenuProductImage
           src={item.image}
           alt={item.name}

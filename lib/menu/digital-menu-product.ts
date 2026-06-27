@@ -107,3 +107,12 @@ export function mergeDigitalMenuProducts(
     return item
   })
 }
+
+/** Showcase lists (chef choice, recommended) — reuse catalog refs when ids match. */
+export function mergeShowcaseProducts(
+  catalog: DigitalMenuProduct[],
+  next: DigitalMenuProduct[],
+): DigitalMenuProduct[] {
+  const byId = new Map(catalog.map((p) => [p.id, p]))
+  return next.map((p) => byId.get(p.id) ?? p)
+}

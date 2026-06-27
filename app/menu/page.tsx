@@ -12,7 +12,7 @@ import { MenuCartProvider } from "@/contexts/MenuCartContext"
 export default function MenuOnlyPage() {
   return (
     <MenuCartProvider>
-      <PageShell contentClassName="pb-20 lg:pb-0">
+      <PageShell stableViewport contentClassName="pb-20 lg:pb-0">
         <SiteHeader backHref="/" />
         <PageHero
           imageSrc={SITE.images.mezze}

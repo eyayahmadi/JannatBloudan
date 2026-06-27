@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence } from "framer-motion"
 import { PageShell } from "@/components/site/PageShell"
 import { PremiumBackdrop } from "@/components/site/PremiumBackdrop"
 import type { OrderStatus } from "@/lib/hooks/useRealtimeOrders"
@@ -24,7 +24,7 @@ import { QrMenuHero } from "@/components/menu/qr/QrMenuHero"
 import { QrMenuSearch } from "@/components/menu/qr/QrMenuSearch"
 import { QrCategoryChips } from "@/components/menu/qr/QrCategoryChips"
 import { QrAttributeFilterChips } from "@/components/menu/qr/QrAttributeFilterChips"
-import { QrMenuProductCard } from "@/components/menu/qr/QrMenuProductCard"
+import { QrTableMenuProductCell } from "@/components/menu/qr/QrTableMenuProductCell"
 import { QrProductDetailSheet } from "@/components/menu/qr/QrProductDetailSheet"
 import { QrMenuCartSheet, QrMenuFloatingBar } from "@/components/menu/qr/QrMenuCartSheet"
 import { QrMenuEmptyState, QrMenuCardSkeleton } from "@/components/menu/qr/QrMenuEmptyState"
@@ -44,6 +44,11 @@ import {
   type CartExtra,
   type CartVariant,
 } from "@/lib/menu/cart-line"
+import {
+  useMenuScrollPreservation,
+  useSilentScrollRestore,
+  MenuScrollGuardProvider,
+} from "@/lib/menu/use-menu-scroll-preservation"
 
 function mapQrApiStatus(raw: string | undefined): OrderStatus {
   const s = (raw ?? "").toLowerCase()
@@ -68,7 +73,6 @@ export default function TableMenuPage() {
   ])
   const [categoryRows, setCategoryRows] = useState<QrMenuCategoryRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [offline, setOffline] = useState(false)
   const [activeCategory, setActiveCategory] = useState("all")
@@ -82,29 +86,58 @@ export default function TableMenuPage() {
   const [recentIds, setRecentIds] = useState<string[]>([])
   const [stationAvailability, setStationAvailability] = useState<StationAvailability[]>([])
   const navRef = useRef<HTMLDivElement>(null)
+  const {
+    captureScrollForSilentRefresh,
+    scrollToNavIfNeeded,
+    consumeSilentScrollRestore,
+    notifyLayoutShift,
+    silentRefreshPendingRef,
+  } = useMenuScrollPreservation()
+
+  const scrollNav = useCallback(() => {
+    scrollToNavIfNeeded(navRef.current)
+  }, [scrollToNavIfNeeded])
+
+  const handleCategoryChange = useCallback(
+    (id: string) => {
+      setActiveCategory(id)
+      scrollNav()
+    },
+    [scrollNav],
+  )
+
+  const handleAttributeFilterChange = useCallback(
+    (id: QrAttributeFilterId) => {
+      setAttributeFilter(id)
+      scrollNav()
+    },
+    [scrollNav],
+  )
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearch((prev) => {
+        const wasEmpty = !prev.trim()
+        const nowEmpty = !value.trim()
+        if (wasEmpty !== nowEmpty) scrollNav()
+        return value
+      })
+    },
+    [scrollNav],
+  )
+
+  useSilentScrollRestore(menuItems, consumeSilentScrollRestore, silentRefreshPendingRef)
 
   useEffect(() => {
     setFavoriteIds(getQrFavorites())
     setRecentIds(getQrRecentlyOrdered(String(tableId)))
   }, [tableId])
 
-  // Au changement de catégorie/filtre : si l'utilisateur a défilé sous la barre
-  // sticky, on remonte en douceur pour repartir en haut de la nouvelle liste.
-  useEffect(() => {
-    const nav = navRef.current
-    if (!nav) return
-    const navTop = nav.getBoundingClientRect().top + window.scrollY
-    if (window.scrollY > navTop) {
-      window.scrollTo({ top: navTop, behavior: "smooth" })
-    }
-  }, [activeCategory, attributeFilter])
-
   const loadMenu = useCallback((options?: { silent?: boolean }) => {
     const silent = options?.silent === true
+    if (silent) captureScrollForSilentRefresh()
     if (!silent) {
       setLoading(true)
-    } else {
-      setRefreshing(true)
     }
     setLoadError(false)
     setOffline(!navigator.onLine)
@@ -116,9 +149,33 @@ export default function TableMenuPage() {
       })
       .then((data) => {
         const rows = (data.categories ?? []) as QrMenuCategoryRow[]
-        setCategoryRows(rows)
+        setCategoryRows((prev) => {
+          if (
+            prev.length === rows.length &&
+            prev.every(
+              (c, i) =>
+                c.id === rows[i]?.id &&
+                c.slug === rows[i]?.slug &&
+                c.name === rows[i]?.name,
+            )
+          ) {
+            return prev
+          }
+          return rows
+        })
         const chips = buildQrTableCategoryChips(rows)
-        setCategoryChips(chips.length > 0 ? chips : [{ id: "all", label: "Alle", icon: "🍽️" }])
+        const nextChips = chips.length > 0 ? chips : [{ id: "all", label: "Alle", icon: "🍽️" }]
+        setCategoryChips((prev) => {
+          if (
+            prev.length === nextChips.length &&
+            prev.every(
+              (c, i) => c.id === nextChips[i]?.id && c.label === nextChips[i]?.label,
+            )
+          ) {
+            return prev
+          }
+          return nextChips
+        })
         setOftenOrderedWith((data.often_ordered_with as Record<string, string[]>) ?? {})
         setStationAvailability((data.station_availability as StationAvailability[]) ?? [])
 
@@ -134,9 +191,8 @@ export default function TableMenuPage() {
       })
       .finally(() => {
         if (!silent) setLoading(false)
-        else setRefreshing(false)
       })
-  }, [])
+  }, [captureScrollForSilentRefresh])
 
   useEffect(() => {
     loadMenu()
@@ -268,34 +324,45 @@ export default function TableMenuPage() {
     [menuItems],
   )
 
-  const handleQuickAdd = (item: QrMenuItem) => {
-    if (!item.canOrder) return
-    addLineToCart({
-      productId: item.id,
-      name: item.name,
-      name_ar: item.name_ar,
-      image: item.image,
-      basePrice: item.price,
-      unitPrice: item.price,
-      variant: null,
-      extras: [],
-      quantity: 1,
-    })
-  }
+  const handleQuickAdd = useCallback(
+    (item: QrMenuItem) => {
+      if (!item.canOrder) return
+      addLineToCart({
+        productId: item.id,
+        name: item.name,
+        name_ar: item.name_ar,
+        image: item.image,
+        basePrice: item.price,
+        unitPrice: item.price,
+        variant: null,
+        extras: [],
+        quantity: 1,
+      })
+    },
+    [addLineToCart],
+  )
 
   const openDetail = useCallback((item: QrMenuItem) => setDetailItemId(item.id), [])
 
-  const increment = (lineId: string) =>
-    setCart((prev) => prev.map((c) => (c.lineId === lineId ? { ...c, quantity: c.quantity + 1 } : c)))
+  const increment = useCallback(
+    (lineId: string) =>
+      setCart((prev) =>
+        prev.map((c) => (c.lineId === lineId ? { ...c, quantity: c.quantity + 1 } : c)),
+      ),
+    [],
+  )
 
-  const decrement = (lineId: string) =>
-    setCart((prev) => {
-      const item = prev.find((c) => c.lineId === lineId)
-      if (item && item.quantity > 1) {
-        return prev.map((c) => (c.lineId === lineId ? { ...c, quantity: c.quantity - 1 } : c))
-      }
-      return prev.filter((c) => c.lineId !== lineId)
-    })
+  const decrement = useCallback(
+    (lineId: string) =>
+      setCart((prev) => {
+        const item = prev.find((c) => c.lineId === lineId)
+        if (item && item.quantity > 1) {
+          return prev.map((c) => (c.lineId === lineId ? { ...c, quantity: c.quantity - 1 } : c))
+        }
+        return prev.filter((c) => c.lineId !== lineId)
+      }),
+    [],
+  )
 
   const cartCount = cart.reduce((s, c) => s + c.quantity, 0)
   const cartTotal = cart.reduce((s, c) => s + c.price * c.quantity, 0)
@@ -398,46 +465,42 @@ export default function TableMenuPage() {
     router.push(`/table/${tableId}/order?oid=${encodeURIComponent(resolvedId)}`)
   }
 
-  const renderProductCard = (item: QrMenuItem, index: number) => {
-    const line = item.isCustomizable || item.hasVariants
-      ? null
-      : cart.find((c) => c.lineId === buildCartLineId(item.id, [], null))
-    const customQty =
-      item.isCustomizable || item.hasVariants
-        ? cart.filter((c) => c.productId === item.id).reduce((s, c) => s + c.quantity, 0)
-        : 0
-    const inCartQty = line?.quantity ?? customQty
-
-    return (
-      <QrMenuProductCard
-        key={item.id}
-        item={item}
-        index={index}
-        query={search}
-        inCartQty={inCartQty}
-        isFavorite={favoriteIds.includes(item.id)}
-        onToggleFavorite={() => handleToggleFavorite(item.id)}
-        showLineControls={!item.isCustomizable && !item.hasVariants && !!line}
-        onOpen={() => openDetail(item)}
-        onQuickAdd={() => handleQuickAdd(item)}
-        onIncrement={line ? () => increment(line.lineId) : undefined}
-        onDecrement={line ? () => decrement(line.lineId) : undefined}
-      />
-    )
-  }
-
-  const renderGrid = (items: QrMenuItem[], offset = 0) => (
+  const renderGrid = (items: QrMenuItem[]) => (
     <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4">
-      {items.map((item, i) => (
-        <div key={item.id} className="h-full min-h-0">
-          {renderProductCard(item, offset + i)}
-        </div>
-      ))}
+      {items.map((item) => {
+        const line =
+          !item.isCustomizable && !item.hasVariants
+            ? cart.find((c) => c.lineId === buildCartLineId(item.id, [], null))
+            : null
+        const customQty =
+          item.isCustomizable || item.hasVariants
+            ? cart.filter((c) => c.productId === item.id).reduce((s, c) => s + c.quantity, 0)
+            : 0
+
+        return (
+          <div key={item.id} className="h-full min-h-0">
+            <QrTableMenuProductCell
+              item={item}
+              query={search}
+              inCartQty={line?.quantity ?? customQty}
+              isFavorite={favoriteIds.includes(item.id)}
+              showLineControls={!item.isCustomizable && !item.hasVariants && !!line}
+              onToggleFavorite={handleToggleFavorite}
+              onOpen={openDetail}
+              onQuickAdd={handleQuickAdd}
+              onIncrement={increment}
+              onDecrement={decrement}
+              lineId={line?.lineId ?? null}
+            />
+          </div>
+        )
+      })}
     </div>
   )
 
   return (
-    <PageShell className="relative dark:bg-neutral-950">
+    <MenuScrollGuardProvider notifyLayoutShift={notifyLayoutShift}>
+    <PageShell stableViewport className="relative dark:bg-neutral-950">
       <PremiumBackdrop variant="cream" />
 
       <QrMenuHero
@@ -456,15 +519,19 @@ export default function TableMenuPage() {
         <StationStatusBanner className="mb-1" />
       </div>
 
-      <div ref={navRef} className="sticky top-0 z-40 border-b border-amber-200/30 bg-white/85 shadow-sm backdrop-blur-xl dark:border-amber-900/20 dark:bg-neutral-950/85">
+      <div ref={navRef} data-menu-sticky-nav className="sticky top-0 z-40 border-b border-amber-200/30 bg-white/85 shadow-sm backdrop-blur-xl [overflow-anchor:none] dark:border-amber-900/20 dark:bg-neutral-950/85">
         <div className="mx-auto max-w-2xl space-y-3 px-4 py-3">
-          <QrMenuSearch value={search} onChange={setSearch} resultCount={search.trim() || attributeFilter !== "all" ? displayed.length : undefined} />
-          <QrAttributeFilterChips activeId={attributeFilter} onSelect={setAttributeFilter} />
-          <QrCategoryChips chips={categoryChips} activeId={activeCategory} onSelect={setActiveCategory} />
+          <QrMenuSearch
+            value={search}
+            onChange={handleSearchChange}
+            resultCount={search.trim() || attributeFilter !== "all" ? displayed.length : undefined}
+          />
+          <QrAttributeFilterChips activeId={attributeFilter} onSelect={handleAttributeFilterChange} />
+          <QrCategoryChips chips={categoryChips} activeId={activeCategory} onSelect={handleCategoryChange} />
         </div>
       </div>
 
-      <main className="mx-auto max-w-2xl flex-1 px-4 py-5 pb-28">
+      <main className="mx-auto max-w-2xl flex-1 px-4 py-5 pb-28 [overflow-anchor:auto]">
         {offline && !loading ? (
           <QrMenuEmptyState variant="offline" onRetry={loadMenu} />
         ) : loading && menuItems.length === 0 ? (
@@ -478,17 +545,10 @@ export default function TableMenuPage() {
         ) : displayed.length === 0 ? (
           <QrMenuEmptyState
             variant={search.trim() ? "search" : "category"}
-            onReset={search.trim() ? () => setSearch("") : undefined}
+            onReset={search.trim() ? () => handleSearchChange("") : undefined}
           />
         ) : (
-          <AnimatePresence mode="wait">
-          <motion.div
-            key={`${activeCategory}|${attributeFilter}`}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-          >
+          <div>
             {!search.trim() && activeCategory === "all" && attributeFilter === "all" ? (
               <QrMenuQuickSections
                 favorites={favoriteItems}
@@ -514,7 +574,7 @@ export default function TableMenuPage() {
 
             {groupedItems ? (
               <div className="space-y-10 scroll-smooth">
-                {groupedItems.map((group, gi) => (
+                {groupedItems.map((group) => (
                   <section
                     key={group.key}
                     id={`subcat-${group.key}`}
@@ -530,15 +590,14 @@ export default function TableMenuPage() {
                       sweet={groupedSection === "desserts"}
                       premium
                     />
-                    {renderGrid(group.items, gi * 10)}
+                    {renderGrid(group.items)}
                   </section>
                 ))}
               </div>
             ) : (
               renderGrid(displayed)
             )}
-          </motion.div>
-          </AnimatePresence>
+          </div>
         )}
       </main>
 
@@ -574,5 +633,6 @@ export default function TableMenuPage() {
         submitting={submitting}
       />
     </PageShell>
+    </MenuScrollGuardProvider>
   )
 }

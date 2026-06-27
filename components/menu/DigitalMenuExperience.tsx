@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { useI18n } from "@/lib/i18n/context"
 import type { DigitalMenuProduct, MenuClientFilters, MenuSortId } from "@/lib/menu/digital-menu-product"
-import { mergeDigitalMenuProducts } from "@/lib/menu/digital-menu-product"
+import { mergeDigitalMenuProducts, mergeShowcaseProducts } from "@/lib/menu/digital-menu-product"
 import { formatMenuPriceLabel } from "@/lib/menu/menu-display"
 import { filterMenuProducts, similarProducts, sortMenuProducts } from "@/lib/menu/filter-menu-client"
 import { filterProductsByAttributeTag, QR_MENU_ATTRIBUTE_FILTERS, attributeBadgeLabel, BADGE_GROUP_TAGS, productHasTag, type QrAttributeFilterId } from "@/lib/menu/product-attributes"
@@ -49,6 +49,11 @@ import { ProductCustomizationModal } from "@/components/menu/ProductCustomizatio
 import { formatKitchenTicketNotes, formatVariantLabel } from "@/lib/menu/cart-line"
 import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
 import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
+import {
+  useMenuScrollPreservation,
+  useSilentScrollRestore,
+  MenuScrollGuardProvider,
+} from "@/lib/menu/use-menu-scroll-preservation"
 
 type CatalogCategoryRow = {
   id: string
@@ -105,18 +110,59 @@ export function DigitalMenuExperience() {
   const [placing, setPlacing] = useState(false)
   const [customizeItemId, setCustomizeItemId] = useState<string | null>(null)
   const navRef = useRef<HTMLDivElement>(null)
+  const {
+    captureScrollForSilentRefresh,
+    scrollToNavIfNeeded,
+    consumeSilentScrollRestore,
+    notifyLayoutShift,
+    silentRefreshPendingRef,
+  } = useMenuScrollPreservation()
 
-  useEffect(() => {
-    const nav = navRef.current
-    if (!nav) return
-    const navTop = nav.getBoundingClientRect().top + window.scrollY
-    if (window.scrollY > navTop) {
-      window.scrollTo({ top: navTop, behavior: "smooth" })
-    }
-  }, [section, categorySlug, attributeFilter])
+  const scrollNav = useCallback(() => {
+    scrollToNavIfNeeded(navRef.current)
+  }, [scrollToNavIfNeeded])
+
+  const handleSectionChange = useCallback(
+    (next: SectionId) => {
+      setSection(next)
+      scrollNav()
+    },
+    [scrollNav],
+  )
+
+  const handleCategorySlugChange = useCallback(
+    (slug: string) => {
+      setCategorySlug(slug)
+      scrollNav()
+    },
+    [scrollNav],
+  )
+
+  const handleAttributeFilterChange = useCallback(
+    (id: QrAttributeFilterId) => {
+      setAttributeFilter(id)
+      scrollNav()
+    },
+    [scrollNav],
+  )
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setQ((prev) => {
+        const wasEmpty = !prev.trim()
+        const nowEmpty = !value.trim()
+        if (wasEmpty !== nowEmpty) scrollNav()
+        return value
+      })
+    },
+    [scrollNav],
+  )
+
+  useSilentScrollRestore(data?.catalog, consumeSilentScrollRestore, silentRefreshPendingRef)
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent === true
+    if (silent) captureScrollForSilentRefresh()
     if (!silent) setLoading(true)
     try {
       const qs = new URLSearchParams({
@@ -131,9 +177,9 @@ export function DigitalMenuExperience() {
         return {
           catalog,
           by_section: j.by_section ?? {},
-          chef_choice: j.chef_choice ?? [],
-          recommended: j.recommended ?? [],
-          most_popular: j.most_popular ?? [],
+          chef_choice: mergeShowcaseProducts(catalog, j.chef_choice ?? []),
+          recommended: mergeShowcaseProducts(catalog, j.recommended ?? []),
+          most_popular: mergeShowcaseProducts(catalog, j.most_popular ?? []),
           categories: j.categories ?? [],
           often_ordered_with: j.often_ordered_with ?? {},
         }
@@ -145,7 +191,7 @@ export function DigitalMenuExperience() {
     } finally {
       if (!silent) setLoading(false)
     }
-  }, [locale, t])
+  }, [locale, t, captureScrollForSilentRefresh])
 
   useEffect(() => {
     void load()
@@ -284,7 +330,8 @@ export function DigitalMenuExperience() {
     setAttributeFilter("all")
     setStationFilter("all")
     setSortBy("recommended")
-  }, [])
+    scrollNav()
+  }, [scrollNav])
 
   const showcaseVisible =
     section === "all" &&
@@ -304,19 +351,22 @@ export function DigitalMenuExperience() {
   type Chip = { key: string; label: string; onClear: () => void }
   const activeChips = useMemo((): Chip[] => {
     const chips: Chip[] = []
-    if (q.trim()) chips.push({ key: "q", label: `${t("menu.chip.search")}: ${q.trim()}`, onClear: () => setQ("") })
+    if (q.trim()) chips.push({ key: "q", label: `${t("menu.chip.search")}: ${q.trim()}`, onClear: () => handleSearchChange("") })
     if (section !== "all")
       chips.push({
         key: "section",
         label: `${t("menu.chip.section")}: ${t(`menu.section.${section}`)}`,
-        onClear: () => setSection("all"),
+        onClear: () => {
+          setSection("all")
+          scrollNav()
+        },
       })
     if (categorySlug !== "all") {
       const nm = data?.categories.find((c) => c.slug === categorySlug)?.name ?? categorySlug
       chips.push({
         key: "cat",
         label: `${t("menu.chip.category")}: ${nm}`,
-        onClear: () => setCategorySlug("all"),
+        onClear: () => handleCategorySlugChange("all"),
       })
     }
     if (priceMin !== "") chips.push({ key: "pmin", label: `${t("menu.chip.min")}: ${priceMin} €`, onClear: () => setPriceMin("") })
@@ -337,7 +387,7 @@ export function DigitalMenuExperience() {
       chips.push({
         key: "attr",
         label: chip?.labelDe ?? attributeFilter,
-        onClear: () => setAttributeFilter("all"),
+        onClear: () => handleAttributeFilterChange("all"),
       })
     }
     if (stationFilter !== "all") {
@@ -370,6 +420,10 @@ export function DigitalMenuExperience() {
     sortBy,
     data?.categories,
     t,
+    handleSearchChange,
+    handleCategorySlugChange,
+    handleAttributeFilterChange,
+    scrollNav,
   ])
 
   const placeOrder = async () => {
@@ -452,18 +506,19 @@ export function DigitalMenuExperience() {
   }
 
   return (
+    <MenuScrollGuardProvider notifyLayoutShift={notifyLayoutShift}>
     <div className="space-y-8 pb-32">
       <div className="site-container pt-4">
         <StationStatusBanner />
       </div>
-      <div ref={navRef} className="sticky top-0 z-40 border-b border-border/60 bg-background/90 backdrop-blur-md">
+      <div ref={navRef} data-menu-sticky-nav className="sticky top-0 z-40 border-b border-border/60 bg-background/90 backdrop-blur-md [overflow-anchor:none]">
         <div className="site-container flex flex-col gap-3 py-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="relative max-w-xl flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder={t("menu.searchPlaceholder")}
                 className="pl-9"
                 aria-label={t("menu.searchPlaceholder")}
@@ -486,7 +541,7 @@ export function DigitalMenuExperience() {
             </div>
           </div>
 
-          <QrAttributeFilterChips activeId={attributeFilter} onSelect={setAttributeFilter} />
+          <QrAttributeFilterChips activeId={attributeFilter} onSelect={handleAttributeFilterChange} />
 
           <div className="flex w-full gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {SECTION_IDS.map((sid) => {
@@ -502,8 +557,8 @@ export function DigitalMenuExperience() {
                     sid === "special" && section === sid && "bg-violet-900 text-violet-50",
                   )}
                   onClick={() => {
-                    setSection(sid)
-                    setCategorySlug("all")
+                    handleSectionChange(sid)
+                    if (categorySlug !== "all") setCategorySlug("all")
                   }}
                 >
                   <Icon className="mr-1 h-4 w-4" />
@@ -521,7 +576,7 @@ export function DigitalMenuExperience() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs text-muted-foreground">{t("menu.categoryLabel")}</Label>
-              <Select value={categorySlug} onValueChange={setCategorySlug}>
+              <Select value={categorySlug} onValueChange={handleCategorySlugChange}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={t("menu.categoryAll")} />
                 </SelectTrigger>
@@ -642,7 +697,7 @@ export function DigitalMenuExperience() {
                   item={item}
                   catalog={data.catalog}
                   oftenOrderedWith={data.often_ordered_with[item.id]}
-                  onSuggestSearch={(name) => setQ(name)}
+                  onSuggestSearch={handleSearchChange}
                   onAdd={handleAddProduct}
                   tagMeta={tagMeta}
                 />
@@ -662,7 +717,7 @@ export function DigitalMenuExperience() {
                   item={item}
                   catalog={data.catalog}
                   oftenOrderedWith={data.often_ordered_with[item.id]}
-                  onSuggestSearch={(name) => setQ(name)}
+                  onSuggestSearch={handleSearchChange}
                   onAdd={handleAddProduct}
                   tagMeta={tagMeta}
                 />
@@ -682,7 +737,7 @@ export function DigitalMenuExperience() {
                   item={item}
                   catalog={data.catalog}
                   oftenOrderedWith={data.often_ordered_with[item.id]}
-                  onSuggestSearch={(name) => setQ(name)}
+                  onSuggestSearch={handleSearchChange}
                   onAdd={handleAddProduct}
                   tagMeta={tagMeta}
                 />
@@ -712,14 +767,7 @@ export function DigitalMenuExperience() {
               ? t(`menu.section.${section}`)
               : t("menu.categoryFallback")}
         </h2>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${section}|${categorySlug}|${attributeFilter}`}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-          >
+        <div>
         {groupedItems ? (
           <div className="space-y-10 scroll-smooth">
             {groupedItems.map((group) => (
@@ -744,7 +792,7 @@ export function DigitalMenuExperience() {
                         item={item}
                         catalog={data.catalog}
                         oftenOrderedWith={data.often_ordered_with[item.id]}
-                        onSuggestSearch={(name) => setQ(name)}
+                        onSuggestSearch={handleSearchChange}
                         onAdd={handleAddProduct}
                         tagMeta={tagMeta}
                         query={q}
@@ -766,7 +814,7 @@ export function DigitalMenuExperience() {
                     item={item}
                     catalog={data.catalog}
                     oftenOrderedWith={data.often_ordered_with[item.id]}
-                    onSuggestSearch={(name) => setQ(name)}
+                    onSuggestSearch={handleSearchChange}
                     onAdd={handleAddProduct}
                     tagMeta={tagMeta}
                     query={q}
@@ -779,18 +827,10 @@ export function DigitalMenuExperience() {
         </div>
         )}
         {filtered.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center gap-3 py-16 text-center"
-          >
-            <motion.span
-              className="text-5xl"
-              animate={{ y: [0, -6, 0] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-            >
+          <div className="flex flex-col items-center gap-3 py-16 text-center">
+            <span className="text-5xl" aria-hidden>
               {q.trim() ? "🔍" : "🍽️"}
-            </motion.span>
+            </span>
             <div className="max-w-xs space-y-1.5">
               <p className="text-base font-semibold text-foreground">{t("menu.noResults")}</p>
               <p className="text-sm text-muted-foreground">{t("menu.emptyHint")}</p>
@@ -799,10 +839,9 @@ export function DigitalMenuExperience() {
               <RotateCcw className="mr-1 h-3.5 w-3.5" />
               {t("menu.resetFilters")}
             </Button>
-          </motion.div>
+          </div>
         )}
-          </motion.div>
-        </AnimatePresence>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -958,6 +997,7 @@ export function DigitalMenuExperience() {
         }}
       />
     </div>
+    </MenuScrollGuardProvider>
   )
 }
 
@@ -1021,6 +1061,9 @@ function MenuCardInner({
   const sim = useMemo(() => similarProducts(catalog, item.id, 3), [catalog, item.id])
   return (
     <div
+      data-menu-product-id={item.id}
+      translate="no"
+      data-no-translate
       className={cn(
         "group flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-shadow hover:-translate-y-0.5 hover:shadow-md",
         dark && "border-violet-500/20 bg-zinc-900/90",

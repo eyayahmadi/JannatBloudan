@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import type { QrTableCategoryChip } from "@/lib/menu/qr-table-category-chips"
 
@@ -13,17 +12,34 @@ type QrCategoryChipsProps = {
 
 export function QrCategoryChips({ chips, activeId, onSelect }: QrCategoryChipsProps) {
   const chipRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const prevActiveRef = useRef<string | null>(null)
 
-  // Garde la puce active visible dans la bande horizontale (centrée).
+  // Scroll chip strip horizontally only — skip first paint, never scroll the page.
   useEffect(() => {
+    if (prevActiveRef.current === activeId) return
+    prevActiveRef.current = activeId
+
     const el = chipRefs.current[activeId]
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" })
+    const container = scrollRef.current
+    if (!el || !container) return
+
+    const elLeft = el.offsetLeft
+    const elRight = elLeft + el.offsetWidth
+    const viewLeft = container.scrollLeft
+    const viewRight = viewLeft + container.clientWidth
+    if (elLeft < viewLeft) {
+      container.scrollTo({ left: elLeft - 8, behavior: "smooth" })
+    } else if (elRight > viewRight) {
+      container.scrollTo({ left: elRight - container.clientWidth + 8, behavior: "smooth" })
     }
   }, [activeId])
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div
+      ref={scrollRef}
+      className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
       {chips.map((cat) => {
         const active = activeId === cat.id
         return (
@@ -42,10 +58,8 @@ export function QrCategoryChips({ chips, activeId, onSelect }: QrCategoryChipsPr
             )}
           >
             {active ? (
-              <motion.span
-                layoutId="qr-active-chip"
+              <span
                 className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-600 to-orange-600 shadow-md shadow-amber-600/25"
-                transition={{ type: "spring", stiffness: 380, damping: 32 }}
               />
             ) : null}
             <span className="relative flex items-center gap-1.5">

@@ -20,6 +20,7 @@
  */
 
 import { useEffect, useRef } from "react"
+import { usePathname } from "next/navigation"
 import { useI18n } from "@/lib/i18n/context"
 import type { Locale } from "@/lib/i18n/config"
 import { translatePage } from "@/lib/client/translate-page"
@@ -105,6 +106,7 @@ type AttrEntry = { el: Element; attr: string; original: string }
 
 export function AutoTranslateDom() {
   const { locale } = useI18n()
+  const pathname = usePathname()
 
   const originalsTextRef = useRef<WeakMap<Text, string>>(new WeakMap())
   const originalsAttrRef = useRef<WeakMap<Element, Map<string, string>>>(new WeakMap())
@@ -118,6 +120,12 @@ export function AutoTranslateDom() {
   localeRef.current = locale
 
   useEffect(() => {
+    // Menu product copy comes from DB (DE/AR) — never machine-translate on menu routes.
+    const path = pathname ?? ""
+    if (path === "/menu" || path.startsWith("/table/")) {
+      return
+    }
+
     // L'ordre importe : le SEED écrase la version persistée pour les chaînes
     // connues (source de vérité figée dans le bundle) ; les autres entrées
     // restent disponibles via le cache local pour éviter de re-frapper l'API.
@@ -406,7 +414,7 @@ export function AutoTranslateDom() {
       pendingTextRef.current = []
       pendingAttrRef.current = []
     }
-  }, [locale])
+  }, [locale, pathname])
 
   return null
 }

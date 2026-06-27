@@ -82,6 +82,7 @@ const NUMBERED_MIGRATIONS = [
   "53-shisha-content.sql",
   "54-deprecate-legacy-categories.sql",
   "55-fix-recommendation-slugs.sql",
+  "56-restore-menu-canonical.sql",
 ]
 
 /** Après le schéma : durcissement rôles puis correctif signup / RLS audit (idempotent). */

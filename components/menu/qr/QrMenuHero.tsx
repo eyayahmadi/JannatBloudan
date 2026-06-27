@@ -30,7 +30,7 @@ export function QrMenuHero({
 
   return (
     <motion.header
-      initial={{ opacity: 0, y: -12 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       className="relative overflow-hidden"
