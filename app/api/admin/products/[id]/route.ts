@@ -14,6 +14,7 @@ const ALLOWED = [
   "name",
   "slug",
   "description",
+  "description_ar",
   "price",
   "category_id",
   "image_url",

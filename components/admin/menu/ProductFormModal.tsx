@@ -18,6 +18,7 @@ export type ProductFormState = {
   name: string
   name_ar: string
   description: string
+  description_ar: string
   price: string
   category_id: string
   stock_quantity: string
@@ -153,8 +154,17 @@ export function ProductFormModal({
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Beschreibung</Label>
+              <Label>Beschreibung (DE)</Label>
               <Textarea value={form.description} onChange={(e) => onChange({ description: e.target.value })} rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label>Beschreibung (AR)</Label>
+              <Textarea
+                value={form.description_ar}
+                onChange={(e) => onChange({ description_ar: e.target.value })}
+                rows={3}
+                dir="rtl"
+              />
             </div>
             <div className="grid gap-6 sm:grid-cols-3">
               <div className="space-y-2">

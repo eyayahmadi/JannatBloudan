@@ -5,268 +5,2412 @@
     "note": "Source de vérité pour la carte — génère scripts/33-jannat-bloudan-menu.sql"
   },
   "categories": [
-    { "name": "Entrées", "name_ar": "المقبلات", "slug": "entrees", "section": "food", "display_order": 10, "icon_emoji": "🥗" },
-    { "name": "Salades", "name_ar": "السلطات", "slug": "salades", "section": "food", "display_order": 20, "icon_emoji": "🥙" },
-    { "name": "Manakish", "name_ar": "المناقيش", "slug": "manakish", "section": "food", "display_order": 30, "icon_emoji": "🫓" },
-    { "name": "Plats", "name_ar": "الوجبات", "slug": "plats", "section": "food", "display_order": 40, "icon_emoji": "🍽️" },
-    { "name": "Shawarma", "name_ar": "الشاورما", "slug": "shawarma", "section": "food", "display_order": 50, "icon_emoji": "🌯" },
-    { "name": "Grillades", "name_ar": "المشاوي", "slug": "grillades", "section": "food", "display_order": 60, "icon_emoji": "🔥" },
-    { "name": "Pizza", "name_ar": "البيتزا", "slug": "pizza", "section": "food", "display_order": 70, "icon_emoji": "🍕" },
-    { "name": "Burgers", "name_ar": "البرغر", "slug": "burgers", "section": "food", "display_order": 80, "icon_emoji": "🍔" },
-    { "name": "Sandwiches", "name_ar": "الساندويش", "slug": "sandwiches", "section": "food", "display_order": 90, "icon_emoji": "🥪" },
-    { "name": "Water", "name_ar": "المياه", "slug": "water", "section": "drinks", "display_order": 100, "icon_emoji": "💧" },
-    { "name": "Juices", "name_ar": "العصائر", "slug": "juices", "section": "drinks", "display_order": 110, "icon_emoji": "🧃" },
-    { "name": "Soft Drinks", "name_ar": "المشروبات الغازية", "slug": "soft-drinks", "section": "drinks", "display_order": 120, "icon_emoji": "🥤" },
-    { "name": "Ice Tea", "name_ar": "الشاي المثلج", "slug": "ice-tea", "section": "drinks", "display_order": 130, "icon_emoji": "🧊" },
-    { "name": "Tea", "name_ar": "الشاي", "slug": "tea", "section": "drinks", "display_order": 140, "icon_emoji": "🍵" },
-    { "name": "Iced Coffee", "name_ar": "القهوة الباردة", "slug": "iced-coffee", "section": "drinks", "display_order": 150, "icon_emoji": "🧋" },
-    { "name": "Hot Drinks", "name_ar": "المشروبات الساخنة", "slug": "coffee", "section": "drinks", "display_order": 160, "icon_emoji": "☕" },
-    { "name": "Cocktails", "name_ar": "الكوكتيلات", "slug": "cocktails", "section": "drinks", "display_order": 170, "icon_emoji": "🍹" },
-    { "name": "Smoothies", "name_ar": "السموذي", "slug": "smoothies", "section": "drinks", "display_order": 180, "icon_emoji": "🥤" },
-    { "name": "Milkshakes", "name_ar": "الميلك شيك", "slug": "milkshakes", "section": "drinks", "display_order": 190, "icon_emoji": "🥛" },
-    { "name": "Banana Milk Cocktails", "name_ar": "كوكتيلات الموز بالحليب", "slug": "banana-milk-cocktails", "section": "drinks", "display_order": 200, "icon_emoji": "🍌" },
-    { "name": "Imperator", "name_ar": "إمبراطور", "slug": "imperator", "section": "drinks", "display_order": 210, "icon_emoji": "💨" },
-    { "name": "Waffeln", "name_ar": "وافل", "slug": "waffeln", "section": "desserts", "display_order": 220, "icon_emoji": "🧇" },
-    { "name": "Crêpes", "name_ar": "كريب", "slug": "crepes", "section": "desserts", "display_order": 230, "icon_emoji": "🥞" },
-    { "name": "Pancakes", "name_ar": "بان كيك", "slug": "pancakes", "section": "desserts", "display_order": 240, "icon_emoji": "🥞" },
-    { "name": "Fruit Salads", "name_ar": "سلطات الفواكه", "slug": "fruit-salads", "section": "desserts", "display_order": 250, "icon_emoji": "🍓" },
-    { "name": "Ice Cream", "name_ar": "آيس كريم", "slug": "ice-cream", "section": "desserts", "display_order": 260, "icon_emoji": "🍨" },
-    { "name": "Cheesecakes", "name_ar": "تشيز كيك", "slug": "cheesecakes", "section": "desserts", "display_order": 270, "icon_emoji": "🍰" },
-    { "name": "Cakes", "name_ar": "كيك", "slug": "cakes", "section": "desserts", "display_order": 280, "icon_emoji": "🍫" },
-    { "name": "Snacks", "name_ar": "سناكات", "slug": "snacks", "section": "desserts", "display_order": 290, "icon_emoji": "🥜" },
-    { "name": "Shisha", "name_ar": "أراكيل", "slug": "shisha", "section": "special", "display_order": 300, "icon_emoji": "💨" }
+    {
+      "name": "Entrées",
+      "name_ar": "المقبلات",
+      "slug": "entrees",
+      "section": "food",
+      "display_order": 10,
+      "icon_emoji": "🥗"
+    },
+    {
+      "name": "Salades",
+      "name_ar": "السلطات",
+      "slug": "salades",
+      "section": "food",
+      "display_order": 20,
+      "icon_emoji": "🥙"
+    },
+    {
+      "name": "Manakish",
+      "name_ar": "المناقيش",
+      "slug": "manakish",
+      "section": "food",
+      "display_order": 30,
+      "icon_emoji": "🫓"
+    },
+    {
+      "name": "Plats",
+      "name_ar": "الوجبات",
+      "slug": "plats",
+      "section": "food",
+      "display_order": 40,
+      "icon_emoji": "🍽️"
+    },
+    {
+      "name": "Shawarma",
+      "name_ar": "الشاورما",
+      "slug": "shawarma",
+      "section": "food",
+      "display_order": 50,
+      "icon_emoji": "🌯"
+    },
+    {
+      "name": "Grillades",
+      "name_ar": "المشاوي",
+      "slug": "grillades",
+      "section": "food",
+      "display_order": 60,
+      "icon_emoji": "🔥"
+    },
+    {
+      "name": "Pizza",
+      "name_ar": "البيتزا",
+      "slug": "pizza",
+      "section": "food",
+      "display_order": 70,
+      "icon_emoji": "🍕"
+    },
+    {
+      "name": "Burgers",
+      "name_ar": "البرغر",
+      "slug": "burgers",
+      "section": "food",
+      "display_order": 80,
+      "icon_emoji": "🍔"
+    },
+    {
+      "name": "Sandwiches",
+      "name_ar": "الساندويش",
+      "slug": "sandwiches",
+      "section": "food",
+      "display_order": 90,
+      "icon_emoji": "🥪"
+    },
+    {
+      "name": "Water",
+      "name_ar": "المياه",
+      "slug": "water",
+      "section": "drinks",
+      "display_order": 100,
+      "icon_emoji": "💧"
+    },
+    {
+      "name": "Juices",
+      "name_ar": "العصائر",
+      "slug": "juices",
+      "section": "drinks",
+      "display_order": 110,
+      "icon_emoji": "🧃"
+    },
+    {
+      "name": "Soft Drinks",
+      "name_ar": "المشروبات الغازية",
+      "slug": "soft-drinks",
+      "section": "drinks",
+      "display_order": 120,
+      "icon_emoji": "🥤"
+    },
+    {
+      "name": "Ice Tea",
+      "name_ar": "الشاي المثلج",
+      "slug": "ice-tea",
+      "section": "drinks",
+      "display_order": 130,
+      "icon_emoji": "🧊"
+    },
+    {
+      "name": "Tea",
+      "name_ar": "الشاي",
+      "slug": "tea",
+      "section": "drinks",
+      "display_order": 140,
+      "icon_emoji": "🍵"
+    },
+    {
+      "name": "Iced Coffee",
+      "name_ar": "القهوة الباردة",
+      "slug": "iced-coffee",
+      "section": "drinks",
+      "display_order": 150,
+      "icon_emoji": "🧋"
+    },
+    {
+      "name": "Hot Drinks",
+      "name_ar": "المشروبات الساخنة",
+      "slug": "coffee",
+      "section": "drinks",
+      "display_order": 160,
+      "icon_emoji": "☕"
+    },
+    {
+      "name": "Cocktails",
+      "name_ar": "الكوكتيلات",
+      "slug": "cocktails",
+      "section": "drinks",
+      "display_order": 170,
+      "icon_emoji": "🍹"
+    },
+    {
+      "name": "Smoothies",
+      "name_ar": "السموذي",
+      "slug": "smoothies",
+      "section": "drinks",
+      "display_order": 180,
+      "icon_emoji": "🥤"
+    },
+    {
+      "name": "Milkshakes",
+      "name_ar": "الميلك شيك",
+      "slug": "milkshakes",
+      "section": "drinks",
+      "display_order": 190,
+      "icon_emoji": "🥛"
+    },
+    {
+      "name": "Banana Milk Cocktails",
+      "name_ar": "كوكتيلات الموز بالحليب",
+      "slug": "banana-milk-cocktails",
+      "section": "drinks",
+      "display_order": 200,
+      "icon_emoji": "🍌"
+    },
+    {
+      "name": "Imperator",
+      "name_ar": "إمبراطور",
+      "slug": "imperator",
+      "section": "drinks",
+      "display_order": 210,
+      "icon_emoji": "💨"
+    },
+    {
+      "name": "Waffeln",
+      "name_ar": "وافل",
+      "slug": "waffeln",
+      "section": "desserts",
+      "display_order": 220,
+      "icon_emoji": "🧇"
+    },
+    {
+      "name": "Crêpes",
+      "name_ar": "كريب",
+      "slug": "crepes",
+      "section": "desserts",
+      "display_order": 230,
+      "icon_emoji": "🥞"
+    },
+    {
+      "name": "Pancakes",
+      "name_ar": "بان كيك",
+      "slug": "pancakes",
+      "section": "desserts",
+      "display_order": 240,
+      "icon_emoji": "🥞"
+    },
+    {
+      "name": "Fruit Salads",
+      "name_ar": "سلطات الفواكه",
+      "slug": "fruit-salads",
+      "section": "desserts",
+      "display_order": 250,
+      "icon_emoji": "🍓"
+    },
+    {
+      "name": "Ice Cream",
+      "name_ar": "آيس كريم",
+      "slug": "ice-cream",
+      "section": "desserts",
+      "display_order": 260,
+      "icon_emoji": "🍨"
+    },
+    {
+      "name": "Cheesecakes",
+      "name_ar": "تشيز كيك",
+      "slug": "cheesecakes",
+      "section": "desserts",
+      "display_order": 270,
+      "icon_emoji": "🍰"
+    },
+    {
+      "name": "Cakes",
+      "name_ar": "كيك",
+      "slug": "cakes",
+      "section": "desserts",
+      "display_order": 280,
+      "icon_emoji": "🍫"
+    },
+    {
+      "name": "Snacks",
+      "name_ar": "سناكات",
+      "slug": "snacks",
+      "section": "desserts",
+      "display_order": 290,
+      "icon_emoji": "🥜"
+    },
+    {
+      "name": "Shisha",
+      "name_ar": "أراكيل",
+      "slug": "shisha",
+      "section": "special",
+      "display_order": 300,
+      "icon_emoji": "💨"
+    }
   ],
   "extras": [
-    { "slug": "extra-nutella", "name": "Nutella", "name_ar": "نوتيلا", "price": 1.5 },
-    { "slug": "extra-oreo", "name": "Oreo", "name_ar": "أوريو", "price": 1.5 },
-    { "slug": "extra-lotus", "name": "Lotus", "name_ar": "لوتس", "price": 1.5 },
-    { "slug": "extra-kinder", "name": "Kinder", "name_ar": "كيندر", "price": 2.0 },
-    { "slug": "extra-white-chocolate", "name": "White Chocolate", "name_ar": "شوكولاتة بيضاء", "price": 1.5 },
-    { "slug": "extra-brownie", "name": "Brownie", "name_ar": "براوني", "price": 2.0 },
-    { "slug": "extra-pistachio", "name": "Pistachio", "name_ar": "فستق", "price": 2.0 },
-    { "slug": "extra-banana", "name": "Banana", "name_ar": "موز", "price": 1.0 },
-    { "slug": "extra-strawberry", "name": "Strawberry", "name_ar": "فراولة", "price": 1.0 },
-    { "slug": "extra-vanilla-ice-cream", "name": "Vanilla Ice Cream", "name_ar": "آيس كريم فانيليا", "price": 2.0 },
-    { "slug": "extra-chocolate-ice-cream", "name": "Chocolate Ice Cream", "name_ar": "آيس كريم شوكولاتة", "price": 2.0 },
-    { "slug": "extra-chocolate-sauce", "name": "Extra Chocolate Sauce", "name_ar": "صوص شوكولاتة إضافي", "price": 1.0 }
+    {
+      "slug": "extra-nutella",
+      "name": "Nutella",
+      "name_ar": "نوتيلا",
+      "price": 1.5
+    },
+    {
+      "slug": "extra-oreo",
+      "name": "Oreo",
+      "name_ar": "أوريو",
+      "price": 1.5
+    },
+    {
+      "slug": "extra-lotus",
+      "name": "Lotus",
+      "name_ar": "لوتس",
+      "price": 1.5
+    },
+    {
+      "slug": "extra-kinder",
+      "name": "Kinder",
+      "name_ar": "كيندر",
+      "price": 2
+    },
+    {
+      "slug": "extra-white-chocolate",
+      "name": "White Chocolate",
+      "name_ar": "شوكولاتة بيضاء",
+      "price": 1.5
+    },
+    {
+      "slug": "extra-brownie",
+      "name": "Brownie",
+      "name_ar": "براوني",
+      "price": 2
+    },
+    {
+      "slug": "extra-pistachio",
+      "name": "Pistachio",
+      "name_ar": "فستق",
+      "price": 2
+    },
+    {
+      "slug": "extra-banana",
+      "name": "Banana",
+      "name_ar": "موز",
+      "price": 1
+    },
+    {
+      "slug": "extra-strawberry",
+      "name": "Strawberry",
+      "name_ar": "فراولة",
+      "price": 1
+    },
+    {
+      "slug": "extra-vanilla-ice-cream",
+      "name": "Vanilla Ice Cream",
+      "name_ar": "آيس كريم فانيليا",
+      "price": 2
+    },
+    {
+      "slug": "extra-chocolate-ice-cream",
+      "name": "Chocolate Ice Cream",
+      "name_ar": "آيس كريم شوكولاتة",
+      "price": 2
+    },
+    {
+      "slug": "extra-chocolate-sauce",
+      "name": "Extra Chocolate Sauce",
+      "name_ar": "صوص شوكولاتة إضافي",
+      "price": 1
+    }
   ],
-  "customizableProductSlugs": ["waffle-nature", "crepe-nature", "pancake-nature"],
+  "customizableProductSlugs": [
+    "waffle-nature",
+    "crepe-nature",
+    "pancake-nature"
+  ],
+  "productRecommendations": {
+    "hummus": [
+      "baba-ghanoug",
+      "tabbouleh",
+      "stillwasser"
+    ],
+    "hummus-mit-hackfleisch": [
+      "gewuerzter-reis",
+      "fattoush",
+      "coca-cola"
+    ],
+    "baba-ghanoug": [
+      "hummus",
+      "tabbouleh",
+      "mineralwasser"
+    ],
+    "mutabbal": [
+      "hummus",
+      "muhammara",
+      "schwarzer-tee"
+    ],
+    "muhammara": [
+      "hummus",
+      "manakish-zaatar"
+    ],
+    "veganer-weinblaetter": [
+      "tabbouleh",
+      "hummus",
+      "eistee-zitrone"
+    ],
+    "zigarrenburak": [
+      "hummus",
+      "coca-cola",
+      "fattoush"
+    ],
+    "gewuerzter-reis": [
+      "gemischter-grillteller",
+      "kebab-teller",
+      "stillwasser"
+    ],
+    "pommes-teller": [
+      "shawarma-sandwich",
+      "coca-cola",
+      "chicken-nuggets-pommes"
+    ],
+    "chicken-nuggets-pommes": [
+      "pommes-teller",
+      "sprite",
+      "coca-cola"
+    ],
+    "kebbeh-frittiert": [
+      "hummus",
+      "fattoush"
+    ],
+    "gegrillte-kibbeh": [
+      "hummus",
+      "tabbouleh",
+      "schwarzer-tee"
+    ]
+  },
   "products": [
-    { "name": "Hummus", "name_ar": "حمص", "slug": "hummus", "category": "entrees", "price": 6.0, "station": "KITCHEN", "is_popular": true, "is_vegetarian": true, "description": "Klassischer Hummus mit Tahini und Olivenöl" },
-    { "name": "Hummus mit Hackfleisch", "name_ar": "حمص باللحمة", "slug": "hummus-mit-hackfleisch", "category": "entrees", "price": 9.0, "station": "KITCHEN", "description": "Cremiger Hummus mit gewürztem Hackfleisch" },
-    { "name": "Baba Ghanoug", "name_ar": "بابا غنوج", "slug": "baba-ghanoug", "category": "entrees", "price": 6.0, "station": "KITCHEN", "is_vegetarian": true, "description": "Geräucherter Auberginen-Dip mit Tahini" },
-    { "name": "Mutabbal", "name_ar": "متبل", "slug": "mutabbal", "category": "entrees", "price": 6.0, "station": "KITCHEN", "is_vegetarian": true, "description": "Auberginenpüree mit Tahini und Knoblauch" },
-    { "name": "Muhammara", "name_ar": "محمرة", "slug": "muhammara", "category": "entrees", "price": 5.5, "station": "KITCHEN", "is_vegetarian": true, "description": "Würzige Paprika-Walnuss-Paste" },
-    { "name": "Veganer Weinblätter", "name_ar": "ورق عنب", "slug": "veganer-weinblaetter", "category": "entrees", "price": 9.0, "station": "KITCHEN", "is_vegan": true, "is_vegetarian": true, "description": "Gefüllte Weinblätter mit Reis und Kräutern" },
-    { "name": "Zigarrenburak", "name_ar": "بورك", "slug": "zigarrenburak", "category": "entrees", "price": 2.5, "station": "KITCHEN", "description": "Knusprige Teigröllchen mit Füllung" },
-    { "name": "Gewürzter Reis", "name_ar": "رز", "slug": "gewuerzter-reis", "category": "entrees", "price": 6.0, "station": "KITCHEN", "is_vegan": true, "is_vegetarian": true, "description": "Orientalisch gewürzter Reis" },
-    { "name": "Pommes Teller", "name_ar": "بطاطا مقلية", "slug": "pommes-teller", "category": "entrees", "price": 5.0, "station": "KITCHEN", "is_vegan": true, "is_vegetarian": true, "description": "Goldene Pommes frites" },
-    { "name": "Chicken Nuggets + Pommes", "name_ar": "ناغتس مع بطاطا", "slug": "chicken-nuggets-pommes", "category": "entrees", "price": 7.0, "station": "KITCHEN", "description": "Knusprige Chicken Nuggets mit Pommes" },
-    { "name": "Kebbeh frittiert", "name_ar": "كبة مقلية", "slug": "kebbeh-frittiert", "category": "entrees", "price": 4.5, "station": "KITCHEN", "description": "Frittierte Bulgur-Bällchen mit Fleischfüllung" },
-    { "name": "Gegrillte Kibbeh", "name_ar": "كبة مشوية", "slug": "gegrillte-kibbeh", "category": "entrees", "price": 5.5, "station": "KITCHEN", "description": "Gegrillte Kibbeh vom Grill" },
-
-    { "name": "Rucola-Salat", "name_ar": "سلطة الجرجير", "slug": "rucola-salat", "category": "salades", "price": 6.0, "station": "KITCHEN", "is_vegetarian": true, "tags": ["has_variants"], "description": "Frischer Rucola-Salat", "variants": [{ "slug": "klein", "name": "Klein", "name_ar": "صغير", "price": 6.0 }, { "slug": "gross", "name": "Groß", "name_ar": "كبير", "price": 10.0 }] },
-    { "name": "Tabbouleh", "name_ar": "تبولة", "slug": "tabbouleh", "category": "salades", "price": 6.0, "station": "KITCHEN", "is_vegetarian": true, "tags": ["has_variants"], "description": "Klassische Tabbouleh", "variants": [{ "slug": "klein", "name": "Klein", "name_ar": "صغير", "price": 6.0 }, { "slug": "gross", "name": "Groß", "name_ar": "كبير", "price": 10.0 }] },
-    { "name": "Fattoush", "name_ar": "فتوش", "slug": "fattoush", "category": "salades", "price": 6.0, "station": "KITCHEN", "is_vegetarian": true, "tags": ["has_variants"], "description": "Knackiger Fattoush-Salat", "variants": [{ "slug": "klein", "name": "Klein", "name_ar": "صغير", "price": 6.0 }, { "slug": "gross", "name": "Groß", "name_ar": "كبير", "price": 9.0 }] },
-    { "name": "Salat", "name_ar": "سلطة", "slug": "salat", "category": "salades", "price": 5.0, "station": "KITCHEN", "is_vegetarian": true, "tags": ["has_variants"], "description": "Frischer grüner Salat", "variants": [{ "slug": "klein", "name": "Klein", "name_ar": "صغير", "price": 5.0 }, { "slug": "gross", "name": "Groß", "name_ar": "كبير", "price": 9.0 }] },
-
-    { "name": "Crispy Chicken Teller", "name_ar": "طبق دجاج مقرمش", "slug": "crispy-chicken-teller", "category": "plats", "price": 13.0, "station": "KITCHEN", "description": "Knuspriges Hähnchen mit Beilagen" },
-    { "name": "Crispy Zinger Teller", "name_ar": "طبق زنجر مقرمش", "slug": "crispy-zinger-teller", "category": "plats", "price": 13.5, "station": "KITCHEN", "is_popular": true, "description": "Scharfes Zinger-Hähnchen mit Beilagen" },
-    { "name": "Fajita Teller", "name_ar": "طبق فاهيتا", "slug": "fajita-teller", "category": "plats", "price": 13.0, "station": "KITCHEN", "description": "Fajita-Hähnchen mit Paprika und Zwiebeln" },
-    { "name": "Mexicano Teller", "name_ar": "طبق مكسيكانو", "slug": "mexicano-teller", "category": "plats", "price": 13.0, "station": "KITCHEN", "description": "Mexikanisch gewürztes Hähnchengericht" },
-    { "name": "Falafel Halloumi Teller", "name_ar": "طبق فلافل حلوم", "slug": "falafel-halloumi-teller", "category": "plats", "price": 12.0, "station": "KITCHEN", "is_vegetarian": true, "description": "Falafel mit gegrilltem Halloumi" },
-    { "name": "Halloumi Teller", "name_ar": "طبق حلوم", "slug": "halloumi-teller", "category": "plats", "price": 10.0, "station": "KITCHEN", "is_vegetarian": true, "description": "Gegrillter Halloumi mit Beilagen" },
-    { "name": "Arabischer Falafel Teller", "name_ar": "طبق فلافل عربي", "slug": "arabischer-falafel-teller", "category": "plats", "price": 10.0, "station": "KITCHEN", "is_vegan": true, "is_vegetarian": true, "description": "Hausgemachter Falafel nach arabischer Art" },
-    { "name": "Chicken Fries", "name_ar": "دجاج مع بطاطا", "slug": "chicken-fries", "category": "plats", "price": 9.5, "station": "KITCHEN", "description": "Hähnchenstreifen mit Pommes frites" },
-    { "name": "Frittierter Fisch Teller", "name_ar": "طبق سمك مقلي", "slug": "frittierter-fisch-teller", "category": "plats", "price": 18.0, "station": "KITCHEN", "description": "Knusprig frittierter Fisch mit Beilagen" },
-
-    { "name": "Shawarma Arabi Teller", "name_ar": "وجبة شاورما عربي", "slug": "shawarma-arabi-teller", "category": "shawarma", "price": 12.5, "station": "KITCHEN", "is_popular": true, "is_chef_choice": true, "description": "Arabisches Shawarma mit Reis und Salat" },
-    { "name": "Shawarma Marina Teller", "name_ar": "وجبة شاورما مارينا", "slug": "shawarma-marina-teller", "category": "shawarma", "price": 10.0, "station": "KITCHEN", "description": "Shawarma Marina mit Beilagen" },
-    { "name": "Shawarma Bloudan Teller", "name_ar": "وجبة شاورما بلودان", "slug": "shawarma-bloudan-teller", "category": "shawarma", "price": 13.5, "station": "KITCHEN", "is_popular": true, "is_recommended": true, "description": "Haus-Spezialität Shawarma Bloudan" },
-    { "name": "Shawarma Frat Teller", "name_ar": "وجبة شاورما فرات", "slug": "shawarma-frat-teller", "category": "shawarma", "price": 13.5, "station": "KITCHEN", "description": "Shawarma Frat mit Beilagen" },
-    { "name": "Shawarma Sandwich", "name_ar": "ساندويتش شاورما", "slug": "shawarma-sandwich", "category": "shawarma", "price": 6.0, "station": "KITCHEN", "is_popular": true, "description": "Shawarma im frischen Fladenbrot" },
-    { "name": "Double Shawarma Sandwich", "name_ar": "ساندويتش شاورما دبل", "slug": "double-shawarma-sandwich", "category": "shawarma", "price": 8.0, "station": "KITCHEN", "description": "Doppelportion Shawarma im Sandwich" },
-
-    { "name": "Gemischter Grillteller", "name_ar": "مشاوي مشكلة", "slug": "gemischter-grillteller", "category": "grillades", "price": 22.0, "station": "KITCHEN", "is_popular": true, "is_chef_choice": true, "description": "Auswahl gegrillter Fleischspezialitäten" },
-    { "name": "Lamm Teller", "name_ar": "طبق لحم غنم", "slug": "lamm-teller", "category": "grillades", "price": 25.0, "station": "KITCHEN", "description": "Zartes Lammfleisch vom Grill" },
-    { "name": "Schisch Tawouk Teller", "name_ar": "طبق شيش طاووق", "slug": "schisch-tawouk-teller", "category": "grillades", "price": 18.0, "station": "KITCHEN", "is_popular": true, "description": "Mariniertes Hähnchenspieß vom Grill" },
-    { "name": "Kebab Teller", "name_ar": "طبق كباب", "slug": "kebab-teller", "category": "grillades", "price": 20.0, "station": "KITCHEN", "description": "Gegrillte Kebab-Spieße mit Beilagen" },
-    { "name": "Leber Teller", "name_ar": "طبق كبدة", "slug": "leber-teller", "category": "grillades", "price": 18.0, "station": "KITCHEN", "description": "Gegrillte Leber mit Gewürzen" },
-    { "name": "Halbes Grillhähnchen", "name_ar": "نصف دجاج مشوي", "slug": "halbes-grillhaehnchen", "category": "grillades", "price": 16.0, "station": "KITCHEN", "description": "Halbes Hähnchen vom Grill" },
-    { "name": "Auberginen Kebab", "name_ar": "كباب باذنجان", "slug": "auberginen-kebab", "category": "grillades", "price": 20.0, "station": "KITCHEN", "description": "Kebab mit gegrillter Aubergine" },
-    { "name": "Lahmacun mit Käse", "name_ar": "لحم بعجين بالجبنة", "slug": "lahmacun-mit-kaese", "category": "grillades", "price": 16.0, "station": "KITCHEN", "description": "Türkische Pizza mit Käse" },
-    { "name": "Gegrillter Fisch Teller", "name_ar": "طبق سمك مشوي", "slug": "gegrillter-fisch-teller", "category": "grillades", "price": 23.0, "station": "KITCHEN", "description": "Frischer Fisch vom Grill" },
-    { "name": "Gegrillter Gemüseteller", "name_ar": "طبق خضار مشوية", "slug": "gegrillter-gemueseteller", "category": "grillades", "price": 12.0, "station": "KITCHEN", "is_vegan": true, "is_vegetarian": true, "description": "Saisonales Grillgemüse" },
-    { "name": "Gemischter Grill 1kg", "name_ar": "مشاوي مشكلة ١ كغ", "slug": "gemischter-grill-1kg", "category": "grillades", "price": 55.0, "station": "KITCHEN", "description": "Gemischte Grillplatte — 1 kg" },
-    { "name": "Kebab 1kg", "name_ar": "كباب ١ كغ", "slug": "kebab-1kg", "category": "grillades", "price": 50.0, "station": "KITCHEN", "description": "Kebab — 1 kg" },
-    { "name": "Schisch Tawouk 1kg", "name_ar": "شيش طاووق ١ كغ", "slug": "schisch-tawouk-1kg", "category": "grillades", "price": 35.0, "station": "KITCHEN", "description": "Schisch Tawouk — 1 kg" },
-    { "name": "Hähnchenflügel 1kg", "name_ar": "أجنحة دجاج ١ كغ", "slug": "haehnchenfluegel-1kg", "category": "grillades", "price": 18.0, "station": "KITCHEN", "description": "Gegrillte Hähnchenflügel — 1 kg" },
-
-    { "name": "Pizza Margherita", "name_ar": "بيتزا مارغريتا", "slug": "pizza-margherita", "category": "pizza", "price": 11.0, "station": "KITCHEN", "is_popular": true, "is_vegetarian": true, "description": "Tomate, Mozzarella, Basilikum" },
-    { "name": "Pizza Quattro Stagioni", "name_ar": "بيتزا فور سيزوني", "slug": "pizza-quattro-stagioni", "category": "pizza", "price": 13.5, "station": "KITCHEN", "description": "Vier Jahreszeiten — Schinken, Pilze, Artischocken, Oliven" },
-    { "name": "Pizza Hollandaise", "name_ar": "بيتزا هولنديز", "slug": "pizza-hollandaise", "category": "pizza", "price": 13.5, "station": "KITCHEN", "description": "Mit Sauce Hollandaise und Schinken" },
-    { "name": "Pizza Sucuk & Ei", "name_ar": "بيتزا سجق وبيض", "slug": "pizza-sucuk-ei", "category": "pizza", "price": 12.5, "station": "KITCHEN", "description": "Türkische Sucuk-Wurst mit Spiegelei" },
-    { "name": "Pizza Mozzarella & Tomaten", "name_ar": "بيتزا موزاريلا وطماطم", "slug": "pizza-mozzarella-tomaten", "category": "pizza", "price": 12.5, "station": "KITCHEN", "is_vegetarian": true, "description": "Frische Mozzarella und Tomaten" },
-    { "name": "Pizza Vegetarisch", "name_ar": "بيتزا نباتية", "slug": "pizza-vegetarisch", "category": "pizza", "price": 12.0, "station": "KITCHEN", "is_vegetarian": true, "description": "Mit frischem Grillgemüse" },
-    { "name": "Pizza Putenmortadella", "name_ar": "بيتزا مرتديلا ديك رومي", "slug": "pizza-putenmortadella", "category": "pizza", "price": 12.0, "station": "KITCHEN", "description": "Mit Putenmortadella" },
-    { "name": "Pizza Mexikano", "name_ar": "بيتزا مكسيكانو", "slug": "pizza-mexikano", "category": "pizza", "price": 13.5, "station": "KITCHEN", "description": "Würzig mit Jalapeños und Mais" },
-    { "name": "Pizza Salami", "name_ar": "بيتزا سلامي", "slug": "pizza-salami", "category": "pizza", "price": 12.5, "station": "KITCHEN", "description": "Klassisch mit Salami" },
-    { "name": "Pizza Tonno", "name_ar": "بيتزا تونة", "slug": "pizza-tonno", "category": "pizza", "price": 12.5, "station": "KITCHEN", "description": "Mit Thunfisch und Zwiebeln" },
-
-    { "name": "Klassik Burger", "name_ar": "برغر كلاسيك", "slug": "klassik-burger", "category": "burgers", "price": 12.0, "station": "KITCHEN", "description": "Rindfleisch-Patty mit frischem Gemüse" },
-    { "name": "Cheeseburger", "name_ar": "تشيز برغر", "slug": "cheeseburger", "category": "burgers", "price": 13.5, "station": "KITCHEN", "is_popular": true, "description": "Mit geschmolzenem Cheddar" },
-    { "name": "Spicy Cheeseburger", "name_ar": "تشيز برغر حار", "slug": "spicy-cheeseburger", "category": "burgers", "price": 13.5, "station": "KITCHEN", "spice_level": "épicé", "description": "Scharfer Cheeseburger mit Jalapeños" },
-    { "name": "Bloudan Burger", "name_ar": "برغر بلودان", "slug": "bloudan-burger", "category": "burgers", "price": 17.0, "station": "KITCHEN", "is_popular": true, "is_recommended": true, "description": "Haus-Spezialität Burger Bloudan" },
-    { "name": "Crispy Chicken Burger", "name_ar": "برغر دجاج مقرمش", "slug": "crispy-chicken-burger", "category": "burgers", "price": 12.0, "station": "KITCHEN", "description": "Knuspriges Hähnchen im Burger" },
-
-    { "name": "Crispy Chicken", "name_ar": "دجاج مقرمش", "slug": "crispy-chicken-sandwich", "category": "sandwiches", "price": 10.0, "station": "KITCHEN", "description": "Knuspriges Hähnchen-Sandwich" },
-    { "name": "Zinger", "name_ar": "زنجر", "slug": "zinger-sandwich", "category": "sandwiches", "price": 10.0, "station": "KITCHEN", "description": "Scharfes Zinger-Sandwich" },
-    { "name": "Fajita", "name_ar": "فاهيتا", "slug": "fajita-sandwich", "category": "sandwiches", "price": 10.0, "station": "KITCHEN", "description": "Fajita-Sandwich mit Paprika" },
-    { "name": "Mexicano", "name_ar": "مكسيكانو", "slug": "mexicano-sandwich", "category": "sandwiches", "price": 10.0, "station": "KITCHEN", "description": "Mexikanisch gewürztes Sandwich" },
-    { "name": "Falafel", "name_ar": "فلافل", "slug": "falafel-sandwich", "category": "sandwiches", "price": 7.0, "station": "KITCHEN", "is_vegan": true, "is_vegetarian": true, "description": "Falafel im frischen Brot" },
-    { "name": "Schaschlik", "name_ar": "شاشليك", "slug": "schaschlik-sandwich", "category": "sandwiches", "price": 10.0, "station": "KITCHEN", "description": "Schaschlik-Spieß im Sandwich" },
-    { "name": "Kebab", "name_ar": "كباب", "slug": "kebab-sandwich", "category": "sandwiches", "price": 10.0, "station": "KITCHEN", "description": "Kebab im Fladenbrot" },
-    { "name": "Lammfleisch", "name_ar": "لحم غنم", "slug": "lammfleisch-sandwich", "category": "sandwiches", "price": 12.0, "station": "KITCHEN", "description": "Lammfleisch-Sandwich" },
-    { "name": "Lammleber", "name_ar": "كبدة غنم", "slug": "lammleber-sandwich", "category": "sandwiches", "price": 8.0, "station": "KITCHEN", "description": "Lammleber im Sandwich" },
-
-    { "name": "Manakish à la Souradia", "name_ar": "مناقيش سورية", "slug": "manakish-a-la-souradia", "category": "manakish", "price": 10.0, "station": "KITCHEN", "is_popular": true, "description": "Manakish à la Souradia" },
-    { "name": "Toshka", "name_ar": "توشكا", "slug": "manakish-toshka", "category": "manakish", "price": 4.5, "station": "KITCHEN", "description": "Toshka" },
-    { "name": "Fleischstreifen auf Teig", "name_ar": "شرحات على العجين", "slug": "manakish-fleischstreifen-auf-teig", "category": "manakish", "price": 6.0, "station": "KITCHEN", "description": "Fleischstreifen auf Teig" },
-    { "name": "Lamm Stückchen auf Teig", "name_ar": "محرّمشة على العجين", "slug": "manakish-lamm-stueckchen-auf-teig", "category": "manakish", "price": 4.5, "station": "KITCHEN", "description": "Lamm Stückchen auf Teig" },
-    { "name": "Schisch Tawouk", "name_ar": "شيش طاووق", "slug": "manakish-schisch-tawouk", "category": "manakish", "price": 4.5, "station": "KITCHEN", "description": "Schisch Tawouk auf Teig" },
-    { "name": "Za'atar", "name_ar": "زعتر", "slug": "manakish-zaatar", "category": "manakish", "price": 2.5, "station": "KITCHEN", "is_vegetarian": true, "is_vegan": true, "description": "Za'atar" },
-    { "name": "Za'atar mit Käse", "name_ar": "زعتر مع جبنة", "slug": "manakish-zaatar-mit-kaese", "category": "manakish", "price": 3.0, "station": "KITCHEN", "is_vegetarian": true, "description": "Za'atar mit Käse" },
-    { "name": "Käse Pide", "name_ar": "جبنة مدورة", "slug": "manakish-kaese-pide", "category": "manakish", "price": 3.0, "station": "KITCHEN", "is_vegetarian": true, "description": "Käse Pide" },
-    { "name": "Calazoni", "name_ar": "قشقوان", "slug": "manakish-calazoni", "category": "manakish", "price": 4.0, "station": "KITCHEN", "is_vegetarian": true, "description": "Calazoni" },
-    { "name": "Muhammara mit Kaschkawal", "name_ar": "محمرة بقشقوان", "slug": "manakish-muhammara-kaschkawal", "category": "manakish", "price": 4.0, "station": "KITCHEN", "is_vegetarian": true, "description": "Muhammara mit Kaschkawal" },
-    { "name": "Spinat Dreieckig", "name_ar": "سبانخ", "slug": "manakish-spinat-dreieckig", "category": "manakish", "price": 3.0, "station": "KITCHEN", "is_vegetarian": true, "is_vegan": true, "description": "Spinat Dreieckig" },
-    { "name": "Sucuk Calzone", "name_ar": "سجق", "slug": "manakish-sucuk-calzone", "category": "manakish", "price": 4.0, "station": "KITCHEN", "description": "Sucuk Calzone" },
-    { "name": "Lammacun", "name_ar": "لحمة بالعجين", "slug": "manakish-lammacun", "category": "manakish", "price": 4.0, "station": "KITCHEN", "description": "Lammacun" },
-    { "name": "Lammacun Syrisch", "name_ar": "صفيحة شامية", "slug": "manakish-lammacun-syrisch", "category": "manakish", "price": 4.0, "station": "KITCHEN", "description": "Lammacun Syrisch" },
-    { "name": "Lammacun mit Joghurt", "name_ar": "صفيحة باللبن", "slug": "manakish-lammacun-mit-joghurt", "category": "manakish", "price": 4.0, "station": "KITCHEN", "description": "Lammacun mit Joghurt" },
-    { "name": "Sanfura", "name_ar": "سنفورة", "slug": "manakish-sanfura", "category": "manakish", "price": 3.5, "station": "KITCHEN", "description": "Sanfura" },
-    { "name": "Kartoffel Ecke", "name_ar": "بطاطا", "slug": "manakish-kartoffel-ecke", "category": "manakish", "price": 2.5, "station": "KITCHEN", "is_vegetarian": true, "is_vegan": true, "description": "Kartoffel Ecke" },
-    { "name": "Oliven", "name_ar": "زيتون", "slug": "manakish-oliven", "category": "manakish", "price": 3.0, "station": "KITCHEN", "is_vegetarian": true, "is_vegan": true, "description": "Oliven" },
-    { "name": "Chicken mit Käse", "name_ar": "دجاج بالجبنة", "slug": "manakish-chicken-mit-kaese", "category": "manakish", "price": 4.0, "station": "KITCHEN", "description": "Chicken mit Käse" },
-    { "name": "Mexican Chicken", "name_ar": "دجاج مكسيكي", "slug": "manakish-mexican-chicken", "category": "manakish", "price": 4.0, "station": "KITCHEN", "spice_level": "épicé", "description": "Mexican Chicken" },
-    { "name": "Muhamara mit Oliven", "name_ar": "محمرة بالزيتون", "slug": "manakish-muhamara-mit-oliven", "category": "manakish", "price": 3.0, "station": "KITCHEN", "is_vegetarian": true, "description": "Muhamara mit Oliven" },
-    { "name": "Muhammara mit Nüsse", "name_ar": "محمرة بالجوز", "slug": "manakish-muhammara-mit-nuesse", "category": "manakish", "price": 2.5, "station": "KITCHEN", "is_vegetarian": true, "description": "Muhammara mit Nüsse" },
-    { "name": "Libanesischer Käse", "name_ar": "جبنة لبنانية", "slug": "manakish-libanesischer-kaese", "category": "manakish", "price": 3.0, "station": "KITCHEN", "is_vegetarian": true, "description": "Libanesischer Käse" },
-    { "name": "Akkawi-Käse", "name_ar": "جبنة عكاوي", "slug": "manakish-akkawi-kaese", "category": "manakish", "price": 3.0, "station": "KITCHEN", "is_vegetarian": true, "description": "Akkawi-Käse" },
-    { "name": "Spezial Bloudan", "name_ar": "منقوشة بلودان", "slug": "manakish-spezial-bloudan", "category": "manakish", "price": 16.0, "station": "KITCHEN", "is_popular": true, "is_chef_choice": true, "description": "Spezial Bloudan — Haus-Spezialität" },
-
-    { "name": "Waffle Nature", "name_ar": "وافل طبيعي", "slug": "waffle-nature", "category": "waffeln", "price": 6.0, "station": "BAR", "is_popular": true, "tags": ["customizable"], "description": "Frische Waffel — wählen Sie Ihre Extras" },
-    { "name": "Crêpe Nature", "name_ar": "كريب طبيعي", "slug": "crepe-nature", "category": "crepes", "price": 6.0, "station": "BAR", "tags": ["customizable"], "description": "Frischer Crêpe — wählen Sie Ihre Extras" },
-    { "name": "Pancake Nature", "name_ar": "بان كيك طبيعي", "slug": "pancake-nature", "category": "pancakes", "price": 6.0, "station": "BAR", "tags": ["customizable"], "description": "Fluffige Pancakes — wählen Sie Ihre Extras" },
-
-    { "name": "Bloudan", "name_ar": "بلودان", "slug": "fruit-salad-bloudan", "category": "fruit-salads", "price": 15.0, "station": "BAR", "is_popular": true, "description": "Fruchtsalat Spezialität Bloudan" },
-    { "name": "Lotus", "name_ar": "لوتس", "slug": "fruit-salad-lotus", "category": "fruit-salads", "price": 9.0, "station": "BAR", "description": "Fruchtsalat mit Lotus" },
-    { "name": "Dubai", "name_ar": "دبي", "slug": "fruit-salad-dubai", "category": "fruit-salads", "price": 11.0, "station": "BAR", "description": "Fruchtsalat Dubai Style" },
-
-    { "name": "Coupe Arabe", "name_ar": "كوب عربي", "slug": "coupe-arabe", "category": "ice-cream", "price": 7.0, "station": "BAR", "description": "Arabisches Eisbecher-Spezial" },
-    { "name": "Vanille", "name_ar": "فانيليا", "slug": "eis-vanille", "category": "ice-cream", "price": 5.5, "station": "BAR", "is_vegetarian": true, "description": "Vanilleeis" },
-    { "name": "Fraise", "name_ar": "فراولة", "slug": "eis-fraise", "category": "ice-cream", "price": 5.5, "station": "BAR", "is_vegetarian": true, "description": "Erdbeereis" },
-    { "name": "Chocolat", "name_ar": "شوكولاتة", "slug": "eis-chocolat", "category": "ice-cream", "price": 5.5, "station": "BAR", "is_vegetarian": true, "description": "Schokoladeneis" },
-
-    { "name": "Bloudan", "name_ar": "بلودان", "slug": "cheesecake-bloudan", "category": "cheesecakes", "price": 7.5, "station": "BAR", "description": "Cheesecake Spezialität Bloudan" },
-    { "name": "Lotus", "name_ar": "لوتس", "slug": "cheesecake-lotus", "category": "cheesecakes", "price": 6.0, "station": "BAR", "description": "Cheesecake mit Lotus" },
-    { "name": "Dubai", "name_ar": "دبي", "slug": "cheesecake-dubai", "category": "cheesecakes", "price": 7.0, "station": "BAR", "description": "Cheesecake Dubai Style" },
-    { "name": "Oreo", "name_ar": "أوريو", "slug": "cheesecake-oreo", "category": "cheesecakes", "price": 6.0, "station": "BAR", "description": "Cheesecake mit Oreo" },
-
-    { "name": "Molten Cake", "name_ar": "مولتن كيك", "slug": "molten-cake", "category": "cakes", "price": 5.5, "station": "BAR", "description": "Warmer Schokoladen-Lavakuchen" },
-    { "name": "Brownie Cake", "name_ar": "كيك براوني", "slug": "brownie-cake", "category": "cakes", "price": 6.5, "station": "BAR", "description": "Saftiger Brownie-Kuchen" },
-
-    { "name": "Chips & Noix", "name_ar": "شيبس ومكسرات", "slug": "chips-noix", "category": "snacks", "price": 5.0, "station": "BAR", "description": "Chips mit gemischten Nüssen" },
-    { "name": "Noix", "name_ar": "مكسرات", "slug": "noix", "category": "snacks", "price": 6.0, "station": "BAR", "description": "Gemischte Nüsse" },
-
-    { "name": "Stillwasser", "name_ar": "مياه معدنية", "slug": "stillwasser", "category": "water", "price": 2.5, "station": "BAR", "tags": ["has_variants"], "description": "Stilles Wasser", "variants": [{ "slug": "025l", "name": "0.25L", "name_ar": "0.25 لتر", "price": 2.5 }, { "slug": "075l", "name": "0.75L", "name_ar": "0.75 لتر", "price": 4.0 }] },
-    { "name": "Mineralwasser", "name_ar": "مياه غازية", "slug": "mineralwasser", "category": "water", "price": 2.5, "station": "BAR", "tags": ["has_variants"], "description": "Mineralwasser", "variants": [{ "slug": "025l", "name": "0.25L", "name_ar": "0.25 لتر", "price": 2.5 }, { "slug": "075l", "name": "0.75L", "name_ar": "0.75 لتر", "price": 4.0 }] },
-
-    { "name": "Ananassaft", "name_ar": "عصير أناناس", "slug": "ananassaft", "category": "juices", "price": 4.0, "station": "BAR", "description": "Frischer Ananassaft" },
-    { "name": "Apfelsaft", "name_ar": "عصير تفاح", "slug": "apfelsaft", "category": "juices", "price": 4.0, "station": "BAR", "description": "Frischer Apfelsaft" },
-    { "name": "Orangensaft", "name_ar": "عصير برتقال", "slug": "orangensaft", "category": "juices", "price": 4.0, "station": "BAR", "description": "Frischer Orangensaft" },
-    { "name": "Mangosaft", "name_ar": "عصير مانجو", "slug": "mangosaft", "category": "juices", "price": 4.0, "station": "BAR", "description": "Frischer Mangosaft" },
-    { "name": "Erdbeersaft", "name_ar": "عصير فراولة", "slug": "erdbeersaft", "category": "juices", "price": 4.0, "station": "BAR", "description": "Frischer Erdbeersaft" },
-    { "name": "Maracujasaft", "name_ar": "عصير باشن فروت", "slug": "maracujasaft", "category": "juices", "price": 4.0, "station": "BAR", "description": "Frischer Maracujasaft" },
-    { "name": "Kiba (Kirsche & Banane)", "name_ar": "كيبا (كرز وموز)", "slug": "kiba", "category": "juices", "price": 4.0, "station": "BAR", "description": "Kiba — Kirsche und Banane" },
-
-    { "name": "Coca-Cola", "name_ar": "كوكا كولا", "slug": "coca-cola", "category": "soft-drinks", "price": 4.0, "station": "BAR", "description": "Coca-Cola 0,33 L" },
-    { "name": "Coca-Cola Zero", "name_ar": "كوكا كولا زيرو", "slug": "coca-cola-zero", "category": "soft-drinks", "price": 4.0, "station": "BAR", "description": "Coca-Cola Zero 0,33 L" },
-    { "name": "Fanta", "name_ar": "فانتا", "slug": "fanta", "category": "soft-drinks", "price": 4.0, "station": "BAR", "description": "Fanta Orange 0,33 L" },
-    { "name": "Sprite", "name_ar": "سبرايت", "slug": "sprite", "category": "soft-drinks", "price": 4.0, "station": "BAR", "description": "Sprite 0,33 L" },
-    { "name": "Red Bull", "name_ar": "ريد بول", "slug": "red-bull", "category": "soft-drinks", "price": 4.0, "station": "BAR", "description": "Red Bull Energy Drink" },
-    { "name": "Red Bull Sugar Free", "name_ar": "ريد بول بدون سكر", "slug": "red-bull-sugar-free", "category": "soft-drinks", "price": 4.0, "station": "BAR", "description": "Red Bull Sugarfree" },
-    { "name": "Red Bull White Edition", "name_ar": "ريد بول وايت", "slug": "red-bull-white", "category": "soft-drinks", "price": 4.0, "station": "BAR", "description": "Red Bull White Edition" },
-
-    { "name": "Eistee Pfirsich", "name_ar": "شاي مثلج خوخ", "slug": "eistee-pfirsich", "category": "ice-tea", "price": 4.0, "station": "BAR", "description": "Eistee Pfirsichgeschmack" },
-    { "name": "Eistee Zitrone", "name_ar": "شاي مثلج ليمون", "slug": "eistee-zitrone", "category": "ice-tea", "price": 4.0, "station": "BAR", "description": "Eistee Zitronengeschmack" },
-    { "name": "Eistee Wassermelone", "name_ar": "شاي مثلج بطيخ", "slug": "eistee-wassermelone", "category": "ice-tea", "price": 4.0, "station": "BAR", "description": "Eistee Wassermelonengeschmack" },
-
-    { "name": "Mojito", "name_ar": "موهيتو", "slug": "mojito", "category": "cocktails", "price": 7.5, "station": "BAR", "description": "Klassischer Mojito" },
-    { "name": "Erdbeer Mojito", "name_ar": "موهيتو فراولة", "slug": "erdbeer-mojito", "category": "cocktails", "price": 7.5, "station": "BAR", "description": "Mojito mit frischen Erdbeeren" },
-    { "name": "Maracuja Splash", "name_ar": "ماراكويا سبلاش", "slug": "maracuja-splash", "category": "cocktails", "price": 7.5, "station": "BAR", "description": "Erfrischender Maracuja-Cocktail" },
-    { "name": "Sweet Ananas", "name_ar": "سويت أناناس", "slug": "sweet-ananas", "category": "cocktails", "price": 7.5, "station": "BAR", "description": "Süßer Ananas-Cocktail" },
-    { "name": "Ipanema", "name_ar": "إيبانيما", "slug": "ipanema", "category": "cocktails", "price": 7.5, "station": "BAR", "description": "Ipanema — alkoholfrei" },
-    { "name": "Jamaica", "name_ar": "جامايكا", "slug": "jamaica", "category": "cocktails", "price": 7.5, "station": "BAR", "description": "Jamaica-Cocktail" },
-
-    { "name": "Bloudan Smoothie", "name_ar": "سموذي بلودان", "slug": "bloudan-smoothie", "category": "smoothies", "price": 8.0, "station": "BAR", "is_popular": true, "description": "Haus-Smoothie Bloudan" },
-    { "name": "Mango Smoothie", "name_ar": "سموذي مانجو", "slug": "mango-smoothie", "category": "smoothies", "price": 6.5, "station": "BAR", "description": "Cremiger Mango-Smoothie" },
-    { "name": "Erdbeer Smoothie", "name_ar": "سموذي فراولة", "slug": "erdbeer-smoothie", "category": "smoothies", "price": 6.5, "station": "BAR", "description": "Frischer Erdbeer-Smoothie" },
-    { "name": "Ananas Smoothie", "name_ar": "سموذي أناناس", "slug": "ananas-smoothie", "category": "smoothies", "price": 6.5, "station": "BAR", "description": "Tropischer Ananas-Smoothie" },
-    { "name": "Polo Smoothie (Zitrone & Minze)", "name_ar": "سموذي بولو (ليمون ونعناع)", "slug": "polo-smoothie", "category": "smoothies", "price": 7.5, "station": "BAR", "description": "Erfrischender Zitrone-Minze-Smoothie" },
-
-    { "name": "Bloudan Milkshake", "name_ar": "ميلك شيك بلودان", "slug": "bloudan-milkshake", "category": "milkshakes", "price": 9.0, "station": "BAR", "description": "Haus-Milkshake Bloudan" },
-    { "name": "Erdbeer Milkshake", "name_ar": "ميلك شيك فراولة", "slug": "erdbeer-milkshake", "category": "milkshakes", "price": 7.0, "station": "BAR", "description": "Cremiger Erdbeer-Milkshake" },
-    { "name": "Schokoladen Milkshake", "name_ar": "ميلك شيك شوكولاتة", "slug": "schokoladen-milkshake", "category": "milkshakes", "price": 7.0, "station": "BAR", "description": "Schokoladen-Milkshake" },
-    { "name": "Oreo Milkshake", "name_ar": "ميلك شيك أوريو", "slug": "oreo-milkshake", "category": "milkshakes", "price": 7.5, "station": "BAR", "description": "Milkshake mit Oreo-Keksen" },
-
-    { "name": "Banane, Milch & Avocado", "name_ar": "موز، حليب وأفوكادو", "slug": "banane-milch-avocado", "category": "banana-milk-cocktails", "price": 7.5, "station": "BAR", "description": "Bananen-Milch-Cocktail mit Avocado" },
-    { "name": "Banane, Milch & Erdbeere", "name_ar": "موز، حليب وفراولة", "slug": "banane-milch-erdbeere", "category": "banana-milk-cocktails", "price": 7.5, "station": "BAR", "description": "Bananen-Milch-Cocktail mit Erdbeere" },
-    { "name": "Banane, Milch & Schokolade", "name_ar": "موز، حليب وشوكولاتة", "slug": "banane-milch-schokolade", "category": "banana-milk-cocktails", "price": 7.5, "station": "BAR", "description": "Bananen-Milch-Cocktail mit Schokolade" },
-
-    { "name": "Arabic Coffee", "name_ar": "قهوة عربية", "slug": "arabic-coffee", "category": "coffee", "price": 3.0, "station": "BAR", "description": "Traditioneller arabischer Kaffee" },
-    { "name": "Espresso", "name_ar": "إسبريسو", "slug": "espresso", "category": "coffee", "price": 3.0, "station": "BAR", "description": "Espresso" },
-    { "name": "Espresso Macchiato", "name_ar": "إسبريسو ماكياتو", "slug": "espresso-macchiato", "category": "coffee", "price": 3.5, "station": "BAR", "description": "Espresso mit Milchschaum" },
-    { "name": "Cappuccino", "name_ar": "كابتشينو", "slug": "cappuccino", "category": "coffee", "price": 4.0, "station": "BAR", "description": "Cappuccino" },
-    { "name": "Latte Macchiato", "name_ar": "لاتيه ماكياتو", "slug": "latte-macchiato", "category": "coffee", "price": 4.5, "station": "BAR", "description": "Latte Macchiato" },
-    { "name": "Chocolate Latte", "name_ar": "لاتيه شوكولاتة", "slug": "chocolate-latte", "category": "coffee", "price": 5.0, "station": "BAR", "description": "Schokoladen-Latte" },
-    { "name": "Vanilla Latte", "name_ar": "لاتيه فانيليا", "slug": "vanilla-latte", "category": "coffee", "price": 5.0, "station": "BAR", "description": "Vanille-Latte" },
-    { "name": "Caramel Latte", "name_ar": "لاتيه كراميل", "slug": "caramel-latte", "category": "coffee", "price": 5.0, "station": "BAR", "description": "Karamell-Latte" },
-    { "name": "Al Pacchino", "name_ar": "آل باتشينو", "slug": "al-pacchino", "category": "coffee", "price": 4.5, "station": "BAR", "description": "Al Pacchino — Haus-Spezialität" },
-    { "name": "Americano", "name_ar": "أمريكانو", "slug": "americano", "category": "coffee", "price": 3.0, "station": "BAR", "description": "Caffè Americano" },
-    { "name": "Flat White", "name_ar": "فلات وايت", "slug": "flat-white", "category": "coffee", "price": 4.5, "station": "BAR", "description": "Flat White" },
-    { "name": "Mocha", "name_ar": "موكا", "slug": "mocha", "category": "coffee", "price": 4.5, "station": "BAR", "description": "Mocha mit Schokolade" },
-    { "name": "Hot Chocolate", "name_ar": "شوكولاتة ساخنة", "slug": "hot-chocolate", "category": "coffee", "price": 4.0, "station": "BAR", "description": "Heiße Schokolade" },
-    { "name": "Sahlab", "name_ar": "سحلب", "slug": "sahlab", "category": "coffee", "price": 3.5, "station": "BAR", "description": "Traditionelles Sahlab-Getränk" },
-
-    { "name": "Schwarzer Tee", "name_ar": "شاي أسود", "slug": "schwarzer-tee", "category": "tea", "price": 3.0, "station": "BAR", "tags": ["has_variants"], "description": "Schwarzer Tee", "variants": [{ "slug": "glas", "name": "Glas", "name_ar": "كأس", "price": 3.0 }, { "slug": "kanne", "name": "Kanne", "name_ar": "إبريق", "price": 8.0 }] },
-    { "name": "Grün Tee", "name_ar": "شاي أخضر", "slug": "gruen-tee", "category": "tea", "price": 3.0, "station": "BAR", "tags": ["has_variants"], "description": "Grüner Tee", "variants": [{ "slug": "glas", "name": "Glas", "name_ar": "كأس", "price": 3.0 }, { "slug": "kanne", "name": "Kanne", "name_ar": "إبريق", "price": 8.0 }] },
-    { "name": "Ingwer Zitrone", "name_ar": "زنجبيل وليمون", "slug": "ingwer-zitrone", "category": "tea", "price": 3.0, "station": "BAR", "tags": ["has_variants"], "description": "Ingwer-Zitronen-Tee", "variants": [{ "slug": "glas", "name": "Glas", "name_ar": "كأس", "price": 3.0 }, { "slug": "kanne", "name": "Kanne", "name_ar": "إبريق", "price": 8.0 }] },
-    { "name": "Kamille Tee", "name_ar": "بابونج", "slug": "kamille-tee", "category": "tea", "price": 3.0, "station": "BAR", "tags": ["has_variants"], "description": "Kamillentee", "variants": [{ "slug": "glas", "name": "Glas", "name_ar": "كأس", "price": 3.0 }, { "slug": "kanne", "name": "Kanne", "name_ar": "إبريق", "price": 8.0 }] },
-    { "name": "Mate", "name_ar": "ماتيه", "slug": "mate", "category": "tea", "price": 5.5, "station": "BAR", "description": "Mate-Tee" },
-    { "name": "Cumin Lemon Tea", "name_ar": "شاي كمون وليمون", "slug": "cumin-lemon-tea", "category": "tea", "price": 3.5, "station": "BAR", "description": "Kreuzkümmel-Zitronen-Tee" },
-
-    { "name": "Iced Latte Macchiato", "name_ar": "آيس لاتيه ماكياتو", "slug": "iced-latte-macchiato", "category": "iced-coffee", "price": 6.0, "station": "BAR", "description": "Eiskalter Latte Macchiato" },
-    { "name": "Iced Latte Chocolate", "name_ar": "آيس لاتيه شوكولاتة", "slug": "iced-latte-chocolate", "category": "iced-coffee", "price": 6.5, "station": "BAR", "description": "Eiskalter Schokoladen-Latte" },
-    { "name": "Iced Latte Vanilla", "name_ar": "آيس لاتيه فانيليا", "slug": "iced-latte-vanilla", "category": "iced-coffee", "price": 6.5, "station": "BAR", "description": "Eiskalter Vanille-Latte" },
-    { "name": "Iced Latte Caramel", "name_ar": "آيس لاتيه كراميل", "slug": "iced-latte-caramel", "category": "iced-coffee", "price": 6.5, "station": "BAR", "description": "Eiskalter Karamell-Latte" },
-    { "name": "Frappuccino", "name_ar": "فرابتشينو", "slug": "frappuccino", "category": "iced-coffee", "price": 7.0, "station": "BAR", "description": "Frappuccino" },
-    { "name": "Iced Mocha", "name_ar": "آيس موكا", "slug": "iced-mocha", "category": "iced-coffee", "price": 6.5, "station": "BAR", "description": "Eiskalter Mocha" },
-
-    { "name": "Bloudan", "name_ar": "بلودان", "slug": "shisha-bloudan", "category": "shisha", "price": 20.0, "station": "SHISHA", "is_popular": true, "description": "Shisha Spezialität Bloudan" },
-    { "name": "Double Apple", "name_ar": "تفاحتين", "slug": "shisha-double-apple", "category": "shisha", "price": 15.0, "station": "SHISHA", "is_popular": true, "description": "Klassisches Doppel-Apfel-Aroma" },
-    { "name": "Grape Mint", "name_ar": "عنب ونعناع", "slug": "shisha-grape-mint", "category": "shisha", "price": 15.0, "station": "SHISHA", "description": "Traube mit Minze" },
-    { "name": "Love 66", "name_ar": "لوف ٦٦", "slug": "shisha-love-66", "category": "shisha", "price": 15.0, "station": "SHISHA", "description": "Love 66 Aroma" },
-    { "name": "Cinderella", "name_ar": "سندريلا", "slug": "shisha-cinderella", "category": "shisha", "price": 15.0, "station": "SHISHA", "description": "Cinderella Aroma" },
-    { "name": "Watermelon", "name_ar": "بطيخ", "slug": "shisha-watermelon", "category": "shisha", "price": 15.0, "station": "SHISHA", "description": "Wassermelonen-Aroma" },
-    { "name": "Raffaello", "name_ar": "رافايلو", "slug": "shisha-raffaello", "category": "shisha", "price": 20.0, "station": "SHISHA", "description": "Raffaello Aroma" },
-    { "name": "Fruits", "name_ar": "فواكه", "slug": "shisha-fruits", "category": "shisha", "price": 15.0, "station": "SHISHA", "description": "Fruchtmix-Aroma" },
-    { "name": "Polo", "name_ar": "بولو", "slug": "shisha-polo", "category": "shisha", "price": 15.0, "station": "SHISHA", "description": "Polo Aroma" },
-    { "name": "Shisha Royale", "name_ar": "شيشة رويال", "slug": "shisha-royale", "category": "shisha", "price": 55.0, "station": "SHISHA", "is_chef_choice": true, "description": "Premium Shisha Royale" },
-
-    { "name": "Avoca Free", "name_ar": "أفوكا فري", "slug": "imperator-avoca-free", "category": "imperator", "price": 14.0, "station": "SHISHA", "description": "Imperator Tabak — Avoca Free" },
-    { "name": "Pinastro Flix", "name_ar": "بيناسترو فليكس", "slug": "imperator-pinastro-flix", "category": "imperator", "price": 13.0, "station": "SHISHA", "description": "Imperator Tabak — Pinastro Flix" },
-    { "name": "X4", "name_ar": "إكس ٤", "slug": "imperator-x4", "category": "imperator", "price": 13.0, "station": "SHISHA", "description": "Imperator Tabak — X4" },
-    { "name": "Thundermix", "name_ar": "ثاندرميكس", "slug": "imperator-thundermix", "category": "imperator", "price": 13.0, "station": "SHISHA", "description": "Imperator Tabak — Thundermix" }
+    {
+      "name": "Hummus",
+      "name_ar": "حمص",
+      "slug": "hummus",
+      "category": "entrees",
+      "price": 6,
+      "station": "KITCHEN",
+      "description": "Hausgemachter Hummus mit Tahini, Zitronensaft und Olivenöl. Cremig, frisch und perfekt als Vorspeise.",
+      "description_ar": "حمص طازج بالطحينة وعصير الليمون وزيت الزيتون، كريمي ومثالي كمقبلات.",
+      "tags": [
+        "vegetarian",
+        "vegan",
+        "halal",
+        "popular"
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/hummus.webp"
+    },
+    {
+      "name": "Hummus mit Hackfleisch",
+      "name_ar": "حمص باللحمة",
+      "slug": "hummus-mit-hackfleisch",
+      "category": "entrees",
+      "price": 9,
+      "station": "KITCHEN",
+      "description": "Cremiger Hummus mit würzigem Hackfleisch, Olivenöl und orientalischen Gewürzen.",
+      "description_ar": "حمص كريمي مع لحم مفروم متبل وزيت الزيتون ونكهات شرقية.",
+      "tags": [
+        "halal",
+        "popular"
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/hummus-mit-hackfleisch.webp"
+    },
+    {
+      "name": "Baba Ghanoug",
+      "name_ar": "بابا غنوج",
+      "slug": "baba-ghanoug",
+      "category": "entrees",
+      "price": 6,
+      "station": "KITCHEN",
+      "description": "Geräucherte Auberginencreme mit Tahini, Zitronensaft und Olivenöl. Leicht, aromatisch und frisch.",
+      "description_ar": "متبل باذنجان مدخن مع الطحينة وعصير الليمون وزيت الزيتون، خفيف وطازج.",
+      "tags": [
+        "vegetarian",
+        "vegan",
+        "halal"
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/baba-ghanoug.webp"
+    },
+    {
+      "name": "Mutabbal",
+      "name_ar": "متبل",
+      "slug": "mutabbal",
+      "category": "entrees",
+      "price": 6,
+      "station": "KITCHEN",
+      "description": "Gegrillte Auberginencreme mit Joghurt, Knoblauch, Tahini und Zitronensaft.",
+      "description_ar": "متبل باذنجان مشوي مع اللبن والثوم والطحينة وعصير الليمون.",
+      "tags": [
+        "vegetarian",
+        "halal",
+        "contains_milk"
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/mutabbal.webp"
+    },
+    {
+      "name": "Muhammara",
+      "name_ar": "محمرة",
+      "slug": "muhammara",
+      "category": "entrees",
+      "price": 5.5,
+      "station": "KITCHEN",
+      "description": "Würzige Paprikapaste mit Walnüssen, Paniermehl, Olivenöl und Granatapfelsauce.",
+      "description_ar": "محمرة حارة خفيفة من الفليفلة والجوز والخبز المطحون وزيت الزيتون ودبس الرمان.",
+      "tags": [
+        "vegetarian",
+        "vegan",
+        "halal",
+        "spicy",
+        "contains_nuts",
+        "contains_gluten"
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/muhammara.webp"
+    },
+    {
+      "name": "Veganer Weinblätter",
+      "name_ar": "ورق عنب",
+      "slug": "veganer-weinblaetter",
+      "category": "entrees",
+      "price": 9,
+      "station": "KITCHEN",
+      "description": "Gefüllte Weinblätter mit Reis, Kräutern und feiner Zitronennote.",
+      "description_ar": "ورق عنب محشي بالأرز والأعشاب مع نكهة ليمون خفيفة.",
+      "tags": [
+        "vegetarian",
+        "vegan",
+        "halal"
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/veganer-weinblaetter.webp"
+    },
+    {
+      "name": "Zigarrenburak",
+      "name_ar": "بورك",
+      "slug": "zigarrenburak",
+      "category": "entrees",
+      "price": 2.5,
+      "station": "KITCHEN",
+      "description": "Knusprige Teigröllchen gefüllt mit Frischkäse, Petersilie und Ei.",
+      "description_ar": "رقائق مقرمشة محشوة بالجبنة والبقدونس والبيض.",
+      "tags": [
+        "vegetarian",
+        "halal",
+        "contains_milk",
+        "contains_eggs",
+        "contains_gluten"
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/zigarrenburak.webp"
+    },
+    {
+      "name": "Gewürzter Reis",
+      "name_ar": "رز",
+      "slug": "gewuerzter-reis",
+      "category": "entrees",
+      "price": 6,
+      "station": "KITCHEN",
+      "description": "Orientalisch gewürzter Reis, ideal als Beilage zu Grillgerichten und Vorspeisen.",
+      "description_ar": "رز متبل على الطريقة الشرقية، مناسب كمرافق للمشاوي والمقبلات.",
+      "tags": [
+        "vegetarian",
+        "vegan",
+        "halal"
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/gewuerzter-reis.webp"
+    },
+    {
+      "name": "Pommes Teller",
+      "name_ar": "بطاطا مقلية",
+      "slug": "pommes-teller",
+      "category": "entrees",
+      "price": 5,
+      "station": "KITCHEN",
+      "description": "Knusprige Pommes frites, goldbraun serviert.",
+      "description_ar": "بطاطا مقلية مقرمشة تقدم ساخنة وذهبية.",
+      "tags": [
+        "vegetarian",
+        "vegan",
+        "halal",
+        "kids_friendly"
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/pommes-teller.webp"
+    },
+    {
+      "name": "Chicken Nuggets + Pommes",
+      "name_ar": "ناغتس مع بطاطا",
+      "slug": "chicken-nuggets-pommes",
+      "category": "entrees",
+      "price": 7,
+      "station": "KITCHEN",
+      "description": "Knusprige Chicken Nuggets, serviert mit Pommes.",
+      "description_ar": "قطع ناغتس دجاج مقرمشة تقدم مع البطاطا.",
+      "tags": [
+        "halal",
+        "kids_friendly"
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/chicken-nuggets-pommes.webp"
+    },
+    {
+      "name": "Kebbeh frittiert",
+      "name_ar": "كبة مقلية",
+      "slug": "kebbeh-frittiert",
+      "category": "entrees",
+      "price": 4.5,
+      "station": "KITCHEN",
+      "description": "Frittierte Kibbeh mit würziger Fleischfüllung und orientalischen Gewürzen.",
+      "description_ar": "كبة مقلية محشوة باللحم المتبل والبهارات الشرقية.",
+      "tags": [
+        "halal",
+        "contains_gluten"
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/kebbeh-frittiert.webp"
+    },
+    {
+      "name": "Gegrillte Kibbeh",
+      "name_ar": "كبة مشوية",
+      "slug": "gegrillte-kibbeh",
+      "category": "entrees",
+      "price": 5.5,
+      "station": "KITCHEN",
+      "description": "Gegrillte Kibbeh mit feiner Fleischfüllung, aromatisch und herzhaft.",
+      "description_ar": "كبة مشوية محشوة باللحم المتبل، غنية بالنكهة الشرقية.",
+      "tags": [
+        "halal",
+        "chef_recommendation",
+        "contains_gluten"
+      ],
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/entrees/gegrillte-kibbeh.webp"
+    },
+    {
+      "name": "Rucola-Salat",
+      "name_ar": "سلطة الجرجير",
+      "slug": "rucola-salat",
+      "category": "salades",
+      "price": 6,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "tags": [
+        "has_variants"
+      ],
+      "description": "Frischer Rucola-Salat",
+      "variants": [
+        {
+          "slug": "klein",
+          "name": "Klein",
+          "name_ar": "صغير",
+          "price": 6
+        },
+        {
+          "slug": "gross",
+          "name": "Groß",
+          "name_ar": "كبير",
+          "price": 10
+        }
+      ]
+    },
+    {
+      "name": "Tabbouleh",
+      "name_ar": "تبولة",
+      "slug": "tabbouleh",
+      "category": "salades",
+      "price": 6,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "tags": [
+        "has_variants"
+      ],
+      "description": "Klassische Tabbouleh",
+      "variants": [
+        {
+          "slug": "klein",
+          "name": "Klein",
+          "name_ar": "صغير",
+          "price": 6
+        },
+        {
+          "slug": "gross",
+          "name": "Groß",
+          "name_ar": "كبير",
+          "price": 10
+        }
+      ]
+    },
+    {
+      "name": "Fattoush",
+      "name_ar": "فتوش",
+      "slug": "fattoush",
+      "category": "salades",
+      "price": 6,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "tags": [
+        "has_variants"
+      ],
+      "description": "Knackiger Fattoush-Salat",
+      "variants": [
+        {
+          "slug": "klein",
+          "name": "Klein",
+          "name_ar": "صغير",
+          "price": 6
+        },
+        {
+          "slug": "gross",
+          "name": "Groß",
+          "name_ar": "كبير",
+          "price": 9
+        }
+      ]
+    },
+    {
+      "name": "Salat",
+      "name_ar": "سلطة",
+      "slug": "salat",
+      "category": "salades",
+      "price": 5,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "tags": [
+        "has_variants"
+      ],
+      "description": "Frischer grüner Salat",
+      "variants": [
+        {
+          "slug": "klein",
+          "name": "Klein",
+          "name_ar": "صغير",
+          "price": 5
+        },
+        {
+          "slug": "gross",
+          "name": "Groß",
+          "name_ar": "كبير",
+          "price": 9
+        }
+      ]
+    },
+    {
+      "name": "Crispy Chicken Teller",
+      "name_ar": "طبق دجاج مقرمش",
+      "slug": "crispy-chicken-teller",
+      "category": "plats",
+      "price": 13,
+      "station": "KITCHEN",
+      "description": "Knuspriges Hähnchen mit Beilagen"
+    },
+    {
+      "name": "Crispy Zinger Teller",
+      "name_ar": "طبق زنجر مقرمش",
+      "slug": "crispy-zinger-teller",
+      "category": "plats",
+      "price": 13.5,
+      "station": "KITCHEN",
+      "is_popular": true,
+      "description": "Scharfes Zinger-Hähnchen mit Beilagen"
+    },
+    {
+      "name": "Fajita Teller",
+      "name_ar": "طبق فاهيتا",
+      "slug": "fajita-teller",
+      "category": "plats",
+      "price": 13,
+      "station": "KITCHEN",
+      "description": "Fajita-Hähnchen mit Paprika und Zwiebeln"
+    },
+    {
+      "name": "Mexicano Teller",
+      "name_ar": "طبق مكسيكانو",
+      "slug": "mexicano-teller",
+      "category": "plats",
+      "price": 13,
+      "station": "KITCHEN",
+      "description": "Mexikanisch gewürztes Hähnchengericht"
+    },
+    {
+      "name": "Falafel Halloumi Teller",
+      "name_ar": "طبق فلافل حلوم",
+      "slug": "falafel-halloumi-teller",
+      "category": "plats",
+      "price": 12,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "description": "Falafel mit gegrilltem Halloumi"
+    },
+    {
+      "name": "Halloumi Teller",
+      "name_ar": "طبق حلوم",
+      "slug": "halloumi-teller",
+      "category": "plats",
+      "price": 10,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "description": "Gegrillter Halloumi mit Beilagen"
+    },
+    {
+      "name": "Arabischer Falafel Teller",
+      "name_ar": "طبق فلافل عربي",
+      "slug": "arabischer-falafel-teller",
+      "category": "plats",
+      "price": 10,
+      "station": "KITCHEN",
+      "is_vegan": true,
+      "is_vegetarian": true,
+      "description": "Hausgemachter Falafel nach arabischer Art"
+    },
+    {
+      "name": "Chicken Fries",
+      "name_ar": "دجاج مع بطاطا",
+      "slug": "chicken-fries",
+      "category": "plats",
+      "price": 9.5,
+      "station": "KITCHEN",
+      "description": "Hähnchenstreifen mit Pommes frites"
+    },
+    {
+      "name": "Frittierter Fisch Teller",
+      "name_ar": "طبق سمك مقلي",
+      "slug": "frittierter-fisch-teller",
+      "category": "plats",
+      "price": 18,
+      "station": "KITCHEN",
+      "description": "Knusprig frittierter Fisch mit Beilagen"
+    },
+    {
+      "name": "Shawarma Arabi Teller",
+      "name_ar": "وجبة شاورما عربي",
+      "slug": "shawarma-arabi-teller",
+      "category": "shawarma",
+      "price": 12.5,
+      "station": "KITCHEN",
+      "is_popular": true,
+      "is_chef_choice": true,
+      "description": "Arabisches Shawarma mit Reis und Salat"
+    },
+    {
+      "name": "Shawarma Marina Teller",
+      "name_ar": "وجبة شاورما مارينا",
+      "slug": "shawarma-marina-teller",
+      "category": "shawarma",
+      "price": 10,
+      "station": "KITCHEN",
+      "description": "Shawarma Marina mit Beilagen"
+    },
+    {
+      "name": "Shawarma Bloudan Teller",
+      "name_ar": "وجبة شاورما بلودان",
+      "slug": "shawarma-bloudan-teller",
+      "category": "shawarma",
+      "price": 13.5,
+      "station": "KITCHEN",
+      "is_popular": true,
+      "is_recommended": true,
+      "description": "Haus-Spezialität Shawarma Bloudan"
+    },
+    {
+      "name": "Shawarma Frat Teller",
+      "name_ar": "وجبة شاورما فرات",
+      "slug": "shawarma-frat-teller",
+      "category": "shawarma",
+      "price": 13.5,
+      "station": "KITCHEN",
+      "description": "Shawarma Frat mit Beilagen"
+    },
+    {
+      "name": "Shawarma Sandwich",
+      "name_ar": "ساندويتش شاورما",
+      "slug": "shawarma-sandwich",
+      "category": "shawarma",
+      "price": 6,
+      "station": "KITCHEN",
+      "is_popular": true,
+      "description": "Shawarma im frischen Fladenbrot"
+    },
+    {
+      "name": "Double Shawarma Sandwich",
+      "name_ar": "ساندويتش شاورما دبل",
+      "slug": "double-shawarma-sandwich",
+      "category": "shawarma",
+      "price": 8,
+      "station": "KITCHEN",
+      "description": "Doppelportion Shawarma im Sandwich"
+    },
+    {
+      "name": "Gemischter Grillteller",
+      "name_ar": "مشاوي مشكلة",
+      "slug": "gemischter-grillteller",
+      "category": "grillades",
+      "price": 22,
+      "station": "KITCHEN",
+      "is_popular": true,
+      "is_chef_choice": true,
+      "description": "Auswahl gegrillter Fleischspezialitäten"
+    },
+    {
+      "name": "Lamm Teller",
+      "name_ar": "طبق لحم غنم",
+      "slug": "lamm-teller",
+      "category": "grillades",
+      "price": 25,
+      "station": "KITCHEN",
+      "description": "Zartes Lammfleisch vom Grill"
+    },
+    {
+      "name": "Schisch Tawouk Teller",
+      "name_ar": "طبق شيش طاووق",
+      "slug": "schisch-tawouk-teller",
+      "category": "grillades",
+      "price": 18,
+      "station": "KITCHEN",
+      "is_popular": true,
+      "description": "Mariniertes Hähnchenspieß vom Grill"
+    },
+    {
+      "name": "Kebab Teller",
+      "name_ar": "طبق كباب",
+      "slug": "kebab-teller",
+      "category": "grillades",
+      "price": 20,
+      "station": "KITCHEN",
+      "description": "Gegrillte Kebab-Spieße mit Beilagen"
+    },
+    {
+      "name": "Leber Teller",
+      "name_ar": "طبق كبدة",
+      "slug": "leber-teller",
+      "category": "grillades",
+      "price": 18,
+      "station": "KITCHEN",
+      "description": "Gegrillte Leber mit Gewürzen"
+    },
+    {
+      "name": "Halbes Grillhähnchen",
+      "name_ar": "نصف دجاج مشوي",
+      "slug": "halbes-grillhaehnchen",
+      "category": "grillades",
+      "price": 16,
+      "station": "KITCHEN",
+      "description": "Halbes Hähnchen vom Grill"
+    },
+    {
+      "name": "Auberginen Kebab",
+      "name_ar": "كباب باذنجان",
+      "slug": "auberginen-kebab",
+      "category": "grillades",
+      "price": 20,
+      "station": "KITCHEN",
+      "description": "Kebab mit gegrillter Aubergine"
+    },
+    {
+      "name": "Lahmacun mit Käse",
+      "name_ar": "لحم بعجين بالجبنة",
+      "slug": "lahmacun-mit-kaese",
+      "category": "grillades",
+      "price": 16,
+      "station": "KITCHEN",
+      "description": "Türkische Pizza mit Käse"
+    },
+    {
+      "name": "Gegrillter Fisch Teller",
+      "name_ar": "طبق سمك مشوي",
+      "slug": "gegrillter-fisch-teller",
+      "category": "grillades",
+      "price": 23,
+      "station": "KITCHEN",
+      "description": "Frischer Fisch vom Grill"
+    },
+    {
+      "name": "Gegrillter Gemüseteller",
+      "name_ar": "طبق خضار مشوية",
+      "slug": "gegrillter-gemueseteller",
+      "category": "grillades",
+      "price": 12,
+      "station": "KITCHEN",
+      "is_vegan": true,
+      "is_vegetarian": true,
+      "description": "Saisonales Grillgemüse"
+    },
+    {
+      "name": "Gemischter Grill 1kg",
+      "name_ar": "مشاوي مشكلة ١ كغ",
+      "slug": "gemischter-grill-1kg",
+      "category": "grillades",
+      "price": 55,
+      "station": "KITCHEN",
+      "description": "Gemischte Grillplatte — 1 kg"
+    },
+    {
+      "name": "Kebab 1kg",
+      "name_ar": "كباب ١ كغ",
+      "slug": "kebab-1kg",
+      "category": "grillades",
+      "price": 50,
+      "station": "KITCHEN",
+      "description": "Kebab — 1 kg"
+    },
+    {
+      "name": "Schisch Tawouk 1kg",
+      "name_ar": "شيش طاووق ١ كغ",
+      "slug": "schisch-tawouk-1kg",
+      "category": "grillades",
+      "price": 35,
+      "station": "KITCHEN",
+      "description": "Schisch Tawouk — 1 kg"
+    },
+    {
+      "name": "Hähnchenflügel 1kg",
+      "name_ar": "أجنحة دجاج ١ كغ",
+      "slug": "haehnchenfluegel-1kg",
+      "category": "grillades",
+      "price": 18,
+      "station": "KITCHEN",
+      "description": "Gegrillte Hähnchenflügel — 1 kg"
+    },
+    {
+      "name": "Pizza Margherita",
+      "name_ar": "بيتزا مارغريتا",
+      "slug": "pizza-margherita",
+      "category": "pizza",
+      "price": 11,
+      "station": "KITCHEN",
+      "is_popular": true,
+      "is_vegetarian": true,
+      "description": "Tomate, Mozzarella, Basilikum"
+    },
+    {
+      "name": "Pizza Quattro Stagioni",
+      "name_ar": "بيتزا فور سيزوني",
+      "slug": "pizza-quattro-stagioni",
+      "category": "pizza",
+      "price": 13.5,
+      "station": "KITCHEN",
+      "description": "Vier Jahreszeiten — Schinken, Pilze, Artischocken, Oliven"
+    },
+    {
+      "name": "Pizza Hollandaise",
+      "name_ar": "بيتزا هولنديز",
+      "slug": "pizza-hollandaise",
+      "category": "pizza",
+      "price": 13.5,
+      "station": "KITCHEN",
+      "description": "Mit Sauce Hollandaise und Schinken"
+    },
+    {
+      "name": "Pizza Sucuk & Ei",
+      "name_ar": "بيتزا سجق وبيض",
+      "slug": "pizza-sucuk-ei",
+      "category": "pizza",
+      "price": 12.5,
+      "station": "KITCHEN",
+      "description": "Türkische Sucuk-Wurst mit Spiegelei"
+    },
+    {
+      "name": "Pizza Mozzarella & Tomaten",
+      "name_ar": "بيتزا موزاريلا وطماطم",
+      "slug": "pizza-mozzarella-tomaten",
+      "category": "pizza",
+      "price": 12.5,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "description": "Frische Mozzarella und Tomaten"
+    },
+    {
+      "name": "Pizza Vegetarisch",
+      "name_ar": "بيتزا نباتية",
+      "slug": "pizza-vegetarisch",
+      "category": "pizza",
+      "price": 12,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "description": "Mit frischem Grillgemüse"
+    },
+    {
+      "name": "Pizza Putenmortadella",
+      "name_ar": "بيتزا مرتديلا ديك رومي",
+      "slug": "pizza-putenmortadella",
+      "category": "pizza",
+      "price": 12,
+      "station": "KITCHEN",
+      "description": "Mit Putenmortadella"
+    },
+    {
+      "name": "Pizza Mexikano",
+      "name_ar": "بيتزا مكسيكانو",
+      "slug": "pizza-mexikano",
+      "category": "pizza",
+      "price": 13.5,
+      "station": "KITCHEN",
+      "description": "Würzig mit Jalapeños und Mais"
+    },
+    {
+      "name": "Pizza Salami",
+      "name_ar": "بيتزا سلامي",
+      "slug": "pizza-salami",
+      "category": "pizza",
+      "price": 12.5,
+      "station": "KITCHEN",
+      "description": "Klassisch mit Salami"
+    },
+    {
+      "name": "Pizza Tonno",
+      "name_ar": "بيتزا تونة",
+      "slug": "pizza-tonno",
+      "category": "pizza",
+      "price": 12.5,
+      "station": "KITCHEN",
+      "description": "Mit Thunfisch und Zwiebeln"
+    },
+    {
+      "name": "Klassik Burger",
+      "name_ar": "برغر كلاسيك",
+      "slug": "klassik-burger",
+      "category": "burgers",
+      "price": 12,
+      "station": "KITCHEN",
+      "description": "Rindfleisch-Patty mit frischem Gemüse"
+    },
+    {
+      "name": "Cheeseburger",
+      "name_ar": "تشيز برغر",
+      "slug": "cheeseburger",
+      "category": "burgers",
+      "price": 13.5,
+      "station": "KITCHEN",
+      "is_popular": true,
+      "description": "Mit geschmolzenem Cheddar"
+    },
+    {
+      "name": "Spicy Cheeseburger",
+      "name_ar": "تشيز برغر حار",
+      "slug": "spicy-cheeseburger",
+      "category": "burgers",
+      "price": 13.5,
+      "station": "KITCHEN",
+      "spice_level": "épicé",
+      "description": "Scharfer Cheeseburger mit Jalapeños"
+    },
+    {
+      "name": "Bloudan Burger",
+      "name_ar": "برغر بلودان",
+      "slug": "bloudan-burger",
+      "category": "burgers",
+      "price": 17,
+      "station": "KITCHEN",
+      "is_popular": true,
+      "is_recommended": true,
+      "description": "Haus-Spezialität Burger Bloudan"
+    },
+    {
+      "name": "Crispy Chicken Burger",
+      "name_ar": "برغر دجاج مقرمش",
+      "slug": "crispy-chicken-burger",
+      "category": "burgers",
+      "price": 12,
+      "station": "KITCHEN",
+      "description": "Knuspriges Hähnchen im Burger"
+    },
+    {
+      "name": "Crispy Chicken",
+      "name_ar": "دجاج مقرمش",
+      "slug": "crispy-chicken-sandwich",
+      "category": "sandwiches",
+      "price": 10,
+      "station": "KITCHEN",
+      "description": "Knuspriges Hähnchen-Sandwich"
+    },
+    {
+      "name": "Zinger",
+      "name_ar": "زنجر",
+      "slug": "zinger-sandwich",
+      "category": "sandwiches",
+      "price": 10,
+      "station": "KITCHEN",
+      "description": "Scharfes Zinger-Sandwich"
+    },
+    {
+      "name": "Fajita",
+      "name_ar": "فاهيتا",
+      "slug": "fajita-sandwich",
+      "category": "sandwiches",
+      "price": 10,
+      "station": "KITCHEN",
+      "description": "Fajita-Sandwich mit Paprika"
+    },
+    {
+      "name": "Mexicano",
+      "name_ar": "مكسيكانو",
+      "slug": "mexicano-sandwich",
+      "category": "sandwiches",
+      "price": 10,
+      "station": "KITCHEN",
+      "description": "Mexikanisch gewürztes Sandwich"
+    },
+    {
+      "name": "Falafel",
+      "name_ar": "فلافل",
+      "slug": "falafel-sandwich",
+      "category": "sandwiches",
+      "price": 7,
+      "station": "KITCHEN",
+      "is_vegan": true,
+      "is_vegetarian": true,
+      "description": "Falafel im frischen Brot"
+    },
+    {
+      "name": "Schaschlik",
+      "name_ar": "شاشليك",
+      "slug": "schaschlik-sandwich",
+      "category": "sandwiches",
+      "price": 10,
+      "station": "KITCHEN",
+      "description": "Schaschlik-Spieß im Sandwich"
+    },
+    {
+      "name": "Kebab",
+      "name_ar": "كباب",
+      "slug": "kebab-sandwich",
+      "category": "sandwiches",
+      "price": 10,
+      "station": "KITCHEN",
+      "description": "Kebab im Fladenbrot"
+    },
+    {
+      "name": "Lammfleisch",
+      "name_ar": "لحم غنم",
+      "slug": "lammfleisch-sandwich",
+      "category": "sandwiches",
+      "price": 12,
+      "station": "KITCHEN",
+      "description": "Lammfleisch-Sandwich"
+    },
+    {
+      "name": "Lammleber",
+      "name_ar": "كبدة غنم",
+      "slug": "lammleber-sandwich",
+      "category": "sandwiches",
+      "price": 8,
+      "station": "KITCHEN",
+      "description": "Lammleber im Sandwich"
+    },
+    {
+      "name": "Manakish à la Souradia",
+      "name_ar": "مناقيش سورية",
+      "slug": "manakish-a-la-souradia",
+      "category": "manakish",
+      "price": 10,
+      "station": "KITCHEN",
+      "is_popular": true,
+      "description": "Manakish à la Souradia"
+    },
+    {
+      "name": "Toshka",
+      "name_ar": "توشكا",
+      "slug": "manakish-toshka",
+      "category": "manakish",
+      "price": 4.5,
+      "station": "KITCHEN",
+      "description": "Toshka"
+    },
+    {
+      "name": "Fleischstreifen auf Teig",
+      "name_ar": "شرحات على العجين",
+      "slug": "manakish-fleischstreifen-auf-teig",
+      "category": "manakish",
+      "price": 6,
+      "station": "KITCHEN",
+      "description": "Fleischstreifen auf Teig"
+    },
+    {
+      "name": "Lamm Stückchen auf Teig",
+      "name_ar": "محرّمشة على العجين",
+      "slug": "manakish-lamm-stueckchen-auf-teig",
+      "category": "manakish",
+      "price": 4.5,
+      "station": "KITCHEN",
+      "description": "Lamm Stückchen auf Teig"
+    },
+    {
+      "name": "Schisch Tawouk",
+      "name_ar": "شيش طاووق",
+      "slug": "manakish-schisch-tawouk",
+      "category": "manakish",
+      "price": 4.5,
+      "station": "KITCHEN",
+      "description": "Schisch Tawouk auf Teig"
+    },
+    {
+      "name": "Za'atar",
+      "name_ar": "زعتر",
+      "slug": "manakish-zaatar",
+      "category": "manakish",
+      "price": 2.5,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "is_vegan": true,
+      "description": "Za'atar"
+    },
+    {
+      "name": "Za'atar mit Käse",
+      "name_ar": "زعتر مع جبنة",
+      "slug": "manakish-zaatar-mit-kaese",
+      "category": "manakish",
+      "price": 3,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "description": "Za'atar mit Käse"
+    },
+    {
+      "name": "Käse Pide",
+      "name_ar": "جبنة مدورة",
+      "slug": "manakish-kaese-pide",
+      "category": "manakish",
+      "price": 3,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "description": "Käse Pide"
+    },
+    {
+      "name": "Calazoni",
+      "name_ar": "قشقوان",
+      "slug": "manakish-calazoni",
+      "category": "manakish",
+      "price": 4,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "description": "Calazoni"
+    },
+    {
+      "name": "Muhammara mit Kaschkawal",
+      "name_ar": "محمرة بقشقوان",
+      "slug": "manakish-muhammara-kaschkawal",
+      "category": "manakish",
+      "price": 4,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "description": "Muhammara mit Kaschkawal"
+    },
+    {
+      "name": "Spinat Dreieckig",
+      "name_ar": "سبانخ",
+      "slug": "manakish-spinat-dreieckig",
+      "category": "manakish",
+      "price": 3,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "is_vegan": true,
+      "description": "Spinat Dreieckig"
+    },
+    {
+      "name": "Sucuk Calzone",
+      "name_ar": "سجق",
+      "slug": "manakish-sucuk-calzone",
+      "category": "manakish",
+      "price": 4,
+      "station": "KITCHEN",
+      "description": "Sucuk Calzone"
+    },
+    {
+      "name": "Lammacun",
+      "name_ar": "لحمة بالعجين",
+      "slug": "manakish-lammacun",
+      "category": "manakish",
+      "price": 4,
+      "station": "KITCHEN",
+      "description": "Lammacun"
+    },
+    {
+      "name": "Lammacun Syrisch",
+      "name_ar": "صفيحة شامية",
+      "slug": "manakish-lammacun-syrisch",
+      "category": "manakish",
+      "price": 4,
+      "station": "KITCHEN",
+      "description": "Lammacun Syrisch"
+    },
+    {
+      "name": "Lammacun mit Joghurt",
+      "name_ar": "صفيحة باللبن",
+      "slug": "manakish-lammacun-mit-joghurt",
+      "category": "manakish",
+      "price": 4,
+      "station": "KITCHEN",
+      "description": "Lammacun mit Joghurt"
+    },
+    {
+      "name": "Sanfura",
+      "name_ar": "سنفورة",
+      "slug": "manakish-sanfura",
+      "category": "manakish",
+      "price": 3.5,
+      "station": "KITCHEN",
+      "description": "Sanfura"
+    },
+    {
+      "name": "Kartoffel Ecke",
+      "name_ar": "بطاطا",
+      "slug": "manakish-kartoffel-ecke",
+      "category": "manakish",
+      "price": 2.5,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "is_vegan": true,
+      "description": "Kartoffel Ecke"
+    },
+    {
+      "name": "Oliven",
+      "name_ar": "زيتون",
+      "slug": "manakish-oliven",
+      "category": "manakish",
+      "price": 3,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "is_vegan": true,
+      "description": "Oliven"
+    },
+    {
+      "name": "Chicken mit Käse",
+      "name_ar": "دجاج بالجبنة",
+      "slug": "manakish-chicken-mit-kaese",
+      "category": "manakish",
+      "price": 4,
+      "station": "KITCHEN",
+      "description": "Chicken mit Käse"
+    },
+    {
+      "name": "Mexican Chicken",
+      "name_ar": "دجاج مكسيكي",
+      "slug": "manakish-mexican-chicken",
+      "category": "manakish",
+      "price": 4,
+      "station": "KITCHEN",
+      "spice_level": "épicé",
+      "description": "Mexican Chicken"
+    },
+    {
+      "name": "Muhamara mit Oliven",
+      "name_ar": "محمرة بالزيتون",
+      "slug": "manakish-muhamara-mit-oliven",
+      "category": "manakish",
+      "price": 3,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "description": "Muhamara mit Oliven"
+    },
+    {
+      "name": "Muhammara mit Nüsse",
+      "name_ar": "محمرة بالجوز",
+      "slug": "manakish-muhammara-mit-nuesse",
+      "category": "manakish",
+      "price": 2.5,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "description": "Muhammara mit Nüsse"
+    },
+    {
+      "name": "Libanesischer Käse",
+      "name_ar": "جبنة لبنانية",
+      "slug": "manakish-libanesischer-kaese",
+      "category": "manakish",
+      "price": 3,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "description": "Libanesischer Käse"
+    },
+    {
+      "name": "Akkawi-Käse",
+      "name_ar": "جبنة عكاوي",
+      "slug": "manakish-akkawi-kaese",
+      "category": "manakish",
+      "price": 3,
+      "station": "KITCHEN",
+      "is_vegetarian": true,
+      "description": "Akkawi-Käse"
+    },
+    {
+      "name": "Spezial Bloudan",
+      "name_ar": "منقوشة بلودان",
+      "slug": "manakish-spezial-bloudan",
+      "category": "manakish",
+      "price": 16,
+      "station": "KITCHEN",
+      "is_popular": true,
+      "is_chef_choice": true,
+      "description": "Spezial Bloudan — Haus-Spezialität"
+    },
+    {
+      "name": "Waffle Nature",
+      "name_ar": "وافل طبيعي",
+      "slug": "waffle-nature",
+      "category": "waffeln",
+      "price": 6,
+      "station": "BAR",
+      "is_popular": true,
+      "tags": [
+        "customizable"
+      ],
+      "description": "Frische Waffel — wählen Sie Ihre Extras"
+    },
+    {
+      "name": "Crêpe Nature",
+      "name_ar": "كريب طبيعي",
+      "slug": "crepe-nature",
+      "category": "crepes",
+      "price": 6,
+      "station": "BAR",
+      "tags": [
+        "customizable"
+      ],
+      "description": "Frischer Crêpe — wählen Sie Ihre Extras"
+    },
+    {
+      "name": "Pancake Nature",
+      "name_ar": "بان كيك طبيعي",
+      "slug": "pancake-nature",
+      "category": "pancakes",
+      "price": 6,
+      "station": "BAR",
+      "tags": [
+        "customizable"
+      ],
+      "description": "Fluffige Pancakes — wählen Sie Ihre Extras"
+    },
+    {
+      "name": "Bloudan",
+      "name_ar": "بلودان",
+      "slug": "fruit-salad-bloudan",
+      "category": "fruit-salads",
+      "price": 15,
+      "station": "BAR",
+      "is_popular": true,
+      "description": "Fruchtsalat Spezialität Bloudan"
+    },
+    {
+      "name": "Lotus",
+      "name_ar": "لوتس",
+      "slug": "fruit-salad-lotus",
+      "category": "fruit-salads",
+      "price": 9,
+      "station": "BAR",
+      "description": "Fruchtsalat mit Lotus"
+    },
+    {
+      "name": "Dubai",
+      "name_ar": "دبي",
+      "slug": "fruit-salad-dubai",
+      "category": "fruit-salads",
+      "price": 11,
+      "station": "BAR",
+      "description": "Fruchtsalat Dubai Style"
+    },
+    {
+      "name": "Coupe Arabe",
+      "name_ar": "كوب عربي",
+      "slug": "coupe-arabe",
+      "category": "ice-cream",
+      "price": 7,
+      "station": "BAR",
+      "description": "Arabisches Eisbecher-Spezial"
+    },
+    {
+      "name": "Vanille",
+      "name_ar": "فانيليا",
+      "slug": "eis-vanille",
+      "category": "ice-cream",
+      "price": 5.5,
+      "station": "BAR",
+      "is_vegetarian": true,
+      "description": "Vanilleeis"
+    },
+    {
+      "name": "Fraise",
+      "name_ar": "فراولة",
+      "slug": "eis-fraise",
+      "category": "ice-cream",
+      "price": 5.5,
+      "station": "BAR",
+      "is_vegetarian": true,
+      "description": "Erdbeereis"
+    },
+    {
+      "name": "Chocolat",
+      "name_ar": "شوكولاتة",
+      "slug": "eis-chocolat",
+      "category": "ice-cream",
+      "price": 5.5,
+      "station": "BAR",
+      "is_vegetarian": true,
+      "description": "Schokoladeneis"
+    },
+    {
+      "name": "Bloudan",
+      "name_ar": "بلودان",
+      "slug": "cheesecake-bloudan",
+      "category": "cheesecakes",
+      "price": 7.5,
+      "station": "BAR",
+      "description": "Cheesecake Spezialität Bloudan"
+    },
+    {
+      "name": "Lotus",
+      "name_ar": "لوتس",
+      "slug": "cheesecake-lotus",
+      "category": "cheesecakes",
+      "price": 6,
+      "station": "BAR",
+      "description": "Cheesecake mit Lotus"
+    },
+    {
+      "name": "Dubai",
+      "name_ar": "دبي",
+      "slug": "cheesecake-dubai",
+      "category": "cheesecakes",
+      "price": 7,
+      "station": "BAR",
+      "description": "Cheesecake Dubai Style"
+    },
+    {
+      "name": "Oreo",
+      "name_ar": "أوريو",
+      "slug": "cheesecake-oreo",
+      "category": "cheesecakes",
+      "price": 6,
+      "station": "BAR",
+      "description": "Cheesecake mit Oreo"
+    },
+    {
+      "name": "Molten Cake",
+      "name_ar": "مولتن كيك",
+      "slug": "molten-cake",
+      "category": "cakes",
+      "price": 5.5,
+      "station": "BAR",
+      "description": "Warmer Schokoladen-Lavakuchen"
+    },
+    {
+      "name": "Brownie Cake",
+      "name_ar": "كيك براوني",
+      "slug": "brownie-cake",
+      "category": "cakes",
+      "price": 6.5,
+      "station": "BAR",
+      "description": "Saftiger Brownie-Kuchen"
+    },
+    {
+      "name": "Chips & Noix",
+      "name_ar": "شيبس ومكسرات",
+      "slug": "chips-noix",
+      "category": "snacks",
+      "price": 5,
+      "station": "BAR",
+      "description": "Chips mit gemischten Nüssen"
+    },
+    {
+      "name": "Noix",
+      "name_ar": "مكسرات",
+      "slug": "noix",
+      "category": "snacks",
+      "price": 6,
+      "station": "BAR",
+      "description": "Gemischte Nüsse"
+    },
+    {
+      "name": "Stillwasser",
+      "name_ar": "مياه معدنية",
+      "slug": "stillwasser",
+      "category": "water",
+      "price": 2.5,
+      "station": "BAR",
+      "tags": [
+        "has_variants"
+      ],
+      "description": "Stilles Wasser",
+      "variants": [
+        {
+          "slug": "025l",
+          "name": "0.25L",
+          "name_ar": "0.25 لتر",
+          "price": 2.5
+        },
+        {
+          "slug": "075l",
+          "name": "0.75L",
+          "name_ar": "0.75 لتر",
+          "price": 4
+        }
+      ]
+    },
+    {
+      "name": "Mineralwasser",
+      "name_ar": "مياه غازية",
+      "slug": "mineralwasser",
+      "category": "water",
+      "price": 2.5,
+      "station": "BAR",
+      "tags": [
+        "has_variants"
+      ],
+      "description": "Mineralwasser",
+      "variants": [
+        {
+          "slug": "025l",
+          "name": "0.25L",
+          "name_ar": "0.25 لتر",
+          "price": 2.5
+        },
+        {
+          "slug": "075l",
+          "name": "0.75L",
+          "name_ar": "0.75 لتر",
+          "price": 4
+        }
+      ]
+    },
+    {
+      "name": "Ananassaft",
+      "name_ar": "عصير أناناس",
+      "slug": "ananassaft",
+      "category": "juices",
+      "price": 4,
+      "station": "BAR",
+      "description": "Frischer Ananassaft"
+    },
+    {
+      "name": "Apfelsaft",
+      "name_ar": "عصير تفاح",
+      "slug": "apfelsaft",
+      "category": "juices",
+      "price": 4,
+      "station": "BAR",
+      "description": "Frischer Apfelsaft"
+    },
+    {
+      "name": "Orangensaft",
+      "name_ar": "عصير برتقال",
+      "slug": "orangensaft",
+      "category": "juices",
+      "price": 4,
+      "station": "BAR",
+      "description": "Frischer Orangensaft"
+    },
+    {
+      "name": "Mangosaft",
+      "name_ar": "عصير مانجو",
+      "slug": "mangosaft",
+      "category": "juices",
+      "price": 4,
+      "station": "BAR",
+      "description": "Frischer Mangosaft"
+    },
+    {
+      "name": "Erdbeersaft",
+      "name_ar": "عصير فراولة",
+      "slug": "erdbeersaft",
+      "category": "juices",
+      "price": 4,
+      "station": "BAR",
+      "description": "Frischer Erdbeersaft"
+    },
+    {
+      "name": "Maracujasaft",
+      "name_ar": "عصير باشن فروت",
+      "slug": "maracujasaft",
+      "category": "juices",
+      "price": 4,
+      "station": "BAR",
+      "description": "Frischer Maracujasaft"
+    },
+    {
+      "name": "Kiba (Kirsche & Banane)",
+      "name_ar": "كيبا (كرز وموز)",
+      "slug": "kiba",
+      "category": "juices",
+      "price": 4,
+      "station": "BAR",
+      "description": "Kiba — Kirsche und Banane"
+    },
+    {
+      "name": "Coca-Cola",
+      "name_ar": "كوكا كولا",
+      "slug": "coca-cola",
+      "category": "soft-drinks",
+      "price": 4,
+      "station": "BAR",
+      "description": "Coca-Cola 0,33 L"
+    },
+    {
+      "name": "Coca-Cola Zero",
+      "name_ar": "كوكا كولا زيرو",
+      "slug": "coca-cola-zero",
+      "category": "soft-drinks",
+      "price": 4,
+      "station": "BAR",
+      "description": "Coca-Cola Zero 0,33 L"
+    },
+    {
+      "name": "Fanta",
+      "name_ar": "فانتا",
+      "slug": "fanta",
+      "category": "soft-drinks",
+      "price": 4,
+      "station": "BAR",
+      "description": "Fanta Orange 0,33 L"
+    },
+    {
+      "name": "Sprite",
+      "name_ar": "سبرايت",
+      "slug": "sprite",
+      "category": "soft-drinks",
+      "price": 4,
+      "station": "BAR",
+      "description": "Sprite 0,33 L"
+    },
+    {
+      "name": "Red Bull",
+      "name_ar": "ريد بول",
+      "slug": "red-bull",
+      "category": "soft-drinks",
+      "price": 4,
+      "station": "BAR",
+      "description": "Red Bull Energy Drink"
+    },
+    {
+      "name": "Red Bull Sugar Free",
+      "name_ar": "ريد بول بدون سكر",
+      "slug": "red-bull-sugar-free",
+      "category": "soft-drinks",
+      "price": 4,
+      "station": "BAR",
+      "description": "Red Bull Sugarfree"
+    },
+    {
+      "name": "Red Bull White Edition",
+      "name_ar": "ريد بول وايت",
+      "slug": "red-bull-white",
+      "category": "soft-drinks",
+      "price": 4,
+      "station": "BAR",
+      "description": "Red Bull White Edition"
+    },
+    {
+      "name": "Eistee Pfirsich",
+      "name_ar": "شاي مثلج خوخ",
+      "slug": "eistee-pfirsich",
+      "category": "ice-tea",
+      "price": 4,
+      "station": "BAR",
+      "description": "Eistee Pfirsichgeschmack"
+    },
+    {
+      "name": "Eistee Zitrone",
+      "name_ar": "شاي مثلج ليمون",
+      "slug": "eistee-zitrone",
+      "category": "ice-tea",
+      "price": 4,
+      "station": "BAR",
+      "description": "Eistee Zitronengeschmack"
+    },
+    {
+      "name": "Eistee Wassermelone",
+      "name_ar": "شاي مثلج بطيخ",
+      "slug": "eistee-wassermelone",
+      "category": "ice-tea",
+      "price": 4,
+      "station": "BAR",
+      "description": "Eistee Wassermelonengeschmack"
+    },
+    {
+      "name": "Mojito",
+      "name_ar": "موهيتو",
+      "slug": "mojito",
+      "category": "cocktails",
+      "price": 7.5,
+      "station": "BAR",
+      "description": "Klassischer Mojito"
+    },
+    {
+      "name": "Erdbeer Mojito",
+      "name_ar": "موهيتو فراولة",
+      "slug": "erdbeer-mojito",
+      "category": "cocktails",
+      "price": 7.5,
+      "station": "BAR",
+      "description": "Mojito mit frischen Erdbeeren"
+    },
+    {
+      "name": "Maracuja Splash",
+      "name_ar": "ماراكويا سبلاش",
+      "slug": "maracuja-splash",
+      "category": "cocktails",
+      "price": 7.5,
+      "station": "BAR",
+      "description": "Erfrischender Maracuja-Cocktail"
+    },
+    {
+      "name": "Sweet Ananas",
+      "name_ar": "سويت أناناس",
+      "slug": "sweet-ananas",
+      "category": "cocktails",
+      "price": 7.5,
+      "station": "BAR",
+      "description": "Süßer Ananas-Cocktail"
+    },
+    {
+      "name": "Ipanema",
+      "name_ar": "إيبانيما",
+      "slug": "ipanema",
+      "category": "cocktails",
+      "price": 7.5,
+      "station": "BAR",
+      "description": "Ipanema — alkoholfrei"
+    },
+    {
+      "name": "Jamaica",
+      "name_ar": "جامايكا",
+      "slug": "jamaica",
+      "category": "cocktails",
+      "price": 7.5,
+      "station": "BAR",
+      "description": "Jamaica-Cocktail"
+    },
+    {
+      "name": "Bloudan Smoothie",
+      "name_ar": "سموذي بلودان",
+      "slug": "bloudan-smoothie",
+      "category": "smoothies",
+      "price": 8,
+      "station": "BAR",
+      "is_popular": true,
+      "description": "Haus-Smoothie Bloudan"
+    },
+    {
+      "name": "Mango Smoothie",
+      "name_ar": "سموذي مانجو",
+      "slug": "mango-smoothie",
+      "category": "smoothies",
+      "price": 6.5,
+      "station": "BAR",
+      "description": "Cremiger Mango-Smoothie"
+    },
+    {
+      "name": "Erdbeer Smoothie",
+      "name_ar": "سموذي فراولة",
+      "slug": "erdbeer-smoothie",
+      "category": "smoothies",
+      "price": 6.5,
+      "station": "BAR",
+      "description": "Frischer Erdbeer-Smoothie"
+    },
+    {
+      "name": "Ananas Smoothie",
+      "name_ar": "سموذي أناناس",
+      "slug": "ananas-smoothie",
+      "category": "smoothies",
+      "price": 6.5,
+      "station": "BAR",
+      "description": "Tropischer Ananas-Smoothie"
+    },
+    {
+      "name": "Polo Smoothie (Zitrone & Minze)",
+      "name_ar": "سموذي بولو (ليمون ونعناع)",
+      "slug": "polo-smoothie",
+      "category": "smoothies",
+      "price": 7.5,
+      "station": "BAR",
+      "description": "Erfrischender Zitrone-Minze-Smoothie"
+    },
+    {
+      "name": "Bloudan Milkshake",
+      "name_ar": "ميلك شيك بلودان",
+      "slug": "bloudan-milkshake",
+      "category": "milkshakes",
+      "price": 9,
+      "station": "BAR",
+      "description": "Haus-Milkshake Bloudan"
+    },
+    {
+      "name": "Erdbeer Milkshake",
+      "name_ar": "ميلك شيك فراولة",
+      "slug": "erdbeer-milkshake",
+      "category": "milkshakes",
+      "price": 7,
+      "station": "BAR",
+      "description": "Cremiger Erdbeer-Milkshake"
+    },
+    {
+      "name": "Schokoladen Milkshake",
+      "name_ar": "ميلك شيك شوكولاتة",
+      "slug": "schokoladen-milkshake",
+      "category": "milkshakes",
+      "price": 7,
+      "station": "BAR",
+      "description": "Schokoladen-Milkshake"
+    },
+    {
+      "name": "Oreo Milkshake",
+      "name_ar": "ميلك شيك أوريو",
+      "slug": "oreo-milkshake",
+      "category": "milkshakes",
+      "price": 7.5,
+      "station": "BAR",
+      "description": "Milkshake mit Oreo-Keksen"
+    },
+    {
+      "name": "Banane, Milch & Avocado",
+      "name_ar": "موز، حليب وأفوكادو",
+      "slug": "banane-milch-avocado",
+      "category": "banana-milk-cocktails",
+      "price": 7.5,
+      "station": "BAR",
+      "description": "Bananen-Milch-Cocktail mit Avocado"
+    },
+    {
+      "name": "Banane, Milch & Erdbeere",
+      "name_ar": "موز، حليب وفراولة",
+      "slug": "banane-milch-erdbeere",
+      "category": "banana-milk-cocktails",
+      "price": 7.5,
+      "station": "BAR",
+      "description": "Bananen-Milch-Cocktail mit Erdbeere"
+    },
+    {
+      "name": "Banane, Milch & Schokolade",
+      "name_ar": "موز، حليب وشوكولاتة",
+      "slug": "banane-milch-schokolade",
+      "category": "banana-milk-cocktails",
+      "price": 7.5,
+      "station": "BAR",
+      "description": "Bananen-Milch-Cocktail mit Schokolade"
+    },
+    {
+      "name": "Arabic Coffee",
+      "name_ar": "قهوة عربية",
+      "slug": "arabic-coffee",
+      "category": "coffee",
+      "price": 3,
+      "station": "BAR",
+      "description": "Traditioneller arabischer Kaffee"
+    },
+    {
+      "name": "Espresso",
+      "name_ar": "إسبريسو",
+      "slug": "espresso",
+      "category": "coffee",
+      "price": 3,
+      "station": "BAR",
+      "description": "Espresso"
+    },
+    {
+      "name": "Espresso Macchiato",
+      "name_ar": "إسبريسو ماكياتو",
+      "slug": "espresso-macchiato",
+      "category": "coffee",
+      "price": 3.5,
+      "station": "BAR",
+      "description": "Espresso mit Milchschaum"
+    },
+    {
+      "name": "Cappuccino",
+      "name_ar": "كابتشينو",
+      "slug": "cappuccino",
+      "category": "coffee",
+      "price": 4,
+      "station": "BAR",
+      "description": "Cappuccino"
+    },
+    {
+      "name": "Latte Macchiato",
+      "name_ar": "لاتيه ماكياتو",
+      "slug": "latte-macchiato",
+      "category": "coffee",
+      "price": 4.5,
+      "station": "BAR",
+      "description": "Latte Macchiato"
+    },
+    {
+      "name": "Chocolate Latte",
+      "name_ar": "لاتيه شوكولاتة",
+      "slug": "chocolate-latte",
+      "category": "coffee",
+      "price": 5,
+      "station": "BAR",
+      "description": "Schokoladen-Latte"
+    },
+    {
+      "name": "Vanilla Latte",
+      "name_ar": "لاتيه فانيليا",
+      "slug": "vanilla-latte",
+      "category": "coffee",
+      "price": 5,
+      "station": "BAR",
+      "description": "Vanille-Latte"
+    },
+    {
+      "name": "Caramel Latte",
+      "name_ar": "لاتيه كراميل",
+      "slug": "caramel-latte",
+      "category": "coffee",
+      "price": 5,
+      "station": "BAR",
+      "description": "Karamell-Latte"
+    },
+    {
+      "name": "Al Pacchino",
+      "name_ar": "آل باتشينو",
+      "slug": "al-pacchino",
+      "category": "coffee",
+      "price": 4.5,
+      "station": "BAR",
+      "description": "Al Pacchino — Haus-Spezialität"
+    },
+    {
+      "name": "Americano",
+      "name_ar": "أمريكانو",
+      "slug": "americano",
+      "category": "coffee",
+      "price": 3,
+      "station": "BAR",
+      "description": "Caffè Americano"
+    },
+    {
+      "name": "Flat White",
+      "name_ar": "فلات وايت",
+      "slug": "flat-white",
+      "category": "coffee",
+      "price": 4.5,
+      "station": "BAR",
+      "description": "Flat White"
+    },
+    {
+      "name": "Mocha",
+      "name_ar": "موكا",
+      "slug": "mocha",
+      "category": "coffee",
+      "price": 4.5,
+      "station": "BAR",
+      "description": "Mocha mit Schokolade"
+    },
+    {
+      "name": "Hot Chocolate",
+      "name_ar": "شوكولاتة ساخنة",
+      "slug": "hot-chocolate",
+      "category": "coffee",
+      "price": 4,
+      "station": "BAR",
+      "description": "Heiße Schokolade"
+    },
+    {
+      "name": "Sahlab",
+      "name_ar": "سحلب",
+      "slug": "sahlab",
+      "category": "coffee",
+      "price": 3.5,
+      "station": "BAR",
+      "description": "Traditionelles Sahlab-Getränk"
+    },
+    {
+      "name": "Schwarzer Tee",
+      "name_ar": "شاي أسود",
+      "slug": "schwarzer-tee",
+      "category": "tea",
+      "price": 3,
+      "station": "BAR",
+      "tags": [
+        "has_variants"
+      ],
+      "description": "Schwarzer Tee",
+      "variants": [
+        {
+          "slug": "glas",
+          "name": "Glas",
+          "name_ar": "كأس",
+          "price": 3
+        },
+        {
+          "slug": "kanne",
+          "name": "Kanne",
+          "name_ar": "إبريق",
+          "price": 8
+        }
+      ]
+    },
+    {
+      "name": "Grün Tee",
+      "name_ar": "شاي أخضر",
+      "slug": "gruen-tee",
+      "category": "tea",
+      "price": 3,
+      "station": "BAR",
+      "tags": [
+        "has_variants"
+      ],
+      "description": "Grüner Tee",
+      "variants": [
+        {
+          "slug": "glas",
+          "name": "Glas",
+          "name_ar": "كأس",
+          "price": 3
+        },
+        {
+          "slug": "kanne",
+          "name": "Kanne",
+          "name_ar": "إبريق",
+          "price": 8
+        }
+      ]
+    },
+    {
+      "name": "Ingwer Zitrone",
+      "name_ar": "زنجبيل وليمون",
+      "slug": "ingwer-zitrone",
+      "category": "tea",
+      "price": 3,
+      "station": "BAR",
+      "tags": [
+        "has_variants"
+      ],
+      "description": "Ingwer-Zitronen-Tee",
+      "variants": [
+        {
+          "slug": "glas",
+          "name": "Glas",
+          "name_ar": "كأس",
+          "price": 3
+        },
+        {
+          "slug": "kanne",
+          "name": "Kanne",
+          "name_ar": "إبريق",
+          "price": 8
+        }
+      ]
+    },
+    {
+      "name": "Kamille Tee",
+      "name_ar": "بابونج",
+      "slug": "kamille-tee",
+      "category": "tea",
+      "price": 3,
+      "station": "BAR",
+      "tags": [
+        "has_variants"
+      ],
+      "description": "Kamillentee",
+      "variants": [
+        {
+          "slug": "glas",
+          "name": "Glas",
+          "name_ar": "كأس",
+          "price": 3
+        },
+        {
+          "slug": "kanne",
+          "name": "Kanne",
+          "name_ar": "إبريق",
+          "price": 8
+        }
+      ]
+    },
+    {
+      "name": "Mate",
+      "name_ar": "ماتيه",
+      "slug": "mate",
+      "category": "tea",
+      "price": 5.5,
+      "station": "BAR",
+      "description": "Mate-Tee"
+    },
+    {
+      "name": "Cumin Lemon Tea",
+      "name_ar": "شاي كمون وليمون",
+      "slug": "cumin-lemon-tea",
+      "category": "tea",
+      "price": 3.5,
+      "station": "BAR",
+      "description": "Kreuzkümmel-Zitronen-Tee"
+    },
+    {
+      "name": "Iced Latte Macchiato",
+      "name_ar": "آيس لاتيه ماكياتو",
+      "slug": "iced-latte-macchiato",
+      "category": "iced-coffee",
+      "price": 6,
+      "station": "BAR",
+      "description": "Eiskalter Latte Macchiato"
+    },
+    {
+      "name": "Iced Latte Chocolate",
+      "name_ar": "آيس لاتيه شوكولاتة",
+      "slug": "iced-latte-chocolate",
+      "category": "iced-coffee",
+      "price": 6.5,
+      "station": "BAR",
+      "description": "Eiskalter Schokoladen-Latte"
+    },
+    {
+      "name": "Iced Latte Vanilla",
+      "name_ar": "آيس لاتيه فانيليا",
+      "slug": "iced-latte-vanilla",
+      "category": "iced-coffee",
+      "price": 6.5,
+      "station": "BAR",
+      "description": "Eiskalter Vanille-Latte"
+    },
+    {
+      "name": "Iced Latte Caramel",
+      "name_ar": "آيس لاتيه كراميل",
+      "slug": "iced-latte-caramel",
+      "category": "iced-coffee",
+      "price": 6.5,
+      "station": "BAR",
+      "description": "Eiskalter Karamell-Latte"
+    },
+    {
+      "name": "Frappuccino",
+      "name_ar": "فرابتشينو",
+      "slug": "frappuccino",
+      "category": "iced-coffee",
+      "price": 7,
+      "station": "BAR",
+      "description": "Frappuccino"
+    },
+    {
+      "name": "Iced Mocha",
+      "name_ar": "آيس موكا",
+      "slug": "iced-mocha",
+      "category": "iced-coffee",
+      "price": 6.5,
+      "station": "BAR",
+      "description": "Eiskalter Mocha"
+    },
+    {
+      "name": "Bloudan",
+      "name_ar": "بلودان",
+      "slug": "shisha-bloudan",
+      "category": "shisha",
+      "price": 20,
+      "station": "SHISHA",
+      "is_popular": true,
+      "description": "Shisha Spezialität Bloudan"
+    },
+    {
+      "name": "Double Apple",
+      "name_ar": "تفاحتين",
+      "slug": "shisha-double-apple",
+      "category": "shisha",
+      "price": 15,
+      "station": "SHISHA",
+      "is_popular": true,
+      "description": "Klassisches Doppel-Apfel-Aroma"
+    },
+    {
+      "name": "Grape Mint",
+      "name_ar": "عنب ونعناع",
+      "slug": "shisha-grape-mint",
+      "category": "shisha",
+      "price": 15,
+      "station": "SHISHA",
+      "description": "Traube mit Minze"
+    },
+    {
+      "name": "Love 66",
+      "name_ar": "لوف ٦٦",
+      "slug": "shisha-love-66",
+      "category": "shisha",
+      "price": 15,
+      "station": "SHISHA",
+      "description": "Love 66 Aroma"
+    },
+    {
+      "name": "Cinderella",
+      "name_ar": "سندريلا",
+      "slug": "shisha-cinderella",
+      "category": "shisha",
+      "price": 15,
+      "station": "SHISHA",
+      "description": "Cinderella Aroma"
+    },
+    {
+      "name": "Watermelon",
+      "name_ar": "بطيخ",
+      "slug": "shisha-watermelon",
+      "category": "shisha",
+      "price": 15,
+      "station": "SHISHA",
+      "description": "Wassermelonen-Aroma"
+    },
+    {
+      "name": "Raffaello",
+      "name_ar": "رافايلو",
+      "slug": "shisha-raffaello",
+      "category": "shisha",
+      "price": 20,
+      "station": "SHISHA",
+      "description": "Raffaello Aroma"
+    },
+    {
+      "name": "Fruits",
+      "name_ar": "فواكه",
+      "slug": "shisha-fruits",
+      "category": "shisha",
+      "price": 15,
+      "station": "SHISHA",
+      "description": "Fruchtmix-Aroma"
+    },
+    {
+      "name": "Polo",
+      "name_ar": "بولو",
+      "slug": "shisha-polo",
+      "category": "shisha",
+      "price": 15,
+      "station": "SHISHA",
+      "description": "Polo Aroma"
+    },
+    {
+      "name": "Shisha Royale",
+      "name_ar": "شيشة رويال",
+      "slug": "shisha-royale",
+      "category": "shisha",
+      "price": 55,
+      "station": "SHISHA",
+      "is_chef_choice": true,
+      "description": "Premium Shisha Royale"
+    },
+    {
+      "name": "Avoca Free",
+      "name_ar": "أفوكا فري",
+      "slug": "imperator-avoca-free",
+      "category": "imperator",
+      "price": 14,
+      "station": "SHISHA",
+      "description": "Imperator Tabak — Avoca Free"
+    },
+    {
+      "name": "Pinastro Flix",
+      "name_ar": "بيناسترو فليكس",
+      "slug": "imperator-pinastro-flix",
+      "category": "imperator",
+      "price": 13,
+      "station": "SHISHA",
+      "description": "Imperator Tabak — Pinastro Flix"
+    },
+    {
+      "name": "X4",
+      "name_ar": "إكس ٤",
+      "slug": "imperator-x4",
+      "category": "imperator",
+      "price": 13,
+      "station": "SHISHA",
+      "description": "Imperator Tabak — X4"
+    },
+    {
+      "name": "Thundermix",
+      "name_ar": "ثاندرميكس",
+      "slug": "imperator-thundermix",
+      "category": "imperator",
+      "price": 13,
+      "station": "SHISHA",
+      "description": "Imperator Tabak — Thundermix"
+    }
   ]
 }

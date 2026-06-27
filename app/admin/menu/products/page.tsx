@@ -60,6 +60,7 @@ type Product = {
   is_archived?: boolean
   display_order?: number
   description: string | null
+  description_ar?: string | null
   station?: string | null
   tags?: string[] | null
   product_ingredients?: Array<{ quantity: number; ingredients?: { id: string; name: string; unit?: string | null } | null }>
@@ -71,6 +72,7 @@ const EMPTY_FORM: ProductFormState = {
   name: "",
   name_ar: "",
   description: "",
+  description_ar: "",
   price: "",
   category_id: "",
   stock_quantity: "0",
@@ -188,6 +190,7 @@ export default function AdminMenuProductsPage() {
       name: p.name,
       name_ar: p.name_ar ?? "",
       description: p.description ?? "",
+      description_ar: p.description_ar ?? "",
       price: String(p.price),
       category_id: p.category?.id ?? p.category_id ?? "",
       stock_quantity: String(p.stock_quantity ?? 0),
@@ -209,6 +212,7 @@ export default function AdminMenuProductsPage() {
         name: form.name.trim(),
         name_ar: form.name_ar.trim() || null,
         description: form.description.trim() || null,
+        description_ar: form.description_ar.trim() || null,
         price: parseFloat(form.price) || 0,
         category_id: form.category_id || null,
         stock_quantity: parseInt(form.stock_quantity, 10) || 0,

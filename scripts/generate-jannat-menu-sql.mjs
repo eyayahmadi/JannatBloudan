@@ -17,8 +17,19 @@ function esc(s) {
 
 function tagsJson(p) {
   const tags = [...(p.tags ?? [])]
-  if (p.is_popular) tags.push("popular")
+  if (p.is_popular && !tags.includes("popular")) tags.push("popular")
   return JSON.stringify([...new Set(tags)])
+}
+
+function legacyFromTags(tags) {
+  const set = new Set(tags ?? [])
+  return {
+    is_popular: set.has("popular") || set.has("best_seller"),
+    is_vegetarian: set.has("vegetarian"),
+    is_vegan: set.has("vegan"),
+    is_chef_choice: set.has("chef_recommendation"),
+    is_recommended: set.has("chef_recommendation"),
+  }
 }
 
 const lines = []
@@ -131,27 +142,31 @@ for (const c of menu.categories) {
 
 for (const p of menu.products) {
   const catVar = p.category.replace(/-/g, "_")
+  const tagList = JSON.parse(tagsJson(p))
+  const legacy = legacyFromTags(tagList)
   const flags = [
-    p.is_popular ? "true" : "false",
-    p.is_vegetarian ? "true" : "false",
-    p.is_vegan ? "true" : "false",
-    p.is_chef_choice ? "true" : "false",
-    p.is_recommended ? "true" : "false",
+    legacy.is_popular ? "true" : "false",
+    legacy.is_vegetarian ? "true" : "false",
+    legacy.is_vegan ? "true" : "false",
+    legacy.is_chef_choice ? "true" : "false",
+    legacy.is_recommended ? "true" : "false",
   ]
-  const spice = p.spice_level ? `'${esc(p.spice_level)}'` : "NULL"
+  const spice = p.spice_level ? `'${esc(p.spice_level)}'` : tagList.includes("spicy") ? "'épicé'" : "NULL"
+  const descAr = p.description_ar ? `'${esc(p.description_ar)}'` : "NULL"
   lines.push(`  INSERT INTO products (
-    name, slug, description, price, category_id, image_url,
+    name, slug, description, description_ar, price, category_id, image_url,
     preparation_time, is_popular, is_vegetarian, is_vegan,
     is_chef_choice, is_recommended, is_available, stock_quantity,
     spice_level, name_ar, station, tags
   ) VALUES (
-    '${esc(p.name)}', '${esc(p.slug)}', '${esc(p.description ?? p.name)}', ${p.price}, cat_${catVar},
-    '/placeholder.svg', 15, ${flags[0]}, ${flags[1]}, ${flags[2]},
+    '${esc(p.name)}', '${esc(p.slug)}', '${esc(p.description ?? p.name)}', ${descAr}, ${p.price}, cat_${catVar},
+    '${esc(p.image_url ?? "/placeholder.svg")}', 15, ${flags[0]}, ${flags[1]}, ${flags[2]},
     ${flags[3]}, ${flags[4]}, true, 100,
     ${spice}, '${esc(p.name_ar)}', '${esc(p.station)}', '${esc(tagsJson(p))}'::jsonb
   ) ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
+    description_ar = EXCLUDED.description_ar,
     price = EXCLUDED.price,
     category_id = EXCLUDED.category_id,
     name_ar = EXCLUDED.name_ar,
@@ -162,6 +177,7 @@ for (const p of menu.products) {
     is_chef_choice = EXCLUDED.is_chef_choice,
     is_recommended = EXCLUDED.is_recommended,
     tags = EXCLUDED.tags,
+    spice_level = EXCLUDED.spice_level,
     image_url = EXCLUDED.image_url;`)
 }
 

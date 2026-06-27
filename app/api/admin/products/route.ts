@@ -20,6 +20,7 @@ function buildProductRow(body: Record<string, unknown>, name: string, slug?: str
     name,
     slug: slug ?? slugify(name) + "-" + Date.now().toString(36),
     description: body.description ?? null,
+    description_ar: body.description_ar ?? null,
     price: Number(body.price) || 0,
     category_id: body.category_id ?? null,
     image_url: body.image_url ?? null,

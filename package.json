@@ -21,7 +21,8 @@
     "i18n:audit": "node scripts/i18n-audit.mjs",
     "i18n:audit:soft": "node scripts/i18n-audit.mjs --soft",
     "tables:generate-sql": "node scripts/generate-jannat-tables-sql.mjs",
-    "tables:seed-info": "node scripts/seed-jannat-tables.mjs"
+    "tables:seed-info": "node scripts/seed-jannat-tables.mjs",
+    "menu:entrees:images": "node --env-file=.env.local scripts/assign-entrees-images.mjs"
   },
   "dependencies": {
     "@google-cloud/translate": "^9.4.1",
