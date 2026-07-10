@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, Clock, ShoppingCart, UtensilsCrossed } from "lucide-react"
-import { SITE } from "@/lib/site-config"
+import { ArrowLeft, Clock, ShoppingCart } from "lucide-react"
+import { BloudanLogoMark } from "@/components/site/BloudanLogoMark"
 import type { OrderStatus } from "@/lib/hooks/useRealtimeOrders"
 import { qrOrderEtaLabel, qrOrderStatusLabel } from "@/lib/menu/qr-order-eta"
 import { cn } from "@/lib/utils"
@@ -26,29 +26,40 @@ export function QrMenuHero({
   activeOrder,
 }: QrMenuHeroProps) {
   const eta = activeOrder ? qrOrderEtaLabel(activeOrder.status) : null
+  const tableStatus = activeOrder
+    ? qrOrderStatusLabel(activeOrder.status)
+    : "Bereit zu bestellen"
 
   return (
     <header className="relative z-0 shrink-0 overflow-hidden">
       <div
-        className="relative px-4 pb-6 pt-4 text-white"
+        className="relative px-4 pb-8 pt-3 text-white sm:pb-10"
         style={{
-          background: "linear-gradient(145deg, #1f1a14 0%, #5c1824 48%, #8b6914 100%)",
+          background: "linear-gradient(160deg, #14100c 0%, #4a1520 42%, #6b4f12 78%, #2a1f14 100%)",
         }}
       >
+        <div
+          className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(212,175,55,0.22), transparent 60%)",
+          }}
+        />
+
         <div className="relative mx-auto max-w-2xl">
-          <div className="mb-5 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between">
             <Link
               href={`/table/${tableId}`}
-              className="flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm transition-colors hover:bg-white/20"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/12 transition-colors hover:bg-white/20"
+              aria-label="Zurück"
             >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="font-medium">Zurück</span>
+              <ArrowLeft className="h-5 w-5" />
             </Link>
             <button
               type="button"
               onClick={onCartOpen}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/20 transition-colors hover:bg-white/30"
-              aria-label="Warenkorb öffnen"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/15 transition-colors hover:bg-white/25"
+              aria-label="Warenkorb"
             >
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 ? (
@@ -59,56 +70,53 @@ export function QrMenuHero({
             </button>
           </div>
 
-          <div className="flex items-start gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/20 bg-white/15 shadow-lg">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/placeholder-logo.svg" alt="" className="h-10 w-10 opacity-90" />
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-5 h-28 w-28 sm:h-32 sm:w-32">
+              <BloudanLogoMark
+                size={0}
+                variant="inline"
+                pulse
+                loop
+                withPhotoBack
+                className="h-full w-full rounded-3xl border border-amber-300/25 bg-black/20 shadow-2xl shadow-black/30"
+              />
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-amber-100/75">
-                Authentic Syrian Cuisine
-              </p>
-              <h1 className="font-display text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
-                {SITE.name}
-              </h1>
-              <p className="mt-1 text-sm text-amber-100/80" dir="rtl">
-                جنّة بلودان
-              </p>
-            </div>
-          </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold">
-              <UtensilsCrossed className="h-3.5 w-3.5 text-amber-200" />
-              Tisch {tableLabel}
-            </span>
-            {activeOrder ? (
-              <>
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold",
-                    activeOrder.status === "preparing"
-                      ? "bg-amber-400/25 text-amber-100"
-                      : activeOrder.status === "ready"
-                        ? "bg-emerald-400/25 text-emerald-100"
-                        : "bg-white/15 text-white",
-                  )}
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                  {qrOrderStatusLabel(activeOrder.status)}
-                </span>
-                {eta ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-black/20 px-3 py-1.5 text-xs text-amber-100/90">
+            <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+              Jannat Bloudan
+            </h1>
+            <p className="mt-1 text-lg text-amber-100/90 sm:text-xl" dir="rtl">
+              جنة بلودان
+            </p>
+
+            <p className="mt-4 text-sm font-medium tracking-wide text-amber-100/80">
+              Authentic Syrian Cuisine
+            </p>
+            <p className="mt-0.5 text-sm text-amber-100/65" dir="rtl">
+              المذاق السوري الأصيل
+            </p>
+
+            <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/12 px-4 py-2 text-sm font-medium text-amber-50/95">
+              <span>Tisch {tableLabel}</span>
+              <span className="text-amber-200/50">·</span>
+              <span
+                className={cn(
+                  activeOrder?.status === "preparing" && "text-amber-200",
+                  activeOrder?.status === "ready" && "text-emerald-200",
+                )}
+              >
+                {tableStatus}
+              </span>
+              {eta ? (
+                <>
+                  <span className="text-amber-200/50">·</span>
+                  <span className="inline-flex items-center gap-1 text-amber-100/80">
                     <Clock className="h-3.5 w-3.5" />
                     {eta}
                   </span>
-                ) : null}
-              </>
-            ) : (
-              <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs text-amber-100/70">
-                Bereit zu bestellen
-              </span>
-            )}
+                </>
+              ) : null}
+            </p>
           </div>
         </div>
       </div>

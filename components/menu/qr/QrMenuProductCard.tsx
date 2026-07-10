@@ -102,6 +102,26 @@ function QrMenuProductCardInner({
               Neu
             </span>
           ) : null}
+          {productHasTag(item.tags, "today_recommended") ? (
+            <span className="rounded-full bg-orange-600/90 px-2 py-0.5 text-[9px] font-bold text-white shadow">
+              🔥 Heute
+            </span>
+          ) : null}
+          {productHasTag(item.tags, "featured") ? (
+            <span className="rounded-full bg-amber-700/90 px-2 py-0.5 text-[9px] font-bold text-white shadow">
+              ✦ Featured
+            </span>
+          ) : null}
+          {productHasTag(item.tags, "seasonal") ? (
+            <span className="rounded-full bg-emerald-700/90 px-2 py-0.5 text-[9px] font-bold text-white shadow">
+              🌿 Saisonal
+            </span>
+          ) : null}
+          {productHasTag(item.tags, "promotion") ? (
+            <span className="rounded-full bg-rose-600/90 px-2 py-0.5 text-[9px] font-bold text-white shadow">
+              🎁 Angebot
+            </span>
+          ) : null}
           {productHasTag(item.tags, "chef_recommendation") ? (
             <span className="rounded-full bg-violet-600/90 px-2 py-0.5 text-[9px] font-bold text-white shadow">
               👨‍🍳 Chef Choice

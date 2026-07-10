@@ -14,7 +14,7 @@ html.menu-stable-scroll {
   overflow-x: visible;
   overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
-  scroll-padding-top: var(--menu-sticky-total-h, 11rem);
+  scroll-padding-top: var(--menu-sticky-total-h, 4.75rem);
 }
 
 html.menu-stable-scroll body {
@@ -117,11 +117,16 @@ html.menu-stable-scroll [data-menu-sticky-nav] {
 }
 
 html.menu-stable-scroll .menu-sticky-main {
-  scroll-margin-top: calc(var(--menu-sticky-total-h, 11rem) + 0.5rem);
+  scroll-margin-top: calc(var(--menu-sticky-total-h, 4.75rem) + 0.5rem);
 }
 
 html.menu-stable-scroll .menu-sticky-main section[id] {
-  scroll-margin-top: calc(var(--menu-sticky-total-h, 11rem) + 1rem);
+  scroll-margin-top: calc(var(--menu-sticky-total-h, 4.75rem) + 1rem);
+}
+
+.menu-sticky-stack--search-only .menu-sticky-stack__search .menu-sticky-stack__inner {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
 }
 
 html.menu-stable-scroll main,

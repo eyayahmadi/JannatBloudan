@@ -11,8 +11,6 @@ import { cn } from "@/lib/utils"
 
 type QrMenuStickyNavProps = {
   search: ReactNode
-  attributeFilters: ReactNode
-  categoryChips: ReactNode
   className?: string
   navRef?: Ref<HTMLDivElement>
 }
@@ -26,17 +24,10 @@ function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
   ;(ref as MutableRefObject<T | null>).current = value
 }
 
-export function QrMenuStickyNav({
-  search,
-  attributeFilters,
-  categoryChips,
-  className,
-  navRef,
-}: QrMenuStickyNavProps) {
+/** Sticky search bar — sits below hero, never overlaps logo/title. */
+export function QrMenuStickyNav({ search, className, navRef }: QrMenuStickyNavProps) {
   const stackRef = useRef<HTMLDivElement | null>(null)
   const searchRef = useRef<HTMLDivElement>(null)
-  const attrRef = useRef<HTMLDivElement>(null)
-  const catRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
     const root = stackRef.current
@@ -44,23 +35,15 @@ export function QrMenuStickyNav({
 
     const setVars = () => {
       const searchH = searchRef.current?.offsetHeight ?? 0
-      const attrH = attrRef.current?.offsetHeight ?? 0
-      const catH = catRef.current?.offsetHeight ?? 0
-      const total = searchH + attrH + catH
-
       root.style.setProperty("--menu-sticky-search-h", `${searchH}px`)
-      root.style.setProperty("--menu-sticky-attr-h", `${attrH}px`)
-      root.style.setProperty("--menu-sticky-cat-h", `${catH}px`)
-      root.style.setProperty("--menu-sticky-total-h", `${total}px`)
-      document.documentElement.style.setProperty("--menu-sticky-total-h", `${total}px`)
+      root.style.setProperty("--menu-sticky-total-h", `${searchH}px`)
+      document.documentElement.style.setProperty("--menu-sticky-total-h", `${searchH}px`)
     }
 
     setVars()
 
     const ro = new ResizeObserver(setVars)
-    for (const ref of [searchRef, attrRef, catRef]) {
-      if (ref.current) ro.observe(ref.current)
-    }
+    if (searchRef.current) ro.observe(searchRef.current)
     window.addEventListener("resize", setVars, { passive: true })
 
     return () => {
@@ -76,15 +59,9 @@ export function QrMenuStickyNav({
   }
 
   return (
-    <div ref={setStackRef} data-menu-sticky-nav className={cn("menu-sticky-stack", className)}>
+    <div ref={setStackRef} data-menu-sticky-nav className={cn("menu-sticky-stack menu-sticky-stack--search-only", className)}>
       <div ref={searchRef} data-menu-sticky-search className="menu-sticky-stack__row menu-sticky-stack__search">
         <div className="menu-sticky-stack__inner">{search}</div>
-      </div>
-      <div ref={attrRef} data-menu-sticky-attr className="menu-sticky-stack__row menu-sticky-stack__attr">
-        <div className="menu-sticky-stack__inner">{attributeFilters}</div>
-      </div>
-      <div ref={catRef} data-menu-sticky-cat className="menu-sticky-stack__row menu-sticky-stack__cat">
-        <div className="menu-sticky-stack__inner menu-sticky-stack__inner--cat">{categoryChips}</div>
       </div>
     </div>
   )

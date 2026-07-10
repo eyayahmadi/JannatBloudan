@@ -9,29 +9,23 @@ import type { OrderStatus } from "@/lib/hooks/useRealtimeOrders"
 import { useRealtimeOrders } from "@/lib/hooks/useRealtimeOrders"
 import { useResolvedRestaurantTable } from "@/lib/hooks/useResolvedRestaurantTable"
 import {
-  buildQrTableCategoryChips,
-  filterQrTableMenuItems,
   type QrMenuCategoryRow,
-  type QrTableCategoryChip,
 } from "@/lib/menu/qr-table-category-chips"
-import {
-  groupMenuItemsByDbCategories,
-  resolveGroupedSection,
-  type GroupedMenuItems,
-} from "@/lib/menu/menu-category-groups"
 import { MenuSubcategoryHeader } from "@/components/menu/MenuSubcategoryHeader"
 import { QrMenuHero } from "@/components/menu/qr/QrMenuHero"
 import { QrMenuSearch } from "@/components/menu/qr/QrMenuSearch"
-import { QrCategoryChips } from "@/components/menu/qr/QrCategoryChips"
-import { QrAttributeFilterChips } from "@/components/menu/qr/QrAttributeFilterChips"
 import { QrMenuStickyNav } from "@/components/menu/qr/QrMenuStickyNav"
+import { QrMenuFeaturedHub } from "@/components/menu/qr/QrMenuFeaturedHub"
+import { QrMenuFeaturedStrip } from "@/components/menu/qr/QrMenuFeaturedStrip"
+import { QrMenuCategoryNav } from "@/components/menu/qr/QrMenuCategoryNav"
+import { QrMenuPromoBanners } from "@/components/menu/qr/QrMenuPromoBanners"
 import { QrTableMenuProductCell } from "@/components/menu/qr/QrTableMenuProductCell"
 import { QrProductDetailSheet } from "@/components/menu/qr/QrProductDetailSheet"
 import { QrMenuCartSheet, QrMenuFloatingBar } from "@/components/menu/qr/QrMenuCartSheet"
 import { QrMenuEmptyState, QrMenuCardSkeleton } from "@/components/menu/qr/QrMenuEmptyState"
 import { QrMenuQuickSections } from "@/components/menu/qr/QrMenuQuickSections"
 import { matchesMenuSearch } from "@/lib/menu/menu-display"
-import { filterProductsByAttributeTag, type QrAttributeFilterId } from "@/lib/menu/product-attributes"
+import { buildQrPrintedMenuSections, pickQrFeaturedProducts } from "@/lib/menu/qr-printed-menu"
 import { mapApiToQrMenuItem, mergeQrMenuItems } from "@/lib/menu/qr-menu-helpers"
 import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
 import { isStableQrMenuPayload } from "@/lib/menu/menu-poll-stable"
@@ -70,15 +64,10 @@ export default function TableMenuPage() {
 
   const [menuItems, setMenuItems] = useState<QrMenuItem[]>([])
   const [oftenOrderedWith, setOftenOrderedWith] = useState<Record<string, string[]>>({})
-  const [categoryChips, setCategoryChips] = useState<QrTableCategoryChip[]>([
-    { id: "all", label: "Alle", icon: "🍽️" },
-  ])
   const [categoryRows, setCategoryRows] = useState<QrMenuCategoryRow[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [offline, setOffline] = useState(false)
-  const [activeCategory, setActiveCategory] = useState("all")
-  const [attributeFilter, setAttributeFilter] = useState<QrAttributeFilterId>("all")
   const [search, setSearch] = useState("")
   const [cart, setCart] = useState<QrCartEntry[]>([])
   const [cartOpen, setCartOpen] = useState(false)
@@ -104,21 +93,12 @@ export default function TableMenuPage() {
     scrollToNavIfNeeded(navRef.current)
   }, [scrollToNavIfNeeded])
 
-  const handleCategoryChange = useCallback(
-    (id: string) => {
-      setActiveCategory(id)
-      scrollNav()
-    },
-    [scrollNav],
-  )
-
-  const handleAttributeFilterChange = useCallback(
-    (id: QrAttributeFilterId) => {
-      setAttributeFilter(id)
-      scrollNav()
-    },
-    [scrollNav],
-  )
+  const scrollToSection = useCallback((sectionId: string) => {
+    requestAnimationFrame(() => {
+      const el = document.getElementById(sectionId)
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+    })
+  }, [])
 
   const handleSearchChange = useCallback(
     (value: string) => {
@@ -184,19 +164,6 @@ export default function TableMenuPage() {
           }
           return rows
         })
-        const chips = buildQrTableCategoryChips(rows)
-        const nextChips = chips.length > 0 ? chips : [{ id: "all", label: "Alle", icon: "🍽️" }]
-        setCategoryChips((prev) => {
-          if (
-            prev.length === nextChips.length &&
-            prev.every(
-              (c, i) => c.id === nextChips[i]?.id && c.label === nextChips[i]?.label,
-            )
-          ) {
-            return prev
-          }
-          return nextChips
-        })
         setOftenOrderedWith((data.often_ordered_with as Record<string, string[]>) ?? {})
         setStationAvailability(stations)
         setMenuItems(merged)
@@ -237,19 +204,30 @@ export default function TableMenuPage() {
     )
   }, [orders, effectiveNumber])
 
-  const filtered = useMemo(
-    () => filterQrTableMenuItems(menuItems, activeCategory),
-    [activeCategory, menuItems],
-  )
+  const isSearchMode = search.trim().length > 0
 
   const searched = useMemo(() => {
     const q = search.trim()
-    let list = filtered
-    if (q) list = list.filter((item) => matchesMenuSearch(item, q))
-    return filterProductsByAttributeTag(list, attributeFilter)
-  }, [filtered, search, attributeFilter])
+    if (!q) return menuItems
+    return menuItems.filter((item) => matchesMenuSearch(item, q))
+  }, [menuItems, search])
 
-  const displayed = useMemo(() => sortByMenuCardOrder(searched), [searched])
+  const searchResults = useMemo(() => sortByMenuCardOrder(searched), [searched])
+
+  const printedSections = useMemo(
+    () => buildQrPrintedMenuSections(menuItems, categoryRows),
+    [menuItems, categoryRows],
+  )
+
+  const bestsellerStrip = useMemo(
+    () => pickQrFeaturedProducts("bestseller", menuItems, 8),
+    [menuItems],
+  )
+
+  const todayStrip = useMemo(
+    () => pickQrFeaturedProducts("today", menuItems, 8),
+    [menuItems],
+  )
 
   const detailItem = useMemo(() => {
     if (!detailItemId) return null
@@ -276,8 +254,6 @@ export default function TableMenuPage() {
     setFavoriteIds(toggleQrFavorite(productId))
   }, [])
 
-  const groupedSection = useMemo(() => resolveGroupedSection(activeCategory), [activeCategory])
-
   const getInCartQty = useCallback(
     (item: QrMenuItem) => {
       if (item.isCustomizable || item.hasVariants) {
@@ -288,14 +264,6 @@ export default function TableMenuPage() {
     },
     [cart],
   )
-
-  const groupedItems = useMemo((): GroupedMenuItems<QrMenuItem>[] | null => {
-    if (!groupedSection) return null
-    const sectionCats = categoryRows
-      .filter((c) => (c.section ?? "food") === groupedSection)
-      .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-    return groupMenuItemsByDbCategories(displayed, sectionCats)
-  }, [displayed, groupedSection, categoryRows])
 
   const addLineToCart = useCallback(
     (payload: {
@@ -541,14 +509,8 @@ export default function TableMenuPage() {
           <QrMenuSearch
             value={search}
             onChange={handleSearchChange}
-            resultCount={search.trim() || attributeFilter !== "all" ? displayed.length : undefined}
+            resultCount={isSearchMode ? searchResults.length : undefined}
           />
-        }
-        attributeFilters={
-          <QrAttributeFilterChips activeId={attributeFilter} onSelect={handleAttributeFilterChange} />
-        }
-        categoryChips={
-          <QrCategoryChips chips={categoryChips} activeId={activeCategory} onSelect={handleCategoryChange} />
         }
       />
 
@@ -563,61 +525,109 @@ export default function TableMenuPage() {
           </div>
         ) : loadError ? (
           <QrMenuEmptyState variant="error" onRetry={loadMenu} />
-        ) : displayed.length === 0 ? (
+        ) : menuItems.length === 0 ? (
+          <QrMenuEmptyState variant="category" />
+        ) : isSearchMode && searchResults.length === 0 ? (
           <QrMenuEmptyState
-            variant={search.trim() ? "search" : "category"}
-            onReset={search.trim() ? () => handleSearchChange("") : undefined}
+            variant="search"
+            onReset={() => handleSearchChange("")}
           />
-        ) : (
+        ) : isSearchMode ? (
           <div>
-            {!search.trim() && activeCategory === "all" && attributeFilter === "all" ? (
-              <QrMenuQuickSections
-                favorites={favoriteItems}
-                recentlyOrdered={recentItems}
-                favoriteIds={new Set(favoriteIds)}
-                onToggleFavorite={handleToggleFavorite}
-                onOpenProduct={openDetail}
-                onQuickAdd={handleQuickAdd}
-                getInCartQty={getInCartQty}
-              />
-            ) : null}
+            <p className="mb-4 text-sm text-amber-800/60 dark:text-amber-300/60">
+              <span className="font-semibold text-amber-950 dark:text-white">{searchResults.length}</span>{" "}
+              {searchResults.length === 1 ? "Ergebnis" : "Ergebnisse"}
+            </p>
+            {renderGrid(searchResults)}
+          </div>
+        ) : (
+          <div className="space-y-8">
+            <QrMenuPromoBanners
+              items={menuItems}
+              onOpenProduct={openDetail}
+              onScrollToSection={scrollToSection}
+            />
 
-            {!search.trim() && activeCategory === "all" ? (
-              <p className="mb-4 text-xs font-medium uppercase tracking-widest text-amber-800/45 dark:text-amber-400/45">
-                {displayed.length} Gerichte · Beliebte zuerst
-              </p>
-            ) : (
-              <p className="mb-4 text-sm text-amber-800/60 dark:text-amber-300/60">
-                <span className="font-semibold text-amber-950 dark:text-white">{displayed.length}</span>{" "}
-                {displayed.length === 1 ? "Gericht" : "Gerichte"}
-              </p>
-            )}
+            <QrMenuFeaturedHub
+              items={menuItems}
+              onScrollToSection={scrollToSection}
+              onOpenProduct={openDetail}
+            />
 
-            {groupedItems ? (
-              <div className="space-y-10">
-                {groupedItems.map((group) => (
-                  <section
-                    key={group.key}
-                    id={`subcat-${group.key}`}
-                    className="space-y-4"
-                  >
-                    <MenuSubcategoryHeader
-                      icon={group.icon}
-                      labelDe={group.labelDe}
-                      labelAr={group.labelAr}
-                      subtitle={group.subtitle}
-                      variant="table"
-                      drink={groupedSection === "drinks"}
-                      sweet={groupedSection === "desserts"}
-                      premium
-                    />
-                    {renderGrid(group.items)}
-                  </section>
-                ))}
-              </div>
-            ) : (
-              renderGrid(displayed)
-            )}
+            <QrMenuFeaturedStrip
+              id="qr-featured-bestseller"
+              icon="⭐"
+              titleDe="Bestseller"
+              titleAr="الأكثر مبيعاً"
+              items={bestsellerStrip}
+              favoriteIds={new Set(favoriteIds)}
+              onToggleFavorite={handleToggleFavorite}
+              onOpenProduct={openDetail}
+              onQuickAdd={handleQuickAdd}
+              getInCartQty={getInCartQty}
+            />
+
+            <QrMenuFeaturedStrip
+              id="qr-featured-today"
+              icon="🔥"
+              titleDe="Heute empfohlen"
+              titleAr="موصى به اليوم"
+              items={todayStrip}
+              favoriteIds={new Set(favoriteIds)}
+              onToggleFavorite={handleToggleFavorite}
+              onOpenProduct={openDetail}
+              onQuickAdd={handleQuickAdd}
+              getInCartQty={getInCartQty}
+            />
+
+            <QrMenuCategoryNav items={menuItems} onSelectCategory={scrollToSection} />
+
+            <QrMenuQuickSections
+              favorites={favoriteItems}
+              recentlyOrdered={recentItems}
+              favoriteIds={new Set(favoriteIds)}
+              onToggleFavorite={handleToggleFavorite}
+              onOpenProduct={openDetail}
+              onQuickAdd={handleQuickAdd}
+              getInCartQty={getInCartQty}
+            />
+
+            <div id="qr-section-menu" className="space-y-12">
+              {printedSections.map((block) => (
+                <section key={block.id} id={block.id} className="space-y-8">
+                  <MenuSubcategoryHeader
+                    icon={block.icon}
+                    labelDe={block.labelDe}
+                    labelAr={block.labelAr}
+                    variant="table"
+                    drink={block.id === "qr-section-drinks"}
+                    sweet={block.id === "qr-section-desserts"}
+                    premium
+                  />
+                  {block.groups.length === 1 && block.groups[0]?.key !== "other" ? (
+                    renderGrid(block.groups[0].items)
+                  ) : (
+                    <div className="space-y-10">
+                      {block.groups.map((group) => (
+                        <div key={group.key} id={`subcat-${group.key}`} className="space-y-4">
+                          <MenuSubcategoryHeader
+                            icon={group.icon}
+                            labelDe={group.labelDe}
+                            labelAr={group.labelAr}
+                            subtitle={group.subtitle}
+                            variant="table"
+                            drink={block.id === "qr-section-drinks"}
+                            sweet={block.id === "qr-section-desserts"}
+                            premium
+                          />
+                          {renderGrid(group.items)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              ))}
+            </div>
           </div>
         )}
       </main>
