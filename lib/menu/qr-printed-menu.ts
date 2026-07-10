@@ -169,8 +169,8 @@ export const QR_FEATURED_SECTIONS: QrFeaturedSectionDef[] = [
   {
     id: "grill",
     icon: "🥩",
-    labelDe: "Grill Spezialitäten",
-    labelAr: "مشاوي مميزة",
+    labelDe: "Tellergerichte",
+    labelAr: "أطباق رئيسية",
     scrollTargetId: qrSectionDomId("grillades"),
     gradient: "from-stone-800 via-red-950 to-amber-900",
   },
