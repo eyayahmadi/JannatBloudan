@@ -1,6 +1,5 @@
 "use client"
 
-import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 type MenuSubcategoryHeaderProps = {
@@ -27,11 +26,7 @@ export function MenuSubcategoryHeader({
   const isTable = variant === "table"
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.6 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
+    <div
       className={cn(
         "col-span-full flex items-center gap-3",
         isTable
@@ -48,39 +43,39 @@ export function MenuSubcategoryHeader({
             ? premium
               ? "h-10 w-10 bg-gradient-to-br from-amber-100 to-amber-50 shadow-sm dark:from-amber-900/40 dark:to-amber-950/40"
               : "h-9 w-9 bg-amber-100 dark:bg-amber-900/30"
-            : drink
-              ? "h-9 w-9 bg-cyan-100"
-              : sweet
-                ? "h-9 w-9 bg-rose-100"
-                : "h-9 w-9 bg-muted",
+            : "h-9 w-9 bg-muted",
         )}
+        aria-hidden
       >
         {icon}
       </span>
-      <div className="min-w-0">
-        <h3
-          className={cn(
-            "font-semibold tracking-wide",
-            isTable
-              ? premium
-                ? "text-base text-amber-950 dark:text-white"
-                : "text-sm text-amber-950 dark:text-white"
-              : drink
-                ? "text-sm text-cyan-900"
-                : sweet
-                  ? "text-sm text-rose-900"
-                  : "text-sm text-foreground",
-          )}
-        >
-          {labelDe}
-        </h3>
-        <p className="text-xs text-muted-foreground" dir="rtl">
-          {labelAr}
-        </p>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <h3
+            className={cn(
+              "font-semibold tracking-tight",
+              isTable ? "text-base text-amber-950 dark:text-white" : "text-lg",
+              drink && "text-cyan-900 dark:text-cyan-100",
+              sweet && "text-rose-900 dark:text-rose-100",
+            )}
+            dir="ltr"
+          >
+            {labelDe}
+          </h3>
+          <span
+            className={cn(
+              "text-sm text-muted-foreground",
+              isTable && "text-amber-800/55 dark:text-amber-300/55",
+            )}
+            dir="rtl"
+          >
+            {labelAr}
+          </span>
+        </div>
         {subtitle ? (
-          <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground/80">{subtitle}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
         ) : null}
       </div>
-    </motion.div>
+    </div>
   )
 }

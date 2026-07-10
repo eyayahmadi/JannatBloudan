@@ -209,7 +209,7 @@ export function DigitalMenuExperience() {
 
   useEffect(() => {
     void load()
-    const pollId = window.setInterval(() => void load({ silent: true }), 20_000)
+    const pollId = window.setInterval(() => void load({ silent: true }), 60_000)
     const unsub = onRealtimeRefresh((scope) => {
       if (scopeMatches("menu", scope)) void load({ silent: true })
     })
@@ -1079,7 +1079,7 @@ function MenuCardInner({
       translate="no"
       data-no-translate
       className={cn(
-        "group flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-shadow hover:-translate-y-0.5 hover:shadow-md",
+        "group menu-product-card flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm",
         dark && "border-violet-500/20 bg-zinc-900/90",
         sweet && "border-rose-200/60",
         drink && "border-cyan-200/50 bg-white/80",

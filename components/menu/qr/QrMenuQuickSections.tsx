@@ -1,6 +1,5 @@
 "use client"
 
-import { motion } from "framer-motion"
 import { Clock, Heart } from "lucide-react"
 import type { QrMenuItem } from "@/lib/menu/qr-menu-types"
 import { QrMenuProductCard } from "@/components/menu/qr/QrMenuProductCard"
@@ -70,11 +69,7 @@ export function QrMenuQuickSections({
   )
 
   return (
-    <motion.div
-      initial={false}
-      animate={{ opacity: 1, y: 0 }}
-      className={cn("mb-8 space-y-6", className)}
-    >
+    <div className={cn("mb-8 space-y-6", className)}>
       {favorites.length > 0 ? (
         <section>
           <SectionHeader icon={Heart} title="Favoriten" subtitle="Ihre Lieblingsgerichte" />
@@ -87,6 +82,6 @@ export function QrMenuQuickSections({
           {renderStrip(recentlyOrdered)}
         </section>
       ) : null}
-    </motion.div>
+    </div>
   )
 }

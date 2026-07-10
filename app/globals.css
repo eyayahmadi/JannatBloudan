@@ -14,6 +14,7 @@ html.menu-stable-scroll {
   overflow-x: visible;
   overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
+  scroll-padding-top: var(--menu-sticky-total-h, 11rem);
 }
 
 html.menu-stable-scroll body {
@@ -28,12 +29,99 @@ html.menu-stable-scroll body {
 html.menu-stable-scroll .menu-page-root {
   display: block;
   width: 100%;
+  max-width: 100%;
   min-height: 0;
-  overflow: visible;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 html.menu-stable-scroll [data-menu-sticky-nav] {
   overflow-anchor: none;
+}
+
+/* QR menu: stacked sticky toolbar — Hero → Search → Attribute chips → Category chips */
+.menu-sticky-stack {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.menu-sticky-stack__inner {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 42rem;
+  padding-inline: 1rem;
+}
+
+.menu-sticky-stack__inner--cat {
+  padding-bottom: 0.75rem;
+}
+
+.menu-sticky-stack__row {
+  position: -webkit-sticky;
+  position: sticky;
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.menu-sticky-stack__search {
+  top: 0;
+  z-index: 43;
+  padding-top: env(safe-area-inset-top, 0px);
+  background-color: #ffffff;
+  border-bottom: 1px solid rgb(253 230 138 / 0.35);
+}
+
+.menu-sticky-stack__search .menu-sticky-stack__inner {
+  padding-top: 0.5rem;
+  padding-bottom: 0.25rem;
+}
+
+.menu-sticky-stack__attr {
+  top: var(--menu-sticky-search-h, 4.5rem);
+  z-index: 42;
+  background-color: #ffffff;
+}
+
+.menu-sticky-stack__attr .menu-sticky-stack__inner {
+  padding-block: 0.25rem;
+}
+
+.menu-sticky-stack__cat {
+  top: calc(var(--menu-sticky-search-h, 4.5rem) + var(--menu-sticky-attr-h, 2.75rem));
+  z-index: 41;
+  background-color: #ffffff;
+  border-bottom: 1px solid rgb(253 230 138 / 0.35);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+}
+
+.menu-sticky-stack__cat .menu-sticky-stack__inner {
+  padding-top: 0.25rem;
+}
+
+.dark .menu-sticky-stack__search,
+.dark .menu-sticky-stack__attr,
+.dark .menu-sticky-stack__cat {
+  background-color: rgb(10 10 10);
+}
+
+.dark .menu-sticky-stack__search,
+.dark .menu-sticky-stack__cat {
+  border-bottom-color: rgb(120 53 15 / 0.25);
+}
+
+html.menu-stable-scroll .menu-sticky-main {
+  scroll-margin-top: calc(var(--menu-sticky-total-h, 11rem) + 0.5rem);
+}
+
+html.menu-stable-scroll .menu-sticky-main section[id] {
+  scroll-margin-top: calc(var(--menu-sticky-total-h, 11rem) + 1rem);
 }
 
 html.menu-stable-scroll main,
@@ -41,6 +129,21 @@ html.menu-stable-scroll [data-menu-scroll-list] {
   overflow: visible;
   overflow-anchor: auto;
   min-height: 0;
+}
+
+/* Off-screen cards skip paint until near viewport — big win on Moto / budget Android */
+html.menu-stable-scroll .menu-product-card,
+html.menu-stable-scroll [data-menu-product-id] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px;
+  /* Avoid contain:paint — it stacks under sticky headers incorrectly on iOS Safari */
+  contain: layout style;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html.menu-stable-scroll .menu-product-card:hover {
+    box-shadow: 0 4px 14px -4px rgba(0, 0, 0, 0.12);
+  }
 }
 
 @custom-variant dark (&:is(.dark *));

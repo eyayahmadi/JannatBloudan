@@ -13,7 +13,7 @@ export function QrMenuSearch({ value, onChange, resultCount }: QrMenuSearchProps
   const showCount = value.trim() && resultCount != null
 
   return (
-    <div className="relative [overflow-anchor:none]">
+    <div className="relative w-full min-w-0 shrink-0 [overflow-anchor:none]">
       <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-amber-700/45 dark:text-amber-400/45" />
       <input
         type="search"

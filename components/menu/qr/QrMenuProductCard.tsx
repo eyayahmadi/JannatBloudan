@@ -1,7 +1,6 @@
 "use client"
 
 import { memo } from "react"
-import { motion } from "framer-motion"
 import { Flame, Heart, Leaf, Minus, Plus, Sparkles, Star } from "lucide-react"
 import { formatMenuPriceLabel } from "@/lib/menu/menu-display"
 import { BADGE_GROUP_TAGS, productHasTag } from "@/lib/menu/product-attributes"
@@ -50,14 +49,12 @@ function QrMenuProductCardInner({
   const blockLabel = item.unavailableLabel ?? (item.soldOut ? "Ausverkauft" : null)
 
   return (
-    <motion.article
-      initial={false}
-      animate={{ opacity: 1, y: 0 }}
+    <article
       data-menu-product-id={item.id}
       translate="no"
       data-no-translate
       className={cn(
-        "group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-amber-100/90 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98] dark:border-amber-900/25 dark:bg-neutral-900",
+        "menu-product-card group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-amber-100/90 bg-white shadow-sm dark:border-amber-900/25 dark:bg-neutral-900",
         disabled && "opacity-60",
       )}
       onClick={onOpen}
@@ -78,7 +75,7 @@ function QrMenuProductCardInner({
               e.stopPropagation()
               onToggleFavorite()
             }}
-            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur transition hover:bg-black/50"
+            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-white transition-colors hover:bg-black/60"
             aria-label={isFavorite ? "Aus Favoriten entfernen" : "Zu Favoriten"}
           >
             <Heart className={cn("h-4 w-4", isFavorite && "fill-rose-400 text-rose-400")} />
@@ -150,7 +147,7 @@ function QrMenuProductCardInner({
         ) : null}
         {item.description ? (
           <p
-            className="mt-1.5 line-clamp-3 text-[11px] leading-relaxed text-amber-800/50 dark:text-amber-300/45"
+            className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-amber-800/50 dark:text-amber-300/45"
             dir="ltr"
           >
             {item.description}
@@ -158,7 +155,7 @@ function QrMenuProductCardInner({
         ) : null}
         {item.description_ar ? (
           <p
-            className="mt-1 line-clamp-3 text-[10px] leading-relaxed text-amber-800/45 dark:text-amber-300/40"
+            className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-amber-800/45 dark:text-amber-300/40"
             dir="rtl"
           >
             {item.description_ar}
@@ -167,7 +164,7 @@ function QrMenuProductCardInner({
         <ProductAttributeBadges
           tags={item.tags}
           exclude={BADGE_GROUP_TAGS}
-          max={5}
+          max={3}
           size="xs"
           className="mt-1.5"
         />
@@ -190,22 +187,15 @@ function QrMenuProductCardInner({
               <button
                 type="button"
                 onClick={onDecrement}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-800 transition active:scale-90 dark:bg-amber-900/40 dark:text-amber-300"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
               >
                 <Minus className="h-4 w-4" />
               </button>
-              <motion.span
-                key={inCartQty}
-                initial={{ scale: 0.7, opacity: 0.5 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="w-6 text-center text-sm font-bold tabular-nums"
-              >
-                {inCartQty}
-              </motion.span>
+              <span className="w-6 text-center text-sm font-bold tabular-nums">{inCartQty}</span>
               <button
                 type="button"
                 onClick={onIncrement}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow active:scale-90"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow"
               >
                 <Plus className="h-4 w-4" />
               </button>
@@ -220,7 +210,7 @@ function QrMenuProductCardInner({
                 if (needsSheet) onOpen()
                 else onQuickAdd()
               }}
-              className="flex h-10 min-w-10 items-center justify-center gap-1 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 px-3 text-white shadow-md transition hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-10 min-w-10 items-center justify-center gap-1 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 px-3 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-40"
             >
               {inCartQty > 0 && !needsSheet ? (
                 <span className="text-xs font-bold">{inCartQty}</span>
@@ -231,7 +221,7 @@ function QrMenuProductCardInner({
           )}
         </div>
       </div>
-    </motion.article>
+    </article>
   )
 }
 

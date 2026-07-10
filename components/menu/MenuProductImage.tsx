@@ -92,7 +92,7 @@ function MenuProductImageInner({
     >
       {!showEmoji && !loaded ? (
         <div
-          className="absolute inset-0 z-[1] animate-pulse bg-amber-100/80 dark:bg-neutral-800"
+          className="absolute inset-0 z-[1] bg-amber-100/80 dark:bg-neutral-800"
           aria-hidden
         />
       ) : null}
@@ -111,7 +111,7 @@ function MenuProductImageInner({
           onLoad={handleLoad}
           onError={handleError}
           className={cn(
-            "absolute inset-0 z-[2] h-full w-full object-cover transition-opacity duration-500",
+            "absolute inset-0 z-[2] h-full w-full object-cover",
             loaded ? "opacity-100" : "opacity-0",
             imgClassName,
           )}

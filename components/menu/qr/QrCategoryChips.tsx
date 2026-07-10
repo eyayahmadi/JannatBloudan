@@ -38,7 +38,7 @@ export function QrCategoryChips({ chips, activeId, onSelect }: QrCategoryChipsPr
   return (
     <div
       ref={scrollRef}
-      className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex min-h-10 w-full min-w-0 max-w-full shrink-0 gap-2 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {chips.map((cat) => {
         const active = activeId === cat.id

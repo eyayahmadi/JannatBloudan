@@ -24,6 +24,7 @@ import { QrMenuHero } from "@/components/menu/qr/QrMenuHero"
 import { QrMenuSearch } from "@/components/menu/qr/QrMenuSearch"
 import { QrCategoryChips } from "@/components/menu/qr/QrCategoryChips"
 import { QrAttributeFilterChips } from "@/components/menu/qr/QrAttributeFilterChips"
+import { QrMenuStickyNav } from "@/components/menu/qr/QrMenuStickyNav"
 import { QrTableMenuProductCell } from "@/components/menu/qr/QrTableMenuProductCell"
 import { QrProductDetailSheet } from "@/components/menu/qr/QrProductDetailSheet"
 import { QrMenuCartSheet, QrMenuFloatingBar } from "@/components/menu/qr/QrMenuCartSheet"
@@ -211,7 +212,7 @@ export default function TableMenuPage() {
 
   useEffect(() => {
     loadMenu()
-    const id = window.setInterval(() => loadMenu({ silent: true }), 20_000)
+    const id = window.setInterval(() => loadMenu({ silent: true }), 60_000)
     return () => window.clearInterval(id)
   }, [loadMenu])
 
@@ -516,7 +517,7 @@ export default function TableMenuPage() {
   return (
     <MenuScrollGuardProvider notifyLayoutShift={notifyLayoutShift}>
     <PageShell stableViewport className="relative dark:bg-neutral-950">
-      <PremiumBackdrop variant="cream" />
+      <PremiumBackdrop variant="cream" lite />
 
       <QrMenuHero
         tableId={String(tableId)}
@@ -530,23 +531,28 @@ export default function TableMenuPage() {
         }
       />
 
-      <div className="mx-auto max-w-2xl px-4 pt-3">
-        <StationStatusBanner className="mb-1" />
+      <div className="relative z-0 mx-auto max-w-2xl px-4 pt-3 pb-2">
+        <StationStatusBanner />
       </div>
 
-      <div ref={navRef} data-menu-sticky-nav className="sticky top-0 z-40 border-b border-amber-200/30 bg-white/95 shadow-sm [overflow-anchor:none] dark:border-amber-900/20 dark:bg-neutral-950/95">
-        <div className="mx-auto max-w-2xl space-y-3 px-4 py-3">
+      <QrMenuStickyNav
+        navRef={navRef}
+        search={
           <QrMenuSearch
             value={search}
             onChange={handleSearchChange}
             resultCount={search.trim() || attributeFilter !== "all" ? displayed.length : undefined}
           />
+        }
+        attributeFilters={
           <QrAttributeFilterChips activeId={attributeFilter} onSelect={handleAttributeFilterChange} />
+        }
+        categoryChips={
           <QrCategoryChips chips={categoryChips} activeId={activeCategory} onSelect={handleCategoryChange} />
-        </div>
-      </div>
+        }
+      />
 
-      <main className="mx-auto max-w-2xl px-4 py-5 pb-28">
+      <main className="menu-sticky-main relative z-0 mx-auto max-w-2xl px-4 py-5 pb-28">
         {offline && !loading ? (
           <QrMenuEmptyState variant="offline" onRetry={loadMenu} />
         ) : loading && menuItems.length === 0 ? (
@@ -593,7 +599,7 @@ export default function TableMenuPage() {
                   <section
                     key={group.key}
                     id={`subcat-${group.key}`}
-                    className="scroll-mt-36 space-y-4"
+                    className="space-y-4"
                   >
                     <MenuSubcategoryHeader
                       icon={group.icon}
