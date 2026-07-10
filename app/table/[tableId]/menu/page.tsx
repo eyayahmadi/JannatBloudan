@@ -573,7 +573,7 @@ export default function TableMenuPage() {
             )}
 
             {groupedItems ? (
-              <div className="space-y-10 scroll-smooth">
+              <div className="space-y-10">
                 {groupedItems.map((group) => (
                   <section
                     key={group.key}

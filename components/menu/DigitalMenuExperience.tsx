@@ -767,9 +767,9 @@ export function DigitalMenuExperience() {
               ? t(`menu.section.${section}`)
               : t("menu.categoryFallback")}
         </h2>
-        <div>
+        <div data-menu-scroll-list className="[overflow-anchor:auto]">
         {groupedItems ? (
-          <div className="space-y-10 scroll-smooth">
+          <div className="space-y-10">
             {groupedItems.map((group) => (
               <section
                 key={group.key}

@@ -7,6 +7,27 @@
   }
 }
 
+/* Menu / QR: disable global smooth scroll — fights touch scroll on all mobile browsers */
+html.menu-stable-scroll {
+  scroll-behavior: auto !important;
+  overscroll-behavior-y: contain;
+}
+
+html.menu-stable-scroll body {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+html.menu-stable-scroll [data-menu-sticky-nav] {
+  overflow-anchor: none;
+}
+
+html.menu-stable-scroll main,
+html.menu-stable-scroll [data-menu-scroll-list] {
+  overflow-anchor: auto;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
