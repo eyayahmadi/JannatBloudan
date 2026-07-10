@@ -17,6 +17,7 @@ import {
   type StationAvailability,
   type StationAvailabilityStatus,
 } from "@/lib/stations/availability"
+import { fetchMenuHomepageSections } from "@/lib/menu/menu-homepage-sections"
 
 type ProductRow = Record<string, unknown> & {
   id: string
@@ -677,6 +678,13 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    let homepage_sections: Record<string, string[]> = {}
+    try {
+      homepage_sections = await fetchMenuHomepageSections(supabase)
+    } catch {
+      homepage_sections = {}
+    }
+
     return NextResponse.json({
       source: "supabase",
       items,
@@ -684,6 +692,7 @@ export async function GET(request: NextRequest) {
       by_section: bySection,
       often_ordered_with,
       most_ordered_ids: mostOrderedIds,
+      homepage_sections,
       chef_choice: items.filter((p) => p.is_chef_choice),
       recommended: items.filter((p) => p.is_recommended),
       most_popular: [...items]

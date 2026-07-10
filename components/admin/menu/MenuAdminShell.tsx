@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 const TABS = [
   { href: "/admin/menu/products", label: "Produkte", icon: "🍽️" },
   { href: "/admin/menu/categories", label: "Kategorien", icon: "📂" },
+  { href: "/admin/menu/homepage", label: "Startseite", icon: "🏠" },
   { href: "/admin/menu/extras", label: "Extras", icon: "✨" },
   { href: "/admin/menu/variants", label: "Varianten", icon: "📐" },
   { href: "/admin/menu/recommendations", label: "Empfehlungen", icon: "💡" },

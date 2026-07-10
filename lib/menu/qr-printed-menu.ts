@@ -41,6 +41,25 @@ export const QR_NAV_CATEGORIES = [
 
 export type QrNavCategory = (typeof QR_NAV_CATEGORIES)[number]
 
+export type QrCategoryNavItem = {
+  slug: QrNavCategory["slug"]
+  id: string
+  labelDe: string
+  labelAr: string
+  icon: string
+}
+
+/** All category nav pills in canonical menu order (always 13, no Shawarma). */
+export function buildQrCategoryNavItems(): QrCategoryNavItem[] {
+  return QR_NAV_CATEGORIES.map((nav) => ({
+    slug: nav.slug,
+    id: qrSectionDomId(nav.slug),
+    labelDe: nav.labelDe,
+    labelAr: nav.labelAr,
+    icon: nav.icon,
+  }))
+}
+
 const DESSERT_SLUGS = new Set<string>(DESSERTS_CATEGORY_GROUPS.map((g) => g.slug))
 
 const QR_HOT_DRINK_SLUGS = new Set(["coffee", "tea"])

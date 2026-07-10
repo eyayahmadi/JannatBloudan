@@ -1,23 +1,24 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import type { QrPrintedMenuBlock } from "@/lib/menu/qr-printed-menu"
+import { useRouter } from "next/navigation"
+import type { QrCategoryNavItem } from "@/lib/menu/qr-printed-menu"
 import { cn } from "@/lib/utils"
 
 type QrMenuCategoryNavProps = {
-  sections: QrPrintedMenuBlock[]
-  onScrollToSection: (sectionId: string) => void
-  activeSectionId?: string | null
+  categories: QrCategoryNavItem[]
+  tableId: string
+  activeSlug?: string | null
   className?: string
 }
 
 function CategoryPill({
-  section,
+  category,
   active,
   onSelect,
   chipRef,
 }: {
-  section: QrPrintedMenuBlock
+  category: QrCategoryNavItem
   active: boolean
   onSelect: () => void
   chipRef?: (el: HTMLButtonElement | null) => void
@@ -38,29 +39,30 @@ function CategoryPill({
         <span className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-600 to-orange-600" />
       ) : null}
       <span className="relative flex items-center gap-1.5 whitespace-nowrap">
-        <span className="text-base leading-none">{section.icon}</span>
-        <span>{section.labelDe}</span>
+        <span className="text-base leading-none">{category.icon}</span>
+        <span>{category.labelDe}</span>
       </span>
     </button>
   )
 }
 
-/** Horizontal category navigation — scroll-only shortcuts to menu sections. */
+/** Horizontal category navigation — opens category pages. */
 export function QrMenuCategoryNav({
-  sections,
-  onScrollToSection,
-  activeSectionId = null,
+  categories,
+  tableId,
+  activeSlug = null,
   className,
 }: QrMenuCategoryNavProps) {
+  const router = useRouter()
   const scrollRef = useRef<HTMLDivElement>(null)
   const chipRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const prevActiveRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!activeSectionId || prevActiveRef.current === activeSectionId) return
-    prevActiveRef.current = activeSectionId
+    if (!activeSlug || prevActiveRef.current === activeSlug) return
+    prevActiveRef.current = activeSlug
 
-    const el = chipRefs.current[activeSectionId]
+    const el = chipRefs.current[activeSlug]
     const container = scrollRef.current
     if (!el || !container) return
 
@@ -73,9 +75,9 @@ export function QrMenuCategoryNav({
     } else if (elRight > viewRight) {
       container.scrollTo({ left: elRight - container.clientWidth + 8, behavior: "smooth" })
     }
-  }, [activeSectionId])
+  }, [activeSlug])
 
-  if (sections.length === 0) return null
+  if (categories.length === 0) return null
 
   return (
     <nav className={cn("w-full min-w-0 max-w-full", className)} aria-label="Kategorien" data-menu-category-nav>
@@ -83,14 +85,14 @@ export function QrMenuCategoryNav({
         ref={scrollRef}
         className="flex gap-2 overflow-x-auto overscroll-x-contain pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {sections.map((section) => (
+        {categories.map((category) => (
           <CategoryPill
-            key={section.id}
-            section={section}
-            active={activeSectionId === section.id}
-            onSelect={() => onScrollToSection(section.id)}
+            key={category.slug}
+            category={category}
+            active={activeSlug === category.slug}
+            onSelect={() => router.push(`/table/${tableId}/menu/${category.slug}`)}
             chipRef={(el) => {
-              chipRefs.current[section.id] = el
+              chipRefs.current[category.slug] = el
             }}
           />
         ))}
