@@ -116,16 +116,16 @@ export function AdminFormModalShell({
 
   const panelMotion = isMobileSheet
     ? {
-        initial: { y: "100%", opacity: 1 },
-        animate: { y: 0, opacity: 1 },
-        exit: { y: "100%", opacity: 1 },
+        initial: { y: "100%" },
+        animate: { y: 0 },
+        exit: { y: "100%" },
         transition: { type: "spring" as const, damping: 28, stiffness: 320 },
       }
     : {
-        initial: { opacity: 0, scale: 0.98 },
-        animate: { opacity: 1, scale: 1 },
-        exit: { opacity: 0, scale: 0.98 },
-        transition: { duration: 0.22, ease: [0.2, 0.8, 0.2, 1] as const },
+        initial: { scale: 0.98 },
+        animate: { scale: 1 },
+        exit: { scale: 0.98 },
+        transition: { duration: 0.18, ease: [0.2, 0.8, 0.2, 1] as const },
       }
 
   if (!mounted) return null
@@ -162,6 +162,7 @@ export function AdminFormModalShell({
                 isMobileSheet ? "max-h-[92dvh] rounded-t-2xl" : "w-[90vw] rounded-2xl",
                 size === "xl" ? "max-w-[1050px]" : "max-w-lg",
               )}
+              style={{ opacity: 1 }}
               onClick={(e) => e.stopPropagation()}
             >
             <div className="shrink-0 border-b bg-white shadow-sm dark:bg-slate-900">

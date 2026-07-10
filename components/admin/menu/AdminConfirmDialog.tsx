@@ -1,7 +1,8 @@
 "use client"
 
-import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
-import type { ReactNode } from "react"
+import { useCallback, useEffect, useState, type ReactNode } from "react"
+import { createPortal } from "react-dom"
+import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -18,9 +19,49 @@ type AdminConfirmDialogProps = {
   children?: ReactNode
 }
 
+function useLockBodyScroll(locked: boolean) {
+  useEffect(() => {
+    if (!locked) return
+
+    const scrollY = window.scrollY
+    const html = document.documentElement
+    const body = document.body
+
+    const prev = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyWidth: body.style.width,
+      bodyPaddingRight: body.style.paddingRight,
+    }
+
+    const scrollbarWidth = window.innerWidth - html.clientWidth
+
+    html.style.overflow = "hidden"
+    body.style.overflow = "hidden"
+    body.style.position = "fixed"
+    body.style.top = `-${scrollY}px`
+    body.style.width = "100%"
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`
+    }
+
+    return () => {
+      html.style.overflow = prev.htmlOverflow
+      body.style.overflow = prev.bodyOverflow
+      body.style.position = prev.bodyPosition
+      body.style.top = prev.bodyTop
+      body.style.width = prev.bodyWidth
+      body.style.paddingRight = prev.bodyPaddingRight
+      window.scrollTo(0, scrollY)
+    }
+  }, [locked])
+}
+
 /**
- * Confirmation admin — portal Radix, centré viewport (z-index élevé).
- * Évite les conflits transform Framer + translate Tailwind.
+ * Confirmation admin — portal body + flex center (pas de translate/animation).
+ * Corrige le cas « overlay visible mais panneau invisible ».
  */
 export function AdminConfirmDialog({
   open,
@@ -34,68 +75,90 @@ export function AdminConfirmDialog({
   destructive = false,
   children,
 }: AdminConfirmDialogProps) {
-  return (
-    <AlertDialogPrimitive.Root
-      open={open}
-      onOpenChange={(next) => {
-        if (!next && !confirming) onClose()
-      }}
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useLockBodyScroll(open)
+
+  const requestClose = useCallback(() => {
+    if (confirming) return
+    onClose()
+  }, [confirming, onClose])
+
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") requestClose()
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [open, requestClose])
+
+  if (!mounted || !open) return null
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      style={{ position: "fixed" }}
     >
-      <AlertDialogPrimitive.Portal>
-        <AlertDialogPrimitive.Overlay
-          className={cn(
-            "fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm",
-            "data-[state=open]:animate-in data-[state=closed]:animate-out",
-            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-          )}
-        />
-        <AlertDialogPrimitive.Content
-          className={cn(
-            "fixed top-[50%] left-[50%] z-[9999] flex w-[calc(100%-2rem)] max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl outline-none dark:bg-slate-900",
-            "max-h-[min(90dvh,640px)] -translate-x-1/2 -translate-y-1/2",
-            "data-[state=open]:animate-in data-[state=closed]:animate-out",
-            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-            "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200",
-          )}
-          onOpenAutoFocus={(e) => e.preventDefault()}
-        >
-          <div className="flex items-start justify-between gap-3 border-b px-5 py-4">
-            <AlertDialogPrimitive.Title className="text-lg font-bold text-slate-900 dark:text-white">
-              {title}
-            </AlertDialogPrimitive.Title>
-          </div>
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        aria-label="Schließen"
+        onClick={requestClose}
+      />
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">
-            {children ? (
-              <AlertDialogPrimitive.Description className="sr-only">
-                Bestätigung erforderlich
-              </AlertDialogPrimitive.Description>
-            ) : null}
-            {children}
-            {description ? (
-              <AlertDialogPrimitive.Description asChild>
-                <p className="text-sm text-slate-600 dark:text-slate-300">{description}</p>
-              </AlertDialogPrimitive.Description>
-            ) : null}
-          </div>
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="admin-confirm-title"
+        className={cn(
+          "relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900",
+          "max-h-[min(90dvh,640px)]",
+        )}
+        style={{ opacity: 1, transform: "none" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 border-b px-5 py-4">
+          <h2 id="admin-confirm-title" className="text-lg font-bold text-slate-900 dark:text-white">
+            {title}
+          </h2>
+          <button
+            type="button"
+            onClick={requestClose}
+            disabled={confirming}
+            aria-label="Schließen"
+            className="shrink-0 rounded-lg p-1.5 text-slate-600 transition hover:bg-slate-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-          <div className="flex gap-2 border-t px-5 py-4">
-            <AlertDialogPrimitive.Cancel asChild>
-              <Button type="button" variant="outline" className="flex-1" disabled={confirming}>
-                {cancelLabel}
-              </Button>
-            </AlertDialogPrimitive.Cancel>
-            <Button
-              type="button"
-              className={cn("flex-1", destructive && "bg-red-600 hover:bg-red-700")}
-              disabled={confirming}
-              onClick={onConfirm}
-            >
-              {confirming ? "…" : confirmLabel}
-            </Button>
-          </div>
-        </AlertDialogPrimitive.Content>
-      </AlertDialogPrimitive.Portal>
-    </AlertDialogPrimitive.Root>
+        <div className="overflow-y-auto overscroll-contain px-5 py-5">
+          {children}
+          {description ? (
+            <p className="text-sm text-slate-600 dark:text-slate-300">{description}</p>
+          ) : null}
+        </div>
+
+        <div className="flex gap-2 border-t px-5 py-4">
+          <Button type="button" variant="outline" className="flex-1" disabled={confirming} onClick={requestClose}>
+            {cancelLabel}
+          </Button>
+          <Button
+            type="button"
+            className={cn("flex-1", destructive && "bg-red-600 hover:bg-red-700")}
+            disabled={confirming}
+            onClick={onConfirm}
+          >
+            {confirming ? "…" : confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   )
 }
