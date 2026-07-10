@@ -1,10 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import { PageShell } from "@/components/site/PageShell"
 import { PremiumBackdrop } from "@/components/site/PremiumBackdrop"
 import { QrMenuHero } from "@/components/menu/qr/QrMenuHero"
 import { QrMenuCategoryCards } from "@/components/menu/qr/QrMenuCategoryCards"
 import { QrMenuFeaturedStrip } from "@/components/menu/qr/QrMenuFeaturedStrip"
+import { QrMenuSearchOverlay } from "@/components/menu/qr/QrMenuSearchOverlay"
 import { QrMenuEmptyState, QrMenuCardSkeleton } from "@/components/menu/qr/QrMenuEmptyState"
 import { QrTableMenuShell } from "@/components/menu/qr/QrTableMenuShell"
 import { useQrTableMenu } from "@/components/menu/qr/QrTableMenuProvider"
@@ -12,6 +14,7 @@ import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
 
 /** Marketing landing page — hero, category nav, curated promo strips only. */
 export default function TableMenuHomePage() {
+  const [searchOpen, setSearchOpen] = useState(false)
   const {
     tableId,
     displayLabel,
@@ -41,6 +44,7 @@ export default function TableMenuHomePage() {
         tableLabel={displayLabel}
         cartCount={cartCount}
         onCartOpen={() => setCartOpen(true)}
+        onSearchOpen={() => setSearchOpen(true)}
         activeOrder={activeOrder}
       />
 
@@ -97,6 +101,7 @@ export default function TableMenuHomePage() {
       </main>
 
       <QrTableMenuShell />
+      <QrMenuSearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </PageShell>
   )
 }

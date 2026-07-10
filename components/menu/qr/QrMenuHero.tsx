@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, Clock, ShoppingCart } from "lucide-react"
+import { ArrowLeft, Clock, Search, ShoppingCart } from "lucide-react"
 import { BloudanLogoMark } from "@/components/site/BloudanLogoMark"
 import type { OrderStatus } from "@/lib/hooks/useRealtimeOrders"
 import { qrOrderEtaLabel, qrOrderStatusLabel } from "@/lib/menu/qr-order-eta"
@@ -12,6 +12,7 @@ type QrMenuHeroProps = {
   tableLabel: string
   cartCount: number
   onCartOpen: () => void
+  onSearchOpen?: () => void
   activeOrder?: {
     order_number: string
     status: OrderStatus
@@ -23,6 +24,7 @@ export function QrMenuHero({
   tableLabel,
   cartCount,
   onCartOpen,
+  onSearchOpen,
   activeOrder,
 }: QrMenuHeroProps) {
   const eta = activeOrder ? qrOrderEtaLabel(activeOrder.status) : null
@@ -47,27 +49,39 @@ export function QrMenuHero({
         />
 
         <div className="relative mx-auto max-w-2xl">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between gap-2">
             <Link
               href={`/table/${tableId}`}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/12 transition-colors hover:bg-white/20"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/12 transition-colors hover:bg-white/20 active:scale-[0.98]"
               aria-label="Zurück"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <button
-              type="button"
-              onClick={onCartOpen}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/15 transition-colors hover:bg-white/25"
-              aria-label="Warenkorb"
-            >
-              <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 ? (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-amber-950">
-                  {cartCount}
-                </span>
+            <div className="flex shrink-0 items-center gap-2 pr-[4.25rem] sm:pr-[4.75rem]">
+              {onSearchOpen ? (
+                <button
+                  type="button"
+                  onClick={onSearchOpen}
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 transition-colors hover:bg-white/25 active:scale-[0.98]"
+                  aria-label="Suchen"
+                >
+                  <Search className="h-5 w-5" />
+                </button>
               ) : null}
-            </button>
+              <button
+                type="button"
+                onClick={onCartOpen}
+                className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white/15 transition-colors hover:bg-white/25 active:scale-[0.98]"
+                aria-label="Warenkorb"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 ? (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-amber-950">
+                    {cartCount}
+                  </span>
+                ) : null}
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col items-center text-center">
