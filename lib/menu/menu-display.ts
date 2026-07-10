@@ -34,6 +34,25 @@ export function formatMenuPriceLabel({
   return `${price.toFixed(2)}${currency}`
 }
 
+/** Normalize query/name for case-insensitive, spacing-tolerant name search. */
+function normalizeProductNameSearchText(text: string): string {
+  return text.trim().replace(/\s+/g, " ").toLocaleLowerCase()
+}
+
+/** QR search: German + Arabic product names only (no description, tags, etc.). */
+export function matchesProductNameSearch(
+  item: { name: string; name_ar?: string | null },
+  query: string,
+): boolean {
+  const q = normalizeProductNameSearchText(query)
+  if (!q) return false
+
+  const nameDe = normalizeProductNameSearchText(item.name)
+  const nameAr = normalizeProductNameSearchText(item.name_ar ?? "")
+
+  return nameDe.includes(q) || (nameAr.length > 0 && nameAr.includes(q))
+}
+
 export function matchesMenuSearch(
   item: { name: string; name_ar?: string | null; description?: string; description_ar?: string | null; tags?: string[] },
   query: string,

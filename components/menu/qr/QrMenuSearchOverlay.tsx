@@ -5,9 +5,8 @@ import { createPortal } from "react-dom"
 import { ArrowLeft } from "lucide-react"
 import { QrMenuSearch } from "@/components/menu/qr/QrMenuSearch"
 import { QrTableMenuProductGrid } from "@/components/menu/qr/QrTableMenuProductGrid"
-import { QrMenuEmptyState } from "@/components/menu/qr/QrMenuEmptyState"
 import { useQrTableMenu } from "@/components/menu/qr/QrTableMenuProvider"
-import { matchesMenuSearch } from "@/lib/menu/menu-display"
+import { matchesProductNameSearch } from "@/lib/menu/menu-display"
 import { sortByMenuCardOrder } from "@/lib/menu/menu-order"
 
 type QrMenuSearchOverlayProps = {
@@ -25,7 +24,7 @@ export function QrMenuSearchOverlay({ open, onClose }: QrMenuSearchOverlayProps)
   const results = useMemo(() => {
     const q = query.trim()
     if (!q) return []
-    return sortByMenuCardOrder(menuItems.filter((item) => matchesMenuSearch(item, q)))
+    return sortByMenuCardOrder(menuItems.filter((item) => matchesProductNameSearch(item, q)))
   }, [menuItems, query])
 
   const handleClose = useCallback(() => {
@@ -107,7 +106,12 @@ export function QrMenuSearchOverlay({ open, onClose }: QrMenuSearchOverlayProps)
               Produktname auf Deutsch oder عربي eingeben
             </p>
           ) : results.length === 0 ? (
-            <QrMenuEmptyState variant="search" onReset={() => setQuery("")} />
+            <div className="py-16 text-center">
+              <p className="text-base font-medium text-amber-950 dark:text-white">Keine Produkte gefunden</p>
+              <p className="mt-1 text-sm text-amber-800/55 dark:text-amber-300/55" dir="rtl">
+                لم يتم العثور على منتجات
+              </p>
+            </div>
           ) : (
             <QrTableMenuProductGrid items={results} />
           )}
