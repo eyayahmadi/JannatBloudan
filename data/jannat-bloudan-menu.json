@@ -2618,7 +2618,8 @@
       "price": 14,
       "station": "SHISHA",
       "description": "Imperator Tabak — Avoca Free",
-      "display_order": 10
+      "display_order": 10,
+      "image_url": "https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/imperator/imperator-avoca-free.webp"
     },
     {
       "name": "Pinastro Flix",

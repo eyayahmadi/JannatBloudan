@@ -168,6 +168,131 @@ export const QR_FEATURED_SECTIONS: QrFeaturedSectionDef[] = [
   },
 ]
 
+/** Colored homepage shortcut cards — navigation only, scroll to menu section. */
+export type QrShortcutNavCard = {
+  id: string
+  icon: string
+  labelDe: string
+  labelAr: string
+  scrollTargetId: string
+  gradient: string
+}
+
+export const QR_SHORTCUT_NAV_CARDS: QrShortcutNavCard[] = [
+  {
+    id: "tellergerichte",
+    icon: "🍛",
+    labelDe: "Tellergerichte",
+    labelAr: "أطباق رئيسية",
+    scrollTargetId: qrSectionDomId("plats"),
+    gradient: "from-stone-800 via-red-950 to-amber-900",
+  },
+  {
+    id: "desserts",
+    icon: "🍰",
+    labelDe: "Desserts & Süßes",
+    labelAr: "حلويات",
+    scrollTargetId: qrSectionDomId("desserts"),
+    gradient: "from-fuchsia-900 via-rose-900 to-amber-800",
+  },
+  {
+    id: "cold-drinks",
+    icon: "🍹",
+    labelDe: "Kalte Getränke",
+    labelAr: "مشروبات باردة",
+    scrollTargetId: qrSectionDomId("drinks"),
+    gradient: "from-sky-900 via-cyan-900 to-teal-800",
+  },
+  {
+    id: "shisha",
+    icon: "🚬",
+    labelDe: "Shisha",
+    labelAr: "أراكيل",
+    scrollTargetId: qrSectionDomId("shisha"),
+    gradient: "from-violet-950 via-purple-950 to-stone-900",
+  },
+  {
+    id: "getraenke",
+    icon: "🥤",
+    labelDe: "Getränke",
+    labelAr: "المشروبات",
+    scrollTargetId: qrSectionDomId("drinks"),
+    gradient: "from-cyan-900 via-blue-900 to-indigo-900",
+  },
+  {
+    id: "grill",
+    icon: "🥩",
+    labelDe: "Grill",
+    labelAr: "المشاوي",
+    scrollTargetId: qrSectionDomId("grillades"),
+    gradient: "from-red-950 via-stone-900 to-amber-950",
+  },
+  {
+    id: "pizza",
+    icon: "🍕",
+    labelDe: "Pizza",
+    labelAr: "البيتزا",
+    scrollTargetId: qrSectionDomId("pizza"),
+    gradient: "from-orange-900 via-red-900 to-amber-900",
+  },
+  {
+    id: "burgers",
+    icon: "🍔",
+    labelDe: "Burger",
+    labelAr: "البرغر",
+    scrollTargetId: qrSectionDomId("burgers"),
+    gradient: "from-amber-900 via-yellow-900 to-orange-950",
+  },
+  {
+    id: "sandwiches",
+    icon: "🥪",
+    labelDe: "Sandwiches",
+    labelAr: "الساندويش",
+    scrollTargetId: qrSectionDomId("sandwiches"),
+    gradient: "from-lime-900 via-amber-900 to-stone-900",
+  },
+  {
+    id: "vorspeisen",
+    icon: "🍽",
+    labelDe: "Vorspeisen",
+    labelAr: "المقبلات",
+    scrollTargetId: qrSectionDomId("entrees"),
+    gradient: "from-emerald-900 via-teal-900 to-stone-900",
+  },
+  {
+    id: "salate",
+    icon: "🥗",
+    labelDe: "Salate",
+    labelAr: "السلطات",
+    scrollTargetId: qrSectionDomId("salades"),
+    gradient: "from-green-900 via-emerald-900 to-lime-950",
+  },
+  {
+    id: "manakish",
+    icon: "🫓",
+    labelDe: "Manakish",
+    labelAr: "المناقيش",
+    scrollTargetId: qrSectionDomId("manakish"),
+    gradient: "from-amber-900 via-orange-900 to-yellow-950",
+  },
+  {
+    id: "shawarma",
+    icon: "🌯",
+    labelDe: "Shawarma",
+    labelAr: "الشاورما",
+    scrollTargetId: qrSectionDomId("shawarma"),
+    gradient: "from-rose-900 via-amber-900 to-stone-900",
+  },
+]
+
+export function filterShortcutCardsForMenu(
+  cards: QrShortcutNavCard[],
+  sections: QrPrintedMenuBlock[],
+): QrShortcutNavCard[] {
+  const ids = new Set(sections.map((s) => s.id))
+  return cards.filter((c) => ids.has(c.scrollTargetId))
+}
+
 
 export function pickQrFeaturedProducts(
   sectionId: string,

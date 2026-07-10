@@ -3621,7 +3621,8 @@ BEGIN
     is_chef_choice = false,
     is_recommended = false,
     is_halal = false,
-    spice_level = NULL
+    spice_level = NULL,
+    image_url = 'https://cddqfgiffgaztgkrcyep.supabase.co/storage/v1/object/public/menu-product-images/products/imperator/imperator-avoca-free.webp'
   WHERE slug = 'imperator-avoca-free';
 
   UPDATE products SET
