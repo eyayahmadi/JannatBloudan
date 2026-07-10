@@ -1,5 +1,5 @@
 /**
- * Hook partagé — charge le plan des tables depuis l'API caisse (64 tables Jannat).
+ * Hook partagé — charge le plan des tables depuis l'API caisse (66 tables Jannat).
  */
 "use client"
 

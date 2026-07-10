@@ -3,9 +3,11 @@
 import { Plus, Search } from "lucide-react"
 import { useMemo, useState } from "react"
 import type { DigitalMenuProduct } from "@/lib/menu/digital-menu-product"
+import { ProductCustomizationModal } from "@/components/menu/ProductCustomizationModal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { formatMenuPriceLabel } from "@/lib/menu/menu-display"
 import {
   filterStaffMenu,
   isProductOrderable,
@@ -13,13 +15,14 @@ import {
   stationBadgeForProduct,
 } from "@/lib/menu/station-order-block"
 import type { StationAvailability } from "@/lib/stations/availability"
+import type { StaffMenuAddPayload } from "@/lib/menu/staff-cart"
 
 type StaffMenuPickerProps = {
   catalog: DigitalMenuProduct[]
   categories: Array<{ name: string; slug: string; section?: string; display_order?: number }>
   stationAvailability?: StationAvailability[]
   loading?: boolean
-  onAdd: (product: DigitalMenuProduct) => void
+  onAdd: (payload: StaffMenuAddPayload) => void
   className?: string
 }
 
@@ -33,12 +36,27 @@ export function StaffMenuPicker({
 }: StaffMenuPickerProps) {
   const [search, setSearch] = useState("")
   const [category, setCategory] = useState("Tout")
+  const [customizeProduct, setCustomizeProduct] = useState<DigitalMenuProduct | null>(null)
 
   const catList = useMemo(() => staffMenuCategories(catalog, categories), [catalog, categories])
   const filtered = useMemo(
     () => filterStaffMenu(catalog, category, search),
     [catalog, category, search],
   )
+
+  const handlePick = (product: DigitalMenuProduct) => {
+    if (product.has_variants || product.modifiers.length > 0) {
+      setCustomizeProduct(product)
+      return
+    }
+    onAdd({
+      product,
+      quantity: 1,
+      unitPrice: product.price,
+      variant: null,
+      extras: [],
+    })
+  }
 
   if (loading && catalog.length === 0) {
     return <p className="text-sm text-slate-500">Menu wird geladen…</p>
@@ -78,6 +96,13 @@ export function StaffMenuPicker({
         {filtered.map((p) => {
           const orderable = isProductOrderable(p)
           const badge = stationBadgeForProduct(p, stationAvailability)
+          const priceLabel = formatMenuPriceLabel({
+            price: p.price,
+            hasVariants: p.has_variants,
+            variants: p.variants,
+            isCustomizable: p.is_customizable && !p.has_variants,
+            currency: " €",
+          })
           return (
             <div
               key={p.id}
@@ -101,7 +126,7 @@ export function StaffMenuPicker({
                     {p.description_ar}
                   </p>
                 ) : null}
-                <p className="text-sm font-bold text-amber-700">{p.price.toFixed(2)} €</p>
+                <p className="text-sm font-bold text-amber-700">{priceLabel}</p>
                 {badge ? (
                   <p
                     className={cn(
@@ -119,7 +144,7 @@ export function StaffMenuPicker({
                 type="button"
                 size="sm"
                 disabled={!orderable}
-                onClick={() => onAdd(p)}
+                onClick={() => handlePick(p)}
                 className="shrink-0"
               >
                 <Plus className="h-4 w-4" />
@@ -128,6 +153,35 @@ export function StaffMenuPicker({
           )
         })}
       </div>
+
+      <ProductCustomizationModal
+        open={!!customizeProduct}
+        product={
+          customizeProduct
+            ? {
+                id: customizeProduct.id,
+                name: customizeProduct.name,
+                name_ar: customizeProduct.name_ar,
+                price: customizeProduct.price,
+                modifiers: customizeProduct.modifiers,
+                variants: customizeProduct.variants,
+              }
+            : null
+        }
+        onClose={() => setCustomizeProduct(null)}
+        addLabel="Ajouter"
+        onConfirm={(payload) => {
+          if (!customizeProduct) return
+          onAdd({
+            product: customizeProduct,
+            quantity: payload.quantity,
+            unitPrice: payload.unitPrice,
+            variant: payload.variant,
+            extras: payload.extras,
+          })
+          setCustomizeProduct(null)
+        }}
+      />
     </div>
   )
 }

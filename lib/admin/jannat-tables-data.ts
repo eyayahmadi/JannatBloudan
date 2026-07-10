@@ -1,5 +1,5 @@
 /**
- * Plan réel des 64 tables — Jannat Bloudan.
+ * Plan réel des 66 tables — Jannat Bloudan.
  * Source de vérité partagée par la migration SQL, le seed Node et l'admin.
  */
 
@@ -129,11 +129,45 @@ function centralTables(startId: number): JannatTableDef[] {
   return out
 }
 
+/** Tables ajoutées après le plan initial (ids 65+) — sans décaler les existantes. */
+function extraTables(): JannatTableDef[] {
+  return [
+    {
+      id: 65,
+      table_number: 65,
+      table_code: "T41",
+      display_name: "Terrasse T41",
+      label: "Table T41",
+      zone: "terrasse",
+      plan_zone: "terrasse",
+      capacity: 6,
+      status: "FREE",
+      is_active: true,
+      position_x: 0,
+      position_y: 5,
+    },
+    {
+      id: 66,
+      table_number: 66,
+      table_code: "N15",
+      display_name: "Nofra N15",
+      label: "Table N15",
+      zone: "nofra",
+      plan_zone: "nofra",
+      capacity: 6,
+      status: "FREE",
+      is_active: true,
+      position_x: 3,
+      position_y: 3,
+    },
+  ]
+}
+
 export function buildJannatTables(): JannatTableDef[] {
   const terrasse = terrasseTables()
   const nofra = nofraTables(terrasse.length + 1)
   const central = centralTables(terrasse.length + nofra.length + 1)
-  return [...terrasse, ...nofra, ...central]
+  return [...terrasse, ...nofra, ...central, ...extraTables()]
 }
 
 export const JANNAT_TABLES: JannatTableDef[] = buildJannatTables()

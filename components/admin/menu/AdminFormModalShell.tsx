@@ -140,7 +140,7 @@ export function AdminFormModalShell({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm"
             aria-hidden="true"
             onClick={requestClose}
           />
@@ -152,7 +152,7 @@ export function AdminFormModalShell({
             aria-labelledby={titleId}
             {...panelMotion}
             className={cn(
-              "fixed z-[101] flex max-h-[90vh] flex-col overflow-hidden bg-white shadow-2xl dark:bg-slate-900",
+              "fixed z-[201] flex max-h-[90vh] flex-col overflow-hidden bg-white shadow-2xl dark:bg-slate-900",
               "inset-x-0 bottom-0 w-full rounded-t-2xl",
               "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[90vw] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl",
               size === "xl" ? "sm:max-w-[1050px]" : "sm:max-w-lg",

@@ -318,7 +318,7 @@ export default function AdminTablesQRPage() {
     <RequireAuth roles={["ADMIN", "STAFF"]}>
       <AdminPageFrame
         title="Tables QR"
-        subtitle="Plan réel Jannat Bloudan — 64 tables (Terrasse T01–T40, Nofra N01–N14, Central C01–C10). QR → menu digital."
+        subtitle="Plan réel Jannat Bloudan — 66 tables (Terrasse T01–T41, Nofra N01–N15, Central C01–C10). QR → menu digital."
         trailing={
           <div className="flex flex-wrap gap-2 print:hidden">
             <Button type="button" variant="outline" size="sm" onClick={() => void load()} disabled={loading}>

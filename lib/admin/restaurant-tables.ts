@@ -1,9 +1,9 @@
-/** Métadonnées zones / plan pour l'admin Tables QR — Jannat Bloudan (64 tables). */
+/** Métadonnées zones / plan pour l'admin Tables QR — Jannat Bloudan (66 tables). */
 
 import { JANNAT_ZONE_LABELS, type JannatZone, menuQrUrl } from "@/lib/admin/jannat-tables-data"
 import { getClientPublicSiteUrl } from "@/lib/site/public-url"
 
-/** Zones réelles du restaurant (plan 64 tables). */
+/** Zones réelles du restaurant (plan 66 tables). */
 export const JANNAT_TABLE_ZONES = ["terrasse", "nofra", "central"] as const
 export type JannatTableZone = (typeof JANNAT_TABLE_ZONES)[number]
 

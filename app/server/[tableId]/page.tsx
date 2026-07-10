@@ -28,9 +28,17 @@ import { Combine } from "lucide-react"
 import { useMenuCatalog } from "@/lib/hooks/useMenuCatalog"
 import { StaffMenuPicker } from "@/components/menu/StaffMenuPicker"
 import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
-import type { DigitalMenuProduct } from "@/lib/menu/digital-menu-product"
+import {
+  mergeStaffCartLine,
+  staffCartLineFromAdd,
+  staffCartToOrderItems,
+  staffCartTotal,
+  type StaffCartLine,
+  type StaffMenuAddPayload,
+} from "@/lib/menu/staff-cart"
+import { formatVariantLabel } from "@/lib/menu/cart-line"
 
-type CartLine = { item: DigitalMenuProduct; quantity: number; note?: string }
+type CartLine = StaffCartLine
 
 const STATUS_LABEL_FR: Record<OrderStatus, string> = {
   received: "Reçue",
@@ -75,31 +83,27 @@ export default function ServerTableOrderPage() {
     })
   }, [])
 
-  const addToCart = useCallback((item: DigitalMenuProduct) => {
-    setCart((prev) => {
-      const existing = prev.find((l) => l.item.id === item.id)
-      if (existing) return prev.map((l) => (l.item.id === item.id ? { ...l, quantity: l.quantity + 1 } : l))
-      return [...prev, { item, quantity: 1 }]
-    })
+  const addToCart = useCallback((payload: StaffMenuAddPayload) => {
+    setCart((prev) => mergeStaffCartLine(prev, staffCartLineFromAdd(payload)))
   }, [])
 
-  const total = cart.reduce((s, l) => s + l.item.price * l.quantity, 0)
+  const total = staffCartTotal(cart)
   const cartCount = cart.reduce((s, l) => s + l.quantity, 0)
 
-  const updateQty = useCallback((itemId: string, delta: number) => {
+  const updateQty = useCallback((lineId: string, delta: number) => {
     setCart((prev) =>
       prev
-        .map((l) => (l.item.id === itemId ? { ...l, quantity: l.quantity + delta } : l))
+        .map((l) => (l.lineId === lineId ? { ...l, quantity: l.quantity + delta } : l))
         .filter((l) => l.quantity > 0),
     )
   }, [])
 
-  const removeLine = useCallback((itemId: string) => {
-    setCart((prev) => prev.filter((l) => l.item.id !== itemId))
+  const removeLine = useCallback((lineId: string) => {
+    setCart((prev) => prev.filter((l) => l.lineId !== lineId))
   }, [])
 
-  const setLineNote = useCallback((itemId: string, note: string) => {
-    setCart((prev) => prev.map((l) => (l.item.id === itemId ? { ...l, note } : l)))
+  const setLineNote = useCallback((lineId: string, note: string) => {
+    setCart((prev) => prev.map((l) => (l.lineId === lineId ? { ...l, note } : l)))
   }, [])
 
   const cancelWholeOrder = useCallback(
@@ -210,13 +214,15 @@ export default function ServerTableOrderPage() {
     const payload = {
       tableRef: String(tableId),
       orderNumber,
-      items: cart.map((l) => ({
-        productId: l.item.id,
-        name: l.item.name,
-        quantity: l.quantity,
-        unitPrice: l.item.price,
-        notes: l.note?.trim() || undefined,
-      })),
+      items: cart.map((l) => {
+        const orderItem = staffCartToOrderItems([l])[0]
+        const extraNote = l.note?.trim()
+        const notes = [orderItem.notes, extraNote].filter(Boolean).join("\n") || undefined
+        return {
+          ...orderItem,
+          notes,
+        }
+      }),
       total: Math.round(total * 100) / 100,
     }
 
@@ -589,39 +595,44 @@ export default function ServerTableOrderPage() {
                   <div className="space-y-2">
                     {cart.map((line) => (
                       <div
-                        key={line.item.id}
+                        key={line.lineId}
                         className="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60"
                       >
                         <div className="flex items-center gap-2">
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
-                              {line.item.name}
+                              {line.product.name}
                             </p>
+                            {line.variant ? (
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {formatVariantLabel(line.variant)}
+                              </p>
+                            ) : null}
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {line.item.price.toFixed(2)} €
+                              {line.unitPrice.toFixed(2)} €
                             </p>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Button variant="outline" size="icon" onClick={() => updateQty(line.item.id, -1)} className="h-8 w-8">
+                            <Button variant="outline" size="icon" onClick={() => updateQty(line.lineId, -1)} className="h-8 w-8">
                               <Minus className="h-3 w-3" />
                             </Button>
                             <span className="w-8 text-center text-sm font-bold text-slate-900 dark:text-white">
                               {line.quantity}
                             </span>
-                            <Button variant="outline" size="icon" onClick={() => updateQty(line.item.id, 1)} className="h-8 w-8">
+                            <Button variant="outline" size="icon" onClick={() => updateQty(line.lineId, 1)} className="h-8 w-8">
                               <Plus className="h-3 w-3" />
                             </Button>
                           </div>
                           <span className="w-16 text-right text-sm font-semibold text-slate-900 dark:text-white">
-                            {(line.item.price * line.quantity).toFixed(2)}
+                            {(line.unitPrice * line.quantity).toFixed(2)}
                           </span>
-                          <Button variant="ghost" size="icon" onClick={() => removeLine(line.item.id)} className="h-8 w-8 text-red-400 hover:text-red-600">
+                          <Button variant="ghost" size="icon" onClick={() => removeLine(line.lineId)} className="h-8 w-8 text-red-400 hover:text-red-600">
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                         <Input
                           value={line.note ?? ""}
-                          onChange={(e) => setLineNote(line.item.id, e.target.value)}
+                          onChange={(e) => setLineNote(line.lineId, e.target.value)}
                           placeholder="Note / allergie (ex. sans oignon, sans gluten…)"
                           className="mt-2 h-7 text-xs"
                         />

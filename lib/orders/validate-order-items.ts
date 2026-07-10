@@ -11,6 +11,13 @@ import type { PersistOrderItemInput } from "@/lib/orders/create-table-order"
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
+type DbVariant = {
+  id: string
+  name_de: string
+  name_ar: string | null
+  price: number
+}
+
 export type ValidatedOrderItem = {
   productId?: string
   name: string
@@ -31,6 +38,73 @@ async function loadStationStatusMap(
     }
   }
   return stationMap
+}
+
+async function loadVariantsByProductId(
+  supabase: SupabaseClient,
+  productIds: string[],
+): Promise<Map<string, DbVariant[]>> {
+  const out = new Map<string, DbVariant[]>()
+  if (productIds.length === 0) return out
+
+  const { data: groups, error: groupErr } = await supabase
+    .from("product_variant_groups")
+    .select("id, product_id")
+    .in("product_id", productIds)
+  if (groupErr || !groups?.length) return out
+
+  const groupIds = groups.map((g) => String(g.id))
+  const groupToProduct = new Map(groups.map((g) => [String(g.id), String(g.product_id)]))
+
+  const { data: variants, error: varErr } = await supabase
+    .from("product_variants")
+    .select("id, group_id, name_de, name_ar, price, display_order")
+    .in("group_id", groupIds)
+    .eq("is_available", true)
+    .order("display_order", { ascending: true })
+  if (varErr || !variants?.length) return out
+
+  for (const v of variants) {
+    const productId = groupToProduct.get(String(v.group_id))
+    if (!productId) continue
+    const list = out.get(productId) ?? []
+    list.push({
+      id: String(v.id),
+      name_de: String(v.name_de),
+      name_ar: (v.name_ar as string | null) ?? null,
+      price: Number(v.price) || 0,
+    })
+    out.set(productId, list)
+  }
+  return out
+}
+
+function variantFromNotes(notes: string | null | undefined, variants: DbVariant[]): DbVariant | null {
+  if (!notes?.trim() || variants.length === 0) return null
+  const sizeLine = notes
+    .split("\n")
+    .map((l) => l.trim())
+    .find((l) => l.toLowerCase().startsWith("size:"))
+  if (!sizeLine) return null
+  const label = sizeLine.replace(/^size:\s*/i, "").split(" / ")[0]?.trim()
+  if (!label) return null
+  return (
+    variants.find((v) => v.name_de === label) ??
+    variants.find((v) => label.startsWith(v.name_de)) ??
+    null
+  )
+}
+
+function resolveVariant(
+  item: PersistOrderItemInput,
+  variants: DbVariant[],
+): DbVariant | null {
+  if (variants.length === 0) return null
+  if (item.variantId && UUID_RE.test(item.variantId)) {
+    const byId = variants.find((v) => v.id === item.variantId)
+    if (byId) return byId
+  }
+  return variantFromNotes(item.notes, variants)
 }
 
 /** Valide produits + stations avant insertion commande (prix DB, dispo, station ouverte). */
@@ -55,6 +129,7 @@ export async function validateAndEnrichOrderItems(
   if (prodErr) throw new Error(prodErr.message)
 
   const productMap = new Map((products ?? []).map((p) => [String(p.id), p]))
+  const variantsByProductId = await loadVariantsByProductId(supabase, productIds)
   const stationMap = await loadStationStatusMap(supabase)
   const validated: ValidatedOrderItem[] = []
 
@@ -83,12 +158,30 @@ export async function validateAndEnrichOrderItems(
       throw new Error(stationBlockMessage(station, stStatus))
     }
 
+    const variants = variantsByProductId.get(it.productId) ?? []
+    let unitPrice = Number(prod.price) || 0
+    let notes = it.notes ?? null
+
+    if (variants.length > 0) {
+      const variant = resolveVariant(it, variants)
+      if (!variant) {
+        throw new Error(`Taille requise pour « ${prod.name} »`)
+      }
+      unitPrice = variant.price
+      if (!notes?.includes("Size:")) {
+        const sizeLabel = variant.name_ar
+          ? `${variant.name_de} / ${variant.name_ar}`
+          : variant.name_de
+        notes = notes?.trim() ? `Size: ${sizeLabel}\n${notes.trim()}` : `Size: ${sizeLabel}`
+      }
+    }
+
     validated.push({
       productId: it.productId,
       name: String(prod.name),
       quantity: qty,
-      unitPrice: Number(prod.price) || 0,
-      notes: it.notes ?? null,
+      unitPrice,
+      notes,
     })
   }
 

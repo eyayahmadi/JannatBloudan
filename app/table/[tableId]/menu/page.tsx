@@ -352,6 +352,7 @@ export default function TableMenuPage() {
       name: c.name,
       quantity: c.quantity,
       unitPrice: c.price,
+      variantId: c.variant?.id ?? null,
       notes: formatKitchenTicketNotes(c.extras, c.variant, c.note),
     }))
 

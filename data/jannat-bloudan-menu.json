@@ -1769,8 +1769,8 @@
       "display_order": 20
     },
     {
-      "name": "Stilles Wasser",
-      "name_ar": "مياه طبيعية",
+      "name": "Stillwasser",
+      "name_ar": "مياه معدنية",
       "slug": "stillwasser",
       "category": "water",
       "price": 2.5,
@@ -1778,18 +1778,19 @@
       "tags": [
         "has_variants"
       ],
-      "description": "Stilles Mineralwasser",
+      "description": "Natürliches stilles Mineralwasser, perfekt gekühlt und die ideale Begleitung zu jeder Mahlzeit.",
+      "description_ar": "مياه معدنية طبيعية باردة، مثالية مع جميع الوجبات.",
       "variants": [
         {
-          "slug": "025l",
-          "name": "0.25L",
-          "name_ar": "0.25 لتر",
+          "slug": "klein",
+          "name": "Klein · 0.25 L",
+          "name_ar": "صغير · 0.25 لتر",
           "price": 2.5
         },
         {
-          "slug": "075l",
-          "name": "0.75L",
-          "name_ar": "0.75 لتر",
+          "slug": "gross",
+          "name": "Groß · 0.75 L",
+          "name_ar": "كبير · 0.75 لتر",
           "price": 4
         }
       ],
@@ -1805,18 +1806,19 @@
       "tags": [
         "has_variants"
       ],
-      "description": "Mineralwasser mit Kohlensäure",
+      "description": "Erfrischendes Mineralwasser mit Kohlensäure.",
+      "description_ar": "مياه غازية باردة ومنعشة.",
       "variants": [
         {
-          "slug": "025l",
-          "name": "0.25L",
-          "name_ar": "0.25 لتر",
+          "slug": "klein",
+          "name": "Klein · 0.25 L",
+          "name_ar": "صغير · 0.25 لتر",
           "price": 2.5
         },
         {
-          "slug": "075l",
-          "name": "0.75L",
-          "name_ar": "0.75 لتر",
+          "slug": "gross",
+          "name": "Groß · 0.75 L",
+          "name_ar": "كبير · 0.75 لتر",
           "price": 4
         }
       ],

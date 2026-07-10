@@ -15,6 +15,7 @@ type QrOrderInput = {
     quantity: number
     unitPrice?: number
     notes?: string
+    variantId?: string | null
   }>
   total?: number
   customerName?: string
@@ -92,6 +93,7 @@ export async function POST(request: Request) {
         quantity: it.quantity,
         unitPrice: it.unitPrice,
         notes: it.notes ?? null,
+        variantId: it.variantId ?? null,
       })),
       total: body.total,
       orderNumber: body.orderNumber,

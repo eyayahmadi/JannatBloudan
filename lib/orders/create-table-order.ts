@@ -13,6 +13,7 @@ export type PersistOrderItemInput = {
   quantity: number
   unitPrice?: number
   notes?: string | null
+  variantId?: string | null
 }
 
 export type CreateTableOrderInput = {

@@ -52,6 +52,10 @@ function buildTables() {
       cSeq++
     }
   }
+  out.push(
+    { id: 65, table_number: 65, table_code: "T41", display_name: "Terrasse T41", zone: "terrasse", plan_zone: "terrasse", capacity: 6, position_x: 0, position_y: 5 },
+    { id: 66, table_number: 66, table_code: "N15", display_name: "Nofra N15", zone: "nofra", plan_zone: "nofra", capacity: 6, position_x: 3, position_y: 3 },
+  )
   return out
 }
 
@@ -66,15 +70,15 @@ const values = tables
   .join(",\n")
 
 const sql = `-- =============================================================================
--- Migration 32 — Plan réel Jannat Bloudan (64 tables)
--- Terrasse T01–T40 | Nofra N01–N14 | Central C01–C10
+-- Migration 32 — Plan réel Jannat Bloudan (66 tables)
+-- Terrasse T01–T41 | Nofra N01–N15 | Central C01–C10
 -- QR : https://jannat-bloudan.vercel.app/table/{code}/menu
 -- Idempotent. Exécuter après 24-restaurant-tables-qr-admin.sql
 -- =============================================================================
 
 BEGIN;
 
--- Désactiver les anciennes tables de test (codes t1, t2, … ou hors plan 64)
+-- Désactiver les anciennes tables de test (codes t1, t2, … ou hors plan ${tables.length})
 UPDATE restaurant_tables
 SET is_active = false,
     status = 'CLEANING',
@@ -83,7 +87,7 @@ WHERE table_code ~ '^t[0-9]+$'
    OR id > ${tables.length}
    OR table_code NOT IN (${tables.map((t) => `'${t.table_code}'`).join(", ")});
 
--- Upsert des 64 tables réelles
+-- Upsert des ${tables.length} tables réelles
 INSERT INTO restaurant_tables (
   id, table_number, table_code, display_name, zone, plan_zone,
   capacity, status, is_active, position_x, position_y
@@ -113,7 +117,7 @@ WHERE is_active = true
 
 COMMIT;
 
-COMMENT ON TABLE restaurant_tables IS 'Plan Jannat Bloudan : 64 tables (terrasse/nofra/central). QR → /table/{code}/menu';
+COMMENT ON TABLE restaurant_tables IS 'Plan Jannat Bloudan : 66 tables (terrasse/nofra/central). QR → /table/{code}/menu';
 `
 
 const outPath = join(ROOT, "scripts", "32-jannat-real-tables.sql")

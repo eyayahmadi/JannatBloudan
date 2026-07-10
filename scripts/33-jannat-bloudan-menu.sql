@@ -4926,9 +4926,9 @@ BEGIN
     VALUES (prod_id, 'Größe', 'الحجم', 1, 1, 0)
     RETURNING id INTO var_grp_id;
     INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (var_grp_id, '025l', '0.25L', '0.25 لتر', 2.5, 1);
+    VALUES (var_grp_id, 'klein', 'Klein · 0.25 L', 'صغير · 0.25 لتر', 2.5, 1);
     INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (var_grp_id, '075l', '0.75L', '0.75 لتر', 4, 2);
+    VALUES (var_grp_id, 'gross', 'Groß · 0.75 L', 'كبير · 0.75 لتر', 4, 2);
   END IF;
   SELECT id INTO prod_id FROM products WHERE slug = 'mineralwasser';
   IF prod_id IS NOT NULL THEN
@@ -4936,9 +4936,9 @@ BEGIN
     VALUES (prod_id, 'Größe', 'الحجم', 1, 1, 0)
     RETURNING id INTO var_grp_id;
     INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (var_grp_id, '025l', '0.25L', '0.25 لتر', 2.5, 1);
+    VALUES (var_grp_id, 'klein', 'Klein · 0.25 L', 'صغير · 0.25 لتر', 2.5, 1);
     INSERT INTO product_variants (group_id, slug, name_de, name_ar, price, display_order)
-    VALUES (var_grp_id, '075l', '0.75L', '0.75 لتر', 4, 2);
+    VALUES (var_grp_id, 'gross', 'Groß · 0.75 L', 'كبير · 0.75 لتر', 4, 2);
   END IF;
   SELECT id INTO prod_id FROM products WHERE slug = 'schwarzer-tee';
   IF prod_id IS NOT NULL THEN

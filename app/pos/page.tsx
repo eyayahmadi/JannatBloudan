@@ -28,12 +28,17 @@ import { useNotifications } from "@/lib/hooks/useNotifications"
 import { cashierAudience } from "@/lib/notifications/audience"
 import { useMenuCatalog } from "@/lib/hooks/useMenuCatalog"
 import { StaffMenuPicker } from "@/components/menu/StaffMenuPicker"
-import type { DigitalMenuProduct } from "@/lib/menu/digital-menu-product"
+import {
+  mergeStaffCartLine,
+  staffCartLineFromAdd,
+  staffCartToOrderItems,
+  staffCartTotal,
+  type StaffCartLine,
+  type StaffMenuAddPayload,
+} from "@/lib/menu/staff-cart"
+import { formatVariantLabel } from "@/lib/menu/cart-line"
 
-type TicketLine = {
-  item: DigitalMenuProduct
-  quantity: number
-}
+type TicketLine = StaffCartLine
 
 type DailySummary = {
   date: string
@@ -79,28 +84,24 @@ export default function PosPage() {
     saveDaily(daily)
   }, [daily])
 
-  const subtotal = ticket.reduce((s, l) => s + l.item.price * l.quantity, 0)
+  const subtotal = staffCartTotal(ticket)
   const tva = subtotal * TVA_RATE
   const total = subtotal + tva
 
-  const addToTicket = useCallback((item: DigitalMenuProduct) => {
-    setTicket((prev) => {
-      const existing = prev.find((l) => l.item.id === item.id)
-      if (existing) return prev.map((l) => (l.item.id === item.id ? { ...l, quantity: l.quantity + 1 } : l))
-      return [...prev, { item, quantity: 1 }]
-    })
+  const addToTicket = useCallback((payload: StaffMenuAddPayload) => {
+    setTicket((prev) => mergeStaffCartLine(prev, staffCartLineFromAdd(payload)))
   }, [])
 
-  const updateQty = useCallback((itemId: string, delta: number) => {
+  const updateQty = useCallback((lineId: string, delta: number) => {
     setTicket((prev) => {
       return prev
-        .map((l) => (l.item.id === itemId ? { ...l, quantity: l.quantity + delta } : l))
+        .map((l) => (l.lineId === lineId ? { ...l, quantity: l.quantity + delta } : l))
         .filter((l) => l.quantity > 0)
     })
   }, [])
 
-  const removeLine = useCallback((itemId: string) => {
-    setTicket((prev) => prev.filter((l) => l.item.id !== itemId))
+  const removeLine = useCallback((lineId: string) => {
+    setTicket((prev) => prev.filter((l) => l.lineId !== lineId))
   }, [])
 
   const clearTicket = useCallback(() => {
@@ -113,12 +114,7 @@ export default function PosPage() {
       if (ticket.length === 0) return
 
       const customerLabel = `POS · Ticket #${ticketNumber}`
-      const payloadItems = ticket.map((l) => ({
-        productId: l.item.id,
-        name: l.item.name,
-        quantity: l.quantity,
-        unitPrice: l.item.price,
-      }))
+      const payloadItems = staffCartToOrderItems(ticket)
 
       try {
         const res = await fetch("/api/orders/walk-in", {
@@ -242,22 +238,27 @@ export default function PosPage() {
           <div className="space-y-2">
             {ticket.map((line) => (
               <div
-                key={line.item.id}
+                key={line.lineId}
                 className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60"
               >
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
-                    {line.item.name}
+                    {line.product.name}
                   </p>
+                  {line.variant ? (
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {formatVariantLabel(line.variant)}
+                    </p>
+                  ) : null}
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {line.item.price.toFixed(2)} DT
+                    {line.unitPrice.toFixed(2)} DT
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
                   <Button
                     variant="outline"
                     size="icon-sm"
-                    onClick={() => updateQty(line.item.id, -1)}
+                    onClick={() => updateQty(line.lineId, -1)}
                     className="h-8 w-8"
                   >
                     <Minus className="h-3 w-3" />
@@ -268,19 +269,19 @@ export default function PosPage() {
                   <Button
                     variant="outline"
                     size="icon-sm"
-                    onClick={() => updateQty(line.item.id, 1)}
+                    onClick={() => updateQty(line.lineId, 1)}
                     className="h-8 w-8"
                   >
                     <Plus className="h-3 w-3" />
                   </Button>
                 </div>
                 <span className="w-16 text-right text-sm font-semibold text-slate-900 dark:text-white">
-                  {(line.item.price * line.quantity).toFixed(2)}
+                  {(line.unitPrice * line.quantity).toFixed(2)}
                 </span>
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  onClick={() => removeLine(line.item.id)}
+                  onClick={() => removeLine(line.lineId)}
                   className="h-8 w-8 text-red-400 hover:text-red-600"
                 >
                   <Trash2 className="h-3.5 w-3.5" />

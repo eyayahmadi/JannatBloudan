@@ -117,14 +117,14 @@ const NAME_FIXES = {
     description: "Tee mit Kreuzkümmel und Zitrone",
   },
   "stillwasser": {
-    name: "Stilles Wasser",
-    name_ar: "مياه طبيعية",
-    description: "Stilles Mineralwasser",
+    name: "Stillwasser",
+    name_ar: "مياه معدنية",
+    description: "Natürliches stilles Mineralwasser, perfekt gekühlt und die ideale Begleitung zu jeder Mahlzeit.",
   },
   "mineralwasser": {
     name: "Mineralwasser",
     name_ar: "مياه غازية",
-    description: "Mineralwasser mit Kohlensäure",
+    description: "Erfrischendes Mineralwasser mit Kohlensäure.",
   },
   "waffle-nature": { name: "Waffle Nature", name_ar: "وافل طبيعي" },
   "crepe-nature": { name: "Crêpe Nature", name_ar: "كريب طبيعي" },

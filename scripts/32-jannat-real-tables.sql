@@ -1,22 +1,22 @@
 -- =============================================================================
--- Migration 32 — Plan réel Jannat Bloudan (64 tables)
--- Terrasse T01–T40 | Nofra N01–N14 | Central C01–C10
+-- Migration 32 — Plan réel Jannat Bloudan (66 tables)
+-- Terrasse T01–T41 | Nofra N01–N15 | Central C01–C10
 -- QR : https://jannat-bloudan.vercel.app/table/{code}/menu
 -- Idempotent. Exécuter après 24-restaurant-tables-qr-admin.sql
 -- =============================================================================
 
 BEGIN;
 
--- Désactiver les anciennes tables de test (codes t1, t2, … ou hors plan 64)
+-- Désactiver les anciennes tables de test (codes t1, t2, … ou hors plan 66)
 UPDATE restaurant_tables
 SET is_active = false,
     status = 'CLEANING',
     updated_at = NOW()
 WHERE table_code ~ '^t[0-9]+$'
-   OR id > 64
-   OR table_code NOT IN ('T01', 'T02', 'T03', 'T04', 'T05', 'T06', 'T07', 'T08', 'T09', 'T10', 'T11', 'T12', 'T13', 'T14', 'T15', 'T16', 'T17', 'T18', 'T19', 'T20', 'T21', 'T22', 'T23', 'T24', 'T25', 'T26', 'T27', 'T28', 'T29', 'T30', 'T31', 'T32', 'T33', 'T34', 'T35', 'T36', 'T37', 'T38', 'T39', 'T40', 'N01', 'N02', 'N03', 'N04', 'N05', 'N06', 'N07', 'N08', 'N09', 'N10', 'N11', 'N12', 'N13', 'N14', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10');
+   OR id > 66
+   OR table_code NOT IN ('T01', 'T02', 'T03', 'T04', 'T05', 'T06', 'T07', 'T08', 'T09', 'T10', 'T11', 'T12', 'T13', 'T14', 'T15', 'T16', 'T17', 'T18', 'T19', 'T20', 'T21', 'T22', 'T23', 'T24', 'T25', 'T26', 'T27', 'T28', 'T29', 'T30', 'T31', 'T32', 'T33', 'T34', 'T35', 'T36', 'T37', 'T38', 'T39', 'T40', 'N01', 'N02', 'N03', 'N04', 'N05', 'N06', 'N07', 'N08', 'N09', 'N10', 'N11', 'N12', 'N13', 'N14', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'T41', 'N15');
 
--- Upsert des 64 tables réelles
+-- Upsert des 66 tables réelles
 INSERT INTO restaurant_tables (
   id, table_number, table_code, display_name, zone, plan_zone,
   capacity, status, is_active, position_x, position_y
@@ -85,7 +85,9 @@ VALUES
   (61, 61, 'C07', 'Salle centrale C07', 'central', 'central', 4, 'FREE', true, 2, 1),
   (62, 62, 'C08', 'Salle centrale C08', 'central', 'central', 4, 'FREE', true, 3, 1),
   (63, 63, 'C09', 'Salle centrale C09', 'central', 'central', 4, 'FREE', true, 0, 2),
-  (64, 64, 'C10', 'Salle centrale C10', 'central', 'central', 10, 'FREE', true, 1, 2)
+  (64, 64, 'C10', 'Salle centrale C10', 'central', 'central', 10, 'FREE', true, 1, 2),
+  (65, 65, 'T41', 'Terrasse T41', 'terrasse', 'terrasse', 6, 'FREE', true, 0, 5),
+  (66, 66, 'N15', 'Nofra N15', 'nofra', 'nofra', 6, 'FREE', true, 3, 3)
 ON CONFLICT (id) DO UPDATE SET
   table_number = EXCLUDED.table_number,
   table_code = EXCLUDED.table_code,
@@ -105,8 +107,8 @@ ON CONFLICT (id) DO UPDATE SET
 -- Garantir l'unicité des codes (au cas où conflit sur table_number)
 UPDATE restaurant_tables SET is_active = false
 WHERE is_active = true
-  AND table_code NOT IN ('T01', 'T02', 'T03', 'T04', 'T05', 'T06', 'T07', 'T08', 'T09', 'T10', 'T11', 'T12', 'T13', 'T14', 'T15', 'T16', 'T17', 'T18', 'T19', 'T20', 'T21', 'T22', 'T23', 'T24', 'T25', 'T26', 'T27', 'T28', 'T29', 'T30', 'T31', 'T32', 'T33', 'T34', 'T35', 'T36', 'T37', 'T38', 'T39', 'T40', 'N01', 'N02', 'N03', 'N04', 'N05', 'N06', 'N07', 'N08', 'N09', 'N10', 'N11', 'N12', 'N13', 'N14', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10');
+  AND table_code NOT IN ('T01', 'T02', 'T03', 'T04', 'T05', 'T06', 'T07', 'T08', 'T09', 'T10', 'T11', 'T12', 'T13', 'T14', 'T15', 'T16', 'T17', 'T18', 'T19', 'T20', 'T21', 'T22', 'T23', 'T24', 'T25', 'T26', 'T27', 'T28', 'T29', 'T30', 'T31', 'T32', 'T33', 'T34', 'T35', 'T36', 'T37', 'T38', 'T39', 'T40', 'N01', 'N02', 'N03', 'N04', 'N05', 'N06', 'N07', 'N08', 'N09', 'N10', 'N11', 'N12', 'N13', 'N14', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'T41', 'N15');
 
 COMMIT;
 
-COMMENT ON TABLE restaurant_tables IS 'Plan Jannat Bloudan : 64 tables (terrasse/nofra/central). QR → /table/{code}/menu';
+COMMENT ON TABLE restaurant_tables IS 'Plan Jannat Bloudan : 66 tables (terrasse/nofra/central). QR → /table/{code}/menu';

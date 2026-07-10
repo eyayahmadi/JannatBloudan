@@ -2219,10 +2219,10 @@ BEGIN
   WHERE slug = 'noix';
 
   UPDATE products SET
-    name = 'Stilles Wasser',
-    name_ar = 'مياه طبيعية',
-    description = 'Stilles Mineralwasser',
-    description_ar = NULL,
+    name = 'Stillwasser',
+    name_ar = 'مياه معدنية',
+    description = 'Natürliches stilles Mineralwasser, perfekt gekühlt und die ideale Begleitung zu jeder Mahlzeit.',
+    description_ar = 'مياه معدنية طبيعية باردة، مثالية مع جميع الوجبات.',
     price = 2.5,
     category_id = cat_water,
     display_order = 10,
@@ -2240,8 +2240,8 @@ BEGIN
   UPDATE products SET
     name = 'Mineralwasser',
     name_ar = 'مياه غازية',
-    description = 'Mineralwasser mit Kohlensäure',
-    description_ar = NULL,
+    description = 'Erfrischendes Mineralwasser mit Kohlensäure.',
+    description_ar = 'مياه غازية باردة ومنعشة.',
     price = 2.5,
     category_id = cat_water,
     display_order = 20,

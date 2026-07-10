@@ -19,6 +19,7 @@ import { MenuAdminShell } from "@/components/admin/menu/MenuAdminShell"
 import { AdminDragReorderList } from "@/components/admin/menu/AdminDragReorderList"
 import { AdminMenuSectionHeader } from "@/components/admin/menu/AdminMenuSectionHeader"
 import { ProductFormModal, type ProductFormState } from "@/components/admin/menu/ProductFormModal"
+import { AdminConfirmDialog } from "@/components/admin/menu/AdminConfirmDialog"
 import { MenuSubcategoryHeader } from "@/components/menu/MenuSubcategoryHeader"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -90,6 +91,43 @@ const SECTION_FILTERS: { id: AdminMenuSectionFilter; label: string }[] = [
   ...ADMIN_MENU_SECTIONS.map((s) => ({ id: s.id as AdminMenuSectionFilter, label: s.labelDe })),
 ]
 
+const FILTER_STORAGE_KEY = "jb-admin-menu-products-filters"
+
+function enrichProduct(row: Product & { categories?: Category | null }, categories: Category[]): Product {
+  const cat = row.categories ?? row.category ?? categories.find((c) => c.id === row.category_id) ?? null
+  return { ...row, category: cat, categories: cat }
+}
+
+function productFromForm(
+  id: string,
+  form: ProductFormState,
+  categories: Category[],
+  prev: Product | null,
+): Product {
+  const avail = rowFromMenuStatus(form.menu_status)
+  const cat = categories.find((c) => c.id === form.category_id) ?? null
+  return {
+    id,
+    name: form.name.trim(),
+    name_ar: form.name_ar.trim() || null,
+    description: form.description.trim() || null,
+    description_ar: form.description_ar.trim() || null,
+    price: parseFloat(form.price) || 0,
+    category_id: form.category_id || null,
+    stock_quantity: parseInt(form.stock_quantity, 10) || 0,
+    image_url: form.image_url || null,
+    station: form.station,
+    display_order: parseInt(form.display_order, 10) || 0,
+    is_available: avail.is_available,
+    is_archived: avail.is_archived,
+    tags: normalizeProductTags(form.tags),
+    category: cat,
+    categories: cat,
+    slug: prev?.slug,
+    product_ingredients: prev?.product_ingredients,
+  }
+}
+
 export default function AdminMenuProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -104,6 +142,7 @@ export default function AdminMenuProductsPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<ProductFormState>(EMPTY_FORM)
   const [reorderList, setReorderList] = useState<Product[]>([])
@@ -133,6 +172,36 @@ export default function AdminMenuProductsPage() {
       /* ignore */
     }
   }, [])
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(FILTER_STORAGE_KEY)
+      if (!raw) return
+      const saved = JSON.parse(raw) as {
+        search?: string
+        catFilter?: string
+        sectionFilter?: AdminMenuSectionFilter
+        showArchived?: boolean
+      }
+      if (typeof saved.search === "string") setSearch(saved.search)
+      if (typeof saved.catFilter === "string") setCatFilter(saved.catFilter)
+      if (saved.sectionFilter) setSectionFilter(saved.sectionFilter)
+      if (typeof saved.showArchived === "boolean") setShowArchived(saved.showArchived)
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        FILTER_STORAGE_KEY,
+        JSON.stringify({ search, catFilter, sectionFilter, showArchived }),
+      )
+    } catch {
+      /* ignore */
+    }
+  }, [search, catFilter, sectionFilter, showArchived])
 
   useEffect(() => {
     load().finally(() => setLoading(false))
@@ -245,16 +314,38 @@ export default function AdminMenuProductsPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         })
-        if (!res.ok) return
+        if (!res.ok) {
+          toast.error("Speichern fehlgeschlagen")
+          return
+        }
+        const data = (await res.json()) as { product?: Product }
+        const merged = enrichProduct(
+          data.product ? { ...editing, ...data.product } : productFromForm(editing.id, form, sortedCategories, editing),
+          sortedCategories,
+        )
+        setProducts((prev) => prev.map((p) => (p.id === editing.id ? merged : p)))
+        productId = editing.id
       } else {
         const res = await fetch("/api/admin/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         })
-        if (!res.ok) return
-        const d = await res.json()
-        productId = d.product?.id
+        if (!res.ok) {
+          toast.error("Erstellen fehlgeschlagen")
+          return
+        }
+        const d = (await res.json()) as { product?: Product }
+        if (!d.product?.id) {
+          toast.error("Erstellen fehlgeschlagen")
+          return
+        }
+        productId = d.product.id
+        const created = enrichProduct(
+          { ...productFromForm(d.product.id, form, sortedCategories, null), ...d.product },
+          sortedCategories,
+        )
+        setProducts((prev) => [...prev, created])
       }
 
       if (productId) {
@@ -263,12 +354,12 @@ export default function AdminMenuProductsPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ recommended_product_ids: form.recommended_ids }),
         })
+        setRecommendations((prev) => ({ ...prev, [productId!]: form.recommended_ids }))
       }
 
       const wasEdit = !!editing
       setModalOpen(false)
       setEditing(null)
-      await load()
       toast.success(wasEdit ? "Produkt erfolgreich gespeichert" : "Produkt erfolgreich erstellt")
     } finally {
       setSaving(false)
@@ -315,10 +406,26 @@ export default function AdminMenuProductsPage() {
   }
 
   const remove = async () => {
-    if (!deleteTarget) return
-    await fetch(`/api/admin/products/${deleteTarget.id}`, { method: "DELETE" })
-    setDeleteTarget(null)
-    await load()
+    if (!deleteTarget || deleting) return
+    const id = deleteTarget.id
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" })
+      if (!res.ok) {
+        toast.error("Löschen fehlgeschlagen")
+        return
+      }
+      setProducts((prev) => prev.filter((p) => p.id !== id))
+      setRecommendations((prev) => {
+        const next = { ...prev }
+        delete next[id]
+        return next
+      })
+      setDeleteTarget(null)
+      toast.success("Produkt gelöscht")
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const productOptions = products.filter((p) => p.id !== editing?.id).map((p) => ({ id: p.id, name: p.name }))
@@ -532,27 +639,46 @@ export default function AdminMenuProductsPage() {
             onSave={() => void save()}
           />
 
-          {deleteTarget ? (
-            <div
-              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-              onClick={() => setDeleteTarget(null)}
-            >
-              <div
-                className="w-full max-w-sm rounded-2xl bg-white p-6 dark:bg-slate-900"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <p className="font-semibold">« {deleteTarget.name} » endgültig löschen?</p>
-                <div className="mt-4 flex gap-2">
-                  <Button type="button" variant="outline" className="flex-1" onClick={() => setDeleteTarget(null)}>
-                    Abbrechen
-                  </Button>
-                  <Button type="button" className="flex-1" onClick={() => void remove()}>
-                    Löschen
-                  </Button>
+          <AdminConfirmDialog
+            open={!!deleteTarget}
+            onClose={() => {
+              if (!deleting) setDeleteTarget(null)
+            }}
+            onConfirm={() => void remove()}
+            title="Produkt löschen"
+            confirmLabel="Löschen"
+            cancelLabel="Abbrechen"
+            confirming={deleting}
+            destructive
+          >
+            {deleteTarget ? (
+              <div className="space-y-4">
+                <div className="mx-auto flex aspect-[16/10] max-h-40 w-full max-w-xs items-center justify-center overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
+                  {deleteTarget.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={deleteTarget.image_url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-5xl">🍽️</span>
+                  )}
+                </div>
+                <div className="text-center">
+                  <p className="text-base font-semibold text-slate-900 dark:text-white">{deleteTarget.name}</p>
+                  {deleteTarget.name_ar ? (
+                    <p className="mt-1 text-sm text-slate-500" dir="rtl">
+                      {deleteTarget.name_ar}
+                    </p>
+                  ) : null}
+                  <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                    Dieses Produkt endgültig aus der Speisekarte entfernen?
+                  </p>
                 </div>
               </div>
-            </div>
-          ) : null}
+            ) : null}
+          </AdminConfirmDialog>
         </MenuAdminShell>
       </AdminPageFrame>
     </RequireAuth>
