@@ -3,9 +3,15 @@ import type { ItemStatus } from "@/lib/stations/config"
 import { isBillableItemStatus } from "@/lib/stations/config"
 import { isLikelyOrderUuid } from "@/lib/orders/guest-tracking"
 
-/** Temporary debug logging for KDS sync races (dev / explicit flag). */
+function isSyntheticLocalItemId(itemId: string, orderId: string): boolean {
+  return !isLikelyOrderUuid(itemId) && itemId.startsWith(`${orderId}-`)
+}
+
+/** Temporary debug logging for KDS sync races (dev or window.__KDS_DEBUG). */
 export const KDS_SYNC_DEBUG =
-  typeof process !== "undefined" && process.env.NODE_ENV !== "production"
+  (typeof process !== "undefined" && process.env.NODE_ENV !== "production") ||
+  (typeof window !== "undefined" &&
+    Boolean((window as unknown as { __KDS_DEBUG?: boolean }).__KDS_DEBUG))
 
 export type KdsSyncSource =
   | "action_start"
@@ -222,40 +228,57 @@ export function mergeOrderItems(
   incomingItems: OrderItem[],
   pending: ReadonlyMap<string, PendingItemMutation>,
   source: KdsSyncSource,
+  orderId: string,
+  graceUntil: ReadonlyMap<string, number> = new Map(),
 ): OrderItem[] {
   const byId = new Map<string, OrderItem>()
-
-  for (const item of localItems) {
-    byId.set(item.id, item)
-  }
+  const hasServerItems = incomingItems.some((it) => isLikelyOrderUuid(it.id))
 
   for (const incoming of incomingItems) {
-    const local = byId.get(incoming.id)
-    if (!local) {
-      byId.set(incoming.id, incoming)
+    byId.set(incoming.id, incoming)
+  }
+
+  for (const local of localItems) {
+    const existing = byId.get(local.id)
+    if (!existing) {
+      if (hasServerItems && isSyntheticLocalItemId(local.id, orderId)) {
+        kdsSyncLog("ignored_stale", {
+          itemId: local.id,
+          orderId,
+          reason: `drop_synthetic_local_from_${source}`,
+        })
+        continue
+      }
+      byId.set(local.id, local)
       continue
     }
 
-    if (pending.has(incoming.id)) {
+    const inGrace = (graceUntil.get(local.id) ?? 0) > Date.now()
+    if (pending.has(local.id) || inGrace) {
       kdsSyncLog("ignored_stale", {
-        itemId: incoming.id,
+        itemId: local.id,
         previousStatus: local.item_status,
-        nextStatus: incoming.item_status,
-        reason: `pending_mutation_from_${source}`,
+        nextStatus: existing.item_status,
+        reason: pending.has(local.id)
+          ? `pending_mutation_from_${source}`
+          : `mutation_grace_from_${source}`,
       })
+      byId.set(local.id, local)
       continue
     }
 
-    if (shouldAcceptIncomingItem(local, incoming, source)) {
-      const version = Math.max(local.status_version ?? 0, incoming.status_version ?? 0)
-      byId.set(incoming.id, {
-        ...incoming,
+    if (shouldAcceptIncomingItem(local, existing, source)) {
+      const version = Math.max(local.status_version ?? 0, existing.status_version ?? 0)
+      byId.set(local.id, {
+        ...existing,
         status_version: version,
         status_updated_at:
-          itemStatusTimestamp(incoming) >= itemStatusTimestamp(local)
-            ? incoming.status_updated_at ?? local.status_updated_at
+          itemStatusTimestamp(existing) >= itemStatusTimestamp(local)
+            ? existing.status_updated_at ?? local.status_updated_at
             : local.status_updated_at,
       })
+    } else {
+      byId.set(local.id, local)
     }
   }
 
@@ -271,6 +294,7 @@ export function mergeKitchenOrders(
   incoming: KitchenOrder[],
   pending: ReadonlyMap<string, PendingItemMutation>,
   source: KdsSyncSource,
+  graceUntil: ReadonlyMap<string, number> = new Map(),
 ): KitchenOrder[] {
   const localById = new Map(local.map((o) => [o.id, o]))
   const incomingById = new Map(incoming.map((o) => [o.id, o]))
@@ -300,6 +324,8 @@ export function mergeKitchenOrders(
         incomingOrder.items,
         pending,
         source,
+        id,
+        graceUntil,
       )
       const localUpdated = new Date(localOrder.updated_at).getTime()
       const incomingUpdated = new Date(incomingOrder.updated_at).getTime()
