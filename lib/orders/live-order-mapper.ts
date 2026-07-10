@@ -2,6 +2,7 @@ import type { KitchenOrder, OrderStatus, OrderType } from "@/lib/hooks/useRealti
 import type { ItemStatus, Station } from "@/lib/stations/config"
 import { inferStation } from "@/lib/stations/inference"
 import { isBillableItemStatus } from "@/lib/stations/config"
+import type { RefusalReasonCode } from "@/lib/stations/refusal-reasons"
 
 type DbOrderRow = {
   id: string
@@ -27,6 +28,8 @@ type DbOrderItemRow = {
   station_status?: string | null
   started_at?: string | null
   ready_at?: string | null
+  served_at?: string | null
+  accepted_at?: string | null
   refusal_reason?: string | null
   refusal_note?: string | null
   refused_at?: string | null
@@ -87,6 +90,20 @@ export function mapDbRowsToKitchenOrders(
     const items = itemsByOrderId.get(order.id) ?? []
     const mappedItems = items.map((it) => {
       const itemStatus = mapDbItemStatus(it.station_status)
+      const timestamps = [
+        it.accepted_at,
+        it.started_at,
+        it.ready_at,
+        it.served_at,
+        it.refused_at,
+      ].filter((v): v is string => Boolean(v))
+      const statusUpdatedAt =
+        timestamps.length > 0
+          ? timestamps.reduce((latest, cur) =>
+              new Date(cur).getTime() > new Date(latest).getTime() ? cur : latest,
+            )
+          : undefined
+
       return {
         id: it.id,
         name: it.product_name,
@@ -98,11 +115,17 @@ export function mapDbRowsToKitchenOrders(
           typeof it.unit_price === "number"
             ? it.unit_price
             : Number.parseFloat(String(it.unit_price ?? "0")) || undefined,
+        refusal_reason_code: it.refusal_reason
+          ? (it.refusal_reason as RefusalReasonCode)
+          : undefined,
         refusal_note: it.refusal_note?.trim() || undefined,
         refused_at: it.refused_at ?? undefined,
         billable: it.billable ?? isBillableItemStatus(itemStatus),
         started_at: it.started_at ?? undefined,
         ready_at: it.ready_at ?? undefined,
+        served_at: it.served_at ?? undefined,
+        accepted_at: it.accepted_at ?? undefined,
+        status_updated_at: statusUpdatedAt,
       }
     })
 

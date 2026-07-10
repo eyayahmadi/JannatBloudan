@@ -128,6 +128,7 @@ type StationItemCardProps = {
   station: Station
   columnKey: ColumnKey
   isFocused?: boolean
+  isItemPending: (itemId: string) => boolean
   onAdvance: (itemId: string, next: ItemStatus) => void
   onRefuse: (itemId: string) => void
   onPrint: () => void
@@ -157,6 +158,7 @@ function StationItemCard({
   station,
   columnKey,
   isFocused = false,
+  isItemPending,
   onAdvance,
   onRefuse,
   onPrint,
@@ -244,6 +246,7 @@ function StationItemCard({
             !isReplaced &&
             item.item_status !== "served" &&
             item.item_status !== "cancelled"
+          const pending = isItemPending(item.id)
           return (
             <li
               key={item.id}
@@ -296,8 +299,10 @@ function StationItemCard({
                 {canAdvance && next && (
                   <button
                     type="button"
+                    disabled={pending}
                     onClick={(e) => {
                       e.stopPropagation()
+                      if (pending) return
                       onAdvance(item.id, next)
                     }}
                     className={cn(
@@ -305,6 +310,7 @@ function StationItemCard({
                       "bg-white/80 text-slate-700 hover:bg-slate-900 hover:text-white",
                       "dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-white dark:hover:text-slate-900",
                       colors.border,
+                      pending && "cursor-not-allowed opacity-50 hover:bg-white/80 hover:text-slate-700 dark:hover:bg-slate-800/80 dark:hover:text-slate-200",
                     )}
                   >
                     {next === "accepted"
@@ -319,14 +325,17 @@ function StationItemCard({
                 {canRefuse && (
                   <button
                     type="button"
+                    disabled={pending}
                     onClick={(e) => {
                       e.stopPropagation()
+                      if (pending) return
                       onRefuse(item.id)
                     }}
                     className={cn(
                       "rounded-lg border px-2 py-1 text-[11px] font-semibold uppercase tracking-wide transition",
                       "border-red-200 bg-white/80 text-red-700 hover:bg-red-600 hover:text-white",
                       "dark:border-red-800 dark:bg-slate-800/80 dark:text-red-300 dark:hover:bg-red-700 dark:hover:text-white",
+                      pending && "cursor-not-allowed opacity-50 hover:bg-white/80 hover:text-red-700 dark:hover:bg-slate-800/80 dark:hover:text-red-300",
                     )}
                     title={t("stations.action.refuse", "Refuser")}
                   >
@@ -389,6 +398,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
     orders,
     updateItemStatus,
     refuseOrderItem,
+    isItemPending,
     lastEvent,
     getStationItems,
   } = useRealtimeOrders()
@@ -615,11 +625,11 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
   }, [lastEvent, autoPrint, orders, station, meta.emoji, t, handlePrint])
 
   const handleAdvance = useCallback(
-    (orderId: string, itemId: string, next: ItemStatus, columnKey: ColumnKey) => {
+    async (orderId: string, itemId: string, next: ItemStatus, columnKey: ColumnKey) => {
+      if (isItemPending(itemId)) return
       queueFocusBeforeAction(columnKey, orderId, itemId)
-      updateItemStatus(orderId, itemId, next)
+      await updateItemStatus(orderId, itemId, next)
       if (next === "ready") {
-        // L'item est prêt → seul le serveur (et l'admin) doivent le voir.
         addNotification({
           type: "order_ready",
           title: `${meta.emoji} ${stationLabel}`,
@@ -628,7 +638,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
         })
       }
     },
-    [queueFocusBeforeAction, updateItemStatus, addNotification, meta.emoji, stationLabel, t],
+    [isItemPending, queueFocusBeforeAction, updateItemStatus, addNotification, meta.emoji, stationLabel, t],
   )
 
   const handleAskRefuse = useCallback(
@@ -650,38 +660,6 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
     [],
   )
 
-  const persistRefuseRemote = useCallback(
-    async (
-      itemId: string,
-      reasonCode: RefusalReasonCode,
-      reasonNote: string,
-      markWaste: boolean,
-    ) => {
-      try {
-        const res = await fetch(`/api/stations/items/${itemId}/refuse`, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            reason_code: reasonCode,
-            reason_note: reasonNote || undefined,
-            mark_waste: markWaste,
-          }),
-        })
-        if (!res.ok) {
-          // En mode démo (Supabase non configuré ou item local), 503/404 est OK.
-          if (res.status !== 503 && res.status !== 404) {
-            const json = (await res.json().catch(() => ({}))) as { error?: string }
-            console.warn("[refuse]", json.error ?? `HTTP ${res.status}`)
-          }
-        }
-      } catch (err) {
-        // Silent — l'état local reste cohérent
-        console.warn("[refuse]", err)
-      }
-    },
-    [],
-  )
-
   const handleConfirmRefuse = useCallback(
     async ({
       reasonCode,
@@ -693,12 +671,13 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
       markWaste: boolean
     }) => {
       if (!refuseTarget) return
+      if (isItemPending(refuseTarget.itemId)) return
       queueFocusBeforeAction(
         refuseTarget.columnKey,
         refuseTarget.orderId,
         refuseTarget.itemId,
       )
-      refuseOrderItem(refuseTarget.orderId, refuseTarget.itemId, {
+      await refuseOrderItem(refuseTarget.orderId, refuseTarget.itemId, {
         code: reasonCode,
         note: reasonNote || undefined,
         markWaste,
@@ -710,14 +689,11 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
           `stations.refusalReason.${camel(reasonCode)}`,
           reasonCode,
         )}`,
-        // Refus item : la station qui refuse + le serveur (qui informe le
-        // client) + la caisse (qui ne facture pas) + admin.
         audience: stationServiceChainAudience(station),
       })
-      await persistRefuseRemote(refuseTarget.itemId, reasonCode, reasonNote, markWaste)
       setRefuseTarget(null)
     },
-    [refuseTarget, queueFocusBeforeAction, refuseOrderItem, addNotification, meta.emoji, stationLabel, t, persistRefuseRemote],
+    [refuseTarget, isItemPending, queueFocusBeforeAction, refuseOrderItem, addNotification, meta.emoji, stationLabel, t, station],
   )
 
   const handleBulkRefuse = useCallback(
@@ -740,7 +716,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
       )
       let count = 0
       for (const tgt of targets) {
-        const ok = refuseOrderItem(tgt.orderId, tgt.itemId, {
+        const ok = await refuseOrderItem(tgt.orderId, tgt.itemId, {
           code: reason,
           note: note || undefined,
         })
@@ -939,6 +915,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
                           isFocused={
                             focusedOrderId === order.id && focusedColumnKey === col.key
                           }
+                          isItemPending={isItemPending}
                           onAdvance={(itemId, next) =>
                             handleAdvance(order.id, itemId, next, col.key)
                           }
@@ -986,6 +963,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
                   isFocused={
                     focusedOrderId === order.id && focusedColumnKey === col.key
                   }
+                  isItemPending={isItemPending}
                   onAdvance={(itemId, next) =>
                     handleAdvance(order.id, itemId, next, col.key)
                   }

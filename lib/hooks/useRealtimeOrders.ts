@@ -9,6 +9,15 @@ import {
 } from "@/lib/stations/config"
 import type { RefusalReasonCode } from "@/lib/stations/refusal-reasons"
 import { inferStation } from "@/lib/stations/inference"
+import {
+  applyItemPatchToOrders,
+  applyServerItemToOrders,
+  bumpItemVersion,
+  kdsSyncLog,
+  mapStationApiItemRow,
+  mergeKitchenOrders,
+  type PendingItemMutation,
+} from "@/lib/orders/kds-sync"
 import { isLikelyOrderUuid } from "@/lib/orders/guest-tracking"
 
 export type OrderStatus = "received" | "preparing" | "ready" | "delivering" | "completed" | "cancelled"
@@ -38,6 +47,12 @@ export type OrderItem = {
   /** Timestamps pour calcul de retard */
   started_at?: string
   ready_at?: string
+  accepted_at?: string
+  served_at?: string
+  /** Version client monotonique — évite les écrasements stale. */
+  status_version?: number
+  /** Dernière mutation connue (client ou serveur). */
+  status_updated_at?: string
 }
 
 /**
@@ -63,6 +78,10 @@ export type OrderItemInput = {
   billable?: boolean
   started_at?: string
   ready_at?: string
+  accepted_at?: string
+  served_at?: string
+  status_version?: number
+  status_updated_at?: string
 }
 
 export type KitchenOrder = {
@@ -93,22 +112,13 @@ function shouldSyncOrdersFromServer(): boolean {
   return /^\/(kitchen|bar|shisha|server|pos|caisse|admin|table)(\/|$)/.test(window.location.pathname)
 }
 
-function mergeLocalAndServerOrders(local: KitchenOrder[], server: KitchenOrder[]): KitchenOrder[] {
-  const byId = new Map<string, KitchenOrder>()
-
-  for (const o of local) {
-    if (!isLikelyOrderUuid(o.id)) byId.set(o.id, o)
-  }
-  for (const o of server) {
-    byId.set(o.id, o)
-  }
-  for (const o of local) {
-    if (isLikelyOrderUuid(o.id) && !byId.has(o.id)) byId.set(o.id, o)
-  }
-
-  return Array.from(byId.values()).sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  )
+function mergeLocalAndServerOrders(
+  local: KitchenOrder[],
+  server: KitchenOrder[],
+  pending: ReadonlyMap<string, PendingItemMutation>,
+  source: "polling" | "realtime" | "storage",
+) {
+  return mergeKitchenOrders(local, server, pending, source)
 }
 
 function loadOrders(): KitchenOrder[] {
@@ -196,7 +206,42 @@ function recomputeOrderTotal(order: KitchenOrder, fallback: number): number {
 export function useRealtimeOrders() {
   const [orders, setOrders] = useState<KitchenOrder[]>(loadOrders)
   const [lastEvent, setLastEvent] = useState<string | null>(null)
+  const [pendingItemIds, setPendingItemIds] = useState<Set<string>>(() => new Set())
   const knownServerOrderIds = useRef<Set<string>>(new Set())
+  const pendingMutationsRef = useRef<Map<string, PendingItemMutation>>(new Map())
+  const ordersRef = useRef(orders)
+  const pullInFlightRef = useRef<Promise<void> | null>(null)
+
+  useEffect(() => {
+    ordersRef.current = orders
+  }, [orders])
+
+  const syncPendingIds = useCallback(() => {
+    setPendingItemIds(new Set(pendingMutationsRef.current.keys()))
+  }, [])
+
+  const beginPendingMutation = useCallback(
+    (mutation: PendingItemMutation) => {
+      pendingMutationsRef.current.set(mutation.itemId, mutation)
+      syncPendingIds()
+      kdsSyncLog("action_start", {
+        itemId: mutation.itemId,
+        orderId: mutation.orderId,
+        previousStatus: mutation.previousStatus,
+        nextStatus: mutation.expectedStatus,
+        version: mutation.version,
+      })
+    },
+    [syncPendingIds],
+  )
+
+  const endPendingMutation = useCallback(
+    (itemId: string) => {
+      pendingMutationsRef.current.delete(itemId)
+      syncPendingIds()
+    },
+    [syncPendingIds],
+  )
 
   useEffect(() => {
     persistOrders(orders)
@@ -207,13 +252,17 @@ export function useRealtimeOrders() {
 
     let cancelled = false
 
-    const pull = async () => {
+    const doPull = async (source: "polling" | "realtime") => {
       try {
         const res = await fetch("/api/orders/live", { cache: "no-store" })
         if (!res.ok) return
         const json = (await res.json()) as { orders?: KitchenOrder[] }
         const serverOrders = Array.isArray(json.orders) ? json.orders : []
         if (cancelled) return
+
+        kdsSyncLog(source, {
+          reason: `payload_orders=${serverOrders.length}`,
+        })
 
         let hasNew = false
         for (const o of serverOrders) {
@@ -223,17 +272,30 @@ export function useRealtimeOrders() {
           }
         }
 
-        setOrders((prev) => mergeLocalAndServerOrders(prev, serverOrders))
+        setOrders((prev) =>
+          mergeLocalAndServerOrders(prev, serverOrders, pendingMutationsRef.current, source),
+        )
         if (hasNew) setLastEvent("NEW_ORDER")
       } catch {
         /* réseau / auth — on garde le local */
       }
     }
 
-    void pull()
-    const id = window.setInterval(() => void pull(), LIVE_SYNC_MS)
+    const pull = (source: "polling" | "realtime") => {
+      if (pullInFlightRef.current) {
+        return pullInFlightRef.current
+      }
+      const run = doPull(source).finally(() => {
+        pullInFlightRef.current = null
+      })
+      pullInFlightRef.current = run
+      return run
+    }
+
+    void pull("polling")
+    const id = window.setInterval(() => void pull("polling"), LIVE_SYNC_MS)
     const unsub = onRealtimeRefresh((scope) => {
-      if (scopeMatches("orders", scope)) void pull()
+      if (scopeMatches("orders", scope)) void pull("realtime")
     })
     return () => {
       cancelled = true
@@ -279,53 +341,151 @@ export function useRealtimeOrders() {
 
   /**
    * Met a jour le statut d'un item specifique et reagrege le statut global.
+   * Verrouille l'item pendant l'appel API et ignore les refresh stale.
    */
   const updateItemStatus = useCallback(
-    (orderId: string, itemId: string, nextStatus: ItemStatus) => {
-      setOrders((prev) =>
-        prev.map((o) => {
-          if (o.id !== orderId) return o
-          const items = o.items.map((it) => {
-            if (it.id !== itemId) return it
-            const now = new Date().toISOString()
-            return {
-              ...it,
-              item_status: nextStatus,
-              started_at: nextStatus === "preparing" && !it.started_at ? now : it.started_at,
-              ready_at: nextStatus === "ready" && !it.ready_at ? now : it.ready_at,
-            }
-          })
-          return {
-            ...o,
-            items,
-            status: aggregateOrderStatus(items),
-            updated_at: new Date().toISOString(),
-          }
-        }),
+    async (orderId: string, itemId: string, nextStatus: ItemStatus): Promise<boolean> => {
+      if (pendingMutationsRef.current.has(itemId)) {
+        kdsSyncLog("action_blocked", {
+          itemId,
+          orderId,
+          nextStatus,
+          reason: "mutation_in_flight",
+        })
+        return false
+      }
+
+      const order = ordersRef.current.find((o) => o.id === orderId)
+      const currentItem = order?.items.find((it) => it.id === itemId)
+      if (!order || !currentItem) return false
+
+      const previousStatus = currentItem.item_status
+      const now = new Date().toISOString()
+      const optimisticItem = bumpItemVersion(
+        {
+          ...currentItem,
+          item_status: nextStatus,
+          started_at:
+            nextStatus === "preparing" && !currentItem.started_at ? now : currentItem.started_at,
+          ready_at: nextStatus === "ready" && !currentItem.ready_at ? now : currentItem.ready_at,
+          accepted_at:
+            nextStatus === "accepted" && !currentItem.accepted_at ? now : currentItem.accepted_at,
+          served_at:
+            nextStatus === "served" && !currentItem.served_at ? now : currentItem.served_at,
+        },
+        now,
       )
+      const version = optimisticItem.status_version ?? 1
+
+      beginPendingMutation({
+        itemId,
+        orderId,
+        previousStatus,
+        expectedStatus: nextStatus,
+        version,
+        startedAt: Date.now(),
+      })
+
+      setOrders((prev) =>
+        applyItemPatchToOrders(
+          prev,
+          orderId,
+          itemId,
+          optimisticItem,
+          aggregateOrderStatus,
+          recomputeOrderTotal,
+        ),
+      )
+      kdsSyncLog("local_update", {
+        itemId,
+        orderId,
+        previousStatus,
+        nextStatus,
+        version,
+        updatedAt: now,
+      })
       setLastEvent("ITEM_STATUS_UPDATED")
 
-      if (isLikelyOrderUuid(itemId)) {
-        void (async () => {
-          try {
-            if (nextStatus === "accepted") {
-              await fetch(`/api/stations/items/${itemId}/accept`, { method: "POST" })
-              return
-            }
-            if (nextStatus === "preparing" || nextStatus === "ready" || nextStatus === "served") {
-              await fetch(`/api/stations/items/${itemId}/advance`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ to: nextStatus }),
-              })
-            }
-          } catch {
-            /* état local conservé */
+      if (!isLikelyOrderUuid(itemId)) {
+        endPendingMutation(itemId)
+        return true
+      }
+
+      try {
+        let apiResult: { ok: boolean; item?: OrderItem; error?: string }
+        if (nextStatus === "accepted") {
+          const res = await fetch(`/api/stations/items/${itemId}/accept`, { method: "POST" })
+          const json = (await res.json().catch(() => ({}))) as {
+            item?: Record<string, unknown>
+            error?: string
           }
-        })()
+          apiResult = res.ok
+            ? { ok: true, item: mapStationApiItemRow((json.item ?? {}) as never) }
+            : { ok: false, error: json.error ?? `HTTP ${res.status}` }
+        } else if (
+          nextStatus === "preparing" ||
+          nextStatus === "ready" ||
+          nextStatus === "served"
+        ) {
+          const res = await fetch(`/api/stations/items/${itemId}/advance`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: nextStatus }),
+          })
+          const json = (await res.json().catch(() => ({}))) as {
+            item?: Record<string, unknown>
+            error?: string
+          }
+          apiResult = res.ok
+            ? { ok: true, item: mapStationApiItemRow((json.item ?? {}) as never) }
+            : { ok: false, error: json.error ?? `HTTP ${res.status}` }
+        } else {
+          apiResult = { ok: true }
+        }
+
+        if (apiResult.ok && apiResult.item) {
+          kdsSyncLog("api_response", {
+            itemId,
+            orderId,
+            previousStatus,
+            nextStatus: apiResult.item.item_status,
+            updatedAt: apiResult.item.status_updated_at,
+            version,
+          })
+          setOrders((prev) =>
+            applyServerItemToOrders(
+              prev,
+              orderId,
+              { ...apiResult.item!, status_version: version },
+              version,
+              aggregateOrderStatus,
+              recomputeOrderTotal,
+            ),
+          )
+        } else if (!apiResult.ok) {
+          kdsSyncLog("api_error", {
+            itemId,
+            orderId,
+            previousStatus,
+            nextStatus,
+            reason: apiResult.error,
+          })
+        }
+        return apiResult.ok
+      } catch (err) {
+        kdsSyncLog("api_error", {
+          itemId,
+          orderId,
+          previousStatus,
+          nextStatus,
+          reason: String(err),
+        })
+        return false
+      } finally {
+        endPendingMutation(itemId)
       }
     },
-    [],
+    [beginPendingMutation, endPendingMutation],
   )
 
   /**
@@ -366,28 +526,10 @@ export function useRealtimeOrders() {
   /**
    * Accepte un item (passe `new` → `accepted`). Aucune autre transition.
    */
-  const acceptOrderItem = useCallback((orderId: string, itemId: string) => {
-    let didAccept = false
-    setOrders((prev) =>
-      prev.map((o) => {
-        if (o.id !== orderId) return o
-        const items = o.items.map((it) => {
-          if (it.id !== itemId) return it
-          if (it.item_status !== "new") return it
-          didAccept = true
-          return { ...it, item_status: "accepted" as ItemStatus }
-        })
-        return {
-          ...o,
-          items,
-          status: aggregateOrderStatus(items),
-          updated_at: new Date().toISOString(),
-        }
-      }),
-    )
-    if (didAccept) setLastEvent("ITEM_ACCEPTED")
-    return didAccept
-  }, [])
+  const acceptOrderItem = useCallback(
+    async (orderId: string, itemId: string) => updateItemStatus(orderId, itemId, "accepted"),
+    [updateItemStatus],
+  )
 
   /**
    * Refuse un item avec un code raison + note libre. Le total et le statut
@@ -395,48 +537,145 @@ export function useRealtimeOrders() {
    * "waste" (item préparé puis perdu, conserve la trace en perte).
    */
   const refuseOrderItem = useCallback(
-    (
+    async (
       orderId: string,
       itemId: string,
       reason: { code: RefusalReasonCode; note?: string; markWaste?: boolean },
-    ) => {
-      let didRefuse = false
-      setOrders((prev) =>
-        prev.map((o) => {
-          if (o.id !== orderId) return o
-          const now = new Date().toISOString()
-          const items = o.items.map((it) => {
-            if (it.id !== itemId) return it
-            if (
-              it.item_status === "refused" ||
-              it.item_status === "replaced" ||
-              it.item_status === "cancelled" ||
-              it.item_status === "waste"
-            )
-              return it
-            didRefuse = true
-            return {
-              ...it,
-              item_status: (reason.markWaste ? "waste" : "refused") as ItemStatus,
-              refusal_reason_code: reason.code,
-              refusal_note: reason.note?.trim() || undefined,
-              refused_at: now,
-              billable: false,
-            }
-          })
-          const updated: KitchenOrder = {
-            ...o,
-            items,
-            status: aggregateOrderStatus(items),
-            updated_at: now,
-          }
-          return { ...updated, total: recomputeOrderTotal(updated, o.total) }
-        }),
+    ): Promise<boolean> => {
+      if (pendingMutationsRef.current.has(itemId)) {
+        kdsSyncLog("action_blocked", {
+          itemId,
+          orderId,
+          reason: "mutation_in_flight",
+        })
+        return false
+      }
+
+      const order = ordersRef.current.find((o) => o.id === orderId)
+      const currentItem = order?.items.find((it) => it.id === itemId)
+      if (!order || !currentItem) return false
+
+      if (
+        currentItem.item_status === "refused" ||
+        currentItem.item_status === "replaced" ||
+        currentItem.item_status === "cancelled" ||
+        currentItem.item_status === "waste"
+      ) {
+        return false
+      }
+
+      const previousStatus = currentItem.item_status
+      const targetStatus: ItemStatus = reason.markWaste ? "waste" : "refused"
+      const now = new Date().toISOString()
+      const optimisticItem = bumpItemVersion(
+        {
+          ...currentItem,
+          item_status: targetStatus,
+          refusal_reason_code: reason.code,
+          refusal_note: reason.note?.trim() || undefined,
+          refused_at: now,
+          billable: false,
+        },
+        now,
       )
-      if (didRefuse) setLastEvent("ITEM_REFUSED")
-      return didRefuse
+      const version = optimisticItem.status_version ?? 1
+
+      beginPendingMutation({
+        itemId,
+        orderId,
+        previousStatus,
+        expectedStatus: targetStatus,
+        version,
+        startedAt: Date.now(),
+      })
+
+      setOrders((prev) =>
+        applyItemPatchToOrders(
+          prev,
+          orderId,
+          itemId,
+          optimisticItem,
+          aggregateOrderStatus,
+          recomputeOrderTotal,
+        ),
+      )
+      kdsSyncLog("local_update", {
+        itemId,
+        orderId,
+        previousStatus,
+        nextStatus: targetStatus,
+        version,
+        updatedAt: now,
+      })
+      setLastEvent("ITEM_REFUSED")
+
+      if (!isLikelyOrderUuid(itemId)) {
+        endPendingMutation(itemId)
+        return true
+      }
+
+      try {
+        const res = await fetch(`/api/stations/items/${itemId}/refuse`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            reason_code: reason.code,
+            reason_note: reason.note || undefined,
+            mark_waste: reason.markWaste ?? false,
+          }),
+        })
+        const json = (await res.json().catch(() => ({}))) as {
+          item?: Record<string, unknown>
+          error?: string
+        }
+
+        if (res.ok && json.item) {
+          const serverItem = mapStationApiItemRow(json.item as never)
+          kdsSyncLog("api_response", {
+            itemId,
+            orderId,
+            previousStatus,
+            nextStatus: serverItem.item_status,
+            updatedAt: serverItem.status_updated_at,
+            version,
+          })
+          setOrders((prev) =>
+            applyServerItemToOrders(
+              prev,
+              orderId,
+              { ...serverItem, status_version: version },
+              version,
+              aggregateOrderStatus,
+              recomputeOrderTotal,
+            ),
+          )
+          return true
+        }
+
+        if (res.status !== 503 && res.status !== 404) {
+          kdsSyncLog("api_error", {
+            itemId,
+            orderId,
+            previousStatus,
+            nextStatus: targetStatus,
+            reason: json.error ?? `HTTP ${res.status}`,
+          })
+        }
+        return res.ok || res.status === 503 || res.status === 404
+      } catch (err) {
+        kdsSyncLog("api_error", {
+          itemId,
+          orderId,
+          previousStatus,
+          nextStatus: targetStatus,
+          reason: String(err),
+        })
+        return false
+      } finally {
+        endPendingMutation(itemId)
+      }
     },
-    [],
+    [beginPendingMutation, endPendingMutation],
   )
 
   /**
@@ -608,12 +847,22 @@ export function useRealtimeOrders() {
     [orders],
   )
 
+  const isItemPending = useCallback(
+    (itemId: string) => pendingItemIds.has(itemId),
+    [pendingItemIds],
+  )
+
   useEffect(() => {
     const handler = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
         try {
-          setOrders(JSON.parse(e.newValue))
-        } catch { /* ignore */ }
+          const incoming = JSON.parse(e.newValue) as KitchenOrder[]
+          setOrders((prev) =>
+            mergeLocalAndServerOrders(prev, incoming, pendingMutationsRef.current, "storage"),
+          )
+        } catch {
+          /* ignore */
+        }
       }
     }
     window.addEventListener("storage", handler)
@@ -634,6 +883,7 @@ export function useRealtimeOrders() {
     clearTableOrders,
     getByStatus,
     getStationItems,
+    isItemPending,
     lastEvent,
   }
 }
