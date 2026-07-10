@@ -15,14 +15,14 @@ export const QR_NAV_CATEGORIES = [
   { slug: "entrees", labelDe: "Vorspeisen", labelAr: "المقبلات", icon: "🍽", kind: "food" as const },
   { slug: "salades", labelDe: "Salate", labelAr: "السلطات", icon: "🥗", kind: "food" as const },
   { slug: "manakish", labelDe: "Manakish", labelAr: "المناقيش", icon: "🫓", kind: "food" as const },
-  { slug: "plats", labelDe: "Gerichte", labelAr: "الوجبات", icon: "🍛", kind: "food" as const },
+  { slug: "plats", labelDe: "Hauptgerichte", labelAr: "الوجبات", icon: "🍛", kind: "food" as const },
   { slug: "shawarma", labelDe: "Shawarma", labelAr: "الشاورما", icon: "🌯", kind: "food" as const },
-  { slug: "grillades", labelDe: "Grillgerichte", labelAr: "المشاوي", icon: "🥩", kind: "food" as const },
+  { slug: "grillades", labelDe: "Grill", labelAr: "المشاوي", icon: "🥩", kind: "food" as const },
   { slug: "pizza", labelDe: "Pizza", labelAr: "البيتزا", icon: "🍕", kind: "food" as const },
   { slug: "burgers", labelDe: "Burger", labelAr: "البرغر", icon: "🍔", kind: "food" as const },
   { slug: "sandwiches", labelDe: "Sandwiches", labelAr: "الساندويش", icon: "🥪", kind: "food" as const },
-  { slug: "drinks", labelDe: "Getränke", labelAr: "المشروبات", icon: "🥤", kind: "drinks" as const },
   { slug: "desserts", labelDe: "Desserts", labelAr: "الحلويات", icon: "🍰", kind: "desserts" as const },
+  { slug: "drinks", labelDe: "Getränke", labelAr: "المشروبات", icon: "🥤", kind: "drinks" as const },
   { slug: "shisha", labelDe: "Shisha", labelAr: "أراكيل", icon: "🚬", kind: "special" as const },
 ] as const
 
@@ -166,65 +166,8 @@ export const QR_FEATURED_SECTIONS: QrFeaturedSectionDef[] = [
     scrollTargetId: "qr-featured-today",
     gradient: "from-rose-900 via-amber-800 to-amber-700",
   },
-  {
-    id: "gerichte",
-    icon: "🍛",
-    labelDe: "Gerichte",
-    labelAr: "الوجبات",
-    scrollTargetId: qrSectionDomId("plats"),
-    gradient: "from-stone-800 via-red-950 to-amber-900",
-  },
-  {
-    id: "desserts",
-    icon: "🍰",
-    labelDe: "Desserts & Süßes",
-    labelAr: "حلويات",
-    scrollTargetId: qrSectionDomId("desserts"),
-    gradient: "from-fuchsia-900 via-rose-900 to-amber-800",
-  },
-  {
-    id: "cold-drinks",
-    icon: "🍹",
-    labelDe: "Kalte Getränke",
-    labelAr: "مشروبات باردة",
-    scrollTargetId: qrSectionDomId("drinks"),
-    gradient: "from-sky-900 via-cyan-900 to-teal-800",
-  },
-  {
-    id: "shisha",
-    icon: "🚬",
-    labelDe: "Shisha Spezial",
-    labelAr: "أراكيل مميزة",
-    scrollTargetId: qrSectionDomId("shisha"),
-    gradient: "from-violet-950 via-purple-950 to-stone-900",
-  },
 ]
 
-const COLD_DRINK_SLUGS = new Set([
-  "water",
-  "juices",
-  "soft-drinks",
-  "ice-tea",
-  "cocktails",
-  "smoothies",
-  "milkshakes",
-  "iced-coffee",
-])
-
-/** Main meals & plates: Plats, Shawarma, Grillgerichte, and any Teller dish. */
-const GERICHTE_CATEGORY_SLUGS = new Set(["plats", "shawarma", "grillades"])
-
-const GERICHTE_TELLER_SLUG_HINTS = ["crispy", "zinger", "fajita", "mexicano"] as const
-
-function isGerichteFeaturedProduct(item: QrMenuItem): boolean {
-  if (GERICHTE_CATEGORY_SLUGS.has(item.category)) return true
-
-  const slug = item.slug.toLowerCase()
-  const name = item.name.toLowerCase()
-  if (slug.includes("teller") || name.includes("teller")) return true
-
-  return GERICHTE_TELLER_SLUG_HINTS.some((hint) => slug.includes(hint) && slug.includes("teller"))
-}
 
 export function pickQrFeaturedProducts(
   sectionId: string,
@@ -252,20 +195,6 @@ export function pickQrFeaturedProducts(
             productHasTag(i.tags, "featured") ||
             productHasTag(i.tags, "promotion"),
         )
-        .slice(0, limit)
-    case "gerichte":
-      return available.filter(isGerichteFeaturedProduct).slice(0, limit)
-    case "desserts":
-      return available
-        .filter((i) => i.section === "desserts" || DESSERT_SLUGS.has(i.category))
-        .slice(0, limit)
-    case "cold-drinks":
-      return available
-        .filter((i) => COLD_DRINK_SLUGS.has(i.category) || i.section === "drinks")
-        .slice(0, limit)
-    case "shisha":
-      return available
-        .filter((i) => i.category === "shisha" || i.section === "special")
         .slice(0, limit)
     default:
       return []
@@ -308,8 +237,8 @@ export function navCategoryFromSlug(slug: string): QrNavCategory | undefined {
 const QR_CATEGORY_LABEL_OVERRIDES: Record<string, { labelDe: string; labelAr: string }> = {
   entrees: { labelDe: "Vorspeisen", labelAr: "المقبلات" },
   salades: { labelDe: "Salate", labelAr: "السلطات" },
-  plats: { labelDe: "Gerichte", labelAr: "الوجبات" },
-  grillades: { labelDe: "Grillgerichte", labelAr: "المشاوي" },
+  plats: { labelDe: "Hauptgerichte", labelAr: "الوجبات" },
+  grillades: { labelDe: "Grill", labelAr: "المشاوي" },
   burgers: { labelDe: "Burger", labelAr: "البرغر" },
   water: { labelDe: "Wasser", labelAr: "المياه" },
   juices: { labelDe: "Säfte", labelAr: "العصائر" },

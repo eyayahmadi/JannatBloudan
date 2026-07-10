@@ -15,17 +15,14 @@ import { MenuSubcategoryHeader } from "@/components/menu/MenuSubcategoryHeader"
 import { QrMenuHero } from "@/components/menu/qr/QrMenuHero"
 import { QrMenuSearch } from "@/components/menu/qr/QrMenuSearch"
 import { QrMenuStickyNav } from "@/components/menu/qr/QrMenuStickyNav"
-import { QrMenuFeaturedHub } from "@/components/menu/qr/QrMenuFeaturedHub"
 import { QrMenuFeaturedStrip } from "@/components/menu/qr/QrMenuFeaturedStrip"
 import { QrMenuCategoryNav } from "@/components/menu/qr/QrMenuCategoryNav"
-import { QrMenuPromoBanners } from "@/components/menu/qr/QrMenuPromoBanners"
 import { QrTableMenuProductCell } from "@/components/menu/qr/QrTableMenuProductCell"
 import { QrProductDetailSheet } from "@/components/menu/qr/QrProductDetailSheet"
 import { QrMenuCartSheet, QrMenuFloatingBar } from "@/components/menu/qr/QrMenuCartSheet"
 import { QrMenuEmptyState, QrMenuCardSkeleton } from "@/components/menu/qr/QrMenuEmptyState"
-import { QrMenuQuickSections } from "@/components/menu/qr/QrMenuQuickSections"
 import { matchesMenuSearch } from "@/lib/menu/menu-display"
-import { getPrintedBlockForCategory, pickQrFeaturedProducts, QR_DEFAULT_CATEGORY_SLUG, qrNavSlugFromSectionId } from "@/lib/menu/qr-printed-menu"
+import { getPrintedBlockForCategory, pickQrFeaturedProducts, QR_DEFAULT_CATEGORY_SLUG } from "@/lib/menu/qr-printed-menu"
 import { mapApiToQrMenuItem, mergeQrMenuItems } from "@/lib/menu/qr-menu-helpers"
 import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
 import { isStableQrMenuPayload } from "@/lib/menu/menu-poll-stable"
@@ -95,13 +92,6 @@ export default function TableMenuPage() {
     scrollToNavIfNeeded(navRef.current)
   }, [scrollToNavIfNeeded])
 
-  const scrollToSection = useCallback((sectionId: string) => {
-    requestAnimationFrame(() => {
-      const el = document.getElementById(sectionId)
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
-    })
-  }, [])
-
   const handleCategorySelect = useCallback(
     (slug: string) => {
       activeCategorySlugRef.current = slug
@@ -113,18 +103,6 @@ export default function TableMenuPage() {
       })
     },
     [scrollNav],
-  )
-
-  const handleSectionNav = useCallback(
-    (sectionId: string) => {
-      const slug = qrNavSlugFromSectionId(sectionId)
-      if (slug) {
-        activeCategorySlugRef.current = slug
-        setActiveCategorySlug(slug)
-      }
-      scrollToSection(sectionId)
-    },
-    [scrollToSection],
   )
 
   const handleSearchChange = useCallback(
@@ -272,16 +250,6 @@ export default function TableMenuPage() {
       setDetailItemId(null)
     }
   }, [detailItemId, detailItem, loading])
-
-  const favoriteItems = useMemo(() => {
-    const set = new Set(favoriteIds)
-    return menuItems.filter((p) => set.has(p.id))
-  }, [menuItems, favoriteIds])
-
-  const recentItems = useMemo(() => {
-    const byId = new Map(menuItems.map((p) => [p.id, p]))
-    return recentIds.map((id) => byId.get(id)).filter((p): p is QrMenuItem => !!p)
-  }, [menuItems, recentIds])
 
   const handleToggleFavorite = useCallback((productId: string) => {
     setFavoriteIds(toggleQrFavorite(productId))
@@ -545,15 +513,6 @@ export default function TableMenuPage() {
             resultCount={isSearchMode ? searchResults.length : undefined}
           />
         }
-        categoryNav={
-          !isSearchMode ? (
-            <QrMenuCategoryNav
-              items={menuItems}
-              activeSlug={activeCategorySlug}
-              onSelect={handleCategorySelect}
-            />
-          ) : null
-        }
       />
 
       <main className="menu-sticky-main relative z-0 mx-auto max-w-2xl px-4 py-5 pb-28">
@@ -586,18 +545,6 @@ export default function TableMenuPage() {
           <div className="space-y-8">
             {isDefaultCategory ? (
               <>
-                <QrMenuPromoBanners
-                  items={menuItems}
-                  onOpenProduct={openDetail}
-                  onScrollToSection={handleSectionNav}
-                />
-
-                <QrMenuFeaturedHub
-                  items={menuItems}
-                  onScrollToSection={handleSectionNav}
-                  onOpenProduct={openDetail}
-                />
-
                 <QrMenuFeaturedStrip
                   id="qr-featured-bestseller"
                   icon="⭐"
@@ -623,18 +570,15 @@ export default function TableMenuPage() {
                   onQuickAdd={handleQuickAdd}
                   getInCartQty={getInCartQty}
                 />
-
-                <QrMenuQuickSections
-                  favorites={favoriteItems}
-                  recentlyOrdered={recentItems}
-                  favoriteIds={new Set(favoriteIds)}
-                  onToggleFavorite={handleToggleFavorite}
-                  onOpenProduct={openDetail}
-                  onQuickAdd={handleQuickAdd}
-                  getInCartQty={getInCartQty}
-                />
               </>
             ) : null}
+
+            <QrMenuCategoryNav
+              items={menuItems}
+              activeSlug={activeCategorySlug}
+              onSelect={handleCategorySelect}
+              showHeading
+            />
 
             <div id="qr-section-menu" className="space-y-8">
               {activeCategoryBlock ? (

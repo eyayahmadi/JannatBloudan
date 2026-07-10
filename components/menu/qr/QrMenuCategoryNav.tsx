@@ -13,6 +13,7 @@ type QrMenuCategoryNavProps = {
   items: QrMenuItem[]
   activeSlug: string
   onSelect: (slug: string) => void
+  showHeading?: boolean
   className?: string
 }
 
@@ -55,6 +56,7 @@ export function QrMenuCategoryNav({
   items,
   activeSlug,
   onSelect,
+  showHeading = false,
   className,
 }: QrMenuCategoryNavProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -85,11 +87,18 @@ export function QrMenuCategoryNav({
   if (visible.length === 0) return null
 
   return (
-    <nav
-      aria-label="Kategorien"
-      className={cn("w-full min-w-0 max-w-full", className)}
-      data-menu-category-nav
-    >
+    <section className={cn("space-y-3", className)} aria-label="Kategorien">
+      {showHeading ? (
+        <div className="px-1">
+          <h2 className="font-display text-lg font-bold tracking-tight text-amber-950 dark:text-white">
+            Karte
+          </h2>
+          <p className="text-sm text-amber-800/55 dark:text-amber-300/55" dir="rtl">
+            قائمة الطعام
+          </p>
+        </div>
+      ) : null}
+      <nav className="w-full min-w-0 max-w-full" data-menu-category-nav>
       <div
         ref={scrollRef}
         className="flex gap-2 overflow-x-auto overscroll-x-contain pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -106,6 +115,7 @@ export function QrMenuCategoryNav({
           />
         ))}
       </div>
-    </nav>
+      </nav>
+    </section>
   )
 }
