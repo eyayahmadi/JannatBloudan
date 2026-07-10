@@ -7,9 +7,29 @@
   }
 }
 
-/* Menu / QR: disable global smooth scroll — fights touch scroll on all mobile browsers */
+/* Menu / QR: native document scroll — fixes frozen screen on Moto & generic Android */
 html.menu-stable-scroll {
   scroll-behavior: auto !important;
+  height: auto !important;
+  overflow-x: visible;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.menu-stable-scroll body {
+  position: static !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow-x: visible;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.menu-stable-scroll .menu-page-root {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  overflow: visible;
 }
 
 html.menu-stable-scroll [data-menu-sticky-nav] {
@@ -18,7 +38,9 @@ html.menu-stable-scroll [data-menu-sticky-nav] {
 
 html.menu-stable-scroll main,
 html.menu-stable-scroll [data-menu-scroll-list] {
+  overflow: visible;
   overflow-anchor: auto;
+  min-height: 0;
 }
 
 @custom-variant dark (&:is(.dark *));

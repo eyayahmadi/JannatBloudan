@@ -525,7 +525,7 @@ export function DigitalMenuExperience() {
       <div className="site-container pt-4">
         <StationStatusBanner />
       </div>
-      <div ref={navRef} data-menu-sticky-nav className="sticky top-0 z-40 border-b border-border/60 bg-background/90 backdrop-blur-md [overflow-anchor:none]">
+      <div ref={navRef} data-menu-sticky-nav className="sticky top-0 z-40 border-b border-border/60 bg-background/95 [overflow-anchor:none]">
         <div className="site-container flex flex-col gap-3 py-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="relative max-w-xl flex-1">

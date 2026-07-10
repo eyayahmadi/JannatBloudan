@@ -9,19 +9,13 @@ type PageShellProps = {
   className?: string
   contentClassName?: string
   grain?: boolean
-  /** Skip min-h-dvh — prevents iOS Safari scroll jumps when the URL bar shows/hides. */
+  /**
+   * Menu / QR pages: plain document scroll for all phones (Moto, generic Android, iOS).
+   * Avoids flex + min-h-dvh traps that freeze scroll on budget WebViews.
+   */
   stableViewport?: boolean
 }
 
-/**
- * Conteneur racine pour les pages publiques.
- * - mesh-page-bg : fond doux à dégradés multiples
- * - grain-overlay : grain subtil
- * - id="main-content" : ancre pour le skip-link a11y du Header
- *
- * Dans le portail admin, le chrome externe est fourni par `AdminPortalShell` :
- * on rend un conteneur léger pour éviter double fond / double min-height.
- */
 export function PageShell({
   children,
   className,
@@ -30,7 +24,6 @@ export function PageShell({
   stableViewport = false,
 }: PageShellProps) {
   const portal = useAdminPortalOptional()
-  const minH = stableViewport ? "min-h-screen" : "min-h-screen min-h-dvh"
 
   if (portal?.suppressPageChrome) {
     return (
@@ -39,6 +32,25 @@ export function PageShell({
       </div>
     )
   }
+
+  /** Menu routes: single block wrapper — native window scroll only. */
+  if (stableViewport) {
+    return (
+      <div
+        id="main-content"
+        tabIndex={-1}
+        className={cn(
+          "menu-page-root relative mesh-page-bg scroll-mt-24 focus:outline-none",
+          className,
+          contentClassName,
+        )}
+      >
+        {children}
+      </div>
+    )
+  }
+
+  const minH = "min-h-screen min-h-dvh"
 
   return (
     <div

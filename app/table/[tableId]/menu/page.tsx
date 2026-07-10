@@ -534,7 +534,7 @@ export default function TableMenuPage() {
         <StationStatusBanner className="mb-1" />
       </div>
 
-      <div ref={navRef} data-menu-sticky-nav className="sticky top-0 z-40 border-b border-amber-200/30 bg-white/85 shadow-sm backdrop-blur-xl [overflow-anchor:none] dark:border-amber-900/20 dark:bg-neutral-950/85">
+      <div ref={navRef} data-menu-sticky-nav className="sticky top-0 z-40 border-b border-amber-200/30 bg-white/95 shadow-sm [overflow-anchor:none] dark:border-amber-900/20 dark:bg-neutral-950/95">
         <div className="mx-auto max-w-2xl space-y-3 px-4 py-3">
           <QrMenuSearch
             value={search}
@@ -546,7 +546,7 @@ export default function TableMenuPage() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-2xl flex-1 px-4 py-5 pb-28 [overflow-anchor:auto]">
+      <main className="mx-auto max-w-2xl px-4 py-5 pb-28">
         {offline && !loading ? (
           <QrMenuEmptyState variant="offline" onRetry={loadMenu} />
         ) : loading && menuItems.length === 0 ? (
