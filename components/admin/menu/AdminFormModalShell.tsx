@@ -122,9 +122,9 @@ export function AdminFormModalShell({
         transition: { type: "spring" as const, damping: 28, stiffness: 320 },
       }
     : {
-        initial: { opacity: 0, y: 16, scale: 0.98 },
-        animate: { opacity: 1, y: 0, scale: 1 },
-        exit: { opacity: 0, y: 12, scale: 0.98 },
+        initial: { opacity: 0, scale: 0.98 },
+        animate: { opacity: 1, scale: 1 },
+        exit: { opacity: 0, scale: 0.98 },
         transition: { duration: 0.22, ease: [0.2, 0.8, 0.2, 1] as const },
       }
 
@@ -133,32 +133,37 @@ export function AdminFormModalShell({
   return createPortal(
     <AnimatePresence>
       {open ? (
-        <>
+        <div key="admin-modal-root" className="fixed inset-0 z-[9998]">
           <motion.div
             key="admin-modal-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             aria-hidden="true"
             onClick={requestClose}
           />
 
-          <motion.div
-            key="admin-modal-panel"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            {...panelMotion}
+          <div
             className={cn(
-              "fixed z-[201] flex max-h-[90vh] flex-col overflow-hidden bg-white shadow-2xl dark:bg-slate-900",
-              "inset-x-0 bottom-0 w-full rounded-t-2xl",
-              "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[90vw] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl",
-              size === "xl" ? "sm:max-w-[1050px]" : "sm:max-w-lg",
+              "absolute inset-0 flex pointer-events-none",
+              isMobileSheet ? "items-end" : "items-center justify-center p-4",
             )}
-            onClick={(e) => e.stopPropagation()}
           >
+            <motion.div
+              key="admin-modal-panel"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={titleId}
+              {...panelMotion}
+              className={cn(
+                "pointer-events-auto flex max-h-[min(90dvh,90vh)] w-full flex-col overflow-hidden bg-white shadow-2xl dark:bg-slate-900",
+                isMobileSheet ? "max-h-[92dvh] rounded-t-2xl" : "w-[90vw] rounded-2xl",
+                size === "xl" ? "max-w-[1050px]" : "max-w-lg",
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
             <div className="shrink-0 border-b bg-white shadow-sm dark:bg-slate-900">
               <div className="flex items-start justify-between gap-3 px-5 py-4">
                 <div className="min-w-0 pr-2">
@@ -188,8 +193,9 @@ export function AdminFormModalShell({
                 {footer}
               </div>
             ) : null}
-          </motion.div>
-        </>
+            </motion.div>
+          </div>
+        </div>
       ) : null}
     </AnimatePresence>,
     document.body,

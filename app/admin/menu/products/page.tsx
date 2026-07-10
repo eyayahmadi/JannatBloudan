@@ -621,66 +621,67 @@ export default function AdminMenuProductsPage() {
             </div>
           )}
 
-          <ProductFormModal
-            open={modalOpen}
-            editingId={editing?.id ?? null}
-            editingName={editing?.name}
-            form={form}
-            categories={sortedCategories}
-            productOptions={productOptions}
-            ingredients={ingredients}
-            recipeLines={editing?.product_ingredients}
-            saving={saving}
-            onClose={() => {
-              setModalOpen(false)
-              setEditing(null)
-            }}
-            onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
-            onSave={() => void save()}
-          />
-
-          <AdminConfirmDialog
-            open={!!deleteTarget}
-            onClose={() => {
-              if (!deleting) setDeleteTarget(null)
-            }}
-            onConfirm={() => void remove()}
-            title="Produkt löschen"
-            confirmLabel="Löschen"
-            cancelLabel="Abbrechen"
-            confirming={deleting}
-            destructive
-          >
-            {deleteTarget ? (
-              <div className="space-y-4">
-                <div className="mx-auto flex aspect-[16/10] max-h-40 w-full max-w-xs items-center justify-center overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
-                  {deleteTarget.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={deleteTarget.image_url}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-5xl">🍽️</span>
-                  )}
-                </div>
-                <div className="text-center">
-                  <p className="text-base font-semibold text-slate-900 dark:text-white">{deleteTarget.name}</p>
-                  {deleteTarget.name_ar ? (
-                    <p className="mt-1 text-sm text-slate-500" dir="rtl">
-                      {deleteTarget.name_ar}
-                    </p>
-                  ) : null}
-                  <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-                    Dieses Produkt endgültig aus der Speisekarte entfernen?
-                  </p>
-                </div>
-              </div>
-            ) : null}
-          </AdminConfirmDialog>
         </MenuAdminShell>
       </AdminPageFrame>
+
+      <ProductFormModal
+        open={modalOpen}
+        editingId={editing?.id ?? null}
+        editingName={editing?.name}
+        form={form}
+        categories={sortedCategories}
+        productOptions={productOptions}
+        ingredients={ingredients}
+        recipeLines={editing?.product_ingredients}
+        saving={saving}
+        onClose={() => {
+          setModalOpen(false)
+          setEditing(null)
+        }}
+        onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+        onSave={() => void save()}
+      />
+
+      <AdminConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => {
+          if (!deleting) setDeleteTarget(null)
+        }}
+        onConfirm={() => void remove()}
+        title="Produkt löschen"
+        confirmLabel="Löschen"
+        cancelLabel="Abbrechen"
+        confirming={deleting}
+        destructive
+      >
+        {deleteTarget ? (
+          <div className="space-y-4">
+            <div className="mx-auto flex aspect-[16/10] max-h-40 w-full max-w-xs items-center justify-center overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
+              {deleteTarget.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={deleteTarget.image_url}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-5xl">🍽️</span>
+              )}
+            </div>
+            <div className="text-center">
+              <p className="text-base font-semibold text-slate-900 dark:text-white">{deleteTarget.name}</p>
+              {deleteTarget.name_ar ? (
+                <p className="mt-1 text-sm text-slate-500" dir="rtl">
+                  {deleteTarget.name_ar}
+                </p>
+              ) : null}
+              <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                Dieses Produkt endgültig aus der Speisekarte entfernen?
+              </p>
+            </div>
+          </div>
+        ) : null}
+      </AdminConfirmDialog>
     </RequireAuth>
   )
 }
