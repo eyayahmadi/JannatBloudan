@@ -1,29 +1,23 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import {
-  QR_NAV_CATEGORIES,
-  countItemsInNavCategory,
-  type QrNavCategory,
-} from "@/lib/menu/qr-printed-menu"
-import type { QrMenuItem } from "@/lib/menu/qr-menu-types"
+import type { QrPrintedMenuBlock } from "@/lib/menu/qr-printed-menu"
 import { cn } from "@/lib/utils"
 
 type QrMenuCategoryNavProps = {
-  items: QrMenuItem[]
-  activeSlug: string
-  onSelect: (slug: string) => void
-  showHeading?: boolean
+  sections: QrPrintedMenuBlock[]
+  onScrollToSection: (sectionId: string) => void
+  activeSectionId?: string | null
   className?: string
 }
 
 function CategoryPill({
-  nav,
+  section,
   active,
   onSelect,
   chipRef,
 }: {
-  nav: QrNavCategory
+  section: QrPrintedMenuBlock
   active: boolean
   onSelect: () => void
   chipRef?: (el: HTMLButtonElement | null) => void
@@ -44,32 +38,29 @@ function CategoryPill({
         <span className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-600 to-orange-600" />
       ) : null}
       <span className="relative flex items-center gap-1.5 whitespace-nowrap">
-        <span className="text-base leading-none">{nav.icon}</span>
-        <span>{nav.labelDe}</span>
+        <span className="text-base leading-none">{section.icon}</span>
+        <span>{section.labelDe}</span>
       </span>
     </button>
   )
 }
 
-/** Sticky top category navigation — real menu categories only, fixed order. */
+/** Horizontal category navigation — scroll-only shortcuts to menu sections. */
 export function QrMenuCategoryNav({
-  items,
-  activeSlug,
-  onSelect,
-  showHeading = false,
+  sections,
+  onScrollToSection,
+  activeSectionId = null,
   className,
 }: QrMenuCategoryNavProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const chipRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const prevActiveRef = useRef<string | null>(null)
 
-  const visible = QR_NAV_CATEGORIES.filter((nav) => countItemsInNavCategory(items, nav) > 0)
-
   useEffect(() => {
-    if (prevActiveRef.current === activeSlug) return
-    prevActiveRef.current = activeSlug
+    if (!activeSectionId || prevActiveRef.current === activeSectionId) return
+    prevActiveRef.current = activeSectionId
 
-    const el = chipRefs.current[activeSlug]
+    const el = chipRefs.current[activeSectionId]
     const container = scrollRef.current
     if (!el || !container) return
 
@@ -82,40 +73,28 @@ export function QrMenuCategoryNav({
     } else if (elRight > viewRight) {
       container.scrollTo({ left: elRight - container.clientWidth + 8, behavior: "smooth" })
     }
-  }, [activeSlug])
+  }, [activeSectionId])
 
-  if (visible.length === 0) return null
+  if (sections.length === 0) return null
 
   return (
-    <section className={cn("space-y-3", className)} aria-label="Kategorien">
-      {showHeading ? (
-        <div className="px-1">
-          <h2 className="font-display text-lg font-bold tracking-tight text-amber-950 dark:text-white">
-            Karte
-          </h2>
-          <p className="text-sm text-amber-800/55 dark:text-amber-300/55" dir="rtl">
-            قائمة الطعام
-          </p>
-        </div>
-      ) : null}
-      <nav className="w-full min-w-0 max-w-full" data-menu-category-nav>
+    <nav className={cn("w-full min-w-0 max-w-full", className)} aria-label="Kategorien" data-menu-category-nav>
       <div
         ref={scrollRef}
         className="flex gap-2 overflow-x-auto overscroll-x-contain pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {visible.map((nav) => (
+        {sections.map((section) => (
           <CategoryPill
-            key={nav.slug}
-            nav={nav}
-            active={activeSlug === nav.slug}
-            onSelect={() => onSelect(nav.slug)}
+            key={section.id}
+            section={section}
+            active={activeSectionId === section.id}
+            onSelect={() => onScrollToSection(section.id)}
             chipRef={(el) => {
-              chipRefs.current[nav.slug] = el
+              chipRefs.current[section.id] = el
             }}
           />
         ))}
       </div>
-      </nav>
-    </section>
+    </nav>
   )
 }

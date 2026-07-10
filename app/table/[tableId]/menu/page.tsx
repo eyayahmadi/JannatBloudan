@@ -13,20 +13,16 @@ import {
 } from "@/lib/menu/qr-table-category-chips"
 import { MenuSubcategoryHeader } from "@/components/menu/MenuSubcategoryHeader"
 import { QrMenuHero } from "@/components/menu/qr/QrMenuHero"
-import { QrMenuSearch } from "@/components/menu/qr/QrMenuSearch"
-import { QrMenuStickyNav } from "@/components/menu/qr/QrMenuStickyNav"
+import { QrMenuCategoryNav } from "@/components/menu/qr/QrMenuCategoryNav"
 import { QrMenuFeaturedStrip } from "@/components/menu/qr/QrMenuFeaturedStrip"
-import { QrMenuShortcutCards } from "@/components/menu/qr/QrMenuShortcutCards"
 import { QrTableMenuProductCell } from "@/components/menu/qr/QrTableMenuProductCell"
 import { QrProductDetailSheet } from "@/components/menu/qr/QrProductDetailSheet"
 import { QrMenuCartSheet, QrMenuFloatingBar } from "@/components/menu/qr/QrMenuCartSheet"
 import { QrMenuEmptyState, QrMenuCardSkeleton } from "@/components/menu/qr/QrMenuEmptyState"
-import { matchesMenuSearch } from "@/lib/menu/menu-display"
-import { buildQrPrintedMenuSections, pickQrFeaturedProducts } from "@/lib/menu/qr-printed-menu"
+import { buildQrPrintedMenuSections, isQrDrinkSectionId, pickQrFeaturedProducts } from "@/lib/menu/qr-printed-menu"
 import { mapApiToQrMenuItem, mergeQrMenuItems } from "@/lib/menu/qr-menu-helpers"
 import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
 import { isStableQrMenuPayload } from "@/lib/menu/menu-poll-stable"
-import { sortByMenuCardOrder } from "@/lib/menu/menu-order"
 import { getQrFavorites, getQrRecentlyOrdered, pushQrRecentlyOrdered, toggleQrFavorite } from "@/lib/menu/qr-guest-prefs"
 import type { QrCartEntry, QrMenuItem } from "@/lib/menu/qr-menu-types"
 import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
@@ -65,7 +61,6 @@ export default function TableMenuPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [offline, setOffline] = useState(false)
-  const [search, setSearch] = useState("")
   const [cart, setCart] = useState<QrCartEntry[]>([])
   const [cartOpen, setCartOpen] = useState(false)
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
@@ -73,41 +68,25 @@ export default function TableMenuPage() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const [recentIds, setRecentIds] = useState<string[]>([])
   const [stationAvailability, setStationAvailability] = useState<StationAvailability[]>([])
-  const navRef = useRef<HTMLDivElement>(null)
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const menuItemsRef = useRef<QrMenuItem[]>([])
   const categoryRowsRef = useRef<QrMenuCategoryRow[]>([])
   menuItemsRef.current = menuItems
   categoryRowsRef.current = categoryRows
   const {
     captureScrollForSilentRefresh,
-    scrollToNavIfNeeded,
     consumeSilentScrollRestore,
     notifyLayoutShift,
     silentRefreshPendingRef,
   } = useMenuScrollPreservation()
 
-  const scrollNav = useCallback(() => {
-    scrollToNavIfNeeded(navRef.current)
-  }, [scrollToNavIfNeeded])
-
   const scrollToSection = useCallback((sectionId: string) => {
+    setActiveSectionId(sectionId)
     requestAnimationFrame(() => {
       const el = document.getElementById(sectionId)
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
     })
   }, [])
-
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      setSearch((prev) => {
-        const wasEmpty = !prev.trim()
-        const nowEmpty = !value.trim()
-        if (wasEmpty !== nowEmpty) scrollNav()
-        return value
-      })
-    },
-    [scrollNav],
-  )
 
   useSilentScrollRestore(menuItems, consumeSilentScrollRestore, silentRefreshPendingRef)
 
@@ -200,16 +179,6 @@ export default function TableMenuPage() {
         o.status !== "cancelled",
     )
   }, [orders, effectiveNumber])
-
-  const isSearchMode = search.trim().length > 0
-
-  const searched = useMemo(() => {
-    const q = search.trim()
-    if (!q) return menuItems
-    return menuItems.filter((item) => matchesMenuSearch(item, q))
-  }, [menuItems, search])
-
-  const searchResults = useMemo(() => sortByMenuCardOrder(searched), [searched])
 
   const printedSections = useMemo(
     () => buildQrPrintedMenuSections(menuItems, categoryRows),
@@ -453,7 +422,7 @@ export default function TableMenuPage() {
           <div key={item.id} className="h-full min-h-0">
             <QrTableMenuProductCell
               item={item}
-              query={search}
+              query=""
               inCartQty={line?.quantity ?? customQty}
               isFavorite={favoriteIds.includes(item.id)}
               showLineControls={!item.isCustomizable && !item.hasVariants && !!line}
@@ -491,18 +460,7 @@ export default function TableMenuPage() {
         <StationStatusBanner />
       </div>
 
-      <QrMenuStickyNav
-        navRef={navRef}
-        search={
-          <QrMenuSearch
-            value={search}
-            onChange={handleSearchChange}
-            resultCount={isSearchMode ? searchResults.length : undefined}
-          />
-        }
-      />
-
-      <main className="menu-sticky-main relative z-0 mx-auto max-w-2xl px-4 py-5 pb-28">
+      <main className="relative z-0 mx-auto max-w-2xl px-4 py-5 pb-28">
         {offline && !loading ? (
           <QrMenuEmptyState variant="offline" onRetry={loadMenu} />
         ) : loading && menuItems.length === 0 ? (
@@ -515,26 +473,8 @@ export default function TableMenuPage() {
           <QrMenuEmptyState variant="error" onRetry={loadMenu} />
         ) : menuItems.length === 0 ? (
           <QrMenuEmptyState variant="category" />
-        ) : isSearchMode && searchResults.length === 0 ? (
-          <QrMenuEmptyState
-            variant="search"
-            onReset={() => handleSearchChange("")}
-          />
-        ) : isSearchMode ? (
-          <div>
-            <p className="mb-4 text-sm text-amber-800/60 dark:text-amber-300/60">
-              <span className="font-semibold text-amber-950 dark:text-white">{searchResults.length}</span>{" "}
-              {searchResults.length === 1 ? "Ergebnis" : "Ergebnisse"}
-            </p>
-            {renderGrid(searchResults)}
-          </div>
         ) : (
           <div className="space-y-8">
-            <QrMenuShortcutCards
-              sections={printedSections}
-              onScrollToSection={scrollToSection}
-            />
-
             <QrMenuFeaturedStrip
               id="qr-featured-bestseller"
               icon="⭐"
@@ -561,15 +501,30 @@ export default function TableMenuPage() {
               getInCartQty={getInCartQty}
             />
 
-            <div id="qr-section-menu" className="space-y-12">
+            <div
+              id="qr-section-menu"
+              className="sticky top-0 z-30 -mx-4 border-b border-amber-200/60 bg-[#faf6f0]/95 px-4 py-2.5 backdrop-blur-md dark:border-amber-900/40 dark:bg-neutral-950/95"
+            >
+              <QrMenuCategoryNav
+                sections={printedSections}
+                onScrollToSection={scrollToSection}
+                activeSectionId={activeSectionId}
+              />
+            </div>
+
+            <div className="space-y-12">
               {printedSections.map((block) => (
-                <section key={block.id} id={block.id} className="space-y-8">
+                <section
+                  key={block.id}
+                  id={block.id}
+                  className="scroll-mt-[4.5rem] space-y-8"
+                >
                   <MenuSubcategoryHeader
                     icon={block.icon}
                     labelDe={block.labelDe}
                     labelAr={block.labelAr}
                     variant="table"
-                    drink={block.id === "qr-section-drinks"}
+                    drink={isQrDrinkSectionId(block.id)}
                     sweet={block.id === "qr-section-desserts"}
                     premium
                   />
@@ -585,7 +540,7 @@ export default function TableMenuPage() {
                             labelAr={group.labelAr}
                             subtitle={group.subtitle}
                             variant="table"
-                            drink={block.id === "qr-section-drinks"}
+                            drink={isQrDrinkSectionId(block.id)}
                             sweet={block.id === "qr-section-desserts"}
                             premium
                           />
