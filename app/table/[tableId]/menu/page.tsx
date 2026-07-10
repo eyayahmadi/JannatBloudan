@@ -33,6 +33,7 @@ import { matchesMenuSearch } from "@/lib/menu/menu-display"
 import { filterProductsByAttributeTag, type QrAttributeFilterId } from "@/lib/menu/product-attributes"
 import { mapApiToQrMenuItem, mergeQrMenuItems } from "@/lib/menu/qr-menu-helpers"
 import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
+import { isStableQrMenuPayload } from "@/lib/menu/menu-poll-stable"
 import { sortByMenuCardOrder } from "@/lib/menu/menu-order"
 import { getQrFavorites, getQrRecentlyOrdered, pushQrRecentlyOrdered, toggleQrFavorite } from "@/lib/menu/qr-guest-prefs"
 import type { QrCartEntry, QrMenuItem } from "@/lib/menu/qr-menu-types"
@@ -86,6 +87,10 @@ export default function TableMenuPage() {
   const [recentIds, setRecentIds] = useState<string[]>([])
   const [stationAvailability, setStationAvailability] = useState<StationAvailability[]>([])
   const navRef = useRef<HTMLDivElement>(null)
+  const menuItemsRef = useRef<QrMenuItem[]>([])
+  const categoryRowsRef = useRef<QrMenuCategoryRow[]>([])
+  menuItemsRef.current = menuItems
+  categoryRowsRef.current = categoryRows
   const {
     captureScrollForSilentRefresh,
     scrollToNavIfNeeded,
@@ -135,7 +140,6 @@ export default function TableMenuPage() {
 
   const loadMenu = useCallback((options?: { silent?: boolean }) => {
     const silent = options?.silent === true
-    if (silent) captureScrollForSilentRefresh()
     if (!silent) {
       setLoading(true)
     }
@@ -149,6 +153,22 @@ export default function TableMenuPage() {
       })
       .then((data) => {
         const rows = (data.categories ?? []) as QrMenuCategoryRow[]
+        const stations = (data.station_availability as StationAvailability[]) ?? []
+        const products = (data.items ?? []).map((p: Record<string, unknown>) =>
+          mapApiToQrMenuItem(p, stations),
+        )
+        const merged = mergeQrMenuItems(menuItemsRef.current, products)
+
+        if (
+          silent &&
+          menuItemsRef.current.length > 0 &&
+          isStableQrMenuPayload(menuItemsRef.current, merged, categoryRowsRef.current, rows)
+        ) {
+          return
+        }
+
+        if (silent) captureScrollForSilentRefresh()
+
         setCategoryRows((prev) => {
           if (
             prev.length === rows.length &&
@@ -177,13 +197,8 @@ export default function TableMenuPage() {
           return nextChips
         })
         setOftenOrderedWith((data.often_ordered_with as Record<string, string[]>) ?? {})
-        setStationAvailability((data.station_availability as StationAvailability[]) ?? [])
-
-        const stations = (data.station_availability as StationAvailability[]) ?? []
-        const products = (data.items ?? []).map((p: Record<string, unknown>) =>
-          mapApiToQrMenuItem(p, stations),
-        )
-        setMenuItems((prev) => mergeQrMenuItems(prev, products))
+        setStationAvailability(stations)
+        setMenuItems(merged)
       })
       .catch(() => {
         if (!silent) setLoadError(true)

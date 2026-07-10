@@ -48,6 +48,7 @@ import { MenuProductImage } from "@/components/menu/MenuProductImage"
 import { ProductCustomizationModal } from "@/components/menu/ProductCustomizationModal"
 import { formatKitchenTicketNotes, formatVariantLabel } from "@/lib/menu/cart-line"
 import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
+import { isStableDigitalMenuPayload } from "@/lib/menu/menu-poll-stable"
 import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
 import {
   useMenuScrollPreservation,
@@ -110,6 +111,8 @@ export function DigitalMenuExperience() {
   const [placing, setPlacing] = useState(false)
   const [customizeItemId, setCustomizeItemId] = useState<string | null>(null)
   const navRef = useRef<HTMLDivElement>(null)
+  const dataRef = useRef(data)
+  dataRef.current = data
   const {
     captureScrollForSilentRefresh,
     scrollToNavIfNeeded,
@@ -162,7 +165,6 @@ export function DigitalMenuExperience() {
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent === true
-    if (silent) captureScrollForSilentRefresh()
     if (!silent) setLoading(true)
     try {
       const qs = new URLSearchParams({
@@ -172,17 +174,29 @@ export function DigitalMenuExperience() {
       const res = await fetch(`/api/menu?${qs.toString()}`, { cache: "no-store" })
       const j = await res.json()
       if (!res.ok) throw new Error(j.error)
-      setData((prev) => {
-        const catalog = mergeDigitalMenuProducts(prev?.catalog ?? [], j.items ?? [])
-        return {
-          catalog,
-          by_section: j.by_section ?? {},
-          chef_choice: mergeShowcaseProducts(catalog, j.chef_choice ?? []),
-          recommended: mergeShowcaseProducts(catalog, j.recommended ?? []),
-          most_popular: mergeShowcaseProducts(catalog, j.most_popular ?? []),
-          categories: j.categories ?? [],
-          often_ordered_with: j.often_ordered_with ?? {},
-        }
+
+      const prev = dataRef.current
+      const catalog = mergeDigitalMenuProducts(prev?.catalog ?? [], j.items ?? [])
+      const categories = j.categories ?? []
+
+      if (
+        silent &&
+        prev &&
+        isStableDigitalMenuPayload(prev, catalog, categories)
+      ) {
+        return
+      }
+
+      if (silent) captureScrollForSilentRefresh()
+
+      setData({
+        catalog,
+        by_section: j.by_section ?? {},
+        chef_choice: mergeShowcaseProducts(catalog, j.chef_choice ?? []),
+        recommended: mergeShowcaseProducts(catalog, j.recommended ?? []),
+        most_popular: mergeShowcaseProducts(catalog, j.most_popular ?? []),
+        categories,
+        often_ordered_with: j.often_ordered_with ?? {},
       })
     } catch (e) {
       console.error(e)

@@ -12,24 +12,17 @@ import {
   type ReactNode,
 } from "react"
 
-const RESTORE_THRESHOLD_PX = 24
-/** Covers slow image decode on budget Android devices. */
-const RESTORE_PASSES_MS = [0, 80, 200, 500, 1000, 1800, 2800] as const
-const GUARD_MS = 2800
-const USER_SCROLL_COOLDOWN_MS = 450
-const JUMP_TO_TOP_DELTA_PX = 280
+const ANCHOR_DRIFT_PX = 32
+/** Only recover when the page jumped to the top by accident (not slow user scroll-up). */
+const JUMP_TO_TOP_MIN_SAVED = 180
+const JUMP_TO_TOP_MAX_CURRENT = 120
 
 type ScrollAnchor = {
   productId: string
   offsetTop: number
 }
 
-/** Cross-browser scroll position (iOS Safari, Android Chrome, Samsung Internet, WebViews). */
 function getScrollTop(): number {
-  const vv = window.visualViewport
-  if (vv && typeof vv.pageTop === "number" && !Number.isNaN(vv.pageTop)) {
-    return vv.pageTop
-  }
   return (
     window.scrollY ||
     window.pageYOffset ||
@@ -41,38 +34,25 @@ function getScrollTop(): number {
 
 function setScrollTop(top: number): void {
   const y = Math.max(0, Math.round(top))
-  window.scrollTo({ top: y, left: 0, behavior: "auto" })
-  if (Math.abs(getScrollTop() - y) > 3) {
+  try {
+    window.scrollTo(0, y)
+  } catch {
     document.documentElement.scrollTop = y
     document.body.scrollTop = y
   }
-  requestAnimationFrame(() => {
-    if (Math.abs(getScrollTop() - y) > 4) {
-      window.scrollTo({ top: y, left: 0, behavior: "auto" })
-    }
-  })
 }
 
-function getVisibleViewport(): { top: number; height: number } {
-  const vv = window.visualViewport
-  if (vv) {
-    return { top: vv.offsetTop, height: vv.height }
-  }
-  return { top: 0, height: window.innerHeight }
-}
-
-/** Pick the product card closest to upper-third of visible viewport — stable across phone heights. */
 function findViewportAnchor(): ScrollAnchor | null {
   const nodes = document.querySelectorAll<HTMLElement>("[data-menu-product-id]")
-  const { top: vvTop, height: vh } = getVisibleViewport()
-  const anchorLine = vvTop + vh * 0.28
+  const vh = window.innerHeight
+  const anchorLine = vh * 0.3
 
   let best: ScrollAnchor | null = null
   let bestDist = Infinity
 
   for (const node of nodes) {
     const rect = node.getBoundingClientRect()
-    if (rect.bottom <= vvTop || rect.top >= vvTop + vh) continue
+    if (rect.bottom <= 0 || rect.top >= vh) continue
     const id = node.getAttribute("data-menu-product-id")
     if (!id) continue
     const mid = rect.top + rect.height * 0.35
@@ -91,253 +71,100 @@ function restoreFromAnchor(anchor: ScrollAnchor): boolean {
   )
   if (!el) return false
   const drift = el.getBoundingClientRect().top - anchor.offsetTop
-  if (Math.abs(drift) <= RESTORE_THRESHOLD_PX) return false
+  if (Math.abs(drift) <= ANCHOR_DRIFT_PX) return false
   setScrollTop(getScrollTop() + drift)
   return true
 }
 
 /**
- * Preserves window scroll during silent menu polling — all mobile browsers.
- * Anchor + scrollY with multi-pass restore for async image loads and URL bar resize.
+ * Minimal scroll preservation for silent menu polling.
+ * Never fights user touch scroll — only fixes accidental jump-to-top after data refresh.
  */
 export function useMenuScrollPreservation() {
-  const pendingScrollYRef = useRef<number | null>(null)
-  const anchorRef = useRef<ScrollAnchor | null>(null)
+  const pendingRef = useRef<{ scrollY: number; anchor: ScrollAnchor | null } | null>(null)
   const silentRefreshPendingRef = useRef(false)
-  const guardUntilRef = useRef(0)
-  const restoreTimersRef = useRef<number[]>([])
-  const userScrollingRef = useRef(false)
-  const userScrollTimerRef = useRef<number>(0)
-  const lastScrollYRef = useRef(0)
-  const layoutShiftRafRef = useRef(0)
-  const pointerActiveRef = useRef(false)
+  const layoutShiftTimerRef = useRef<number>(0)
 
-  const clearRestoreTimers = useCallback(() => {
-    for (const id of restoreTimersRef.current) window.clearTimeout(id)
-    restoreTimersRef.current = []
+  const clearPending = useCallback(() => {
+    pendingRef.current = null
+    silentRefreshPendingRef.current = false
+    window.clearTimeout(layoutShiftTimerRef.current)
   }, [])
-
-  const isGuardActive = useCallback(() => Date.now() <= guardUntilRef.current, [])
-
-  const markUserScrolling = useCallback(() => {
-    userScrollingRef.current = true
-    window.clearTimeout(userScrollTimerRef.current)
-    userScrollTimerRef.current = window.setTimeout(() => {
-      if (!pointerActiveRef.current) userScrollingRef.current = false
-    }, USER_SCROLL_COOLDOWN_MS)
-  }, [])
-
-  const runRestore = useCallback(
-    (options?: { force?: boolean }) => {
-      if (!options?.force && (userScrollingRef.current || pointerActiveRef.current)) return false
-      if (!isGuardActive() && !silentRefreshPendingRef.current) return false
-
-      const saved = pendingScrollYRef.current
-      const anchor = anchorRef.current
-      let restored = false
-
-      if (anchor) {
-        restored = restoreFromAnchor(anchor)
-      }
-
-      if (!restored && saved != null) {
-        const current = getScrollTop()
-        const last = lastScrollYRef.current
-        const suddenJumpToTop =
-          saved > 160 && current < 96 && last > saved - 160 && last - current >= JUMP_TO_TOP_DELTA_PX
-
-        if (suddenJumpToTop) {
-          setScrollTop(saved)
-          restored = true
-        } else if (Math.abs(current - saved) > RESTORE_THRESHOLD_PX && !userScrollingRef.current) {
-          setScrollTop(saved)
-          restored = true
-        }
-      }
-
-      return restored
-    },
-    [isGuardActive],
-  )
 
   const captureScrollForSilentRefresh = useCallback(() => {
-    pendingScrollYRef.current = getScrollTop()
-    lastScrollYRef.current = pendingScrollYRef.current
-    anchorRef.current = findViewportAnchor()
+    pendingRef.current = {
+      scrollY: getScrollTop(),
+      anchor: findViewportAnchor(),
+    }
     silentRefreshPendingRef.current = true
-    guardUntilRef.current = Date.now() + GUARD_MS
   }, [])
 
-  const scrollToNavIfNeeded = useCallback(
-    (navEl: HTMLElement | null) => {
-      if (isGuardActive() || silentRefreshPendingRef.current) return
-      if (!navEl) return
-      requestAnimationFrame(() => {
-        if (isGuardActive() || silentRefreshPendingRef.current) return
-        const navTop = navEl.getBoundingClientRect().top + getScrollTop()
-        if (getScrollTop() > navTop + 4) setScrollTop(navTop)
-      })
-    },
-    [isGuardActive],
-  )
+  const runOneRestore = useCallback(() => {
+    const saved = pendingRef.current
+    if (!saved) return
 
-  const scheduleRestorePasses = useCallback(() => {
-    clearRestoreTimers()
+    const current = getScrollTop()
+    const jumpedToTop =
+      saved.scrollY >= JUMP_TO_TOP_MIN_SAVED && current <= JUMP_TO_TOP_MAX_CURRENT
 
-    const attempt = () => runRestore()
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(attempt)
-    })
-
-    for (const delay of RESTORE_PASSES_MS) {
-      if (delay === 0) continue
-      restoreTimersRef.current.push(window.setTimeout(attempt, delay))
+    if (jumpedToTop) {
+      setScrollTop(saved.scrollY)
+      clearPending()
+      return
     }
 
-    restoreTimersRef.current.push(
-      window.setTimeout(() => {
-        silentRefreshPendingRef.current = false
-        pendingScrollYRef.current = null
-        anchorRef.current = null
-      }, GUARD_MS),
-    )
-  }, [clearRestoreTimers, runRestore])
+    if (saved.anchor && restoreFromAnchor(saved.anchor)) {
+      clearPending()
+    }
+  }, [clearPending])
 
   const consumeSilentScrollRestore = useCallback(() => {
-    if (!silentRefreshPendingRef.current) return
-    scheduleRestorePasses()
-  }, [scheduleRestorePasses])
-
-  const notifyLayoutShift = useCallback(() => {
-    if (!isGuardActive()) return
-    if (userScrollingRef.current || pointerActiveRef.current) return
-    window.cancelAnimationFrame(layoutShiftRafRef.current)
-    layoutShiftRafRef.current = window.requestAnimationFrame(() => {
-      runRestore()
+    if (!silentRefreshPendingRef.current || !pendingRef.current) return
+    requestAnimationFrame(() => {
+      runOneRestore()
+      window.setTimeout(() => {
+        if (silentRefreshPendingRef.current) runOneRestore()
+        clearPending()
+      }, 120)
     })
-  }, [isGuardActive, runRestore])
+  }, [runOneRestore, clearPending])
+
+  const scrollToNavIfNeeded = useCallback((navEl: HTMLElement | null) => {
+    if (!navEl || silentRefreshPendingRef.current) return
+    requestAnimationFrame(() => {
+      const navTop = navEl.getBoundingClientRect().top + getScrollTop()
+      if (getScrollTop() > navTop + 4) setScrollTop(navTop)
+    })
+  }, [])
+
+  /** Debounced — only during pending silent refresh, never blocks user scroll. */
+  const notifyLayoutShift = useCallback(() => {
+    if (!pendingRef.current) return
+    window.clearTimeout(layoutShiftTimerRef.current)
+    layoutShiftTimerRef.current = window.setTimeout(() => {
+      runOneRestore()
+    }, 80)
+  }, [runOneRestore])
 
   useEffect(() => {
     document.documentElement.classList.add("menu-stable-scroll")
     return () => document.documentElement.classList.remove("menu-stable-scroll")
   }, [])
 
+  /** Any touch = user owns scroll; cancel all programmatic restore. */
   useEffect(() => {
-    lastScrollYRef.current = getScrollTop()
-
-    const onScroll = () => {
-      const current = getScrollTop()
-      const last = lastScrollYRef.current
-      if (Math.abs(current - last) > 2) markUserScrolling()
-      lastScrollYRef.current = current
-
-      if (!isGuardActive()) return
-      const saved = pendingScrollYRef.current
-      if (saved == null || saved < 160) return
-
-      if (current < 96 && last > 320 && last - current >= JUMP_TO_TOP_DELTA_PX) {
-        setScrollTop(saved)
-      }
-    }
-
-    window.addEventListener("scroll", onScroll, { passive: true })
-    return () => window.removeEventListener("scroll", onScroll)
-  }, [isGuardActive, markUserScrolling])
-
-  useEffect(() => {
-    const passive = { passive: true } as const
-    const onTouch = () => markUserScrolling()
-
-    const onPointerDown = () => {
-      pointerActiveRef.current = true
-      markUserScrolling()
-    }
-    const onPointerUp = () => {
-      pointerActiveRef.current = false
-      markUserScrolling()
-    }
-
-    window.addEventListener("touchstart", onTouch, passive)
-    window.addEventListener("touchmove", onTouch, passive)
-    window.addEventListener("wheel", onTouch, passive)
-    window.addEventListener("pointerdown", onPointerDown, passive)
-    window.addEventListener("pointerup", onPointerUp, passive)
-    window.addEventListener("pointercancel", onPointerUp, passive)
-
-    const onKey = (e: KeyboardEvent) => {
-      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(e.key)) {
-        markUserScrolling()
-      }
-    }
-    window.addEventListener("keydown", onKey)
-
-    const scrollEnd = () => {
-      window.setTimeout(() => {
-        if (!pointerActiveRef.current) userScrollingRef.current = false
-      }, 120)
-    }
-    window.addEventListener("scrollend", scrollEnd)
-
+    const opts = { passive: true } as const
+    const onUserScroll = () => clearPending()
+    window.addEventListener("touchstart", onUserScroll, opts)
+    window.addEventListener("touchmove", onUserScroll, opts)
+    window.addEventListener("wheel", onUserScroll, opts)
     return () => {
-      window.removeEventListener("touchstart", onTouch)
-      window.removeEventListener("touchmove", onTouch)
-      window.removeEventListener("wheel", onTouch)
-      window.removeEventListener("pointerdown", onPointerDown)
-      window.removeEventListener("pointerup", onPointerUp)
-      window.removeEventListener("pointercancel", onPointerUp)
-      window.removeEventListener("keydown", onKey)
-      window.removeEventListener("scrollend", scrollEnd)
-      window.clearTimeout(userScrollTimerRef.current)
+      window.removeEventListener("touchstart", onUserScroll)
+      window.removeEventListener("touchmove", onUserScroll)
+      window.removeEventListener("wheel", onUserScroll)
+      window.clearTimeout(layoutShiftTimerRef.current)
     }
-  }, [markUserScrolling])
-
-  useEffect(() => {
-    const prev = history.scrollRestoration
-    history.scrollRestoration = "manual"
-    return () => {
-      history.scrollRestoration = prev
-    }
-  }, [])
-
-  useEffect(() => {
-    const vv = window.visualViewport
-    if (!vv) return
-    const onVvChange = () => {
-      if (!isGuardActive() || userScrollingRef.current || pointerActiveRef.current) return
-      runRestore()
-    }
-    vv.addEventListener("resize", onVvChange)
-    vv.addEventListener("scroll", onVvChange)
-    return () => {
-      vv.removeEventListener("resize", onVvChange)
-      vv.removeEventListener("scroll", onVvChange)
-    }
-  }, [isGuardActive, runRestore])
-
-  useEffect(() => {
-    const targets = document.querySelectorAll("main, [data-menu-scroll-list]")
-    if (targets.length === 0 || typeof ResizeObserver === "undefined") return
-    let raf = 0
-    const ro = new ResizeObserver(() => {
-      if (!isGuardActive() || userScrollingRef.current) return
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => runRestore())
-    })
-    targets.forEach((el) => ro.observe(el))
-    return () => {
-      cancelAnimationFrame(raf)
-      ro.disconnect()
-    }
-  }, [isGuardActive, runRestore])
-
-  useEffect(
-    () => () => {
-      clearRestoreTimers()
-      window.cancelAnimationFrame(layoutShiftRafRef.current)
-    },
-    [clearRestoreTimers],
-  )
+  }, [clearPending])
 
   return {
     captureScrollForSilentRefresh,
@@ -348,7 +175,6 @@ export function useMenuScrollPreservation() {
   }
 }
 
-/** Restore scroll after React commits silent menu data (layout effect). */
 export function useSilentScrollRestore(
   listVersion: unknown,
   consumeSilentScrollRestore: () => void,

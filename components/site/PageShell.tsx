@@ -45,7 +45,6 @@ export function PageShell({
       className={cn(
         "relative mesh-page-bg overflow-x-hidden",
         minH,
-        stableViewport && "overscroll-y-contain",
         grain && "grain-overlay",
         className,
       )}
