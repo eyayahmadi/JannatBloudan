@@ -167,11 +167,11 @@ export const QR_FEATURED_SECTIONS: QrFeaturedSectionDef[] = [
     gradient: "from-rose-900 via-amber-800 to-amber-700",
   },
   {
-    id: "grill",
-    icon: "🥩",
-    labelDe: "Tellergerichte",
-    labelAr: "أطباق رئيسية",
-    scrollTargetId: qrSectionDomId("grillades"),
+    id: "gerichte",
+    icon: "🍛",
+    labelDe: "Gerichte",
+    labelAr: "الوجبات",
+    scrollTargetId: qrSectionDomId("plats"),
     gradient: "from-stone-800 via-red-950 to-amber-900",
   },
   {
@@ -211,6 +211,21 @@ const COLD_DRINK_SLUGS = new Set([
   "iced-coffee",
 ])
 
+/** Main meals & plates: Plats, Shawarma, Grillgerichte, and any Teller dish. */
+const GERICHTE_CATEGORY_SLUGS = new Set(["plats", "shawarma", "grillades"])
+
+const GERICHTE_TELLER_SLUG_HINTS = ["crispy", "zinger", "fajita", "mexicano"] as const
+
+function isGerichteFeaturedProduct(item: QrMenuItem): boolean {
+  if (GERICHTE_CATEGORY_SLUGS.has(item.category)) return true
+
+  const slug = item.slug.toLowerCase()
+  const name = item.name.toLowerCase()
+  if (slug.includes("teller") || name.includes("teller")) return true
+
+  return GERICHTE_TELLER_SLUG_HINTS.some((hint) => slug.includes(hint) && slug.includes("teller"))
+}
+
 export function pickQrFeaturedProducts(
   sectionId: string,
   items: QrMenuItem[],
@@ -238,8 +253,8 @@ export function pickQrFeaturedProducts(
             productHasTag(i.tags, "promotion"),
         )
         .slice(0, limit)
-    case "grill":
-      return available.filter((i) => i.category === "grillades").slice(0, limit)
+    case "gerichte":
+      return available.filter(isGerichteFeaturedProduct).slice(0, limit)
     case "desserts":
       return available
         .filter((i) => i.section === "desserts" || DESSERT_SLUGS.has(i.category))
