@@ -9,11 +9,13 @@ import type { QrMenuCategoryRow } from "@/lib/menu/qr-table-category-chips"
 import type { QrMenuItem } from "@/lib/menu/qr-menu-types"
 
 /** Navigation & printed-menu labels (DE + AR) — canonical QR order. */
+export const QR_DEFAULT_CATEGORY_SLUG = "entrees"
+
 export const QR_NAV_CATEGORIES = [
-  { slug: "entrees", labelDe: "Vorspeisen", labelAr: "المقبلات", icon: "🥗", kind: "food" as const },
-  { slug: "salades", labelDe: "Salate", labelAr: "السلطات", icon: "🥙", kind: "food" as const },
+  { slug: "entrees", labelDe: "Vorspeisen", labelAr: "المقبلات", icon: "🍽", kind: "food" as const },
+  { slug: "salades", labelDe: "Salate", labelAr: "السلطات", icon: "🥗", kind: "food" as const },
   { slug: "manakish", labelDe: "Manakish", labelAr: "المناقيش", icon: "🫓", kind: "food" as const },
-  { slug: "plats", labelDe: "Gerichte", labelAr: "الوجبات", icon: "🍽️", kind: "food" as const },
+  { slug: "plats", labelDe: "Gerichte", labelAr: "الوجبات", icon: "🍛", kind: "food" as const },
   { slug: "shawarma", labelDe: "Shawarma", labelAr: "الشاورما", icon: "🌯", kind: "food" as const },
   { slug: "grillades", labelDe: "Grillgerichte", labelAr: "المشاوي", icon: "🥩", kind: "food" as const },
   { slug: "pizza", labelDe: "Pizza", labelAr: "البيتزا", icon: "🍕", kind: "food" as const },
@@ -21,7 +23,7 @@ export const QR_NAV_CATEGORIES = [
   { slug: "sandwiches", labelDe: "Sandwiches", labelAr: "الساندويش", icon: "🥪", kind: "food" as const },
   { slug: "drinks", labelDe: "Getränke", labelAr: "المشروبات", icon: "🥤", kind: "drinks" as const },
   { slug: "desserts", labelDe: "Desserts", labelAr: "الحلويات", icon: "🍰", kind: "desserts" as const },
-  { slug: "shisha", labelDe: "Shisha", labelAr: "أراكيل", icon: "💨", kind: "special" as const },
+  { slug: "shisha", labelDe: "Shisha", labelAr: "أراكيل", icon: "🚬", kind: "special" as const },
 ] as const
 
 export type QrNavCategory = (typeof QR_NAV_CATEGORIES)[number]
@@ -41,6 +43,16 @@ export function qrSectionDomId(slug: string): string {
   if (slug === "drinks") return "qr-section-drinks"
   if (slug === "desserts") return "qr-section-desserts"
   return `qr-cat-${slug}`
+}
+
+export function qrNavSlugFromSectionId(sectionId: string): QrNavCategory["slug"] | null {
+  if (sectionId === "qr-section-drinks") return "drinks"
+  if (sectionId === "qr-section-desserts") return "desserts"
+  if (sectionId.startsWith("qr-cat-")) {
+    const slug = sectionId.slice("qr-cat-".length)
+    return QR_NAV_CATEGORIES.some((c) => c.slug === slug) ? (slug as QrNavCategory["slug"]) : null
+  }
+  return null
 }
 
 export function buildQrPrintedMenuSections(
@@ -106,6 +118,25 @@ export function buildQrPrintedMenuSections(
   }
 
   return blocks
+}
+
+/** Single printed-menu block for the active top-nav category. */
+export function getPrintedBlockForCategory(
+  items: QrMenuItem[],
+  categories: QrMenuCategoryRow[],
+  slug: string,
+): QrPrintedMenuBlock | null {
+  const targetId =
+    slug === "drinks"
+      ? qrSectionDomId("drinks")
+      : slug === "desserts"
+        ? qrSectionDomId("desserts")
+        : qrSectionDomId(slug)
+  return buildQrPrintedMenuSections(items, categories).find((b) => b.id === targetId) ?? null
+}
+
+export function isValidQrNavCategorySlug(slug: string): slug is QrNavCategory["slug"] {
+  return QR_NAV_CATEGORIES.some((c) => c.slug === slug)
 }
 
 export type QrFeaturedSectionDef = {

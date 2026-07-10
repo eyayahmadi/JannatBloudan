@@ -25,7 +25,7 @@ import { QrMenuCartSheet, QrMenuFloatingBar } from "@/components/menu/qr/QrMenuC
 import { QrMenuEmptyState, QrMenuCardSkeleton } from "@/components/menu/qr/QrMenuEmptyState"
 import { QrMenuQuickSections } from "@/components/menu/qr/QrMenuQuickSections"
 import { matchesMenuSearch } from "@/lib/menu/menu-display"
-import { buildQrPrintedMenuSections, pickQrFeaturedProducts } from "@/lib/menu/qr-printed-menu"
+import { getPrintedBlockForCategory, pickQrFeaturedProducts, QR_DEFAULT_CATEGORY_SLUG, qrNavSlugFromSectionId } from "@/lib/menu/qr-printed-menu"
 import { mapApiToQrMenuItem, mergeQrMenuItems } from "@/lib/menu/qr-menu-helpers"
 import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
 import { isStableQrMenuPayload } from "@/lib/menu/menu-poll-stable"
@@ -69,6 +69,8 @@ export default function TableMenuPage() {
   const [loadError, setLoadError] = useState(false)
   const [offline, setOffline] = useState(false)
   const [search, setSearch] = useState("")
+  const [activeCategorySlug, setActiveCategorySlug] = useState(QR_DEFAULT_CATEGORY_SLUG)
+  const activeCategorySlugRef = useRef(QR_DEFAULT_CATEGORY_SLUG)
   const [cart, setCart] = useState<QrCartEntry[]>([])
   const [cartOpen, setCartOpen] = useState(false)
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
@@ -100,6 +102,31 @@ export default function TableMenuPage() {
     })
   }, [])
 
+  const handleCategorySelect = useCallback(
+    (slug: string) => {
+      activeCategorySlugRef.current = slug
+      setActiveCategorySlug(slug)
+      scrollNav()
+      requestAnimationFrame(() => {
+        const el = document.getElementById("qr-section-menu")
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+      })
+    },
+    [scrollNav],
+  )
+
+  const handleSectionNav = useCallback(
+    (sectionId: string) => {
+      const slug = qrNavSlugFromSectionId(sectionId)
+      if (slug) {
+        activeCategorySlugRef.current = slug
+        setActiveCategorySlug(slug)
+      }
+      scrollToSection(sectionId)
+    },
+    [scrollToSection],
+  )
+
   const handleSearchChange = useCallback(
     (value: string) => {
       setSearch((prev) => {
@@ -111,6 +138,10 @@ export default function TableMenuPage() {
     },
     [scrollNav],
   )
+
+  useEffect(() => {
+    activeCategorySlugRef.current = activeCategorySlug
+  }, [activeCategorySlug])
 
   useSilentScrollRestore(menuItems, consumeSilentScrollRestore, silentRefreshPendingRef)
 
@@ -214,10 +245,12 @@ export default function TableMenuPage() {
 
   const searchResults = useMemo(() => sortByMenuCardOrder(searched), [searched])
 
-  const printedSections = useMemo(
-    () => buildQrPrintedMenuSections(menuItems, categoryRows),
-    [menuItems, categoryRows],
+  const activeCategoryBlock = useMemo(
+    () => getPrintedBlockForCategory(menuItems, categoryRows, activeCategorySlug),
+    [menuItems, categoryRows, activeCategorySlug],
   )
+
+  const isDefaultCategory = activeCategorySlug === QR_DEFAULT_CATEGORY_SLUG
 
   const bestsellerStrip = useMemo(
     () => pickQrFeaturedProducts("bestseller", menuItems, 8),
@@ -512,6 +545,15 @@ export default function TableMenuPage() {
             resultCount={isSearchMode ? searchResults.length : undefined}
           />
         }
+        categoryNav={
+          !isSearchMode ? (
+            <QrMenuCategoryNav
+              items={menuItems}
+              activeSlug={activeCategorySlug}
+              onSelect={handleCategorySelect}
+            />
+          ) : null
+        }
       />
 
       <main className="menu-sticky-main relative z-0 mx-auto max-w-2xl px-4 py-5 pb-28">
@@ -542,73 +584,76 @@ export default function TableMenuPage() {
           </div>
         ) : (
           <div className="space-y-8">
-            <QrMenuPromoBanners
-              items={menuItems}
-              onOpenProduct={openDetail}
-              onScrollToSection={scrollToSection}
-            />
+            {isDefaultCategory ? (
+              <>
+                <QrMenuPromoBanners
+                  items={menuItems}
+                  onOpenProduct={openDetail}
+                  onScrollToSection={handleSectionNav}
+                />
 
-            <QrMenuFeaturedHub
-              items={menuItems}
-              onScrollToSection={scrollToSection}
-              onOpenProduct={openDetail}
-            />
+                <QrMenuFeaturedHub
+                  items={menuItems}
+                  onScrollToSection={handleSectionNav}
+                  onOpenProduct={openDetail}
+                />
 
-            <QrMenuFeaturedStrip
-              id="qr-featured-bestseller"
-              icon="⭐"
-              titleDe="Bestseller"
-              titleAr="الأكثر مبيعاً"
-              items={bestsellerStrip}
-              favoriteIds={new Set(favoriteIds)}
-              onToggleFavorite={handleToggleFavorite}
-              onOpenProduct={openDetail}
-              onQuickAdd={handleQuickAdd}
-              getInCartQty={getInCartQty}
-            />
+                <QrMenuFeaturedStrip
+                  id="qr-featured-bestseller"
+                  icon="⭐"
+                  titleDe="Bestseller"
+                  titleAr="الأكثر مبيعاً"
+                  items={bestsellerStrip}
+                  favoriteIds={new Set(favoriteIds)}
+                  onToggleFavorite={handleToggleFavorite}
+                  onOpenProduct={openDetail}
+                  onQuickAdd={handleQuickAdd}
+                  getInCartQty={getInCartQty}
+                />
 
-            <QrMenuFeaturedStrip
-              id="qr-featured-today"
-              icon="🔥"
-              titleDe="Heute empfohlen"
-              titleAr="موصى به اليوم"
-              items={todayStrip}
-              favoriteIds={new Set(favoriteIds)}
-              onToggleFavorite={handleToggleFavorite}
-              onOpenProduct={openDetail}
-              onQuickAdd={handleQuickAdd}
-              getInCartQty={getInCartQty}
-            />
+                <QrMenuFeaturedStrip
+                  id="qr-featured-today"
+                  icon="🔥"
+                  titleDe="Heute empfohlen"
+                  titleAr="موصى به اليوم"
+                  items={todayStrip}
+                  favoriteIds={new Set(favoriteIds)}
+                  onToggleFavorite={handleToggleFavorite}
+                  onOpenProduct={openDetail}
+                  onQuickAdd={handleQuickAdd}
+                  getInCartQty={getInCartQty}
+                />
 
-            <QrMenuCategoryNav items={menuItems} onSelectCategory={scrollToSection} />
+                <QrMenuQuickSections
+                  favorites={favoriteItems}
+                  recentlyOrdered={recentItems}
+                  favoriteIds={new Set(favoriteIds)}
+                  onToggleFavorite={handleToggleFavorite}
+                  onOpenProduct={openDetail}
+                  onQuickAdd={handleQuickAdd}
+                  getInCartQty={getInCartQty}
+                />
+              </>
+            ) : null}
 
-            <QrMenuQuickSections
-              favorites={favoriteItems}
-              recentlyOrdered={recentItems}
-              favoriteIds={new Set(favoriteIds)}
-              onToggleFavorite={handleToggleFavorite}
-              onOpenProduct={openDetail}
-              onQuickAdd={handleQuickAdd}
-              getInCartQty={getInCartQty}
-            />
-
-            <div id="qr-section-menu" className="space-y-12">
-              {printedSections.map((block) => (
-                <section key={block.id} id={block.id} className="space-y-8">
+            <div id="qr-section-menu" className="space-y-8">
+              {activeCategoryBlock ? (
+                <section id={activeCategoryBlock.id} className="space-y-8">
                   <MenuSubcategoryHeader
-                    icon={block.icon}
-                    labelDe={block.labelDe}
-                    labelAr={block.labelAr}
+                    icon={activeCategoryBlock.icon}
+                    labelDe={activeCategoryBlock.labelDe}
+                    labelAr={activeCategoryBlock.labelAr}
                     variant="table"
-                    drink={block.id === "qr-section-drinks"}
-                    sweet={block.id === "qr-section-desserts"}
+                    drink={activeCategoryBlock.id === "qr-section-drinks"}
+                    sweet={activeCategoryBlock.id === "qr-section-desserts"}
                     premium
                   />
-                  {block.groups.length === 1 && block.groups[0]?.key !== "other" ? (
-                    renderGrid(block.groups[0].items)
+                  {activeCategoryBlock.groups.length === 1 &&
+                  activeCategoryBlock.groups[0]?.key !== "other" ? (
+                    renderGrid(activeCategoryBlock.groups[0].items)
                   ) : (
                     <div className="space-y-10">
-                      {block.groups.map((group) => (
+                      {activeCategoryBlock.groups.map((group) => (
                         <div key={group.key} id={`subcat-${group.key}`} className="space-y-4">
                           <MenuSubcategoryHeader
                             icon={group.icon}
@@ -616,8 +661,8 @@ export default function TableMenuPage() {
                             labelAr={group.labelAr}
                             subtitle={group.subtitle}
                             variant="table"
-                            drink={block.id === "qr-section-drinks"}
-                            sweet={block.id === "qr-section-desserts"}
+                            drink={activeCategoryBlock.id === "qr-section-drinks"}
+                            sweet={activeCategoryBlock.id === "qr-section-desserts"}
                             premium
                           />
                           {renderGrid(group.items)}
@@ -626,7 +671,9 @@ export default function TableMenuPage() {
                     </div>
                   )}
                 </section>
-              ))}
+              ) : (
+                <QrMenuEmptyState variant="category" />
+              )}
             </div>
           </div>
         )}

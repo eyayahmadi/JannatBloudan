@@ -1,9 +1,9 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import {
   QR_NAV_CATEGORIES,
   countItemsInNavCategory,
-  qrSectionDomId,
   type QrNavCategory,
 } from "@/lib/menu/qr-printed-menu"
 import type { QrMenuItem } from "@/lib/menu/qr-menu-types"
@@ -11,67 +11,101 @@ import { cn } from "@/lib/utils"
 
 type QrMenuCategoryNavProps = {
   items: QrMenuItem[]
-  onSelectCategory: (sectionId: string) => void
+  activeSlug: string
+  onSelect: (slug: string) => void
   className?: string
 }
 
-function CategoryCard({
+function CategoryPill({
   nav,
-  count,
+  active,
   onSelect,
+  chipRef,
 }: {
   nav: QrNavCategory
-  count: number
+  active: boolean
   onSelect: () => void
+  chipRef?: (el: HTMLButtonElement | null) => void
 }) {
-  if (count === 0) return null
-
   return (
     <button
+      ref={chipRef}
       type="button"
       onClick={onSelect}
       className={cn(
-        "flex min-h-[6.5rem] w-[8.75rem] shrink-0 flex-col justify-between rounded-2xl border border-amber-200/70 bg-white p-3.5 text-left shadow-sm transition",
-        "hover:border-amber-300 hover:shadow-md active:scale-[0.98]",
-        "dark:border-amber-900/40 dark:bg-neutral-900 dark:hover:border-amber-800",
+        "relative shrink-0 rounded-full px-3.5 py-2.5 text-sm font-medium transition-colors",
+        active
+          ? "text-white shadow-md shadow-amber-600/20"
+          : "border border-amber-200/80 bg-white text-amber-950 hover:border-amber-300 dark:border-amber-800 dark:bg-neutral-900 dark:text-amber-100",
       )}
     >
-      <span className="text-2xl leading-none">{nav.icon}</span>
-      <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-amber-950 dark:text-white">{nav.labelDe}</p>
-        <p className="truncate text-xs text-amber-800/55 dark:text-amber-300/55" dir="rtl">
-          {nav.labelAr}
-        </p>
-      </div>
+      {active ? (
+        <span className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-600 to-orange-600" />
+      ) : null}
+      <span className="relative flex items-center gap-1.5 whitespace-nowrap">
+        <span className="text-base leading-none">{nav.icon}</span>
+        <span>{nav.labelDe}</span>
+      </span>
     </button>
   )
 }
 
-export function QrMenuCategoryNav({ items, onSelectCategory, className }: QrMenuCategoryNavProps) {
+/** Sticky top category navigation — real menu categories only, fixed order. */
+export function QrMenuCategoryNav({
+  items,
+  activeSlug,
+  onSelect,
+  className,
+}: QrMenuCategoryNavProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const chipRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const prevActiveRef = useRef<string | null>(null)
+
   const visible = QR_NAV_CATEGORIES.filter((nav) => countItemsInNavCategory(items, nav) > 0)
+
+  useEffect(() => {
+    if (prevActiveRef.current === activeSlug) return
+    prevActiveRef.current = activeSlug
+
+    const el = chipRefs.current[activeSlug]
+    const container = scrollRef.current
+    if (!el || !container) return
+
+    const elLeft = el.offsetLeft
+    const elRight = elLeft + el.offsetWidth
+    const viewLeft = container.scrollLeft
+    const viewRight = viewLeft + container.clientWidth
+    if (elLeft < viewLeft) {
+      container.scrollTo({ left: elLeft - 8, behavior: "smooth" })
+    } else if (elRight > viewRight) {
+      container.scrollTo({ left: elRight - container.clientWidth + 8, behavior: "smooth" })
+    }
+  }, [activeSlug])
 
   if (visible.length === 0) return null
 
   return (
-    <section className={cn("space-y-3", className)} aria-label="Kategorien">
-      <div className="px-1">
-        <h2 className="font-display text-lg font-bold tracking-tight text-amber-950 dark:text-white">
-          Karte
-        </h2>
-        <p className="text-sm text-amber-800/55 dark:text-amber-300/55" dir="rtl">
-          قائمة الطعام
-        </p>
-      </div>
-      <div className="flex gap-3 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav
+      aria-label="Kategorien"
+      className={cn("w-full min-w-0 max-w-full", className)}
+      data-menu-category-nav
+    >
+      <div
+        ref={scrollRef}
+        className="flex gap-2 overflow-x-auto overscroll-x-contain pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {visible.map((nav) => (
-          <CategoryCard
+          <CategoryPill
             key={nav.slug}
             nav={nav}
-            count={countItemsInNavCategory(items, nav)}
-            onSelect={() => onSelectCategory(qrSectionDomId(nav.slug))}
+            active={activeSlug === nav.slug}
+            onSelect={() => onSelect(nav.slug)}
+            chipRef={(el) => {
+              chipRefs.current[nav.slug] = el
+            }}
           />
         ))}
       </div>
-    </section>
+    </nav>
   )
 }
