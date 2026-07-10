@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { RequireAuth } from "@/components/auth/RequireAuth"
 import type { AppRole } from "@/lib/auth/roles"
 import { PageShell } from "@/components/site/PageShell"
@@ -126,9 +126,28 @@ type StationItemCardProps = {
   items: OrderItem[]
   color: string
   station: Station
+  columnKey: ColumnKey
+  isFocused?: boolean
   onAdvance: (itemId: string, next: ItemStatus) => void
   onRefuse: (itemId: string) => void
   onPrint: () => void
+}
+
+function stationCardDomId(orderId: string, columnKey: ColumnKey): string {
+  return `station-card-${orderId}-${columnKey}`
+}
+
+function findScrollParent(el: HTMLElement | null): HTMLElement | null {
+  let node = el?.parentElement ?? null
+  while (node) {
+    const style = window.getComputedStyle(node)
+    const overflowY = style.overflowY
+    if (overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay") {
+      return node
+    }
+    node = node.parentElement
+  }
+  return null
 }
 
 function StationItemCard({
@@ -136,6 +155,8 @@ function StationItemCard({
   items,
   color,
   station,
+  columnKey,
+  isFocused = false,
   onAdvance,
   onRefuse,
   onPrint,
@@ -165,10 +186,10 @@ function StationItemCard({
 
   return (
     <motion.div
-      layout
+      id={stationCardDomId(order.id, columnKey)}
       initial={{ opacity: 0, y: 14, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+      exit={{ opacity: 0, scale: 0.98 }}
       transition={SPRING_SOFT}
       whileHover={{ y: -2 }}
       className={cn(
@@ -177,6 +198,7 @@ function StationItemCard({
         colors.card,
         colors.border,
         isLate && "ring-2 ring-red-400/70 dark:ring-red-500/60",
+        isFocused && "ring-2 ring-amber-500/80 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-950",
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -382,8 +404,19 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
     itemId: string
     name: string
     canMarkWaste: boolean
+    columnKey: ColumnKey
   } | null>(null)
   const [bulkOpen, setBulkOpen] = useState(false)
+  const [focusedOrderId, setFocusedOrderId] = useState<string | null>(null)
+  const [focusedColumnKey, setFocusedColumnKey] = useState<ColumnKey | null>(null)
+  const boardRootRef = useRef<HTMLDivElement>(null)
+  const pendingFocusRef = useRef<{
+    orderId: string
+    columnKey: ColumnKey
+    maintainPosition: boolean
+  } | null>(null)
+  const savedScrollRef = useRef(0)
+  const scrollRestorePendingRef = useRef(false)
 
   const meta = STATION_META[station]
   const stationLabel = t(meta.i18nKey, station)
@@ -445,30 +478,104 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
     [stationItems, oneHourAgo],
   )
 
-  const columns = COLUMNS.map((col) => {
-    const matching = visibleItems.filter(({ item }) => {
-      if (col.key === "refused") {
-        return item.item_status === "refused" || item.item_status === "waste"
+  const columns = useMemo(() => {
+    return COLUMNS.map((col) => {
+      const matching = visibleItems.filter(({ item }) => {
+        if (col.key === "refused") {
+          return item.item_status === "refused" || item.item_status === "waste"
+        }
+        return item.item_status === col.key
+      })
+      const grouped = new Map<string, GroupedItem>()
+      matching.forEach(({ order, item }) => {
+        const g = grouped.get(order.id)
+        if (g) g.items.push(item)
+        else grouped.set(order.id, { order, items: [item] })
+      })
+      return {
+        ...col,
+        label: t(`stations.status.${col.key}`, col.key),
+        groups: Array.from(grouped.values()).sort(
+          (a, b) =>
+            new Date(a.order.created_at).getTime() -
+            new Date(b.order.created_at).getTime(),
+        ),
       }
-      return item.item_status === col.key
     })
-    // Regroupement par commande
-    const grouped = new Map<string, GroupedItem>()
-    matching.forEach(({ order, item }) => {
-      const g = grouped.get(order.id)
-      if (g) g.items.push(item)
-      else grouped.set(order.id, { order, items: [item] })
-    })
-    return {
-      ...col,
-      label: t(`stations.status.${col.key}`, col.key),
-      groups: Array.from(grouped.values()).sort(
-        (a, b) =>
-          new Date(a.order.created_at).getTime() -
-          new Date(b.order.created_at).getTime(),
-      ),
+  }, [visibleItems, t])
+
+  const queueFocusBeforeAction = useCallback(
+    (
+      columnKey: ColumnKey,
+      orderId: string,
+      itemId: string,
+    ) => {
+      const col = columns.find((c) => c.key === columnKey)
+      const groups = col?.groups ?? []
+      const idx = groups.findIndex((g) => g.order.id === orderId)
+      if (idx < 0) return
+
+      const group = groups[idx]
+      const otherItems = group.items.filter((it) => it.id !== itemId)
+      const itemStillMatchesColumn = otherItems.some((it) => {
+        if (columnKey === "refused") {
+          return it.item_status === "refused" || it.item_status === "waste"
+        }
+        return it.item_status === columnKey
+      })
+
+      let nextOrderId: string | null = null
+      let maintainPosition = false
+
+      if (itemStillMatchesColumn) {
+        nextOrderId = orderId
+        maintainPosition = true
+      } else if (idx < groups.length - 1) {
+        nextOrderId = groups[idx + 1].order.id
+      } else if (groups.length > 1 && idx > 0) {
+        nextOrderId = groups[idx - 1].order.id
+      }
+
+      scrollRestorePendingRef.current = true
+      const scrollParent = findScrollParent(boardRootRef.current)
+      if (scrollParent) {
+        savedScrollRef.current = scrollParent.scrollTop
+      }
+
+      if (nextOrderId) {
+        pendingFocusRef.current = { orderId: nextOrderId, columnKey, maintainPosition }
+      } else {
+        pendingFocusRef.current = null
+      }
+    },
+    [columns],
+  )
+
+  useLayoutEffect(() => {
+    if (!scrollRestorePendingRef.current) return
+    scrollRestorePendingRef.current = false
+
+    const scrollParent = findScrollParent(boardRootRef.current)
+    if (scrollParent) {
+      scrollParent.scrollTop = savedScrollRef.current
     }
-  })
+
+    const pending = pendingFocusRef.current
+    if (!pending) return
+    pendingFocusRef.current = null
+
+    setFocusedOrderId(pending.orderId)
+    setFocusedColumnKey(pending.columnKey)
+
+    if (!pending.maintainPosition) {
+      requestAnimationFrame(() => {
+        const el = document.getElementById(
+          stationCardDomId(pending.orderId, pending.columnKey),
+        )
+        el?.scrollIntoView({ block: "nearest", behavior: "auto" })
+      })
+    }
+  }, [orders])
 
   const activeCount = visibleItems.filter(
     (x) =>
@@ -508,7 +615,8 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
   }, [lastEvent, autoPrint, orders, station, meta.emoji, t, handlePrint])
 
   const handleAdvance = useCallback(
-    (orderId: string, itemId: string, next: ItemStatus) => {
+    (orderId: string, itemId: string, next: ItemStatus, columnKey: ColumnKey) => {
+      queueFocusBeforeAction(columnKey, orderId, itemId)
       updateItemStatus(orderId, itemId, next)
       if (next === "ready") {
         // L'item est prêt → seul le serveur (et l'admin) doivent le voir.
@@ -520,16 +628,23 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
         })
       }
     },
-    [updateItemStatus, addNotification, meta.emoji, stationLabel, t],
+    [queueFocusBeforeAction, updateItemStatus, addNotification, meta.emoji, stationLabel, t],
   )
 
   const handleAskRefuse = useCallback(
-    (orderId: string, itemId: string, name: string, currentStatus: ItemStatus) => {
+    (
+      orderId: string,
+      itemId: string,
+      name: string,
+      currentStatus: ItemStatus,
+      columnKey: ColumnKey,
+    ) => {
       setRefuseTarget({
         orderId,
         itemId,
         name,
         canMarkWaste: currentStatus === "preparing" || currentStatus === "ready",
+        columnKey,
       })
     },
     [],
@@ -578,6 +693,11 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
       markWaste: boolean
     }) => {
       if (!refuseTarget) return
+      queueFocusBeforeAction(
+        refuseTarget.columnKey,
+        refuseTarget.orderId,
+        refuseTarget.itemId,
+      )
       refuseOrderItem(refuseTarget.orderId, refuseTarget.itemId, {
         code: reasonCode,
         note: reasonNote || undefined,
@@ -597,7 +717,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
       await persistRefuseRemote(refuseTarget.itemId, reasonCode, reasonNote, markWaste)
       setRefuseTarget(null)
     },
-    [refuseTarget, refuseOrderItem, addNotification, meta.emoji, stationLabel, t, persistRefuseRemote],
+    [refuseTarget, queueFocusBeforeAction, refuseOrderItem, addNotification, meta.emoji, stationLabel, t, persistRefuseRemote],
   )
 
   const handleBulkRefuse = useCallback(
@@ -807,21 +927,31 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
                       </p>
                     </div>
                   ) : (
-                    <AnimatePresence initial={false} mode="popLayout">
+                    <AnimatePresence initial={false} mode="sync">
                       {col.groups.map(({ order, items }) => (
                         <StationItemCard
-                          key={`${order.id}-${col.key}`}
+                          key={order.id}
                           order={order}
                           items={items}
                           color={col.color}
                           station={station}
+                          columnKey={col.key}
+                          isFocused={
+                            focusedOrderId === order.id && focusedColumnKey === col.key
+                          }
                           onAdvance={(itemId, next) =>
-                            handleAdvance(order.id, itemId, next)
+                            handleAdvance(order.id, itemId, next, col.key)
                           }
                           onRefuse={(itemId) => {
                             const it = items.find((x) => x.id === itemId)
                             if (it)
-                              handleAskRefuse(order.id, itemId, it.name, it.item_status)
+                              handleAskRefuse(
+                                order.id,
+                                itemId,
+                                it.name,
+                                it.item_status,
+                                col.key,
+                              )
                           }}
                           onPrint={() => handlePrint(order, items)}
                         />
@@ -847,15 +977,28 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
             ) : (
               col.groups.map(({ order, items }) => (
                 <StationItemCard
-                  key={`${order.id}-${col.key}`}
+                  key={order.id}
                   order={order}
                   items={items}
                   color={col.color}
                   station={station}
-                  onAdvance={(itemId, next) => handleAdvance(order.id, itemId, next)}
+                  columnKey={col.key}
+                  isFocused={
+                    focusedOrderId === order.id && focusedColumnKey === col.key
+                  }
+                  onAdvance={(itemId, next) =>
+                    handleAdvance(order.id, itemId, next, col.key)
+                  }
                   onRefuse={(itemId) => {
                     const it = items.find((x) => x.id === itemId)
-                    if (it) handleAskRefuse(order.id, itemId, it.name, it.item_status)
+                    if (it)
+                      handleAskRefuse(
+                        order.id,
+                        itemId,
+                        it.name,
+                        it.item_status,
+                        col.key,
+                      )
                   }}
                   onPrint={() => handlePrint(order, items)}
                 />
@@ -907,14 +1050,23 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
   if (layout === "workspace") {
     return (
       <RequireAuth roles={authRoles}>
-        <div className="flex min-h-0 flex-1 flex-col bg-slate-50 dark:bg-slate-950">{main}</div>
+        <div
+          ref={boardRootRef}
+          className="flex min-h-0 flex-1 flex-col bg-slate-50 dark:bg-slate-950"
+        >
+          {main}
+        </div>
       </RequireAuth>
     )
   }
 
   return (
     <RequireAuth roles={authRoles}>
-      <PageShell className="min-h-screen bg-slate-50 dark:bg-slate-950">{main}</PageShell>
+      <PageShell className="min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div ref={boardRootRef} className="flex min-h-0 flex-1 flex-col">
+          {main}
+        </div>
+      </PageShell>
     </RequireAuth>
   )
 }
