@@ -3,7 +3,7 @@
 import { PageShell } from "@/components/site/PageShell"
 import { PremiumBackdrop } from "@/components/site/PremiumBackdrop"
 import { QrMenuHero } from "@/components/menu/qr/QrMenuHero"
-import { QrMenuCategoryNav } from "@/components/menu/qr/QrMenuCategoryNav"
+import { QrMenuCategoryCards } from "@/components/menu/qr/QrMenuCategoryCards"
 import { QrMenuFeaturedStrip } from "@/components/menu/qr/QrMenuFeaturedStrip"
 import { QrMenuEmptyState, QrMenuCardSkeleton } from "@/components/menu/qr/QrMenuEmptyState"
 import { QrTableMenuShell } from "@/components/menu/qr/QrTableMenuShell"
@@ -18,7 +18,6 @@ export default function TableMenuHomePage() {
     cartCount,
     setCartOpen,
     activeOrder,
-    categoryNavItems,
     bestsellerItems,
     todayItems,
     favoriteIds,
@@ -62,7 +61,7 @@ export default function TableMenuHomePage() {
           <QrMenuEmptyState variant="error" onRetry={loadMenu} />
         ) : (
           <div className="space-y-8">
-            <QrMenuCategoryNav categories={categoryNavItems} tableId={tableId} />
+            <QrMenuCategoryCards tableId={tableId} />
 
             {bestsellerItems.length > 0 ? (
               <QrMenuFeaturedStrip

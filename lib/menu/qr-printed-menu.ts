@@ -60,6 +60,109 @@ export function buildQrCategoryNavItems(): QrCategoryNavItem[] {
   }))
 }
 
+/** Large colored homepage category cards — navigation only, opens category page. */
+export type QrCategoryNavCard = {
+  slug: QrNavCategory["slug"]
+  icon: string
+  labelDe: string
+  labelAr: string
+  gradient: string
+}
+
+export const QR_CATEGORY_NAV_CARDS: QrCategoryNavCard[] = [
+  {
+    slug: "entrees",
+    icon: "🍽",
+    labelDe: "Vorspeisen",
+    labelAr: "المقبلات",
+    gradient: "from-emerald-900 via-teal-900 to-stone-900",
+  },
+  {
+    slug: "salades",
+    icon: "🥗",
+    labelDe: "Salate",
+    labelAr: "السلطات",
+    gradient: "from-green-900 via-emerald-900 to-lime-950",
+  },
+  {
+    slug: "plats",
+    icon: "🍛",
+    labelDe: "Tellergerichte",
+    labelAr: "الوجبات الرئيسية",
+    gradient: "from-stone-800 via-red-950 to-amber-900",
+  },
+  {
+    slug: "grillades",
+    icon: "🥩",
+    labelDe: "Grillgerichte",
+    labelAr: "المشاوي",
+    gradient: "from-red-950 via-stone-900 to-amber-950",
+  },
+  {
+    slug: "manakish",
+    icon: "🫓",
+    labelDe: "Manakish",
+    labelAr: "المناقيش",
+    gradient: "from-amber-900 via-orange-900 to-yellow-950",
+  },
+  {
+    slug: "pizza",
+    icon: "🍕",
+    labelDe: "Pizza",
+    labelAr: "البيتزا",
+    gradient: "from-orange-900 via-red-900 to-amber-900",
+  },
+  {
+    slug: "burgers",
+    icon: "🍔",
+    labelDe: "Burger",
+    labelAr: "البرغر",
+    gradient: "from-amber-900 via-yellow-900 to-orange-950",
+  },
+  {
+    slug: "sandwiches",
+    icon: "🥪",
+    labelDe: "Sandwiches",
+    labelAr: "الساندويش",
+    gradient: "from-lime-900 via-amber-900 to-stone-900",
+  },
+  {
+    slug: "hot-drinks",
+    icon: "☕",
+    labelDe: "Heißgetränke",
+    labelAr: "المشروبات الساخنة",
+    gradient: "from-cyan-900 via-blue-900 to-indigo-900",
+  },
+  {
+    slug: "cold-drinks",
+    icon: "🥤",
+    labelDe: "Kalte Getränke",
+    labelAr: "المشروبات الباردة",
+    gradient: "from-sky-900 via-cyan-900 to-teal-800",
+  },
+  {
+    slug: "bar",
+    icon: "🍹",
+    labelDe: "Bar",
+    labelAr: "قسم البار",
+    gradient: "from-fuchsia-900 via-purple-900 to-indigo-900",
+  },
+  {
+    slug: "desserts",
+    icon: "🍰",
+    labelDe: "Desserts",
+    labelAr: "الحلويات",
+    gradient: "from-fuchsia-900 via-rose-900 to-amber-800",
+  },
+  {
+    slug: "shisha",
+    icon: "🚬",
+    labelDe: "Shisha",
+    labelAr: "الأراكيل",
+    gradient: "from-violet-950 via-purple-950 to-stone-900",
+  },
+]
+
 const DESSERT_SLUGS = new Set<string>(DESSERTS_CATEGORY_GROUPS.map((g) => g.slug))
 
 const QR_HOT_DRINK_SLUGS = new Set(["coffee", "tea"])

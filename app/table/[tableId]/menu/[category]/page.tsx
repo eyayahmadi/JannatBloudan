@@ -54,7 +54,7 @@ export default function TableMenuCategoryPage() {
             className="flex items-center gap-2 rounded-full px-2 py-1.5 text-sm font-medium text-amber-950 transition hover:bg-amber-100/80 dark:text-amber-100 dark:hover:bg-amber-900/30"
           >
             <ArrowLeft className="h-4 w-4" />
-            Startseite
+            Zurück
           </button>
           <div className="min-w-0 text-center">
             <p className="truncate font-display text-base font-bold text-amber-950 dark:text-white">
