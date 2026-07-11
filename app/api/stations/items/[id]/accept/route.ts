@@ -14,6 +14,7 @@ import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
 import { syncOrderInvoice } from "@/lib/caisse/sync-order-invoice"
+import { ORDER_ITEM_KDS_SELECT, enrichSingleOrderItemRow } from "@/lib/orders/order-item-fields"
 import type { Station, ItemStatus } from "@/lib/stations/config"
 import { normalizeRole, type AppRole } from "@/lib/auth/roles"
 
@@ -85,7 +86,7 @@ export async function POST(
       accepted_by: guard.user.id,
     })
     .eq("id", id)
-    .select("id, order_id, station, station_status, accepted_at, accepted_by")
+    .select(ORDER_ITEM_KDS_SELECT)
     .single()
 
   if (updErr) {
@@ -118,7 +119,7 @@ export async function POST(
 
   return NextResponse.json({
     ok: true,
-    item: updated,
+    item: await enrichSingleOrderItemRow(supabase, updated as { product_id?: string | null; product_name_ar?: string | null }),
     transition: { from: previousStatus, to: "accepted" },
     invoice_sync: sync,
   })

@@ -83,6 +83,9 @@ const NUMBERED_MIGRATIONS = [
   "54-deprecate-legacy-categories.sql",
   "55-fix-recommendation-slugs.sql",
   "56-restore-menu-canonical.sql",
+  "57-water-variants.sql",
+  "58-menu-homepage-sections.sql",
+  "59-order-item-bilingual-names.sql",
 ]
 
 /** Après le schéma : durcissement rôles puis correctif signup / RLS audit (idempotent). */

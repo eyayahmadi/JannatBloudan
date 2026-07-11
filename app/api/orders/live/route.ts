@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { mapDbRowsToKitchenOrders } from "@/lib/orders/live-order-mapper"
+import { enrichOrderItemsWithProductArabic } from "@/lib/orders/order-item-fields"
 
 const STAFF_ROLES = ["ADMIN", "SERVER", "CASHIER", "KITCHEN", "BAR", "SHISHA"] as const
 
@@ -45,7 +46,7 @@ export async function GET() {
     const { data: items, error: itemsErr } = await supabase
       .from("order_items")
       .select(
-        "id, order_id, product_name, product_name_ar, quantity, unit_price, special_instructions, station, station_status, started_at, ready_at, served_at, accepted_at, refusal_reason, refusal_note, refused_at, billable",
+        "id, order_id, product_id, product_name, product_name_ar, quantity, unit_price, special_instructions, station, station_status, started_at, ready_at, served_at, accepted_at, refusal_reason, refusal_note, refused_at, billable",
       )
       .in("order_id", orderIds)
 
@@ -53,9 +54,11 @@ export async function GET() {
       return NextResponse.json({ orders: [], error: itemsErr.message }, { status: 500 })
     }
 
-    type ItemRow = NonNullable<typeof items>[number]
+    const enrichedItems = await enrichOrderItemsWithProductArabic(supabase, items ?? [])
+
+    type ItemRow = (typeof enrichedItems)[number]
     const itemsByOrderId = new Map<string, ItemRow[]>()
-    for (const row of items ?? []) {
+    for (const row of enrichedItems) {
       const oid = String((row as { order_id?: string }).order_id ?? "")
       if (!oid) continue
       const list = itemsByOrderId.get(oid) ?? []

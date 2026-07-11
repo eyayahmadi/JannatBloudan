@@ -265,14 +265,24 @@ export function mergeOrderItems(
           ? `pending_mutation_from_${source}`
           : `mutation_grace_from_${source}`,
       })
-      byId.set(local.id, local)
+      byId.set(local.id, {
+        ...local,
+        name: String(local.name ?? "").trim() || String(existing.name ?? "").trim() || local.name,
+        name_ar:
+          String(local.name_ar ?? "").trim() || String(existing.name_ar ?? "").trim() || undefined,
+      })
       continue
     }
 
     if (shouldAcceptIncomingItem(local, existing, source)) {
       const version = Math.max(local.status_version ?? 0, existing.status_version ?? 0)
+      const mergedName = String(existing.name ?? "").trim() || local.name
+      const mergedNameAr =
+        String(existing.name_ar ?? "").trim() || String(local.name_ar ?? "").trim() || undefined
       byId.set(local.id, {
         ...existing,
+        name: mergedName,
+        name_ar: mergedNameAr,
         status_version: version,
         status_updated_at:
           itemStatusTimestamp(existing) >= itemStatusTimestamp(local)
@@ -280,7 +290,10 @@ export function mergeOrderItems(
             : local.status_updated_at,
       })
     } else {
-      byId.set(local.id, local)
+      byId.set(local.id, {
+        ...local,
+        name_ar: String(local.name_ar ?? "").trim() || String(existing.name_ar ?? "").trim() || undefined,
+      })
     }
   }
 
@@ -383,9 +396,18 @@ export function applyServerItemToOrders(
     const items = order.items.map((it) => {
       if (it.id !== serverItem.id) return it
       const version = Math.max(minVersion, serverItem.status_version ?? 0, it.status_version ?? 0)
+      const serverName = String(serverItem.name ?? "").trim()
+      const serverNameAr = String(serverItem.name_ar ?? "").trim()
+      const serverQty = Number(serverItem.quantity) || 0
       return {
         ...it,
         ...serverItem,
+        name: serverName || it.name,
+        name_ar: serverNameAr || it.name_ar,
+        quantity: serverQty > 0 ? serverQty : it.quantity,
+        notes: serverItem.notes?.trim() ? serverItem.notes : it.notes,
+        unit_price: serverItem.unit_price ?? it.unit_price,
+        station: serverItem.station ?? it.station,
         status_version: version,
         status_updated_at: serverItem.status_updated_at ?? it.status_updated_at,
       }

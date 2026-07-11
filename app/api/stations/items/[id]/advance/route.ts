@@ -8,6 +8,7 @@ import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
 import { syncOrderInvoice } from "@/lib/caisse/sync-order-invoice"
+import { ORDER_ITEM_KDS_SELECT, enrichSingleOrderItemRow } from "@/lib/orders/order-item-fields"
 import { NEXT_ITEM_STATUS, type ItemStatus, type Station } from "@/lib/stations/config"
 import { normalizeRole, type AppRole } from "@/lib/auth/roles"
 
@@ -73,7 +74,7 @@ export async function PATCH(
     .from("order_items")
     .update({ station_status: target })
     .eq("id", id)
-    .select()
+    .select(ORDER_ITEM_KDS_SELECT)
     .single()
 
   if (updateErr) {
@@ -104,7 +105,7 @@ export async function PATCH(
   })
 
   return NextResponse.json({
-    item: updated,
+    item: await enrichSingleOrderItemRow(supabase, updated as { product_id?: string | null; product_name_ar?: string | null }),
     transition: { from: currentStatus, to: target },
     invoice_sync: sync,
   })

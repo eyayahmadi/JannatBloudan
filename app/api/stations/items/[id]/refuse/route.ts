@@ -31,6 +31,7 @@ import {
   isRefusalReasonCode,
   type RefusalReasonCode,
 } from "@/lib/stations/refusal-reasons"
+import { ORDER_ITEM_KDS_SELECT, enrichSingleOrderItemRow } from "@/lib/orders/order-item-fields"
 import type { Station, ItemStatus } from "@/lib/stations/config"
 import { normalizeRole, type AppRole } from "@/lib/auth/roles"
 
@@ -126,9 +127,7 @@ export async function POST(
       refused_by: guard.user.id,
     })
     .eq("id", id)
-    .select(
-      "id, order_id, station, station_status, refusal_reason, refusal_note, refused_at, billable",
-    )
+    .select(ORDER_ITEM_KDS_SELECT)
     .single()
 
   if (updErr) {
@@ -180,7 +179,7 @@ export async function POST(
 
   return NextResponse.json({
     ok: true,
-    item: updated,
+    item: await enrichSingleOrderItemRow(supabase, updated as { product_id?: string | null; product_name_ar?: string | null }),
     transition: { from: previousStatus, to: targetStatus },
     invoice_sync: sync,
   })
