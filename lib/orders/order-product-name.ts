@@ -56,6 +56,32 @@ export function buildOrderProductNameHtml(
   ].join("")
 }
 
+/**
+ * HTML ligne article pour tickets station (58/80mm) :
+ *   Ligne 1 : nom DE + quantité à droite
+ *   Ligne 2 : nom AR (RTL), si présent
+ */
+export function buildTicketItemNameHtml(
+  item: BilingualOrderProduct,
+  quantity: number,
+): string {
+  const { de, ar } = resolveOrderProductNames(item)
+  const qty = `${Math.max(1, Math.floor(Number(quantity) || 1))}x`
+  const label = de || "—"
+
+  return [
+    `<div class="item-name">`,
+    `<div class="name-de-row">`,
+    `<span class="name-de">${escapeOrderProductHtml(label)}</span>`,
+    `<span class="qty-inline">${qty}</span>`,
+    `</div>`,
+    ar
+      ? `<div class="name-ar-wrap"><span class="name-ar" dir="rtl">${escapeOrderProductHtml(ar)}</span></div>`
+      : "",
+    `</div>`,
+  ].join("")
+}
+
 export const ORDER_PRODUCT_NAME_STYLES = {
   deSm: "font-medium text-inherit",
   deMd: "font-semibold text-inherit",

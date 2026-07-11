@@ -17,7 +17,7 @@
 
 import type { KitchenOrder } from "@/lib/hooks/useRealtimeOrders"
 import type { Station } from "@/lib/stations/config"
-import { buildOrderProductNameHtml } from "@/lib/orders/order-product-name"
+import { buildTicketItemNameHtml } from "@/lib/orders/order-product-name"
 
 export type PrintOptions = {
   restaurantName?: string
@@ -215,8 +215,7 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
       (item) => `
         <div class="item">
           <div class="item-main">
-            <span class="qty">${item.quantity}x</span>
-            <div class="name">${buildOrderProductNameHtml(item, { uppercaseDe: true })}</div>
+            ${buildTicketItemNameHtml(item, item.quantity)}
           </div>
           ${item.notes ? `<div class="item-notes">&rarr; ${escapeHtml(item.notes)}</div>` : ""}
         </div>
@@ -310,22 +309,37 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
   }
   .item:last-child { border-bottom: none; }
   .item-main {
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1.25;
+  }
+  .item-name { width: 100%; min-width: 0; }
+  .name-de-row {
     display: flex;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: bold;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
   }
-  .qty {
-    min-width: 30px;
-    background: #000;
-    color: #fff;
-    padding: 2px 6px;
-    text-align: center;
+  .name-de {
+    flex: 1;
+    min-width: 0;
     font-weight: bold;
+    word-break: break-word;
   }
-  .name { flex: 1; min-width: 0; }
-  .name-de-wrap { font-weight: bold; text-transform: uppercase; }
-  .name-ar-wrap { margin-top: 2px; font-size: 11px; font-weight: normal; line-height: 1.3; }
+  .qty-inline {
+    flex-shrink: 0;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .name-ar-wrap {
+    margin-top: 1px;
+    font-size: 10px;
+    font-weight: normal;
+    line-height: 1.25;
+    text-align: right;
+    direction: rtl;
+    unicode-bidi: isolate;
+  }
   .name-ar { display: block; }
   .item-notes {
     margin-top: 4px;
