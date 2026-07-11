@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import type { AppRole } from "@/lib/auth/roles"
-import { useNotifications } from "@/lib/hooks/useNotifications"
+import { notificationsStore } from "@/lib/notifications/notifications-store"
 import { useRealtimeOrders, type KitchenOrder } from "@/lib/hooks/useRealtimeOrders"
 import { useTableAlerts } from "@/lib/hooks/useTableAlerts"
 import {
@@ -21,7 +21,6 @@ function isStaffRoute(): boolean {
 
 /** Émet des notifications métier quand commandes / alertes / items prêts changent. */
 export function useWorkflowNotifications(enabled = true) {
-  const { add } = useNotifications()
   const { orders } = useRealtimeOrders()
   const { active: activeAlerts } = useTableAlerts()
   const knownOrders = useRef<Set<string>>(new Set())
@@ -41,7 +40,7 @@ export function useWorkflowNotifications(enabled = true) {
           if (bootstrapped.current) {
             const tableLabel =
               o.table_number != null ? `Table ${o.table_number}` : o.customer_name ?? "Sans table"
-            add({
+            notificationsStore.add({
               type: "new_order",
               title: "Nouvelle commande",
               message: `${o.order_number} — ${tableLabel}`,
@@ -63,7 +62,7 @@ export function useWorkflowNotifications(enabled = true) {
             if (bootstrapped.current) {
               const station = it.station as Station
               const label = STATION_META[station]?.emoji ?? station
-              add({
+              notificationsStore.add({
                 type: "order_ready",
                 title: `${label} Prêt`,
                 message: `${it.quantity}× ${it.name} (${o.order_number})`,
@@ -82,7 +81,7 @@ export function useWorkflowNotifications(enabled = true) {
     }
 
     processOrders(orders)
-  }, [orders, add, enabled])
+  }, [orders, enabled])
 
   useEffect(() => {
     if (!enabled || !isStaffRoute()) return
@@ -94,28 +93,28 @@ export function useWorkflowNotifications(enabled = true) {
       if (!bootstrapped.current) continue
 
       if (a.type === "request_bill") {
-        add({
+        notificationsStore.add({
           type: "payment_received",
           title: "Addition demandée",
           message: `Table ${a.tableId} — ${a.message || "Le client demande l'addition"}`,
           audience: cashierAudience(),
         })
       } else if (a.type === "call_server") {
-        add({
+        notificationsStore.add({
           type: "info",
           title: "Appel serveur",
           message: `Table ${a.tableId}`,
           audience: serverAudience(),
         })
       } else if (a.type === "call_cashier") {
-        add({
+        notificationsStore.add({
           type: "info",
           title: "Appel caisse",
           message: `Table ${a.tableId}`,
           audience: cashierAudience(),
         })
       } else if (a.type === "payment_done") {
-        add({
+        notificationsStore.add({
           type: "payment_received",
           title: "Paiement effectué",
           message: `Table ${a.tableId}`,
@@ -123,7 +122,7 @@ export function useWorkflowNotifications(enabled = true) {
         })
       }
     }
-  }, [activeAlerts, add, enabled])
+  }, [activeAlerts, enabled])
 
   useEffect(() => {
     if (!enabled) return

@@ -39,7 +39,7 @@ import {
   type OrderItem,
   type OrderType,
 } from "@/lib/hooks/useRealtimeOrders"
-import { useNotifications } from "@/lib/hooks/useNotifications"
+import { notificationsStore } from "@/lib/notifications/notifications-store"
 import { useStationAvailability } from "@/lib/hooks/useStationAvailability"
 import { useI18n } from "@/lib/i18n/context"
 import { printKitchenTicket } from "@/lib/print/kitchen-ticket"
@@ -578,7 +578,6 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
     lastEvent,
     getStationItems,
   } = useRealtimeOrders()
-  const { add: addNotification } = useNotifications()
   const stationAvail = useStationAvailability()
   const [mobileTab, setMobileTab] = useState<ItemStatus>("new")
   const [toast, setToast] = useState<string | null>(null)
@@ -834,7 +833,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
       queueFocusBeforeAction(columnKey, orderId, itemId)
       await updateItemStatus(orderId, itemId, next)
       if (next === "ready") {
-        addNotification({
+        notificationsStore.add({
           type: "order_ready",
           title: `${meta.emoji} ${stationLabel}`,
           message: t("stations.status.ready", "Pret"),
@@ -842,7 +841,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
         })
       }
     },
-    [isItemPending, queueFocusBeforeAction, updateItemStatus, addNotification, meta.emoji, stationLabel, t],
+    [isItemPending, queueFocusBeforeAction, updateItemStatus, meta.emoji, stationLabel, t],
   )
 
   const handleAskRefuse = useCallback(
@@ -913,7 +912,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
         note: reasonNote || undefined,
         markWaste,
       })
-      addNotification({
+      notificationsStore.add({
         type: "info",
         title: `${meta.emoji} ${stationLabel}`,
         message: `${refuseTarget.name} — ${t(
@@ -924,7 +923,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
       })
       setRefuseTarget(null)
     },
-    [refuseTarget, isItemPending, queueFocusBeforeAction, refuseOrderItem, addNotification, meta.emoji, stationLabel, t, station],
+    [refuseTarget, isItemPending, queueFocusBeforeAction, refuseOrderItem, meta.emoji, stationLabel, t, station],
   )
 
   const handleBulkRefuse = useCallback(
@@ -954,7 +953,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
         if (ok) count += 1
       }
       if (count > 0) {
-        addNotification({
+        notificationsStore.add({
           type: "info",
           title: `${meta.emoji} ${stationLabel}`,
           message: t(
@@ -980,7 +979,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
       }
       setBulkOpen(false)
     },
-    [stationAvail, station, orders, refuseOrderItem, addNotification, meta.emoji, stationLabel, t],
+    [stationAvail, station, orders, refuseOrderItem, meta.emoji, stationLabel, t],
   )
 
   const header = layout === "workspace" ? (

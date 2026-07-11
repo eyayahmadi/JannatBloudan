@@ -38,6 +38,20 @@ type QrProductDetailSheetProps = {
   onOpenProduct: (item: QrMenuItem) => void
 }
 
+const SHEET_ROOT_STYLE = {
+  position: "fixed" as const,
+  inset: 0,
+  width: "100%",
+  height: "100dvh",
+  zIndex: 9999,
+}
+
+const SHEET_SCROLL_STYLE = {
+  overflowY: "auto" as const,
+  overscrollBehavior: "contain" as const,
+  WebkitOverflowScrolling: "touch" as const,
+}
+
 export function QrProductDetailSheet({
   product,
   catalog,
@@ -123,35 +137,39 @@ export function QrProductDetailSheet({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[110] flex flex-col justify-end"
+      className="product-detail-sheet-root flex flex-col bg-white dark:bg-neutral-950"
+      style={SHEET_ROOT_STYLE}
       role="dialog"
       aria-modal="true"
       aria-labelledby="qr-product-detail-title"
     >
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden />
-      <div className="menu-sheet-panel relative flex max-h-[92vh] flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl dark:bg-neutral-950">
-        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-amber-200/80 dark:bg-amber-800" />
+      <header
+        className="sticky top-0 z-[10010] flex shrink-0 items-center justify-end border-b border-amber-100/90 bg-white px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] dark:border-amber-900/40 dark:bg-neutral-950"
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Schließen"
+          className="flex h-11 min-h-[44px] w-11 min-w-[44px] items-center justify-center rounded-full bg-amber-100 text-amber-950 transition-colors hover:bg-amber-200 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
+        >
+          <X className="h-6 w-6" strokeWidth={2.5} aria-hidden />
+        </button>
+      </header>
 
-        <div className="relative aspect-[4/3] max-h-[300px] w-full shrink-0 overflow-hidden">
-          <MenuProductImage
-            src={product.image}
-            alt={product.name}
-            section={product.section}
-            category={product.category}
-            className="h-full w-full"
-            emojiFallback
-          />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white transition hover:bg-black/55"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 px-5 py-4" style={SHEET_SCROLL_STYLE}>
+          <div className="relative mb-4 aspect-[4/3] max-h-[280px] w-full overflow-hidden rounded-2xl">
+            <MenuProductImage
+              src={product.image}
+              alt={product.name}
+              section={product.section}
+              category={product.category}
+              className="h-full w-full"
+              emojiFallback
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          </div>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4">
           {!product.canOrder ? (
             <p className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-800 dark:bg-red-950/40 dark:text-red-200">
               {product.unavailableLabel ?? "Ausverkauft — derzeit nicht bestellbar"}
@@ -196,7 +214,7 @@ export function QrProductDetailSheet({
                       type="button"
                       onClick={() => setSelectedVariantId(v.id)}
                       className={cn(
-                        "rounded-2xl border px-3 py-3 text-left transition active:scale-[0.98]",
+                        "rounded-2xl border px-3 py-3 text-left transition-colors",
                         active
                           ? "border-amber-500 bg-amber-50 ring-2 ring-amber-400/40 dark:bg-amber-900/25"
                           : "border-amber-100 bg-white hover:border-amber-300 dark:border-amber-900/30 dark:bg-neutral-900",
@@ -230,9 +248,9 @@ export function QrProductDetailSheet({
                       type="button"
                       onClick={() => toggleExtra(mod.id)}
                       className={cn(
-                        "rounded-2xl border px-3 py-2.5 text-left transition active:scale-[0.97]",
+                        "rounded-2xl border px-3 py-2.5 text-left transition-colors",
                         active
-                          ? "border-amber-500 bg-gradient-to-br from-amber-50 to-orange-50 ring-1 ring-amber-400/50 dark:from-amber-900/30 dark:to-orange-900/20"
+                          ? "border-amber-500 bg-amber-50 ring-1 ring-amber-400/50 dark:bg-amber-900/30"
                           : "border-amber-100 bg-white dark:border-amber-900/30 dark:bg-neutral-900",
                       )}
                     >
@@ -261,7 +279,7 @@ export function QrProductDetailSheet({
                     key={rec.id}
                     type="button"
                     onClick={() => onOpenProduct(rec)}
-                    className="w-28 shrink-0 overflow-hidden rounded-xl border border-amber-100 bg-white text-left shadow-sm transition hover:shadow-md active:scale-[0.97] dark:border-amber-900/30 dark:bg-neutral-900"
+                    className="w-28 shrink-0 overflow-hidden rounded-xl border border-amber-100 bg-white text-left shadow-sm transition-shadow hover:shadow-md dark:border-amber-900/30 dark:bg-neutral-900"
                   >
                     <div className="flex aspect-square items-center justify-center overflow-hidden bg-amber-50 dark:bg-neutral-800">
                       <MenuProductImage
@@ -307,7 +325,7 @@ export function QrProductDetailSheet({
               <button
                 type="button"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-amber-200 text-amber-800 transition active:scale-90 dark:border-amber-800"
+                className="flex h-11 min-h-[44px] w-11 min-w-[44px] items-center justify-center rounded-full border border-amber-200 text-amber-800 transition-colors dark:border-amber-800"
               >
                 <Minus className="h-4 w-4" />
               </button>
@@ -315,7 +333,7 @@ export function QrProductDetailSheet({
               <button
                 type="button"
                 onClick={() => setQuantity((q) => q + 1)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-600 text-white transition active:scale-90"
+                className="flex h-11 min-h-[44px] w-11 min-w-[44px] items-center justify-center rounded-full bg-amber-600 text-white transition-colors"
               >
                 <Plus className="h-4 w-4" />
               </button>
@@ -323,7 +341,7 @@ export function QrProductDetailSheet({
           </div>
         </div>
 
-        <div className="border-t border-amber-100 px-5 py-4 dark:border-amber-900/30">
+        <div className="shrink-0 border-t border-amber-100 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] dark:border-amber-900/30">
           {selectedVariant ? (
             <p className="mb-1 text-xs text-amber-800/60 dark:text-amber-400/60">
               {formatVariantLabel(selectedVariant)}
@@ -357,7 +375,7 @@ export function QrProductDetailSheet({
               })
               onClose()
             }}
-            className="w-full rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 py-4 text-center text-base font-bold text-white shadow-lg shadow-amber-600/25 transition hover:shadow-xl active:scale-[0.98] disabled:opacity-50"
+            className="w-full rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 py-4 text-center text-base font-bold text-white shadow-lg shadow-amber-600/25 transition-shadow hover:shadow-xl disabled:opacity-50"
           >
             {!product.canOrder
               ? product.unavailableLabel ?? "Ausverkauft"

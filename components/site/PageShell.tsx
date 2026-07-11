@@ -38,6 +38,7 @@ export function PageShell({
     return (
       <div
         id="main-content"
+        data-menu-page-root
         tabIndex={-1}
         className={cn(
           "menu-page-root relative scroll-mt-24 bg-[color:var(--lux-cream)] focus:outline-none dark:bg-neutral-950",

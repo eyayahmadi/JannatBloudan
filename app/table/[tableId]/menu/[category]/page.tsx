@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import { PageShell } from "@/components/site/PageShell"
@@ -29,12 +29,19 @@ export default function TableMenuCategoryPage() {
     offline,
     loadMenu,
     menuItems,
+    detailItemId,
   } = useQrTableMenu()
 
   const slug = String(category ?? "")
   const valid = isValidQrNavCategorySlug(slug)
   const navMeta = valid ? navCategoryFromSlug(slug) : undefined
   const block = valid ? getCategoryBlock(slug) : null
+
+  const blockFrozenRef = useRef(block)
+  if (!detailItemId) {
+    blockFrozenRef.current = block
+  }
+  const displayBlock = detailItemId ? blockFrozenRef.current : block
 
   useEffect(() => {
     if (!loading && !valid) {
@@ -103,24 +110,24 @@ export default function TableMenuCategoryPage() {
           </div>
         ) : loadError ? (
           <QrMenuEmptyState variant="error" onRetry={loadMenu} />
-        ) : !block || block.groups.every((g) => g.items.length === 0) ? (
+        ) : !displayBlock || displayBlock.groups.every((g) => g.items.length === 0) ? (
           <QrMenuEmptyState variant="category" />
         ) : (
           <div className="space-y-8">
             <MenuSubcategoryHeader
-              icon={block.icon}
-              labelDe={block.labelDe}
-              labelAr={block.labelAr}
+              icon={displayBlock.icon}
+              labelDe={displayBlock.labelDe}
+              labelAr={displayBlock.labelAr}
               variant="table"
-              drink={isQrDrinkSectionId(block.id)}
-              sweet={block.id === "qr-section-desserts"}
+              drink={isQrDrinkSectionId(displayBlock.id)}
+              sweet={displayBlock.id === "qr-section-desserts"}
               premium
             />
-            {block.groups.length === 1 && block.groups[0]?.key !== "other" ? (
-              <QrTableMenuProductGrid items={block.groups[0].items} />
+            {displayBlock.groups.length === 1 && displayBlock.groups[0]?.key !== "other" ? (
+              <QrTableMenuProductGrid items={displayBlock.groups[0].items} />
             ) : (
               <div className="space-y-10">
-                {block.groups.map((group) => (
+                {displayBlock.groups.map((group) => (
                   <div key={group.key} className="space-y-4">
                     <MenuSubcategoryHeader
                       icon={group.icon}
@@ -128,8 +135,8 @@ export default function TableMenuCategoryPage() {
                       labelAr={group.labelAr}
                       subtitle={group.subtitle}
                       variant="table"
-                      drink={isQrDrinkSectionId(block.id)}
-                      sweet={block.id === "qr-section-desserts"}
+                      drink={isQrDrinkSectionId(displayBlock.id)}
+                      sweet={displayBlock.id === "qr-section-desserts"}
                       premium
                     />
                     <QrTableMenuProductGrid items={group.items} />

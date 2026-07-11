@@ -160,15 +160,45 @@ html.menu-modal-open body {
   overflow: hidden !important;
 }
 
-html.menu-modal-open [data-menu-background] {
-  pointer-events: none;
+html.menu-modal-open [data-menu-page-root],
+html.menu-product-sheet-open [data-menu-page-root] {
   overflow: hidden !important;
+  pointer-events: none !important;
+  touch-action: none !important;
+}
+
+html.menu-modal-open [data-menu-background],
+html.menu-product-sheet-open [data-menu-background] {
+  pointer-events: none !important;
+  overflow: hidden !important;
+  touch-action: none !important;
+}
+
+html.menu-product-sheet-open [data-menu-page-root],
+html.menu-product-sheet-open [data-menu-background],
+html.menu-product-sheet-open .menu-page-root,
+html.menu-product-sheet-open header,
+html.menu-product-sheet-open .menu-product-card {
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  perspective: none !important;
+  will-change: auto !important;
 }
 
 html.menu-modal-open .menu-product-card,
 html.menu-modal-open [data-menu-product-id] {
   animation: none !important;
   transition: none !important;
+}
+
+.product-detail-sheet-root {
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  will-change: auto !important;
 }
 
 @keyframes menu-sheet-in {
@@ -182,7 +212,6 @@ html.menu-modal-open [data-menu-product-id] {
 
 .menu-sheet-panel {
   animation: menu-sheet-in 0.28s ease-out;
-  will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {

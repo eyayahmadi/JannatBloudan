@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect } from "react"
-import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock"
+import { useProductSheetLock } from "@/lib/hooks/useProductSheetLock"
 import { registerMenuModalOpen } from "@/lib/menu/menu-modal-guard"
 
-/** Portal modals: lock scroll + pause menu background refresh. */
+/** Portal product sheets: lock scroll + pause menu background refresh. */
 export function useMenuModalLifecycle(open: boolean) {
-  useBodyScrollLock(open)
+  useProductSheetLock(open)
 
   useEffect(() => {
     if (!open) return

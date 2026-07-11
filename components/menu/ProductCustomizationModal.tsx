@@ -122,26 +122,40 @@ export function ProductCustomizationModal({
     })
   }
 
+  const sheetRootStyle = {
+    position: "fixed" as const,
+    inset: 0,
+    width: "100%",
+    height: "100dvh",
+    zIndex: 9999,
+  }
+
+  const sheetScrollStyle = {
+    overflowY: "auto" as const,
+    overscrollBehavior: "contain" as const,
+    WebkitOverflowScrolling: "touch" as const,
+  }
+
   return createPortal(
     <div
-      className="fixed inset-0 z-[110] flex items-end justify-center sm:items-center"
+      className="product-detail-sheet-root flex flex-col bg-white dark:bg-neutral-950 sm:bg-neutral-950/70"
+      style={sheetRootStyle}
       role="dialog"
       aria-modal="true"
     >
-      <div className="absolute inset-0 bg-black/55" onClick={handleClose} aria-hidden />
       <div
         className={cn(
-          "menu-sheet-panel relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl shadow-2xl sm:rounded-3xl",
-          isTable ? "bg-white dark:bg-neutral-900" : "border border-border bg-background",
+          "relative flex min-h-0 flex-1 flex-col sm:mx-auto sm:my-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-3xl sm:shadow-2xl",
+          isTable ? "bg-white dark:bg-neutral-900" : "border border-border bg-background sm:border",
         )}
       >
-        <div
+        <header
           className={cn(
-            "flex items-start justify-between gap-3 border-b px-5 py-4",
-            isTable ? "border-amber-100 dark:border-amber-900/30" : "border-border",
+            "sticky top-0 z-[10010] flex shrink-0 items-center justify-between gap-3 border-b px-5 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]",
+            isTable ? "border-amber-100 bg-white dark:border-amber-900/30 dark:bg-neutral-900" : "border-border bg-background",
           )}
         >
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h2
               className={cn(
                 "text-lg font-bold leading-tight",
@@ -155,41 +169,24 @@ export function ProductCustomizationModal({
                 {product.name_ar}
               </p>
             ) : null}
-            {hasVariants && selectedVariant ? (
-              <p
-                className={cn(
-                  "mt-1 text-sm font-semibold",
-                  isTable ? "text-amber-700 dark:text-amber-400" : "text-foreground",
-                )}
-              >
-                {unitPrice.toFixed(2)} €
-              </p>
-            ) : hasExtras ? (
-              <p
-                className={cn(
-                  "mt-1 text-sm",
-                  isTable ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground",
-                )}
-              >
-                Base {product.price.toFixed(2)} €
-              </p>
-            ) : null}
           </div>
           <button
             type="button"
             onClick={handleClose}
+            aria-label="Schließen"
             className={cn(
-              "shrink-0 rounded-full p-1.5 transition",
+              "flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full transition-colors",
               isTable
-                ? "text-amber-800 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
-                : "text-muted-foreground hover:bg-muted",
+                ? "bg-amber-100 text-amber-950 hover:bg-amber-200 dark:bg-neutral-800 dark:text-white"
+                : "bg-muted text-muted-foreground hover:bg-muted/80",
             )}
           >
-            <X className="h-5 w-5" />
+            <X className="h-6 w-6" strokeWidth={2.5} />
           </button>
-        </div>
+        </header>
 
-        <div className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-5 py-4">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-5 px-5 py-4" style={sheetScrollStyle}>
           {hasVariants ? (
             <div>
               <p
@@ -321,7 +318,7 @@ export function ProductCustomizationModal({
 
         <div
           className={cn(
-            "border-t px-5 py-4",
+            "shrink-0 border-t px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]",
             isTable ? "border-amber-100 dark:border-amber-900/30" : "border-border",
           )}
         >
@@ -358,6 +355,7 @@ export function ProductCustomizationModal({
           >
             {addLabel} — {lineTotal.toFixed(2)} €
           </Button>
+        </div>
         </div>
       </div>
     </div>,

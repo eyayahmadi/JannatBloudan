@@ -13,7 +13,7 @@ export function QrTableMenuShell() {
     oftenOrderedWith,
     detailItem,
     detailItemId,
-    setDetailItemId,
+    closeDetail,
     addLineToCart,
     openDetail,
     cart,
@@ -42,11 +42,11 @@ export function QrTableMenuShell() {
         catalog={detailItemId ? catalogFrozenRef.current : menuItems}
         oftenOrderedWith={detailItemId ? oftenFrozenRef.current : oftenOrderedWith}
         open={!!detailItemId}
-        onClose={() => setDetailItemId(null)}
+        onClose={closeDetail}
         onOpenProduct={openDetail}
         onConfirm={(payload) => {
           addLineToCart(payload)
-          setDetailItemId(null)
+          closeDetail()
         }}
       />
 

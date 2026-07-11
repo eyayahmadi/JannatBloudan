@@ -26,6 +26,7 @@ import {
   type MenuHomepageSectionsMap,
 } from "@/lib/menu/menu-homepage-sections"
 import { mapApiToQrMenuItem, mergeQrMenuItems } from "@/lib/menu/qr-menu-helpers"
+import { captureProductSheetScroll } from "@/lib/menu/product-sheet-scroll"
 import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
 import { isMenuModalBlockingRefresh } from "@/lib/menu/menu-modal-guard"
 import { isStableQrMenuPayload } from "@/lib/menu/menu-poll-stable"
@@ -84,6 +85,7 @@ type QrTableMenuContextValue = {
   getInCartQty: (item: QrMenuItem) => number
   handleQuickAdd: (item: QrMenuItem) => void
   openDetail: (item: QrMenuItem) => void
+  closeDetail: () => void
   increment: (lineId: string) => void
   decrement: (lineId: string) => void
   addLineToCart: (payload: {
@@ -270,15 +272,30 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
 
   const detailItem = detailItemId ? detailItemSnapshot : null
 
+  const closeDetail = useCallback(() => {
+    setDetailItemId(null)
+    setDetailItemSnapshot(null)
+  }, [])
+
   const setDetailItemIdWithSnapshot = useCallback((id: string | null) => {
     if (id === null) {
-      setDetailItemId(null)
-      setDetailItemSnapshot(null)
+      closeDetail()
       return
     }
     const item = menuItemsRef.current.find((p) => p.id === id) ?? null
-    if (item) setDetailItemSnapshot(item)
+    if (item) {
+      if (!detailItemIdRef.current) captureProductSheetScroll()
+      setDetailItemSnapshot(item)
+    }
     setDetailItemId(id)
+  }, [closeDetail])
+
+  const openDetail = useCallback((item: QrMenuItem) => {
+    if (!detailItemIdRef.current) {
+      captureProductSheetScroll()
+    }
+    setDetailItemSnapshot(item)
+    setDetailItemId(item.id)
   }, [])
 
   useEffect(() => {
@@ -347,11 +364,6 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
     },
     [addLineToCart],
   )
-
-  const openDetail = useCallback((item: QrMenuItem) => {
-    setDetailItemSnapshot(item)
-    setDetailItemId(item.id)
-  }, [])
 
   const handleToggleFavorite = useCallback((productId: string) => {
     setFavoriteIds(toggleQrFavorite(productId))
@@ -531,6 +543,7 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
       getInCartQty,
       handleQuickAdd,
       openDetail,
+      closeDetail,
       increment,
       decrement,
       addLineToCart,
@@ -567,6 +580,7 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
     getInCartQty,
     handleQuickAdd,
     openDetail,
+    closeDetail,
     increment,
     decrement,
     addLineToCart,
