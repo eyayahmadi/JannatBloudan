@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { memo, useEffect, useState } from "react"
 import { Radio, RefreshCw, Wifi } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -36,8 +36,12 @@ const META: Record<
   },
 }
 
-/** Pastille discrète indiquant l'état de la synchronisation temps réel. */
-export function RealtimeIndicator({ className }: { className?: string }) {
+/** Pastille discrète — dimensions fixes, pas d'animation layout. */
+export const RealtimeIndicator = memo(function RealtimeIndicator({
+  className,
+}: {
+  className?: string
+}) {
   const [status, setStatus] = useState<RealtimeConnectionStatus>("connecting")
 
   useEffect(() => {
@@ -51,25 +55,15 @@ export function RealtimeIndicator({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+        "inline-flex h-7 min-w-[6.75rem] shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-semibold",
         meta.className,
         className,
       )}
       title={`Synchronisation : ${meta.label}`}
     >
-      <span className="relative flex h-2 w-2">
-        {status === "live" ? (
-          <span
-            className={cn(
-              "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
-              meta.dot,
-            )}
-          />
-        ) : null}
-        <span className={cn("relative inline-flex h-2 w-2 rounded-full", meta.dot)} />
-      </span>
-      <Icon className="h-3 w-3" />
-      <span className="hidden sm:inline">{meta.label}</span>
+      <span className={cn("inline-flex h-2 w-2 shrink-0 rounded-full", meta.dot)} />
+      <Icon className="h-3 w-3 shrink-0" />
+      <span className="hidden truncate sm:inline">{meta.label}</span>
     </span>
   )
-}
+})

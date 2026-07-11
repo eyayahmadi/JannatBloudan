@@ -61,6 +61,7 @@ import {
 import { AIAgentBadge, type AgentContext } from "@/components/ai/AIAgentBadge"
 import { StationAvailabilityControl } from "@/components/stations/StationAvailabilityControl"
 import { ItemRefuseDialog } from "@/components/stations/ItemRefuseDialog"
+import { StationBoardToast } from "@/components/stations/StationBoardToast"
 import { OrderProductName } from "@/components/orders/OrderProductName"
 
 const STATION_TO_AGENT: Record<Station, AgentContext> = {
@@ -786,13 +787,17 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
     }
   }, [orders])
 
-  const activeCount = visibleItems.filter(
-    (x) =>
-      x.item.item_status !== "ready" &&
-      x.item.item_status !== "refused" &&
-      x.item.item_status !== "waste" &&
-      x.item.item_status !== "replaced",
-  ).length
+  const activeCount = useMemo(
+    () =>
+      visibleItems.filter(
+        (x) =>
+          x.item.item_status !== "ready" &&
+          x.item.item_status !== "refused" &&
+          x.item.item_status !== "waste" &&
+          x.item.item_status !== "replaced",
+      ).length,
+    [visibleItems],
+  )
 
   // Toast nouvelle commande + auto-print
   useEffect(() => {
@@ -978,10 +983,53 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
     [stationAvail, station, orders, refuseOrderItem, addNotification, meta.emoji, stationLabel, t],
   )
 
-  const header = (
+  const header = layout === "workspace" ? (
+    <div className="shrink-0 border-b border-slate-200/80 bg-white/90 px-3 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 sm:px-4">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <RealtimeIndicator />
+        <Badge
+          variant="secondary"
+          className={cn(
+            "hidden text-xs font-semibold sm:inline-flex",
+            `bg-gradient-to-r ${meta.gradient} border-0 text-white`,
+          )}
+        >
+          {meta.emoji} {stationLabel}
+        </Badge>
+        <StationAvailabilityControl station={station} />
+        <Badge variant="outline" className="hidden text-xs md:inline-flex">
+          {activeCount} {t("kitchen.orderNumber", "items").toLowerCase()}
+        </Badge>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setBulkOpen(true)}
+          className="gap-1.5 border-red-300 text-red-700 hover:bg-red-600 hover:text-white dark:border-red-800 dark:text-red-300"
+          title={t("stations.action.refuseAll", "Refuser toute la file")}
+        >
+          <XOctagon className="h-4 w-4" />
+          <span className="hidden lg:inline">{t("stations.action.refuseAll", "Refuser tout")}</span>
+        </Button>
+        <Button
+          size="sm"
+          variant={autoPrint ? "default" : "outline"}
+          onClick={toggleAutoPrint}
+          className={cn("gap-1.5", autoPrint && "bg-emerald-600 text-white hover:bg-emerald-700")}
+          title={
+            autoPrint
+              ? t("kitchen.autoPrintOn", "Auto-impression ON")
+              : t("kitchen.autoPrintOff", "Auto-impression OFF")
+          }
+        >
+          {autoPrint ? <PrinterCheck className="h-4 w-4" /> : <Printer className="h-4 w-4" />}
+          <span className="hidden lg:inline">{t("kitchen.autoPrint", "Auto-impression")}</span>
+        </Button>
+      </div>
+    </div>
+  ) : (
     <SiteHeader
-          backHref={layout === "workspace" ? undefined : "/admin"}
-          backLabel={layout === "workspace" ? undefined : t("nav.admin", "Admin")}
+          backHref="/admin"
+          backLabel={t("nav.admin", "Admin")}
           hideMainNav
           trailing={
             <div className="flex items-center gap-2">
@@ -1044,14 +1092,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
     <>
         {header}
 
-        {toast && (
-          <div className="fixed end-4 top-20 z-[100] animate-in slide-in-from-right fade-in rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 shadow-lg dark:border-amber-700 dark:bg-amber-950">
-            <div className="flex items-center gap-2 text-sm font-semibold text-amber-900 dark:text-amber-100">
-              <AlertCircle className="h-5 w-5 text-amber-500" />
-              {toast}
-            </div>
-          </div>
-        )}
+        <StationBoardToast message={toast} />
 
         {/* Station hero */}
         <div
@@ -1073,7 +1114,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
                   {t("stations.mins", "min")}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="text-right tabular-nums">
                 <p className="text-3xl font-bold leading-none">{activeCount}</p>
                 <p className="text-[10px] uppercase tracking-wide opacity-90">
                   {t("common.total", "Total")}

@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { memo, useEffect, useState } from "react"
 import { Bell, Package, ChefHat, AlertTriangle, Calendar, CreditCard, Info, X } from "lucide-react"
 import { useNotifications, type NotificationType } from "@/lib/hooks/useNotifications"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 const typeConfig: Record<NotificationType, { icon: typeof Bell; color: string; bg: string }> = {
   new_order: { icon: Package, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950/40" },
@@ -14,7 +15,50 @@ const typeConfig: Record<NotificationType, { icon: typeof Bell; color: string; b
   info: { icon: Info, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/40" },
 }
 
-export function NotificationCenter() {
+/** Fixed-size badge — prevents header layout shift when count changes. */
+const NotificationUnreadBadge = memo(function NotificationUnreadBadge({
+  count,
+}: {
+  count: number
+}) {
+  const label = count > 9 ? "9+" : count > 0 ? String(count) : ""
+
+  return (
+    <span
+      className={cn(
+        "pointer-events-none absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold leading-none transition-opacity",
+        count > 0 ? "bg-red-500 text-white opacity-100" : "bg-transparent text-transparent opacity-0",
+      )}
+      aria-hidden={count <= 0}
+    >
+      {label || "0"}
+    </span>
+  )
+})
+
+const NotificationListAge = memo(function NotificationListAge({
+  timestamp,
+}: {
+  timestamp: string
+}) {
+  const [ageLabel, setAgeLabel] = useState("")
+
+  useEffect(() => {
+    const tick = () => {
+      const age = Math.round((Date.now() - new Date(timestamp).getTime()) / 60000)
+      setAgeLabel(age < 1 ? "maintenant" : age < 60 ? `${age}m` : `${Math.round(age / 60)}h`)
+    }
+    tick()
+    const iv = window.setInterval(tick, 60_000)
+    return () => window.clearInterval(iv)
+  }, [timestamp])
+
+  return (
+    <p className="mt-1 text-[10px] text-amber-700/50 dark:text-amber-400/50">{ageLabel}</p>
+  )
+})
+
+export const NotificationCenter = memo(function NotificationCenter() {
   const { notifications, unreadCount, markAllRead, dismiss, isAdminAudience } = useNotifications()
   const [open, setOpen] = useState(false)
 
@@ -23,21 +67,20 @@ export function NotificationCenter() {
       <button
         type="button"
         onClick={() => {
-          setOpen((v) => !v)
-          if (!open && unreadCount > 0) markAllRead()
+          setOpen((v) => {
+            const next = !v
+            if (next && unreadCount > 0) markAllRead()
+            return next
+          })
         }}
-        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--lux-gold)]/25 bg-white/90 text-amber-900 shadow-sm backdrop-blur-sm transition hover:border-[color:var(--lux-gold)]/40 hover:bg-white hover:shadow-md dark:border-[color:var(--lux-gold)]/30 dark:bg-zinc-900/90 dark:text-amber-200 dark:hover:bg-zinc-900"
-        aria-label="Notifications"
+        className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--lux-gold)]/25 bg-white/90 text-amber-900 shadow-sm backdrop-blur-sm transition hover:border-[color:var(--lux-gold)]/40 hover:bg-white hover:shadow-md dark:border-[color:var(--lux-gold)]/30 dark:bg-zinc-900/90 dark:text-amber-200 dark:hover:bg-zinc-900"
+        aria-label={unreadCount > 0 ? `${unreadCount} notifications` : "Notifications"}
       >
-        <Bell className="h-4 w-4" />
-        {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
+        <Bell className="h-4 w-4 shrink-0" />
+        <NotificationUnreadBadge count={unreadCount} />
       </button>
 
-      {open && (
+      {open ? (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-12 z-50 w-80 max-h-96 overflow-y-auto rounded-2xl border border-amber-200/50 bg-white shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-stone-900">
@@ -53,11 +96,11 @@ export function NotificationCenter() {
                   </span>
                 ) : null}
               </div>
-              {notifications.length > 0 && (
+              {notifications.length > 0 ? (
                 <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={markAllRead}>
                   Tout lire
                 </Button>
-              )}
+              ) : null}
             </div>
 
             {notifications.length === 0 ? (
@@ -69,13 +112,11 @@ export function NotificationCenter() {
                 {notifications.slice(0, 20).map((n) => {
                   const cfg = typeConfig[n.type] || typeConfig.info
                   const Icon = cfg.icon
-                  const age = Math.round((Date.now() - new Date(n.timestamp).getTime()) / 60000)
-                  const ageLabel = age < 1 ? "maintenant" : age < 60 ? `${age}m` : `${Math.round(age / 60)}h`
 
                   return (
                     <div
                       key={n.id}
-                      className={`flex items-start gap-3 px-4 py-3 transition ${!n.read ? cfg.bg : "hover:bg-amber-50/50 dark:hover:bg-white/5"}`}
+                      className={`flex items-start gap-3 px-4 py-3 ${!n.read ? cfg.bg : "hover:bg-amber-50/50 dark:hover:bg-white/5"}`}
                     >
                       <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${cfg.bg}`}>
                         <Icon className={`h-4 w-4 ${cfg.color}`} />
@@ -83,12 +124,12 @@ export function NotificationCenter() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-amber-950 dark:text-amber-100">{n.title}</p>
                         <p className="text-xs text-amber-800/70 dark:text-amber-300/70 line-clamp-2">{n.message}</p>
-                        <p className="mt-1 text-[10px] text-amber-700/50 dark:text-amber-400/50">{ageLabel}</p>
+                        <NotificationListAge timestamp={n.timestamp} />
                       </div>
                       <button
                         type="button"
                         onClick={() => dismiss(n.id)}
-                        className="shrink-0 rounded p-1 text-amber-700/40 transition hover:bg-amber-100 hover:text-amber-800 dark:text-amber-400/40 dark:hover:bg-white/10"
+                        className="shrink-0 rounded p-1 text-amber-700/40 hover:bg-amber-100 hover:text-amber-800 dark:text-amber-400/40 dark:hover:bg-white/10"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -99,7 +140,7 @@ export function NotificationCenter() {
             )}
           </div>
         </>
-      )}
+      ) : null}
     </div>
   )
-}
+})
