@@ -115,6 +115,88 @@ export function bumpItemVersion(item: OrderItem, now: string): OrderItem {
   }
 }
 
+function orderItemFieldsEqual(a: OrderItem, b: OrderItem): boolean {
+  return (
+    a.id === b.id &&
+    a.name === b.name &&
+    (a.name_ar ?? null) === (b.name_ar ?? null) &&
+    a.quantity === b.quantity &&
+    (a.notes ?? null) === (b.notes ?? null) &&
+    a.station === b.station &&
+    a.item_status === b.item_status &&
+    (a.unit_price ?? null) === (b.unit_price ?? null) &&
+    (a.refusal_reason_code ?? null) === (b.refusal_reason_code ?? null) &&
+    (a.refusal_note ?? null) === (b.refusal_note ?? null) &&
+    (a.refused_at ?? null) === (b.refused_at ?? null) &&
+    (a.started_at ?? null) === (b.started_at ?? null) &&
+    (a.ready_at ?? null) === (b.ready_at ?? null) &&
+    (a.accepted_at ?? null) === (b.accepted_at ?? null) &&
+    (a.served_at ?? null) === (b.served_at ?? null) &&
+    (a.status_version ?? 0) === (b.status_version ?? 0) &&
+    (a.status_updated_at ?? null) === (b.status_updated_at ?? null) &&
+    (a.billable ?? true) === (b.billable ?? true)
+  )
+}
+
+function kitchenOrderFieldsEqual(a: KitchenOrder, b: KitchenOrder): boolean {
+  if (
+    a.id !== b.id ||
+    a.order_number !== b.order_number ||
+    a.table_number !== b.table_number ||
+    a.order_type !== b.order_type ||
+    a.status !== b.status ||
+    a.created_at !== b.created_at ||
+    a.updated_at !== b.updated_at ||
+    (a.customer_name ?? null) !== (b.customer_name ?? null) ||
+    a.total !== b.total ||
+    a.items.length !== b.items.length
+  ) {
+    return false
+  }
+  for (let i = 0; i < a.items.length; i++) {
+    if (!orderItemFieldsEqual(a.items[i], b.items[i])) return false
+  }
+  return true
+}
+
+function pickNewerItemShell(local: OrderItem, incoming: OrderItem): OrderItem {
+  const localTs = itemStatusTimestamp(local)
+  const incomingTs = itemStatusTimestamp(incoming)
+  const localRank = linearStatusRank(local.item_status)
+  const incomingRank = linearStatusRank(incoming.item_status)
+
+  if (incomingTs > localTs) return incoming
+  if (incomingRank !== null && localRank !== null && incomingRank > localRank) return incoming
+  if (
+    incomingTs === localTs &&
+    (incoming.status_version ?? 0) > (local.status_version ?? 0)
+  ) {
+    return incoming
+  }
+  return local
+}
+
+function coalesceItemFields(local: OrderItem, incoming: OrderItem): OrderItem {
+  const name = String(incoming.name ?? "").trim() || local.name
+  const name_ar =
+    String(incoming.name_ar ?? "").trim() || String(local.name_ar ?? "").trim() || undefined
+  const quantity = Number(incoming.quantity) > 0 ? incoming.quantity : local.quantity
+  return {
+    ...pickNewerItemShell(local, incoming),
+    name,
+    name_ar,
+    quantity,
+    notes: incoming.notes?.trim() ? incoming.notes : local.notes,
+    unit_price: incoming.unit_price ?? local.unit_price,
+    station: incoming.station ?? local.station,
+    status_version: Math.max(local.status_version ?? 0, incoming.status_version ?? 0),
+    status_updated_at:
+      itemStatusTimestamp(incoming) >= itemStatusTimestamp(local)
+        ? incoming.status_updated_at ?? local.status_updated_at
+        : local.status_updated_at,
+  }
+}
+
 type DbStationItemRow = {
   id: string
   station_status?: string | null
@@ -265,43 +347,129 @@ export function mergeOrderItems(
           ? `pending_mutation_from_${source}`
           : `mutation_grace_from_${source}`,
       })
-      byId.set(local.id, {
-        ...local,
-        name: String(local.name ?? "").trim() || String(existing.name ?? "").trim() || local.name,
-        name_ar:
-          String(local.name_ar ?? "").trim() || String(existing.name_ar ?? "").trim() || undefined,
-      })
+      const kept = coalesceItemFields(local, existing)
+      const locked: OrderItem = {
+        ...kept,
+        item_status: local.item_status,
+        status_version: local.status_version,
+        status_updated_at: local.status_updated_at,
+        accepted_at: local.accepted_at ?? kept.accepted_at,
+        started_at: local.started_at ?? kept.started_at,
+        ready_at: local.ready_at ?? kept.ready_at,
+        served_at: local.served_at ?? kept.served_at,
+        refused_at: local.refused_at ?? kept.refused_at,
+      }
+      byId.set(local.id, orderItemFieldsEqual(local, locked) ? local : locked)
       continue
     }
 
     if (shouldAcceptIncomingItem(local, existing, source)) {
-      const version = Math.max(local.status_version ?? 0, existing.status_version ?? 0)
-      const mergedName = String(existing.name ?? "").trim() || local.name
-      const mergedNameAr =
-        String(existing.name_ar ?? "").trim() || String(local.name_ar ?? "").trim() || undefined
-      byId.set(local.id, {
-        ...existing,
-        name: mergedName,
-        name_ar: mergedNameAr,
-        status_version: version,
-        status_updated_at:
-          itemStatusTimestamp(existing) >= itemStatusTimestamp(local)
-            ? existing.status_updated_at ?? local.status_updated_at
-            : local.status_updated_at,
-      })
+      const merged = coalesceItemFields(local, existing)
+      byId.set(local.id, orderItemFieldsEqual(local, merged) ? local : merged)
     } else {
-      byId.set(local.id, {
-        ...local,
-        name_ar: String(local.name_ar ?? "").trim() || String(existing.name_ar ?? "").trim() || undefined,
-      })
+      const merged = coalesceItemFields(local, existing)
+      byId.set(local.id, orderItemFieldsEqual(local, merged) ? local : merged)
     }
   }
 
-  return Array.from(byId.values())
+  const result = Array.from(byId.values())
+  if (
+    result.length === localItems.length &&
+    localItems.every((local, idx) => {
+      const merged = result.find((it) => it.id === local.id)
+      return merged != null && orderItemFieldsEqual(local, merged)
+    })
+  ) {
+    return localItems
+  }
+
+  return result
 }
 
-function hasPendingItems(order: KitchenOrder, pending: ReadonlyMap<string, PendingItemMutation>) {
-  return order.items.some((it) => pending.has(it.id))
+
+export function applyItemPatchToOrders(
+  orders: KitchenOrder[],
+  orderId: string,
+  itemId: string,
+  patch: Partial<OrderItem>,
+  aggregateStatus: (items: OrderItem[]) => KitchenOrder["status"],
+  recomputeTotal: (order: KitchenOrder, fallback: number) => number,
+): KitchenOrder[] {
+  const orderIdx = orders.findIndex((o) => o.id === orderId)
+  if (orderIdx === -1) return orders
+
+  const order = orders[orderIdx]
+  const itemIdx = order.items.findIndex((it) => it.id === itemId)
+  if (itemIdx === -1) return orders
+
+  const patched = { ...order.items[itemIdx], ...patch }
+  if (orderItemFieldsEqual(order.items[itemIdx], patched)) return orders
+
+  const items = order.items.map((it, idx) => (idx === itemIdx ? patched : it))
+  const updated: KitchenOrder = {
+    ...order,
+    items,
+    status: aggregateStatus(items),
+    updated_at: new Date().toISOString(),
+  }
+  const withTotal = { ...updated, total: recomputeTotal(updated, order.total) }
+  if (kitchenOrderFieldsEqual(order, withTotal)) return orders
+
+  const next = [...orders]
+  next[orderIdx] = withTotal
+  return next
+}
+
+export function applyServerItemToOrders(
+  orders: KitchenOrder[],
+  orderId: string,
+  serverItem: OrderItem,
+  minVersion: number,
+  aggregateStatus: (items: OrderItem[]) => KitchenOrder["status"],
+  recomputeTotal: (order: KitchenOrder, fallback: number) => number,
+): KitchenOrder[] {
+  const orderIdx = orders.findIndex((o) => o.id === orderId)
+  if (orderIdx === -1) return orders
+
+  const order = orders[orderIdx]
+  const itemIdx = order.items.findIndex((it) => it.id === serverItem.id)
+  if (itemIdx === -1) return orders
+
+  const current = order.items[itemIdx]
+  const version = Math.max(minVersion, serverItem.status_version ?? 0, current.status_version ?? 0)
+  const safeStatus = isBackwardStatusTransition(current.item_status, serverItem.item_status)
+    ? current.item_status
+    : serverItem.item_status
+
+  const merged: OrderItem = {
+    ...current,
+    ...serverItem,
+    item_status: safeStatus,
+    name: String(serverItem.name ?? "").trim() || current.name,
+    name_ar: String(serverItem.name_ar ?? "").trim() || current.name_ar,
+    quantity: Number(serverItem.quantity) > 0 ? serverItem.quantity : current.quantity,
+    notes: serverItem.notes?.trim() ? serverItem.notes : current.notes,
+    unit_price: serverItem.unit_price ?? current.unit_price,
+    station: serverItem.station ?? current.station,
+    status_version: version,
+    status_updated_at: serverItem.status_updated_at ?? current.status_updated_at,
+  }
+
+  if (orderItemFieldsEqual(current, merged)) return orders
+
+  const items = order.items.map((it, idx) => (idx === itemIdx ? merged : it))
+  const updated: KitchenOrder = {
+    ...order,
+    items,
+    status: aggregateStatus(items),
+    updated_at: new Date().toISOString(),
+  }
+  const withTotal = { ...updated, total: recomputeTotal(updated, order.total) }
+  if (kitchenOrderFieldsEqual(order, withTotal)) return orders
+
+  const next = [...orders]
+  next[orderIdx] = withTotal
+  return next
 }
 
 export function mergeKitchenOrders(
@@ -315,21 +483,24 @@ export function mergeKitchenOrders(
   const incomingById = new Map(incoming.map((o) => [o.id, o]))
   const allIds = new Set([...localById.keys(), ...incomingById.keys()])
 
-  const merged: KitchenOrder[] = []
+  const mergedById = new Map<string, KitchenOrder>()
 
   for (const id of allIds) {
     const localOrder = localById.get(id)
     const incomingOrder = incomingById.get(id)
 
     if (!localOrder && incomingOrder) {
-      merged.push(incomingOrder)
+      mergedById.set(id, incomingOrder)
       continue
     }
 
     if (localOrder && !incomingOrder) {
-      if (!isLikelyOrderUuid(id) || hasPendingItems(localOrder, pending)) {
-        merged.push(localOrder)
-      }
+      // Never drop a known local order because a poll/realtime payload omitted it.
+      mergedById.set(id, localOrder)
+      kdsSyncLog("ignored_stale", {
+        orderId: id,
+        reason: `keep_local_missing_from_${source}`,
+      })
       continue
     }
 
@@ -346,78 +517,48 @@ export function mergeKitchenOrders(
       const incomingUpdated = new Date(incomingOrder.updated_at).getTime()
       const shell = incomingUpdated >= localUpdated ? incomingOrder : localOrder
 
-      merged.push({
+      const next: KitchenOrder = {
         ...shell,
         items,
         updated_at:
           incomingUpdated >= localUpdated
             ? incomingOrder.updated_at
             : localOrder.updated_at,
-      })
+      }
+
+      mergedById.set(
+        id,
+        kitchenOrderFieldsEqual(localOrder, next) ? localOrder : next,
+      )
     }
   }
 
-  return merged.sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  )
-}
+  // Preserve local board order; append genuinely new orders from server.
+  const result: KitchenOrder[] = []
+  const seen = new Set<string>()
 
-export function applyItemPatchToOrders(
-  orders: KitchenOrder[],
-  orderId: string,
-  itemId: string,
-  patch: Partial<OrderItem>,
-  aggregateStatus: (items: OrderItem[]) => KitchenOrder["status"],
-  recomputeTotal: (order: KitchenOrder, fallback: number) => number,
-): KitchenOrder[] {
-  return orders.map((order) => {
-    if (order.id !== orderId) return order
-    const items = order.items.map((it) => (it.id === itemId ? { ...it, ...patch } : it))
-    const updated: KitchenOrder = {
-      ...order,
-      items,
-      status: aggregateStatus(items),
-      updated_at: new Date().toISOString(),
-    }
-    return { ...updated, total: recomputeTotal(updated, order.total) }
-  })
-}
+  for (const localOrder of local) {
+    const merged = mergedById.get(localOrder.id)
+    if (!merged) continue
+    result.push(merged)
+    seen.add(localOrder.id)
+  }
 
-export function applyServerItemToOrders(
-  orders: KitchenOrder[],
-  orderId: string,
-  serverItem: OrderItem,
-  minVersion: number,
-  aggregateStatus: (items: OrderItem[]) => KitchenOrder["status"],
-  recomputeTotal: (order: KitchenOrder, fallback: number) => number,
-): KitchenOrder[] {
-  return orders.map((order) => {
-    if (order.id !== orderId) return order
-    const items = order.items.map((it) => {
-      if (it.id !== serverItem.id) return it
-      const version = Math.max(minVersion, serverItem.status_version ?? 0, it.status_version ?? 0)
-      const serverName = String(serverItem.name ?? "").trim()
-      const serverNameAr = String(serverItem.name_ar ?? "").trim()
-      const serverQty = Number(serverItem.quantity) || 0
-      return {
-        ...it,
-        ...serverItem,
-        name: serverName || it.name,
-        name_ar: serverNameAr || it.name_ar,
-        quantity: serverQty > 0 ? serverQty : it.quantity,
-        notes: serverItem.notes?.trim() ? serverItem.notes : it.notes,
-        unit_price: serverItem.unit_price ?? it.unit_price,
-        station: serverItem.station ?? it.station,
-        status_version: version,
-        status_updated_at: serverItem.status_updated_at ?? it.status_updated_at,
-      }
-    })
-    const updated: KitchenOrder = {
-      ...order,
-      items,
-      status: aggregateStatus(items),
-      updated_at: new Date().toISOString(),
+  for (const incomingOrder of incoming) {
+    if (seen.has(incomingOrder.id)) continue
+    const merged = mergedById.get(incomingOrder.id)
+    if (merged) {
+      result.unshift(merged)
+      seen.add(incomingOrder.id)
     }
-    return { ...updated, total: recomputeTotal(updated, order.total) }
-  })
+  }
+
+  if (
+    result.length === local.length &&
+    result.every((order, idx) => order === local[idx])
+  ) {
+    return local
+  }
+
+  return result
 }

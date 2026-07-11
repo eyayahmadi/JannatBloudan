@@ -128,6 +128,10 @@ export function mapDbRowsToKitchenOrders(
         served_at: it.served_at ?? undefined,
         accepted_at: it.accepted_at ?? undefined,
         status_updated_at: statusUpdatedAt,
+        status_version: Math.max(
+          0,
+          ...timestamps.map((v) => new Date(v).getTime()).filter(Number.isFinite),
+        ),
       }
     })
 

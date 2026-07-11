@@ -3,7 +3,7 @@
  * les consommateurs de useRealtimeOrders (StationBoard, workflow, serveur, etc.).
  */
 
-import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
+import { onRealtimeRefresh, scopeMatches, getRealtimeStatus } from "@/lib/realtime/bus"
 import {
   isBillableItemStatus,
   type ItemStatus,
@@ -30,8 +30,10 @@ import type {
 
 const STORAGE_KEY = "jb-realtime-orders"
 const LIVE_SYNC_MS = 4000
-const MUTATION_GRACE_MS = 6000
-const PULL_SUPPRESS_MS = 1200
+const LIVE_SYNC_FALLBACK_MS = 30000
+const MUTATION_GRACE_MS = 8000
+const PULL_SUPPRESS_MS = 2500
+const REALTIME_DEBOUNCE_MS = 500
 
 type StoreListener = () => void
 
@@ -129,6 +131,8 @@ class RealtimeOrdersStore {
   private suppressPullUntil = 0
   private lastEvent: string | null = null
   private lastEventListeners = new Set<StoreListener>()
+  private realtimeDebounceTimer: ReturnType<typeof setTimeout> | null = null
+  private pollIntervalId: number | null = null
 
   subscribe = (listener: StoreListener): (() => void) => {
     this.listeners.add(listener)
@@ -165,13 +169,16 @@ class RealtimeOrdersStore {
   }
 
   private setOrders(updater: (prev: KitchenOrder[]) => KitchenOrder[]) {
-    this.orders = updater(this.orders)
+    const next = updater(this.orders)
+    if (next === this.orders) return
+    this.orders = next
     persistOrders(this.orders)
     this.emit()
   }
 
   private beginPending(mutation: PendingItemMutation) {
     this.pendingMutations.set(mutation.itemId, mutation)
+    this.suppressPullUntil = Date.now() + PULL_SUPPRESS_MS
     kdsSyncLog("action_start", {
       itemId: mutation.itemId,
       orderId: mutation.orderId,
@@ -193,15 +200,17 @@ class RealtimeOrdersStore {
     serverOrders: KitchenOrder[],
     source: "polling" | "realtime" | "storage",
   ) {
-    this.setOrders((prev) =>
-      mergeKitchenOrders(
-        prev,
-        serverOrders,
-        this.pendingMutations,
-        source,
-        this.mutationGraceUntil,
-      ),
+    const merged = mergeKitchenOrders(
+      this.orders,
+      serverOrders,
+      this.pendingMutations,
+      source,
+      this.mutationGraceUntil,
     )
+    if (merged === this.orders) return
+    this.orders = merged
+    persistOrders(this.orders)
+    this.emit()
   }
 
   private ensureSync() {
@@ -213,6 +222,10 @@ class RealtimeOrdersStore {
 
     const doPull = async (source: "polling" | "realtime") => {
       if (this.syncCancelled) return
+      if (this.pendingMutations.size > 0) {
+        kdsSyncLog(source, { reason: "pull_skipped_pending_mutation" })
+        return
+      }
       if (Date.now() < this.suppressPullUntil) {
         kdsSyncLog(source, { reason: "pull_suppressed_after_mutation" })
         return
@@ -250,28 +263,39 @@ class RealtimeOrdersStore {
     }
 
     void pull("polling")
-    const intervalId = window.setInterval(() => void pull("polling"), LIVE_SYNC_MS)
-    const unsub = onRealtimeRefresh((scope) => {
-      if (scopeMatches("orders", scope)) void pull("realtime")
-    })
 
-    const storageHandler = (e: StorageEvent) => {
-      if (e.key !== STORAGE_KEY || !e.newValue) return
-      try {
-        const incoming = JSON.parse(e.newValue) as KitchenOrder[]
-        this.mergeFromServer(incoming, "storage")
-      } catch {
-        /* ignore */
+    const schedulePolling = () => {
+      if (this.pollIntervalId != null) {
+        clearInterval(this.pollIntervalId)
       }
+      const interval =
+        getRealtimeStatus() === "live" ? LIVE_SYNC_FALLBACK_MS : LIVE_SYNC_MS
+      this.pollIntervalId = window.setInterval(() => void pull("polling"), interval)
     }
-    window.addEventListener("storage", storageHandler)
+
+    schedulePolling()
+
+    const unsub = onRealtimeRefresh((scope) => {
+      if (!scopeMatches("orders", scope)) return
+      if (this.pendingMutations.size > 0) {
+        kdsSyncLog("realtime", { reason: "refresh_skipped_pending_mutation" })
+        return
+      }
+      if (this.realtimeDebounceTimer) {
+        clearTimeout(this.realtimeDebounceTimer)
+      }
+      this.realtimeDebounceTimer = setTimeout(() => {
+        this.realtimeDebounceTimer = null
+        void pull("realtime")
+      }, REALTIME_DEBOUNCE_MS)
+    })
 
     const prevCleanup = this.cleanupSync
     this.cleanupSync = () => {
       this.syncCancelled = true
-      window.clearInterval(intervalId)
+      if (this.pollIntervalId != null) clearInterval(this.pollIntervalId)
+      if (this.realtimeDebounceTimer) clearTimeout(this.realtimeDebounceTimer)
       unsub()
-      window.removeEventListener("storage", storageHandler)
       prevCleanup?.()
     }
   }
