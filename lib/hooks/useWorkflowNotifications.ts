@@ -10,6 +10,10 @@ import {
   cashierAudience,
   serverAudience,
 } from "@/lib/notifications/audience"
+import {
+  parseGuestServiceAlertMessage,
+  staffServiceNotificationBody,
+} from "@/lib/table/guest-service-alerts"
 import { isLikelyOrderUuid } from "@/lib/orders/guest-tracking"
 import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
 import { STATION_META, type Station } from "@/lib/stations/config"
@@ -93,17 +97,25 @@ export function useWorkflowNotifications(enabled = true) {
       if (!bootstrapped.current) continue
 
       if (a.type === "request_bill") {
+        const meta = parseGuestServiceAlertMessage(a.message)
+        const body = meta
+          ? staffServiceNotificationBody(meta)
+          : `Table ${a.tableId} — ${a.message || "Customer requests the bill."}`
         notificationsStore.add({
           type: "payment_received",
-          title: "Addition demandée",
-          message: `Table ${a.tableId} — ${a.message || "Le client demande l'addition"}`,
-          audience: cashierAudience(),
+          title: "Bill request",
+          message: body,
+          audience: [...new Set([...serverAudience(), ...cashierAudience()])],
         })
       } else if (a.type === "call_server") {
+        const meta = parseGuestServiceAlertMessage(a.message)
+        const body = meta
+          ? staffServiceNotificationBody(meta)
+          : `Table ${a.tableId} — ${a.message || "Customer requests a waiter."}`
         notificationsStore.add({
           type: "info",
-          title: "Appel serveur",
-          message: `Table ${a.tableId}`,
+          title: "Waiter request",
+          message: body,
           audience: serverAudience(),
         })
       } else if (a.type === "call_cashier") {

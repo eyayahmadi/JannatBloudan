@@ -5,6 +5,8 @@ import { useParams, useSearchParams } from "next/navigation"
 import { CheckCircle2, Clock, ChefHat, BellRing, PartyPopper } from "lucide-react"
 import { PageShell } from "@/components/site/PageShell"
 import { OrderProductName } from "@/components/orders/OrderProductName"
+import { OrderServiceActions } from "@/components/table/OrderServiceActions"
+import { useI18n } from "@/lib/i18n/context"
 import { isLikelyOrderUuid } from "@/lib/orders/guest-tracking"
 
 type OrderItem = { name: string; name_ar?: string | null; quantity: number }
@@ -30,6 +32,7 @@ const steps: { key: Order["status"]; label: string; icon: typeof Clock }[] = [
 ]
 
 export default function OrderConfirmationPage() {
+  const { t } = useI18n()
   const { tableId } = useParams<{ tableId: string }>()
   const searchParams = useSearchParams()
   const orderId = searchParams.get("oid")
@@ -195,6 +198,18 @@ export default function OrderConfirmationPage() {
                 })}
               </div>
             </div>
+            )}
+
+            {order.status !== "cancelled" && (
+              <div className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm dark:border-amber-900/30 dark:bg-neutral-900">
+                <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-amber-700 dark:text-amber-400">
+                  {t("guestService.sectionTitle")}
+                </h2>
+                <OrderServiceActions
+                  tableNumber={order.table_number}
+                  orderNumber={order.order_number}
+                />
+              </div>
             )}
 
             {/* Thank-you message for completed orders */}
