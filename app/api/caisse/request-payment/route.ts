@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
+import { resolveStaffUserId } from "@/lib/caisse/resolve-staff-user-id"
 
 const ROLES = ["ADMIN", "CASHIER", "SERVER"] as const
 
@@ -38,8 +39,9 @@ export async function POST(request: Request) {
 
     if (error || !after) return NextResponse.json({ error: error?.message ?? "Erreur" }, { status: 500 })
 
+    const staffUserId = await resolveStaffUserId(supabase, guard.user.id, guard.user.email ?? null)
     await insertCaisseAudit(supabase, {
-      userId: guard.user.id,
+      userId: staffUserId,
       action: "payment_requested",
       entityType: "invoices",
       entityId: invoiceId,

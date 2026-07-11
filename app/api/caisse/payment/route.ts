@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { processInvoicePayment } from "@/lib/caisse/process-payment"
+import { friendlyPaymentError } from "@/lib/caisse/friendly-payment-error"
 
 const ALLOW = ["ADMIN", "CASHIER"] as const
 
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
   }, invoiceId, parts)
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status })
+    return NextResponse.json({ error: friendlyPaymentError(result.error) }, { status: result.status })
   }
 
   return NextResponse.json({

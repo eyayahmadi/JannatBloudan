@@ -30,6 +30,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Checkbox } from "@/components/ui/checkbox"
+import { isOnlinePaymentProviderConfiguredClient } from "@/lib/payments/online-provider"
+import { cn } from "@/lib/utils"
 
 type Item = {
   id?: string
@@ -86,7 +89,10 @@ export function CaisseInvoicesPanel(props: { date: string }) {
   const [list, setList] = useState<Inv[]>([])
   const [loading, setLoading] = useState(false)
 
-  const [payOpen, setPayOpen] = useState<string | null>(null)
+  const [payTargets, setPayTargets] = useState<string[]>([])
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [paySubmitting, setPaySubmitting] = useState(false)
+  const onlineProviderReady = isOnlinePaymentProviderConfiguredClient()
   const [payMode, setPayMode] = useState<"single" | "split">("single")
   const [splitMode, setSplitMode] = useState<SplitMode>("amount")
   const [m1, setM1] = useState({ method: "cash", amount: "" })
@@ -139,28 +145,47 @@ export function CaisseInvoicesPanel(props: { date: string }) {
     return Math.max(0, total - paid)
   }, [])
 
-  const validatePay = async (invoiceId: string, totalNeeded: number) => {
-    const body =
-      payMode === "single"
-        ? {
-            invoice_id: invoiceId,
+  const isPayable = useCallback((inv: Inv) => {
+    const st = String(inv.status ?? "").toLowerCase()
+    return st === "draft" || st === "validated"
+  }, [])
+
+  const toggleSelected = useCallback((invoiceId: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(invoiceId)
+      else next.delete(invoiceId)
+      return next
+    })
+  }, [])
+
+  const buildPaymentParts = useCallback(
+    (totalNeeded: number, inv?: Inv) => {
+      const bill = String(inv?.billing_type ?? "normal").toLowerCase()
+      const isHospitalityPay = bill === "hospitality" || bill === "complimentary"
+      if (payMode === "single" && Math.abs(totalNeeded) < 0.05 && isHospitalityPay) {
+        return [{ method: "hospitality", amount: 0 }]
+      }
+      if (payMode === "single") {
+        return [
+          {
             method: m1.method,
             amount: Number(String(m1.amount).replace(",", ".")),
-          }
-        : {
-            invoice_id: invoiceId,
-            payments: [
-              { method: m1.method, amount: Number(String(m1.amount).replace(",", ".")) },
-              { method: m2.method, amount: Number(String(m2.amount).replace(",", ".")) },
-            ],
-          }
+          },
+        ]
+      }
+      return [
+        { method: m1.method, amount: Number(String(m1.amount).replace(",", ".")) },
+        { method: m2.method, amount: Number(String(m2.amount).replace(",", ".")) },
+      ]
+    },
+    [m1, m2, payMode],
+  )
 
-    const sum =
-      payMode === "single"
-        ? (body as { amount: number }).amount
-        : (body as { payments: Array<{ amount: number }> }).payments.reduce((s, p) => s + p.amount, 0)
-
+  const validatePay = async (invoiceId: string, totalNeeded: number) => {
     const inv = list.find((i) => i.id === invoiceId)
+    const parts = buildPaymentParts(totalNeeded, inv)
+    const sum = parts.reduce((s, p) => s + Number(p.amount ?? 0), 0)
     const bill = String(inv?.billing_type ?? "normal").toLowerCase()
     const isHospitalityPay = bill === "hospitality" || bill === "complimentary"
     const needMatch = !(isHospitalityPay && Math.abs(totalNeeded) < 0.05)
@@ -170,25 +195,111 @@ export function CaisseInvoicesPanel(props: { date: string }) {
       return
     }
 
-    let hospitalityBody: { invoice_id: string; method: string; amount: number } | null = null
-    if (payMode === "single" && Math.abs(totalNeeded) < 0.05 && isHospitalityPay) {
-      hospitalityBody = { invoice_id: invoiceId, method: "hospitality", amount: 0 }
+    setPaySubmitting(true)
+    try {
+      const res = await fetch("/api/caisse/payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoice_id: invoiceId, payments: parts }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(typeof j?.error === "string" ? j.error : "Paiement refusé")
+        return
+      }
+      toast.success("Paiement enregistré.")
+      setPayTargets([])
+      setSelectedIds(new Set())
+      await load()
+    } finally {
+      setPaySubmitting(false)
+    }
+  }
+
+  const buildBatchPaymentParts = useCallback((inv: Inv) => {
+    const total = Number(inv.total ?? 0)
+    const bill = String(inv.billing_type ?? "normal").toLowerCase()
+    const isHospitalityPay = bill === "hospitality" || bill === "complimentary"
+    if (isHospitalityPay && Math.abs(total) < 0.05) {
+      return [{ method: "hospitality", amount: 0 }]
+    }
+    return [{ method: m1.method, amount: total }]
+  }, [m1.method])
+
+  const validateBatchPay = async (invoiceIds: string[]) => {
+    const settlements = invoiceIds.map((id) => {
+      const inv = list.find((i) => i.id === id)
+      if (!inv) return null
+      return { invoice_id: id, payments: buildBatchPaymentParts(inv) }
+    }).filter((s): s is { invoice_id: string; payments: Array<{ method: string; amount: number }> } => s !== null)
+
+    for (const s of settlements) {
+      const inv = list.find((i) => i.id === s.invoice_id)
+      const total = Number(inv?.total ?? 0)
+      const sum = s.payments.reduce((acc, p) => acc + Number(p.amount ?? 0), 0)
+      const bill = String(inv?.billing_type ?? "normal").toLowerCase()
+      const isHospitalityPay = bill === "hospitality" || bill === "complimentary"
+      const needMatch = !(isHospitalityPay && Math.abs(total) < 0.05)
+      if (needMatch && (!Number.isFinite(sum) || Math.abs(sum - total) > 0.05)) {
+        toast.error(`La somme des paiements doit égaler le total TTC pour ${s.invoice_id}.`)
+        return
+      }
     }
 
-    const res = await fetch("/api/caisse/payment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(hospitalityBody ?? body),
-    })
-    const j = await res.json().catch(() => ({}))
-    if (!res.ok) {
-      toast.error(typeof j?.error === "string" ? j.error : "Paiement refusé")
-      return
+    setPaySubmitting(true)
+    try {
+      const res = await fetch("/api/caisse/batch-pay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settlements }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(typeof j?.error === "string" ? j.error : "Paiement groupé refusé")
+        return
+      }
+      toast.success(`${invoiceIds.length} factures encaissées.`)
+      setPayTargets([])
+      setSelectedIds(new Set())
+      await load()
+    } finally {
+      setPaySubmitting(false)
     }
-    toast.success("Paiement enregistré.")
-    setPayOpen(null)
-    await load()
   }
+
+  const verifyOnlinePayment = async (invoiceId: string) => {
+    setPaySubmitting(true)
+    try {
+      const res = await fetch("/api/caisse/verify-online-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoice_id: invoiceId }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(typeof j?.error === "string" ? j.error : "Vérification impossible")
+        return
+      }
+      toast.success(typeof j?.message === "string" ? j.message : "Vérification terminée.")
+    } finally {
+      setPaySubmitting(false)
+    }
+  }
+
+  const openPayDialog = useCallback((ids: string[]) => {
+    const first = list.find((i) => i.id === ids[0])
+    if (!first) return
+    setPayMode(ids.length > 1 ? "single" : "single")
+    const bill = String(first.billing_type ?? "normal").toLowerCase()
+    const t = Number(first.total ?? 0)
+    const zeroHospitality = (bill === "hospitality" || bill === "complimentary") && Math.abs(t) < 0.05
+    setM1({
+      method: zeroHospitality ? "hospitality" : "cash",
+      amount: t.toFixed(2).replace(".", ","),
+    })
+    setM2({ method: "card", amount: "" })
+    setPayTargets(ids)
+  }, [list])
 
   const requestPayment = async (invoiceId: string) => {
     const res = await fetch("/api/caisse/request-payment", {
@@ -324,6 +435,15 @@ export function CaisseInvoicesPanel(props: { date: string }) {
           Factures du <strong>{date}</strong>. Encaissements via API sécurisée (paiement fractionné inclus).
         </p>
         <div className="flex gap-2">
+          {selectedIds.size >= 2 ? (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => openPayDialog(Array.from(selectedIds))}
+            >
+              Encaisser {selectedIds.size} factures
+            </Button>
+          ) : null}
           <Button type="button" variant="outline" size="sm" asChild className="gap-1">
             <a href={exportCsvHref}>
               <FileDown className="h-4 w-4" /> Excel (CSV)
@@ -356,6 +476,7 @@ export function CaisseInvoicesPanel(props: { date: string }) {
         <table className="w-full border-collapse text-left text-xs sm:text-sm">
           <thead>
             <tr className="border-b bg-muted/40">
+              <th className="p-2 w-8" />
               <th className="p-2 font-medium">N° facture</th>
               <th className="p-2 font-medium hidden sm:table-cell">Client</th>
               <th className="p-2 font-medium">HT</th>
@@ -372,8 +493,18 @@ export function CaisseInvoicesPanel(props: { date: string }) {
             {list.map((inv) => {
               const { ht, tv, t } = totalFormat(inv)
               const st = String(inv.status ?? "").toLowerCase()
+              const payable = isPayable(inv)
               return (
                 <tr key={inv.id} className="border-b border-neutral-100 dark:border-neutral-900">
+                  <td className="p-2 align-middle">
+                    {payable ? (
+                      <Checkbox
+                        checked={selectedIds.has(inv.id)}
+                        onCheckedChange={(v) => toggleSelected(inv.id, v === true)}
+                        aria-label={`Sélectionner ${inv.id}`}
+                      />
+                    ) : null}
+                  </td>
                   <td className="p-2 font-mono">{inv.id}</td>
                   <td className="p-2 hidden sm:table-cell max-w-[140px] truncate">{inv.customer_name ?? "—"}</td>
                   <td className="p-2">{ht.toFixed(2)} €</td>
@@ -409,18 +540,7 @@ export function CaisseInvoicesPanel(props: { date: string }) {
                       onApplyOffer={() => setOfferOpen(inv.id)}
                       onHospitality={() => setHosOpen(inv.id)}
                       onCredit={() => setCreditOpen(inv)}
-                      onPay={() => {
-                        setPayMode("single")
-                        const bill = String(inv.billing_type ?? "normal").toLowerCase()
-                        const zeroHospitality =
-                          (bill === "hospitality" || bill === "complimentary") && Math.abs(t) < 0.05
-                        setM1({
-                          method: zeroHospitality ? "hospitality" : "cash",
-                          amount: t.toFixed(2).replace(".", ","),
-                        })
-                        setM2({ method: "card", amount: "" })
-                        setPayOpen(inv.id)
-                      }}
+                      onPay={() => openPayDialog([inv.id])}
                       onRequest={() => void requestPayment(inv.id)}
                       onCancel={() => setCancelOpen(inv.id)}
                       onDetail={() => setDetail(inv)}
@@ -496,19 +616,34 @@ export function CaisseInvoicesPanel(props: { date: string }) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!payOpen} onOpenChange={(o) => !o && setPayOpen(null)}>
+      <Dialog open={payTargets.length > 0} onOpenChange={(o) => !o && !paySubmitting && setPayTargets([])}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" /> Encaisser {payOpen}
+              <Receipt className="h-5 w-5" />
+              {payTargets.length > 1
+                ? `Encaisser ${payTargets.length} factures`
+                : `Encaisser ${payTargets[0] ?? ""}`}
             </DialogTitle>
           </DialogHeader>
-          {payOpen
+          {payTargets.length > 0
             ? (() => {
-                const inv = list.find((i) => i.id === payOpen)
+                const isBatch = payTargets.length > 1
+                const inv = list.find((i) => i.id === payTargets[0])
                 const tot = Number(inv?.total ?? 0)
+                const batchTotal = payTargets.reduce((s, id) => {
+                  const row = list.find((i) => i.id === id)
+                  return s + Number(row?.total ?? 0)
+                }, 0)
                 return (
                   <div className="space-y-4">
+                    {isBatch ? (
+                      <p className="rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                        Paiement groupé — {payTargets.length} factures · total{" "}
+                        <strong>{batchTotal.toFixed(2)} €</strong>
+                        <span className="mt-1 block">{payTargets.join(", ")}</span>
+                      </p>
+                    ) : null}
                     <div className="flex gap-2">
                       <Button
                         size="sm"
@@ -517,13 +652,15 @@ export function CaisseInvoicesPanel(props: { date: string }) {
                       >
                         Une méthode
                       </Button>
-                      <Button
-                        size="sm"
-                        variant={payMode === "split" ? "default" : "outline"}
-                        onClick={() => setPayMode("split")}
-                      >
-                        Split
-                      </Button>
+                      {!isBatch ? (
+                        <Button
+                          size="sm"
+                          variant={payMode === "split" ? "default" : "outline"}
+                          onClick={() => setPayMode("split")}
+                        >
+                          Split
+                        </Button>
+                      ) : null}
                     </div>
                     {payMode === "split" ? (
                       <div className="flex flex-wrap gap-2 text-xs">
@@ -539,7 +676,7 @@ export function CaisseInvoicesPanel(props: { date: string }) {
                       </div>
                     ) : null}
                     {payMode === "single" ? (
-                      <div className="grid gap-2 sm:grid-cols-2">
+                      <div className={cn("grid gap-2", isBatch ? "sm:grid-cols-1" : "sm:grid-cols-2")}>
                         <div>
                           <Label className="text-xs">Mode</Label>
                           <Select value={m1.method} onValueChange={(v) => setM1((m) => ({ ...m, method: v }))}>
@@ -554,10 +691,16 @@ export function CaisseInvoicesPanel(props: { date: string }) {
                             </SelectContent>
                           </Select>
                         </div>
-                        <div>
-                          <Label className="text-xs">Montant TTC</Label>
-                          <Input value={m1.amount} onChange={(e) => setM1((m) => ({ ...m, amount: e.target.value }))} />
-                        </div>
+                        {!isBatch ? (
+                          <div>
+                            <Label className="text-xs">Montant TTC</Label>
+                            <Input value={m1.amount} onChange={(e) => setM1((m) => ({ ...m, amount: e.target.value }))} />
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            Chaque facture sera encaissée pour son montant TTC avec ce mode de paiement.
+                          </p>
+                        )}
                       </div>
                     ) : (
                       <div className="grid gap-3">
@@ -606,18 +749,33 @@ export function CaisseInvoicesPanel(props: { date: string }) {
                       </div>
                     )}
                     <DialogFooter>
-                      <Button type="button" variant="outline" onClick={() => toast.info("Vérification paiement online: webhook/provider à brancher.")}>
-                        Vérifier paiement online
-                      </Button>
-                      <Button type="button" variant="outline" onClick={() => toast.info("Paiement groupé: utilisez /api/caisse/batch-pay pour lots.")}>
-                        Paiement groupé
-                      </Button>
-                      <Button type="button" onClick={() => payOpen && validatePay(payOpen, tot)}>
-                        {m1.method === "cash"
-                          ? "Valider paiement cash"
-                          : m1.method === "card"
-                            ? "Valider paiement carte"
-                            : "Valider paiement"}
+                      {!isBatch && onlineProviderReady && m1.method === "online" ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={paySubmitting}
+                          onClick={() => payTargets[0] && void verifyOnlinePayment(payTargets[0])}
+                        >
+                          Vérifier paiement online
+                        </Button>
+                      ) : null}
+                      <Button
+                        type="button"
+                        disabled={paySubmitting}
+                        onClick={() => {
+                          if (isBatch) void validateBatchPay(payTargets)
+                          else if (payTargets[0]) void validatePay(payTargets[0], tot)
+                        }}
+                      >
+                        {paySubmitting
+                          ? "Enregistrement…"
+                          : isBatch
+                            ? `Valider ${payTargets.length} paiements`
+                            : m1.method === "cash"
+                              ? "Valider paiement cash"
+                              : m1.method === "card"
+                                ? "Valider paiement carte"
+                                : "Valider paiement"}
                       </Button>
                     </DialogFooter>
                   </div>

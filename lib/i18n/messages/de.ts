@@ -63,6 +63,7 @@ export const de: Messages = {
     cancel: "Abbrechen",
     toastWaiter: "Der Kellner wurde benachrichtigt.",
     toastBill: "Ihre Rechnungsanfrage wurde gesendet.",
+    toastError: "Anfrage konnte nicht gesendet werden. Bitte erneut versuchen.",
     pendingWaiter: "Warten auf Kellner…",
     pendingBill: "Rechnungsanfrage läuft…",
     sectionTitle: "Service",

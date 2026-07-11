@@ -63,6 +63,7 @@ export const ar: Messages = {
     cancel: "إلغاء",
     toastWaiter: "تم إخطار النادل.",
     toastBill: "تم إرسال طلب الفاتورة.",
+    toastError: "تعذّر إرسال الطلب. يرجى المحاولة مرة أخرى.",
     pendingWaiter: "في انتظار النادل…",
     pendingBill: "طلب الفاتورة قيد المعالجة…",
     sectionTitle: "الخدمة",

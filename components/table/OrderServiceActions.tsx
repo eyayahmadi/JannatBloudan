@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { HandPlatter, Receipt } from "lucide-react"
+import { HandPlatter, Loader2, Receipt } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,16 +25,28 @@ type OrderServiceActionsProps = {
   className?: string
 }
 
+type ToastState = {
+  message: string
+  variant: "success" | "error"
+} | null
+
 export function OrderServiceActions({ tableNumber, orderNumber, className }: OrderServiceActionsProps) {
   const { t } = useI18n()
-  const { raise, activeByTable } = useTableAlerts()
+  const { raiseAsync, alerts, remoteAuthoritative } = useTableAlerts()
   const [confirmKind, setConfirmKind] = useState<PendingKind>(null)
-  const [toast, setToast] = useState<string | null>(null)
+  const [sending, setSending] = useState<PendingKind>(null)
+  const [waiterLocked, setWaiterLocked] = useState(false)
+  const [billLocked, setBillLocked] = useState(false)
+  const [toast, setToast] = useState<ToastState>(null)
 
   const tableKey = String(tableNumber)
-  const tableAlerts = activeByTable(tableKey)
-  const waiterPending = tableAlerts.some((a) => a.type === "call_server")
-  const billPending = tableAlerts.some((a) => a.type === "request_bill")
+
+  useEffect(() => {
+    if (!remoteAuthoritative) return
+    const pending = alerts.filter((a) => a.tableId === tableKey && !a.resolvedAt)
+    setWaiterLocked(pending.some((a) => a.type === "call_server"))
+    setBillLocked(pending.some((a) => a.type === "request_bill"))
+  }, [alerts, remoteAuthoritative, tableKey])
 
   useEffect(() => {
     if (!toast) return
@@ -42,8 +54,9 @@ export function OrderServiceActions({ tableNumber, orderNumber, className }: Ord
     return () => clearTimeout(timer)
   }, [toast])
 
-  const sendWaiterRequest = () => {
-    raise({
+  const sendWaiterRequest = async () => {
+    setSending("waiter")
+    const { ok } = await raiseAsync({
       tableId: tableKey,
       type: "call_server",
       message: buildGuestServiceAlertMessage({
@@ -52,12 +65,19 @@ export function OrderServiceActions({ tableNumber, orderNumber, className }: Ord
         orderNumber,
       }),
     })
-    setToast(t("guestService.toastWaiter"))
+    setSending(null)
     setConfirmKind(null)
+    if (ok) {
+      setWaiterLocked(true)
+      setToast({ message: t("guestService.toastWaiter"), variant: "success" })
+    } else {
+      setToast({ message: t("guestService.toastError"), variant: "error" })
+    }
   }
 
-  const sendBillRequest = () => {
-    raise({
+  const sendBillRequest = async () => {
+    setSending("bill")
+    const { ok } = await raiseAsync({
       tableId: tableKey,
       type: "request_bill",
       message: buildGuestServiceAlertMessage({
@@ -66,32 +86,39 @@ export function OrderServiceActions({ tableNumber, orderNumber, className }: Ord
         orderNumber,
       }),
     })
-    setToast(t("guestService.toastBill"))
+    setSending(null)
     setConfirmKind(null)
+    if (ok) {
+      setBillLocked(true)
+      setToast({ message: t("guestService.toastBill"), variant: "success" })
+    } else {
+      setToast({ message: t("guestService.toastError"), variant: "error" })
+    }
   }
+
+  const waiterDisabled = waiterLocked || sending === "waiter"
+  const billDisabled = billLocked || sending === "bill"
+  const dialogBusy = sending !== null
 
   return (
     <>
-      <div
-        className={cn(
-          "grid grid-cols-1 gap-3 sm:grid-cols-2",
-          className,
-        )}
-      >
+      <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", className)}>
         <ServiceActionButton
           emoji="👨‍🍳"
           icon={HandPlatter}
           label={t("guestService.requestWaiter")}
-          sub={waiterPending ? t("guestService.pendingWaiter") : t("guestService.requestWaiterSub")}
-          disabled={waiterPending}
+          sub={waiterLocked ? t("guestService.pendingWaiter") : t("guestService.requestWaiterSub")}
+          disabled={waiterDisabled}
+          loading={sending === "waiter"}
           onClick={() => setConfirmKind("waiter")}
         />
         <ServiceActionButton
           emoji="💳"
           icon={Receipt}
           label={t("guestService.requestBill")}
-          sub={billPending ? t("guestService.pendingBill") : t("guestService.requestBillSub")}
-          disabled={billPending}
+          sub={billLocked ? t("guestService.pendingBill") : t("guestService.requestBillSub")}
+          disabled={billDisabled}
+          loading={sending === "bill"}
           onClick={() => setConfirmKind("bill")}
         />
       </div>
@@ -99,34 +126,59 @@ export function OrderServiceActions({ tableNumber, orderNumber, className }: Ord
       {toast ? (
         <div
           role="status"
-          className="fixed bottom-6 left-1/2 z-[120] max-w-sm -translate-x-1/2 rounded-2xl border border-amber-200/80 bg-white px-5 py-3 text-center text-sm font-medium text-amber-950 shadow-lg dark:border-amber-800/50 dark:bg-neutral-900 dark:text-amber-100"
+          className={cn(
+            "fixed bottom-6 left-1/2 z-[120] max-w-sm -translate-x-1/2 rounded-2xl border px-5 py-3 text-center text-sm font-medium shadow-lg",
+            toast.variant === "success"
+              ? "border-emerald-200/80 bg-white text-emerald-900 dark:border-emerald-800/50 dark:bg-neutral-900 dark:text-emerald-200"
+              : "border-rose-200/80 bg-white text-rose-900 dark:border-rose-800/50 dark:bg-neutral-900 dark:text-rose-200",
+          )}
         >
-          {toast}
+          {toast.message}
         </div>
       ) : null}
 
-      <AlertDialog open={confirmKind === "waiter"} onOpenChange={(open) => !open && setConfirmKind(null)}>
+      <AlertDialog
+        open={confirmKind === "waiter"}
+        onOpenChange={(open) => {
+          if (!open && !dialogBusy) setConfirmKind(null)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("guestService.confirmWaiterTitle")}</AlertDialogTitle>
             <AlertDialogDescription>{t("guestService.confirmWaiterDesc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("guestService.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={sendWaiterRequest}>{t("guestService.confirmSend")}</AlertDialogAction>
+            <AlertDialogCancel disabled={dialogBusy}>{t("guestService.cancel")}</AlertDialogCancel>
+            <AlertDialogAction disabled={dialogBusy} onClick={() => void sendWaiterRequest()}>
+              {dialogBusy && sending === "waiter" ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+              ) : null}
+              {t("guestService.confirmSend")}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={confirmKind === "bill"} onOpenChange={(open) => !open && setConfirmKind(null)}>
+      <AlertDialog
+        open={confirmKind === "bill"}
+        onOpenChange={(open) => {
+          if (!open && !dialogBusy) setConfirmKind(null)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("guestService.confirmBillTitle")}</AlertDialogTitle>
             <AlertDialogDescription>{t("guestService.confirmBillDesc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("guestService.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={sendBillRequest}>{t("guestService.confirmSend")}</AlertDialogAction>
+            <AlertDialogCancel disabled={dialogBusy}>{t("guestService.cancel")}</AlertDialogCancel>
+            <AlertDialogAction disabled={dialogBusy} onClick={() => void sendBillRequest()}>
+              {dialogBusy && sending === "bill" ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+              ) : null}
+              {t("guestService.confirmSend")}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -140,6 +192,7 @@ function ServiceActionButton({
   label,
   sub,
   disabled,
+  loading,
   onClick,
 }: {
   emoji: string
@@ -147,6 +200,7 @@ function ServiceActionButton({
   label: string
   sub: string
   disabled: boolean
+  loading: boolean
   onClick: () => void
 }) {
   return (
@@ -161,8 +215,12 @@ function ServiceActionButton({
           : "border-amber-200 bg-white shadow-sm hover:border-amber-300 hover:bg-amber-50/50 dark:border-amber-900/40 dark:bg-neutral-900 dark:hover:border-amber-700/50",
       )}
     >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-xl dark:bg-amber-900/30">
-        {emoji}
+      <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-xl dark:bg-amber-900/30">
+        {loading ? (
+          <Loader2 className="h-5 w-5 animate-spin text-amber-700 dark:text-amber-300" aria-hidden />
+        ) : (
+          emoji
+        )}
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5 text-sm font-semibold text-amber-950 dark:text-white">

@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
+import { friendlyPaymentError } from "@/lib/caisse/friendly-payment-error"
+import { resolveStaffUserId } from "@/lib/caisse/resolve-staff-user-id"
 import {
   CREDIT_PAYMENT_METHODS,
   CREDIT_REASONS,
@@ -124,6 +126,7 @@ export async function markInvoiceAsCredit(
 
   const now = new Date().toISOString()
   const dueAt = normalizeDueAt(input.dueAt)
+  const staffUserId = await resolveStaffUserId(supabase, ctx.userId, ctx.userEmail)
 
   for (const p of parts) {
     const { error: payErr } = await supabase.from("payments").insert({
@@ -135,12 +138,12 @@ export async function markInvoiceAsCredit(
       method: p.method,
       status: "succeeded",
       provider: "manual",
-      processed_by: ctx.userId,
+      processed_by: staffUserId,
       processed_at: now,
     })
     if (payErr) {
       console.error("[credit] partial payment failed:", payErr)
-      return { ok: false, status: 500, error: payErr.message }
+      return { ok: false, status: 500, error: friendlyPaymentError(payErr.message) }
     }
   }
 
@@ -167,7 +170,7 @@ export async function markInvoiceAsCredit(
     credit_remaining: remaining,
     credit_reason: input.reason,
     credit_note: input.note ?? null,
-    credit_recorded_by: ctx.userId,
+    credit_recorded_by: staffUserId,
     credit_recorded_at: now,
     status: state === "PAID" ? "paid" : "validated",
     paid_at: state === "PAID" ? now : null,
@@ -258,6 +261,7 @@ export async function recordCreditPayment(
   }
 
   const now = new Date().toISOString()
+  const staffUserId = await resolveStaffUserId(supabase, ctx.userId, ctx.userEmail)
 
   const { data: payRow, error: payErr } = await supabase
     .from("payments")
@@ -270,7 +274,7 @@ export async function recordCreditPayment(
       method: input.method,
       status: "succeeded",
       provider: "manual",
-      processed_by: ctx.userId,
+      processed_by: staffUserId,
       processed_at: now,
       provider_payload: { kind: "credit_recovery" } as Record<string, unknown>,
     })
@@ -279,7 +283,7 @@ export async function recordCreditPayment(
 
   if (payErr) {
     console.error("[credit] payment insert failed:", payErr)
-    return { ok: false, status: 500, error: payErr.message }
+    return { ok: false, status: 500, error: friendlyPaymentError(payErr.message) }
   }
 
   const { error: ccpErr } = await supabase.from("client_credit_payments").insert({

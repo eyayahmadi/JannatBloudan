@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
+import { friendlyPaymentError } from "@/lib/caisse/friendly-payment-error"
+import { resolveStaffUserId } from "@/lib/caisse/resolve-staff-user-id"
 
 const EPS = 0.03
 
@@ -28,7 +30,7 @@ export async function processInvoicePayment(
 
   const { data: inv, error: invErr } = await supabase.from("invoices").select("*").eq("id", invoiceId).maybeSingle()
   if (invErr || !inv) {
-    return { ok: false, status: 404, error: invErr?.message ?? "Facture introuvable" }
+    return { ok: false, status: 404, error: friendlyPaymentError(invErr?.message, "Facture introuvable") }
   }
 
   const sessionId = (inv as { session_id?: string | null }).session_id ?? null
@@ -72,7 +74,7 @@ export async function processInvoicePayment(
     }
   }
 
-  const uid = ctx.userId
+  const staffUserId = await resolveStaffUserId(supabase, ctx.userId, ctx.userEmail)
   const now = new Date().toISOString()
   const uniqueMethods = new Set(parts.map((p) => p.method.toLowerCase()))
   const isSplit = parts.length > 1 || uniqueMethods.size > 1
@@ -89,7 +91,7 @@ export async function processInvoicePayment(
       method: p.method === "wallet" ? "wallet" : p.method,
       status: "succeeded",
       provider: "manual",
-      processed_by: uid,
+      processed_by: staffUserId,
       processed_at: now,
       payment_batch_id: opts?.payment_batch_id ?? null,
       guest_session_id: p.guest_session_id ?? (inv as { guest_session_id?: string | null }).guest_session_id ?? null,
@@ -97,7 +99,7 @@ export async function processInvoicePayment(
     const { error: pErr } = await supabase.from("payments").insert(payRow)
     if (pErr) {
       console.error("[processInvoicePayment]", pErr)
-      return { ok: false, status: 500, error: pErr.message }
+      return { ok: false, status: 500, error: friendlyPaymentError(pErr.message) }
     }
   }
 
@@ -129,7 +131,7 @@ export async function processInvoicePayment(
   const updatedRow = {
     status: "paid",
     paid_at: now,
-    cashier_id: uid,
+    cashier_id: staffUserId,
     payment_method: invoiceMethod,
     payment_stage,
     payment_split: isSplit && !onlyHospitalityZero ? splitPayload : onlyHospitalityZero ? [{ method: "hospitality", amount: 0 }] : null,
@@ -146,11 +148,11 @@ export async function processInvoicePayment(
     .maybeSingle()
 
   if (upErr || !after) {
-    return { ok: false, status: 500, error: upErr?.message ?? "MàJ facture" }
+    return { ok: false, status: 500, error: friendlyPaymentError(upErr?.message, "Mise à jour de la facture impossible") }
   }
 
   await insertCaisseAudit(supabase, {
-    userId: uid,
+    userId: staffUserId,
     userEmail: ctx.userEmail ?? null,
     action: "payment_validated",
     entityType: "invoices",

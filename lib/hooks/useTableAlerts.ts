@@ -81,6 +81,9 @@ export function useTableAlerts() {
   }, [])
 
   // Polling Supabase (multi-appareil)
+  const [remoteSynced, setRemoteSynced] = useState(false)
+  const [remoteAuthoritative, setRemoteAuthoritative] = useState(false)
+
   useEffect(() => {
     let cancelled = false
     const sync = async () => {
@@ -89,7 +92,9 @@ export function useTableAlerts() {
       if (remote) {
         remoteActiveRef.current = true
         setAlerts(remote)
+        setRemoteAuthoritative(true)
       }
+      setRemoteSynced(true)
     }
     sync()
     const timer = setInterval(sync, POLL_INTERVAL_MS)
@@ -102,6 +107,45 @@ export function useTableAlerts() {
       unsub()
     }
   }, [])
+
+  const raiseAsync = useCallback(
+    async (input: Omit<TableAlert, "id" | "createdAt" | "resolvedAt">): Promise<{ ok: boolean }> => {
+      const optimistic: TableAlert = {
+        ...input,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        createdAt: new Date().toISOString(),
+      }
+      setAlerts((prev) => [optimistic, ...prev])
+
+      try {
+        const res = await fetch("/api/table-alerts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tableId: Number(input.tableId),
+            type: input.type,
+            message: input.message,
+          }),
+        })
+        if (!res.ok) {
+          setAlerts((prev) => prev.filter((a) => a.id !== optimistic.id))
+          return { ok: false }
+        }
+        const data = (await res.json()) as { alert?: Record<string, unknown> }
+        if (data.alert) {
+          const serverAlert = mapServer(data.alert)
+          setAlerts((prev) =>
+            prev.map((a) => (a.id === optimistic.id ? serverAlert : a)),
+          )
+        }
+        return { ok: true }
+      } catch {
+        setAlerts((prev) => prev.filter((a) => a.id !== optimistic.id))
+        return { ok: false }
+      }
+    },
+    [],
+  )
 
   const raise = useCallback(
     (input: Omit<TableAlert, "id" | "createdAt" | "resolvedAt">) => {
@@ -174,5 +218,16 @@ export function useTableAlerts() {
 
   const active = alerts.filter((a) => !a.resolvedAt)
 
-  return { alerts, active, raise, resolve, resolveTable, transferTableAlerts, activeByTable }
+  return {
+    alerts,
+    active,
+    raise,
+    raiseAsync,
+    resolve,
+    resolveTable,
+    transferTableAlerts,
+    activeByTable,
+    remoteSynced,
+    remoteAuthoritative,
+  }
 }

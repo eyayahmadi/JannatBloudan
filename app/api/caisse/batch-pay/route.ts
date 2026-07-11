@@ -3,6 +3,7 @@ import { randomUUID } from "crypto"
 import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { processInvoicePayment, type PayPart } from "@/lib/caisse/process-payment"
+import { friendlyPaymentError } from "@/lib/caisse/friendly-payment-error"
 
 const ALLOW = ["ADMIN", "CASHIER"] as const
 
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
     }
     const r = await processInvoicePayment(supabase, ctx, invoiceId, parts, { payment_batch_id: batchId })
     if (!r.ok) {
-      return NextResponse.json({ error: r.error, partial: done, payment_batch_id: batchId }, { status: r.status })
+      return NextResponse.json({ error: friendlyPaymentError(r.error), partial: done, payment_batch_id: batchId }, { status: r.status })
     }
     done.push(r.invoice)
   }

@@ -12,7 +12,8 @@
  * Utilisation:
  *   printKitchenTicket(order, { restaurantName: "Joseph Bechara", locale: "fr", station: "BAR" })
  *
- * Le pop-up declenche window.print() automatiquement puis se ferme.
+ * Le ticket production (cuisine / bar / chicha) n'affiche aucun prix —
+ * preparation uniquement. Totaux et tarifs : ticket client / facture caisse.
  */
 
 import type { KitchenOrder } from "@/lib/hooks/useRealtimeOrders"
@@ -77,12 +78,12 @@ const STATION_PRINT: Record<
 const LABELS = {
   fr: {
     title: "TICKET CUISINE",
-    order: "Commande",
+    order: "N° ticket",
     table: "Table",
-    type: "Type",
-    received: "Recue",
+    type: "Type commande",
+    received: "Heure",
+    customerTable: "Client / Table",
     notes: "Notes",
-    total: "Total",
     printed: "Imprime le",
     types: {
       qr_self_service: "QR (self-service)",
@@ -93,12 +94,12 @@ const LABELS = {
   },
   en: {
     title: "KITCHEN TICKET",
-    order: "Order",
+    order: "Ticket #",
     table: "Table",
-    type: "Type",
-    received: "Received",
+    type: "Order type",
+    received: "Time",
+    customerTable: "Customer / Table",
     notes: "Notes",
-    total: "Total",
     printed: "Printed at",
     types: {
       qr_self_service: "QR (self-service)",
@@ -109,12 +110,12 @@ const LABELS = {
   },
   ar: {
     title: "تذكرة المطبخ",
-    order: "طلب",
+    order: "رقم التذكرة",
     table: "طاولة",
-    type: "نوع",
-    received: "استُلم",
+    type: "نوع الطلب",
+    received: "الوقت",
+    customerTable: "العميل / الطاولة",
     notes: "ملاحظات",
-    total: "المجموع",
     printed: "طُبعت في",
     types: {
       qr_self_service: "QR (خدمة ذاتية)",
@@ -125,12 +126,12 @@ const LABELS = {
   },
   de: {
     title: "KÜCHENTICKET",
-    order: "Bestellung",
+    order: "Ticket-Nr.",
     table: "Tisch",
-    type: "Typ",
-    received: "Erhalten",
+    type: "Bestelltyp",
+    received: "Uhrzeit",
+    customerTable: "Kunde / Tisch",
     notes: "Notizen",
-    total: "Gesamt",
     printed: "Gedruckt am",
     types: {
       qr_self_service: "QR (Selbstbedienung)",
@@ -222,6 +223,8 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
       `,
     )
     .join("")
+
+  const customerTableValue = order.customer_name?.trim() ?? ""
 
   return `<!DOCTYPE html>
 <html lang="${locale}" dir="${isRtl ? "rtl" : "ltr"}">
@@ -349,15 +352,6 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
     font-size: 11px;
     font-style: italic;
   }
-  .total {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    font-weight: bold;
-    font-size: 14px;
-    border-top: 2px dashed #000;
-    margin-top: 6px;
-  }
   .footer {
     margin-top: 10px;
     padding-top: 6px;
@@ -401,6 +395,10 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
     </div>
 
     <div class="meta">
+      <div class="meta-row">
+        <strong>${L.order}:</strong>
+        <span>#${escapeHtml(order.order_number)}</span>
+      </div>
       ${
         order.table_number !== null && order.table_number !== undefined
           ? `<div class="meta-row"><strong>${L.table}:</strong><span>${escapeHtml(String(order.table_number))}</span></div>`
@@ -415,18 +413,13 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
         <span>${formatTime(order.created_at, locale)}</span>
       </div>
       ${
-        order.customer_name
-          ? `<div class="meta-row"><strong>Client:</strong><span>${escapeHtml(order.customer_name)}</span></div>`
+        customerTableValue
+          ? `<div class="meta-row"><strong>${L.customerTable}:</strong><span>${escapeHtml(customerTableValue)}</span></div>`
           : ""
       }
     </div>
 
     <div class="items">${itemsHtml}</div>
-
-    <div class="total">
-      <span>${L.total}</span>
-      <span>${order.total.toFixed(2)} DT</span>
-    </div>
 
     <div class="footer">
       ${L.printed}: ${formatDateTime(new Date().toISOString(), locale)}

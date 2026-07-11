@@ -62,6 +62,7 @@ export const fr = {
     cancel: "Annuler",
     toastWaiter: "Le serveur a été prévenu.",
     toastBill: "Votre demande d'addition a été envoyée.",
+    toastError: "Impossible d'envoyer la demande. Veuillez réessayer.",
     pendingWaiter: "En attente du serveur…",
     pendingBill: "Demande d'addition en cours…",
     sectionTitle: "Service",
