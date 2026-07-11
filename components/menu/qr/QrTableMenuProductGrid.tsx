@@ -1,12 +1,20 @@
 "use client"
 
+import { memo, useRef } from "react"
 import type { QrMenuItem } from "@/lib/menu/qr-menu-types"
 import { buildCartLineId } from "@/lib/menu/cart-line"
 import { useQrTableMenu } from "@/components/menu/qr/QrTableMenuProvider"
 import { QrTableMenuProductCell } from "@/components/menu/qr/QrTableMenuProductCell"
 
-export function QrTableMenuProductGrid({ items }: { items: QrMenuItem[] }) {
+type FrozenGridState = {
+  items: QrMenuItem[]
+  cart: ReturnType<typeof useQrTableMenu>["cart"]
+  favoriteIds: string[]
+}
+
+function QrTableMenuProductGridInner({ items }: { items: QrMenuItem[] }) {
   const {
+    detailItemId,
     cart,
     favoriteIds,
     handleToggleFavorite,
@@ -16,18 +24,25 @@ export function QrTableMenuProductGrid({ items }: { items: QrMenuItem[] }) {
     decrement,
   } = useQrTableMenu()
 
-  if (items.length === 0) return null
+  const frozenRef = useRef<FrozenGridState>({ items, cart, favoriteIds })
+  if (!detailItemId) {
+    frozenRef.current = { items, cart, favoriteIds }
+  }
+
+  const display = detailItemId ? frozenRef.current : { items, cart, favoriteIds }
+
+  if (display.items.length === 0) return null
 
   return (
-    <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4">
-      {items.map((item) => {
+    <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4" data-menu-scroll-list>
+      {display.items.map((item) => {
         const line =
           !item.isCustomizable && !item.hasVariants
-            ? cart.find((c) => c.lineId === buildCartLineId(item.id, [], null))
+            ? display.cart.find((c) => c.lineId === buildCartLineId(item.id, [], null))
             : null
         const customQty =
           item.isCustomizable || item.hasVariants
-            ? cart.filter((c) => c.productId === item.id).reduce((s, c) => s + c.quantity, 0)
+            ? display.cart.filter((c) => c.productId === item.id).reduce((s, c) => s + c.quantity, 0)
             : 0
 
         return (
@@ -36,7 +51,7 @@ export function QrTableMenuProductGrid({ items }: { items: QrMenuItem[] }) {
               item={item}
               query=""
               inCartQty={line?.quantity ?? customQty}
-              isFavorite={favoriteIds.includes(item.id)}
+              isFavorite={display.favoriteIds.includes(item.id)}
               showLineControls={!item.isCustomizable && !item.hasVariants && !!line}
               onToggleFavorite={handleToggleFavorite}
               onOpen={openDetail}
@@ -51,3 +66,5 @@ export function QrTableMenuProductGrid({ items }: { items: QrMenuItem[] }) {
     </div>
   )
 }
+
+export const QrTableMenuProductGrid = memo(QrTableMenuProductGridInner)

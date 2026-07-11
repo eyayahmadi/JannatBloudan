@@ -75,6 +75,15 @@ export type KitchenOrderInput = Omit<KitchenOrder, "items"> & {
   items: OrderItemInput[]
 }
 
+/** Subscribe only to pending state for one item — avoids full-board rerenders. */
+export function useItemPending(itemId: string): boolean {
+  return useSyncExternalStore(
+    realtimeOrdersStore.subscribePending,
+    () => realtimeOrdersStore.isItemPending(itemId),
+    () => false,
+  )
+}
+
 /**
  * Hook KDS partagé — tous les composants lisent le même store singleton
  * (une seule sync polling/realtime, une seule source de vérité).

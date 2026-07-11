@@ -50,6 +50,7 @@ import { formatKitchenTicketNotes, formatVariantLabel } from "@/lib/menu/cart-li
 import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
 import { isStableDigitalMenuPayload } from "@/lib/menu/menu-poll-stable"
 import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
+import { isMenuModalBlockingRefresh } from "@/lib/menu/menu-modal-guard"
 import {
   useMenuScrollPreservation,
   useSilentScrollRestore,
@@ -110,6 +111,8 @@ export function DigitalMenuExperience() {
   const [sortBy, setSortBy] = useState<MenuSortId>("recommended")
   const [placing, setPlacing] = useState(false)
   const [customizeItemId, setCustomizeItemId] = useState<string | null>(null)
+  const [customizeItemSnapshot, setCustomizeItemSnapshot] = useState<DigitalMenuProduct | null>(null)
+  const customizeItemIdRef = useRef<string | null>(null)
   const navRef = useRef<HTMLDivElement>(null)
   const dataRef = useRef(data)
   dataRef.current = data
@@ -163,8 +166,13 @@ export function DigitalMenuExperience() {
 
   useSilentScrollRestore(data?.catalog, consumeSilentScrollRestore, silentRefreshPendingRef)
 
+  customizeItemIdRef.current = customizeItemId
+
   const load = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent === true
+    if (silent && (customizeItemIdRef.current || isMenuModalBlockingRefresh())) {
+      return
+    }
     if (!silent) setLoading(true)
     try {
       const qs = new URLSearchParams({
@@ -309,6 +317,7 @@ export function DigitalMenuExperience() {
   const handleAddProduct = useCallback(
     (item: DigitalMenuProduct) => {
       if (item.is_customizable) {
+        setCustomizeItemSnapshot(item)
         setCustomizeItemId(item.id)
         return
       }
@@ -323,12 +332,7 @@ export function DigitalMenuExperience() {
     [add],
   )
 
-  const catalogById = useMemo(() => new Map(data?.catalog.map((p) => [p.id, p]) ?? []), [data])
-
-  const customizeItem = useMemo(() => {
-    if (!customizeItemId) return null
-    return catalogById.get(customizeItemId) ?? null
-  }, [customizeItemId, catalogById])
+  const customizeItem = customizeItemId ? customizeItemSnapshot : null
 
   const resetFilters = useCallback(() => {
     setQ("")
@@ -994,7 +998,10 @@ export function DigitalMenuExperience() {
               }
             : null
         }
-        onClose={() => setCustomizeItemId(null)}
+        onClose={() => {
+          setCustomizeItemId(null)
+          setCustomizeItemSnapshot(null)
+        }}
         addLabel={t("menu.addToCart")}
         onConfirm={(payload) => {
           add({
@@ -1008,6 +1015,7 @@ export function DigitalMenuExperience() {
             quantity: payload.quantity,
           })
           setCustomizeItemId(null)
+          setCustomizeItemSnapshot(null)
         }}
       />
     </div>

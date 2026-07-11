@@ -1,11 +1,13 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { Minus, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { useMenuModalLifecycle } from "@/lib/hooks/useMenuModalLifecycle"
 import type { ProductModifier, ProductVariant } from "@/lib/menu/digital-menu-product"
 import {
   calcUnitPrice,
@@ -49,10 +51,17 @@ export function ProductCustomizationModal({
   variant = "default",
   addLabel = "Ajouter au panier",
 }: ProductCustomizationModalProps) {
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null)
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
   const [selectedExtras, setSelectedExtras] = useState<Set<string>>(new Set())
   const [quantity, setQuantity] = useState(1)
   const resetProductIdRef = useRef<string | null>(null)
+
+  useMenuModalLifecycle(open)
+
+  useEffect(() => {
+    setPortalRoot(document.body)
+  }, [])
 
   const hasVariants = (product?.variants.length ?? 0) > 0
   const hasExtras = (product?.modifiers.length ?? 0) > 0
@@ -93,7 +102,7 @@ export function ProductCustomizationModal({
   const lineTotal = unitPrice * quantity
   const canConfirm = !hasVariants || selectedVariantId != null
 
-  if (!open || !product) return null
+  if (!portalRoot || !open || !product) return null
 
   const isTable = variant === "table"
 
@@ -113,12 +122,16 @@ export function ProductCustomizationModal({
     })
   }
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={handleClose} aria-hidden />
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[110] flex items-end justify-center sm:items-center"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="absolute inset-0 bg-black/55" onClick={handleClose} aria-hidden />
       <div
         className={cn(
-          "relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl shadow-2xl sm:rounded-3xl",
+          "menu-sheet-panel relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl shadow-2xl sm:rounded-3xl",
           isTable ? "bg-white dark:bg-neutral-900" : "border border-border bg-background",
         )}
       >
@@ -143,11 +156,21 @@ export function ProductCustomizationModal({
               </p>
             ) : null}
             {hasVariants && selectedVariant ? (
-              <p className={cn("mt-1 text-sm font-semibold", isTable ? "text-amber-700 dark:text-amber-400" : "text-foreground")}>
+              <p
+                className={cn(
+                  "mt-1 text-sm font-semibold",
+                  isTable ? "text-amber-700 dark:text-amber-400" : "text-foreground",
+                )}
+              >
                 {unitPrice.toFixed(2)} €
               </p>
             ) : hasExtras ? (
-              <p className={cn("mt-1 text-sm", isTable ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground")}>
+              <p
+                className={cn(
+                  "mt-1 text-sm",
+                  isTable ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground",
+                )}
+              >
                 Base {product.price.toFixed(2)} €
               </p>
             ) : null}
@@ -166,10 +189,15 @@ export function ProductCustomizationModal({
           </button>
         </div>
 
-        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
+        <div className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-5 py-4">
           {hasVariants ? (
             <div>
-              <p className={cn("mb-3 text-sm font-semibold", isTable ? "text-amber-950 dark:text-white" : "text-foreground")}>
+              <p
+                className={cn(
+                  "mb-3 text-sm font-semibold",
+                  isTable ? "text-amber-950 dark:text-white" : "text-foreground",
+                )}
+              >
                 Größe wählen
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -199,7 +227,12 @@ export function ProductCustomizationModal({
                           {v.name_ar}
                         </p>
                       ) : null}
-                      <p className={cn("mt-1 text-sm font-bold", isTable ? "text-amber-700 dark:text-amber-400" : "text-foreground")}>
+                      <p
+                        className={cn(
+                          "mt-1 text-sm font-bold",
+                          isTable ? "text-amber-700 dark:text-amber-400" : "text-foreground",
+                        )}
+                      >
                         {v.price.toFixed(2)} €
                       </p>
                     </button>
@@ -211,7 +244,12 @@ export function ProductCustomizationModal({
 
           {hasExtras ? (
             <div>
-              <p className={cn("mb-3 text-sm font-semibold", isTable ? "text-amber-950 dark:text-white" : "text-foreground")}>
+              <p
+                className={cn(
+                  "mb-3 text-sm font-semibold",
+                  isTable ? "text-amber-950 dark:text-white" : "text-foreground",
+                )}
+              >
                 Extras
               </p>
               <div className="space-y-2">
@@ -239,7 +277,12 @@ export function ProductCustomizationModal({
                         </p>
                       ) : null}
                     </div>
-                    <span className={cn("text-sm font-semibold", isTable ? "text-amber-700 dark:text-amber-400" : "text-foreground")}>
+                    <span
+                      className={cn(
+                        "text-sm font-semibold",
+                        isTable ? "text-amber-700 dark:text-amber-400" : "text-foreground",
+                      )}
+                    >
                       +{mod.price.toFixed(2)} €
                     </span>
                   </label>
@@ -283,9 +326,7 @@ export function ProductCustomizationModal({
           )}
         >
           {selectedVariant ? (
-            <p className="mb-2 text-xs text-muted-foreground">
-              {formatVariantLabel(selectedVariant)}
-            </p>
+            <p className="mb-2 text-xs text-muted-foreground">{formatVariantLabel(selectedVariant)}</p>
           ) : null}
           <div className="mb-3 flex items-center justify-between text-sm">
             <span className={isTable ? "text-amber-800 dark:text-amber-300" : "text-muted-foreground"}>Total</span>
@@ -319,6 +360,7 @@ export function ProductCustomizationModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    portalRoot,
   )
 }

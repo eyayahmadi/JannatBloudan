@@ -134,6 +134,9 @@ class RealtimeOrdersStore {
   private realtimeDebounceTimer: ReturnType<typeof setTimeout> | null = null
   private pollIntervalId: number | null = null
 
+  private pendingRevision = 0
+  private pendingListeners = new Set<StoreListener>()
+
   subscribe = (listener: StoreListener): (() => void) => {
     this.listeners.add(listener)
     this.ensureSync()
@@ -144,6 +147,14 @@ class RealtimeOrdersStore {
     this.lastEventListeners.add(listener)
     return () => this.lastEventListeners.delete(listener)
   }
+
+  /** Pending-only updates — does not notify order subscribers. */
+  subscribePending = (listener: StoreListener): (() => void) => {
+    this.pendingListeners.add(listener)
+    return () => this.pendingListeners.delete(listener)
+  }
+
+  getPendingRevision = (): number => this.pendingRevision
 
   getOrders = (): KitchenOrder[] => this.orders
 
@@ -157,6 +168,11 @@ class RealtimeOrdersStore {
 
   private emit() {
     for (const listener of this.listeners) listener()
+  }
+
+  private emitPending() {
+    this.pendingRevision += 1
+    for (const listener of this.pendingListeners) listener()
   }
 
   private emitLastEvent() {
@@ -186,14 +202,14 @@ class RealtimeOrdersStore {
       nextStatus: mutation.expectedStatus,
       version: mutation.version,
     })
-    this.emit()
+    this.emitPending()
   }
 
   private endPending(itemId: string) {
     this.pendingMutations.delete(itemId)
     this.mutationGraceUntil.set(itemId, Date.now() + MUTATION_GRACE_MS)
     this.suppressPullUntil = Date.now() + PULL_SUPPRESS_MS
-    this.emit()
+    this.emitPending()
   }
 
   private mergeFromServer(

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, memo } from "react"
 import { RequireAuth } from "@/components/auth/RequireAuth"
 import type { AppRole } from "@/lib/auth/roles"
 import { PageShell } from "@/components/site/PageShell"
@@ -22,11 +22,19 @@ import {
   UtensilsCrossed,
   XOctagon,
 } from "lucide-react"
-import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import {
+  type BoardGroupedItem,
+  kdsRenderLog,
+  pruneBoardGroupCache,
+  sortBoardGroups,
+  stabilizeGroupsArray,
+  stableBoardGroup,
+} from "@/lib/orders/kds-board-groups"
 import { RealtimeIndicator } from "@/components/realtime/RealtimeIndicator"
 import {
   useRealtimeOrders,
+  useItemPending,
   type KitchenOrder,
   type OrderItem,
   type OrderType,
@@ -51,7 +59,6 @@ import {
   stationServiceChainAudience,
 } from "@/lib/notifications/audience"
 import { AIAgentBadge, type AgentContext } from "@/components/ai/AIAgentBadge"
-import { SPRING_SOFT } from "@/lib/ui/motion"
 import { StationAvailabilityControl } from "@/components/stations/StationAvailabilityControl"
 import { ItemRefuseDialog } from "@/components/stations/ItemRefuseDialog"
 import { OrderProductName } from "@/components/orders/OrderProductName"
@@ -115,12 +122,69 @@ function elapsed(created: string): string {
   return `${s}s`
 }
 
+/** Isolated timer — only this subtree re-renders on tick. */
+const StationCardElapsedTimer = memo(function StationCardElapsedTimer({
+  createdAt,
+}: {
+  createdAt: string
+}) {
+  kdsRenderLog("Timer", { createdAt })
+  const [time, setTime] = useState(() => elapsed(createdAt))
+
+  useEffect(() => {
+    setTime(elapsed(createdAt))
+    const iv = setInterval(() => setTime(elapsed(createdAt)), 1000)
+    return () => clearInterval(iv)
+  }, [createdAt])
+
+  return (
+    <span className="inline-block min-w-[4.5rem] tabular-nums">{time}</span>
+  )
+})
+
+/** Late badge with reserved height so cards do not resize when it appears. */
+const StationLateBadgeSlot = memo(function StationLateBadgeSlot({
+  items,
+  avgPrepMinutes,
+}: {
+  items: OrderItem[]
+  avgPrepMinutes: number
+}) {
+  const { t } = useI18n()
+  const [isLate, setIsLate] = useState(false)
+
+  useEffect(() => {
+    const check = () => {
+      const late = items.some((it) => {
+        if (it.item_status !== "preparing" || !it.started_at) return false
+        const diff = (Date.now() - new Date(it.started_at).getTime()) / 60000
+        return diff > avgPrepMinutes
+      })
+      setIsLate(late)
+    }
+    check()
+    const iv = setInterval(check, 30_000)
+    return () => clearInterval(iv)
+  }, [items, avgPrepMinutes])
+
+  return (
+    <span className="inline-flex h-5 min-w-0 items-center">
+      {isLate ? (
+        <Badge className="bg-red-500 text-white text-[10px] uppercase" variant="secondary">
+          <AlertCircle className="me-1 h-3 w-3" />
+          {t("stations.lateAlert", "Retard")}
+        </Badge>
+      ) : null}
+    </span>
+  )
+})
+
 /** Convertit "produit_indisponible" → "produitIndisponible" pour la clé i18n. */
 function camel(snake: string): string {
   return snake.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase())
 }
 
-type GroupedItem = { order: KitchenOrder; items: OrderItem[] }
+type GroupedItem = BoardGroupedItem
 
 type StationItemCardProps = {
   order: KitchenOrder
@@ -129,10 +193,15 @@ type StationItemCardProps = {
   station: Station
   columnKey: ColumnKey
   isFocused?: boolean
-  isItemPending: (itemId: string) => boolean
-  onAdvance: (itemId: string, next: ItemStatus) => void
-  onRefuse: (itemId: string) => void
-  onPrint: () => void
+  onAdvanceOrder: (orderId: string, itemId: string, next: ItemStatus, columnKey: ColumnKey) => void
+  onRefuseOrder: (
+    orderId: string,
+    itemId: string,
+    name: string,
+    currentStatus: ItemStatus,
+    columnKey: ColumnKey,
+  ) => void
+  onPrintOrder: (order: KitchenOrder, items: OrderItem[]) => void
 }
 
 function stationCardDomId(orderId: string, columnKey: ColumnKey): string {
@@ -152,54 +221,36 @@ function findScrollParent(el: HTMLElement | null): HTMLElement | null {
   return null
 }
 
-function StationItemCard({
+const StationItemCard = memo(function StationItemCard({
   order,
   items,
   color,
   station,
   columnKey,
   isFocused = false,
-  isItemPending,
-  onAdvance,
-  onRefuse,
-  onPrint,
+  onAdvanceOrder,
+  onRefuseOrder,
+  onPrintOrder,
 }: StationItemCardProps) {
+  kdsRenderLog("OrderCard", { orderId: order.id, columnKey })
   const { t, locale } = useI18n()
-  const [time, setTime] = useState(elapsed(order.created_at))
   const colors = COLOR_MAP[color]
   const TypeIcon = ORDER_TYPE_ICON[order.order_type]
   const avgPrep = STATION_META[station].avgPrepMinutes
-
-  useEffect(() => {
-    setTime(elapsed(order.created_at))
-    const iv = setInterval(() => setTime(elapsed(order.created_at)), 30_000)
-    return () => clearInterval(iv)
-  }, [order.created_at])
-
-  // Detection "retard": dans preparing depuis plus que la moyenne de la station
-  const isLate = items.some((it) => {
-    if (it.item_status !== "preparing" || !it.started_at) return false
-    const diff = (Date.now() - new Date(it.started_at).getTime()) / 60000
-    return diff > avgPrep
-  })
+  const showLateSlot = columnKey === "preparing"
 
   const typeLabel = t(`kitchen.ticket.orderType.${order.order_type}`, order.order_type)
 
   void locale
 
   return (
-    <motion.div
+    <div
       id={stationCardDomId(order.id, columnKey)}
-      layout="position"
-      initial={false}
-      transition={SPRING_SOFT}
-      whileHover={{ y: -2 }}
       className={cn(
-        "group relative rounded-2xl border p-4 shadow-md backdrop-blur-sm transition-shadow",
-        "hover:shadow-xl dark:shadow-black/20",
+        "group relative rounded-2xl border p-4 shadow-md backdrop-blur-sm",
+        "dark:shadow-black/20",
         colors.card,
         colors.border,
-        isLate && "ring-2 ring-red-400/70 dark:ring-red-500/60",
         isFocused && "ring-2 ring-amber-500/80 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-950",
       )}
     >
@@ -213,12 +264,7 @@ function StationItemCard({
               {t("kitchen.table", "Table")} {order.table_number}
             </Badge>
           )}
-          {isLate && (
-            <Badge className="bg-red-500 text-white text-[10px] uppercase" variant="secondary">
-              <AlertCircle className="me-1 h-3 w-3" />
-              {t("stations.lateAlert", "Retard")}
-            </Badge>
-          )}
+          {showLateSlot ? <StationLateBadgeSlot items={items} avgPrepMinutes={avgPrep} /> : null}
         </div>
         <Badge
           className={cn("text-[10px] uppercase tracking-wide", colors.badge)}
@@ -246,7 +292,6 @@ function StationItemCard({
             !isReplaced &&
             item.item_status !== "served" &&
             item.item_status !== "cancelled"
-          const pending = isItemPending(item.id)
           return (
             <li
               key={item.id}
@@ -298,67 +343,30 @@ function StationItemCard({
                   </p>
                 )}
               </div>
-              <div className="flex shrink-0 items-center gap-1">
-                {canAdvance && next && (
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (pending) return
-                      onAdvance(item.id, next)
-                    }}
-                    className={cn(
-                      "rounded-lg border px-2 py-1 text-[11px] font-semibold uppercase tracking-wide transition",
-                      "bg-white/80 text-slate-700 hover:bg-slate-900 hover:text-white",
-                      "dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-white dark:hover:text-slate-900",
-                      colors.border,
-                      pending && "cursor-not-allowed opacity-50 hover:bg-white/80 hover:text-slate-700 dark:hover:bg-slate-800/80 dark:hover:text-slate-200",
-                    )}
-                  >
-                    {next === "accepted"
-                      ? t("stations.action.accept", "Accepter")
-                      : next === "preparing"
-                        ? t("stations.action.start", "Lancer")
-                        : next === "ready"
-                          ? t("stations.action.markReady", "Pret")
-                          : t("stations.action.markServed", "Servi")}
-                  </button>
-                )}
-                {canRefuse && (
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (pending) return
-                      onRefuse(item.id)
-                    }}
-                    className={cn(
-                      "rounded-lg border px-2 py-1 text-[11px] font-semibold uppercase tracking-wide transition",
-                      "border-red-200 bg-white/80 text-red-700 hover:bg-red-600 hover:text-white",
-                      "dark:border-red-800 dark:bg-slate-800/80 dark:text-red-300 dark:hover:bg-red-700 dark:hover:text-white",
-                      pending && "cursor-not-allowed opacity-50 hover:bg-white/80 hover:text-red-700 dark:hover:bg-slate-800/80 dark:hover:text-red-300",
-                    )}
-                    title={t("stations.action.refuse", "Refuser")}
-                  >
-                    <Ban className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
+              <StationItemActionButtons
+                item={item}
+                next={next}
+                canAdvance={canAdvance}
+                canRefuse={canRefuse}
+                colors={colors}
+                columnKey={columnKey}
+                orderId={order.id}
+                onAdvanceOrder={onAdvanceOrder}
+                onRefuseOrder={onRefuseOrder}
+              />
             </li>
           )
         })}
       </ul>
 
-      <div className="mt-3 flex items-center justify-between border-t border-slate-200/60 pt-2 dark:border-slate-700/40">
+      <div className="mt-3 flex h-8 items-center justify-between border-t border-slate-200/60 pt-2 dark:border-slate-700/40">
         <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-          <Clock className="h-3 w-3" />
-          {time}
+          <Clock className="h-3 w-3 shrink-0" />
+          <StationCardElapsedTimer createdAt={order.created_at} />
         </div>
         <button
           type="button"
-          onClick={onPrint}
+          onClick={() => onPrintOrder(order, items)}
           className={cn(
             "rounded-full bg-white/90 p-1.5 text-slate-600 shadow-sm transition",
             "hover:bg-slate-900 hover:text-white hover:shadow-md",
@@ -370,11 +378,175 @@ function StationItemCard({
           <Printer className="h-3.5 w-3.5" />
         </button>
       </div>
-    </motion.div>
+    </div>
   )
+})
+
+type StationItemActionButtonsProps = {
+  item: OrderItem
+  next: ItemStatus | undefined
+  canAdvance: boolean
+  canRefuse: boolean
+  colors: { border: string }
+  columnKey: ColumnKey
+  orderId: string
+  onAdvanceOrder: StationItemCardProps["onAdvanceOrder"]
+  onRefuseOrder: StationItemCardProps["onRefuseOrder"]
 }
 
+const StationItemActionButtons = memo(function StationItemActionButtons({
+  item,
+  next,
+  canAdvance,
+  canRefuse,
+  colors,
+  columnKey,
+  orderId,
+  onAdvanceOrder,
+  onRefuseOrder,
+}: StationItemActionButtonsProps) {
+  kdsRenderLog("ActionButtons", { itemId: item.id, columnKey })
+  const { t } = useI18n()
+  const pending = useItemPending(item.id)
+
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      {canAdvance && next ? (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={(e) => {
+            e.stopPropagation()
+            if (pending) return
+            onAdvanceOrder(orderId, item.id, next, columnKey)
+          }}
+          className={cn(
+            "rounded-lg border px-2 py-1 text-[11px] font-semibold uppercase tracking-wide transition",
+            "bg-white/80 text-slate-700 hover:bg-slate-900 hover:text-white",
+            "dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-white dark:hover:text-slate-900",
+            colors.border,
+            pending && "cursor-not-allowed opacity-50 hover:bg-white/80 hover:text-slate-700 dark:hover:bg-slate-800/80 dark:hover:text-slate-200",
+          )}
+        >
+          {next === "accepted"
+            ? t("stations.action.accept", "Accepter")
+            : next === "preparing"
+              ? t("stations.action.start", "Lancer")
+              : next === "ready"
+                ? t("stations.action.markReady", "Pret")
+                : t("stations.action.markServed", "Servi")}
+        </button>
+      ) : null}
+      {canRefuse ? (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={(e) => {
+            e.stopPropagation()
+            if (pending) return
+            onRefuseOrder(orderId, item.id, item.name, item.item_status, columnKey)
+          }}
+          className={cn(
+            "rounded-lg border px-2 py-1 text-[11px] font-semibold uppercase tracking-wide transition",
+            "border-red-200 bg-white/80 text-red-700 hover:bg-red-600 hover:text-white",
+            "dark:border-red-800 dark:bg-slate-800/80 dark:text-red-300 dark:hover:bg-red-700 dark:hover:text-white",
+            pending && "cursor-not-allowed opacity-50 hover:bg-white/80 hover:text-red-700 dark:hover:bg-slate-800/80 dark:hover:text-red-300",
+          )}
+          title={t("stations.action.refuse", "Refuser")}
+        >
+          <Ban className="h-3 w-3" />
+        </button>
+      ) : null}
+    </div>
+  )
+})
+
 const AUTO_PRINT_KEY_PREFIX = "station.autoPrint."
+
+type StationColumnData = {
+  key: ColumnKey
+  icon: typeof Clock
+  color: string
+  label: string
+  groups: BoardGroupedItem[]
+}
+
+type StationColumnProps = {
+  col: StationColumnData
+  station: Station
+  focusedOrderId: string | null
+  focusedColumnKey: ColumnKey | null
+  onAdvanceOrder: StationItemCardProps["onAdvanceOrder"]
+  onRefuseOrder: StationItemCardProps["onRefuseOrder"]
+  onPrintOrder: StationItemCardProps["onPrintOrder"]
+  emptyLabel: string
+}
+
+const StationColumn = memo(function StationColumn({
+  col,
+  station,
+  focusedOrderId,
+  focusedColumnKey,
+  onAdvanceOrder,
+  onRefuseOrder,
+  onPrintOrder,
+  emptyLabel,
+}: StationColumnProps) {
+  kdsRenderLog(col.key === "preparing" ? "PreparingColumn" : `Column:${col.key}`, {
+    count: col.groups.length,
+  })
+  const ColIcon = col.icon
+  const itemCount = col.groups.reduce((s, g) => s + g.items.length, 0)
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2 px-1">
+        <ColIcon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+          {col.label}
+        </h2>
+        <Badge variant="outline" className="ms-auto text-xs">
+          {itemCount}
+        </Badge>
+      </div>
+      <div className="flex flex-1 flex-col gap-3">
+        {col.groups.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 p-8 dark:border-slate-800">
+            <p className="text-center text-sm text-slate-400 dark:text-slate-500">{emptyLabel}</p>
+          </div>
+        ) : (
+          col.groups.map(({ order, items }) => (
+            <StationItemCard
+              key={order.id}
+              order={order}
+              items={items}
+              color={col.color}
+              station={station}
+              columnKey={col.key}
+              isFocused={focusedOrderId === order.id && focusedColumnKey === col.key}
+              onAdvanceOrder={onAdvanceOrder}
+              onRefuseOrder={onRefuseOrder}
+              onPrintOrder={onPrintOrder}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  )
+}, (prev, next) => {
+  return (
+    prev.col.groups === next.col.groups &&
+    prev.col.label === next.col.label &&
+    prev.station === next.station &&
+    prev.focusedOrderId === next.focusedOrderId &&
+    prev.focusedColumnKey === next.focusedColumnKey &&
+    prev.onAdvanceOrder === next.onAdvanceOrder &&
+    prev.onRefuseOrder === next.onRefuseOrder &&
+    prev.onPrintOrder === next.onPrintOrder &&
+    prev.emptyLabel === next.emptyLabel
+  )
+})
+
 
 function defaultRolesForStation(station: Station): AppRole[] {
   switch (station) {
@@ -430,6 +602,13 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
   } | null>(null)
   const savedScrollRef = useRef(0)
   const scrollRestorePendingRef = useRef(false)
+  const columnGroupsRef = useRef<Partial<Record<ColumnKey, BoardGroupedItem[]>>>({})
+  const [hourBoundary, setHourBoundary] = useState(() => Date.now() - 60 * 60 * 1000)
+
+  useEffect(() => {
+    const iv = window.setInterval(() => setHourBoundary(Date.now() - 60 * 60 * 1000), 60_000)
+    return () => window.clearInterval(iv)
+  }, [])
 
   const meta = STATION_META[station]
   const stationLabel = t(meta.i18nKey, station)
@@ -458,7 +637,6 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
 
   const handlePrint = useCallback(
     (order: KitchenOrder, stationItems: OrderItem[]) => {
-      // On imprime uniquement les items de cette station
       const stationOnlyOrder: KitchenOrder = { ...order, items: stationItems }
       const ok = printKitchenTicket(stationOnlyOrder, {
         restaurantName: SITE.name,
@@ -473,13 +651,20 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
     [locale, station],
   )
 
+  const onPrintOrder = useCallback(
+    (order: KitchenOrder, items: OrderItem[]) => {
+      handlePrint(order, items)
+    },
+    [handlePrint],
+  )
+
   // Items de cette station uniquement, regroupes par commande + colonne statut
   const stationItems = useMemo(
     () => getStationItems(station),
     [getStationItems, station],
   )
 
-  const oneHourAgo = Date.now() - 60 * 60 * 1000
+  const oneHourAgo = hourBoundary
   const visibleItems = useMemo(
     () =>
       stationItems.filter(({ item, order }) => {
@@ -499,20 +684,31 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
         }
         return item.item_status === col.key
       })
-      const grouped = new Map<string, GroupedItem>()
+
+      const itemsByOrder = new Map<string, { order: KitchenOrder; items: OrderItem[] }>()
+      const orderIds = new Set<string>()
       matching.forEach(({ order, item }) => {
-        const g = grouped.get(order.id)
-        if (g) g.items.push(item)
-        else grouped.set(order.id, { order, items: [item] })
+        orderIds.add(order.id)
+        let slot = itemsByOrder.get(order.id)
+        if (!slot) {
+          slot = { order, items: [] }
+          itemsByOrder.set(order.id, slot)
+        }
+        slot.items.push(item)
       })
+      pruneBoardGroupCache(col.key, orderIds)
+
+      const built = Array.from(itemsByOrder.values()).map(({ order, items }) =>
+        stableBoardGroup(col.key, order, items),
+      )
+      const sorted = sortBoardGroups(col.key, built)
+      const stabilized = stabilizeGroupsArray(col.key, columnGroupsRef.current[col.key], sorted)
+      columnGroupsRef.current[col.key] = stabilized
+
       return {
         ...col,
         label: t(`stations.status.${col.key}`, col.key),
-        groups: Array.from(grouped.values()).sort(
-          (a, b) =>
-            new Date(a.order.created_at).getTime() -
-            new Date(b.order.created_at).getTime(),
-        ),
+        groups: stabilized,
       }
     })
   }, [visibleItems, t])
@@ -662,6 +858,33 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
     },
     [],
   )
+
+  const handleAdvanceRef = useRef(handleAdvance)
+  const handleAskRefuseRef = useRef(handleAskRefuse)
+  handleAdvanceRef.current = handleAdvance
+  handleAskRefuseRef.current = handleAskRefuse
+
+  const onAdvanceOrder = useCallback(
+    (orderId: string, itemId: string, next: ItemStatus, columnKey: ColumnKey) => {
+      void handleAdvanceRef.current(orderId, itemId, next, columnKey)
+    },
+    [],
+  )
+
+  const onRefuseOrder = useCallback(
+    (
+      orderId: string,
+      itemId: string,
+      name: string,
+      currentStatus: ItemStatus,
+      columnKey: ColumnKey,
+    ) => {
+      handleAskRefuseRef.current(orderId, itemId, name, currentStatus, columnKey)
+    },
+    [],
+  )
+
+  const emptyQueueLabel = t("stations.emptyQueue", "File vide")
 
   const handleConfirmRefuse = useCallback(
     async ({
@@ -884,104 +1107,36 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
 
         {/* Desktop kanban */}
         <div className="hidden flex-1 gap-4 p-4 md:grid md:grid-cols-3 lg:grid-cols-5 lg:gap-4 lg:p-6">
-          {columns.map((col) => {
-            const ColIcon = col.icon
-            const itemCount = col.groups.reduce((s, g) => s + g.items.length, 0)
-            return (
-              <div key={col.key} className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 px-1">
-                  <ColIcon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                    {col.label}
-                  </h2>
-                  <Badge variant="outline" className="ms-auto text-xs">
-                    {itemCount}
-                  </Badge>
-                </div>
-                <div className="flex flex-1 flex-col gap-3">
-                  {col.groups.length === 0 ? (
-                    <div className="flex flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 p-8 dark:border-slate-800">
-                      <p className="text-center text-sm text-slate-400 dark:text-slate-500">
-                        {t("stations.emptyQueue", "File vide")}
-                      </p>
-                    </div>
-                  ) : (
-                    col.groups.map(({ order, items }) => (
-                      <StationItemCard
-                        key={`${order.id}-${col.key}`}
-                          order={order}
-                          items={items}
-                          color={col.color}
-                          station={station}
-                          columnKey={col.key}
-                          isFocused={
-                            focusedOrderId === order.id && focusedColumnKey === col.key
-                          }
-                          isItemPending={isItemPending}
-                          onAdvance={(itemId, next) =>
-                            handleAdvance(order.id, itemId, next, col.key)
-                          }
-                          onRefuse={(itemId) => {
-                            const it = items.find((x) => x.id === itemId)
-                            if (it)
-                              handleAskRefuse(
-                                order.id,
-                                itemId,
-                                it.name,
-                                it.item_status,
-                                col.key,
-                              )
-                          }}
-                          onPrint={() => handlePrint(order, items)}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            )
-          })}
+          {columns.map((col) => (
+            <StationColumn
+              key={col.key}
+              col={col}
+              station={station}
+              focusedOrderId={focusedOrderId}
+              focusedColumnKey={focusedColumnKey}
+              onAdvanceOrder={onAdvanceOrder}
+              onRefuseOrder={onRefuseOrder}
+              onPrintOrder={onPrintOrder}
+              emptyLabel={emptyQueueLabel}
+            />
+          ))}
         </div>
 
         {/* Mobile column */}
         <div className="flex flex-1 flex-col gap-3 p-4 md:hidden">
           {(() => {
             const col = columns.find((c) => c.key === mobileTab)!
-            return col.groups.length === 0 ? (
-              <div className="flex flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 p-8 dark:border-slate-800">
-                <p className="text-center text-sm text-slate-400 dark:text-slate-500">
-                  {t("stations.emptyQueue", "File vide")}
-                </p>
-              </div>
-            ) : (
-              col.groups.map(({ order, items }) => (
-                <StationItemCard
-                  key={`${order.id}-${col.key}`}
-                  order={order}
-                  items={items}
-                  color={col.color}
-                  station={station}
-                  columnKey={col.key}
-                  isFocused={
-                    focusedOrderId === order.id && focusedColumnKey === col.key
-                  }
-                  isItemPending={isItemPending}
-                  onAdvance={(itemId, next) =>
-                    handleAdvance(order.id, itemId, next, col.key)
-                  }
-                  onRefuse={(itemId) => {
-                    const it = items.find((x) => x.id === itemId)
-                    if (it)
-                      handleAskRefuse(
-                        order.id,
-                        itemId,
-                        it.name,
-                        it.item_status,
-                        col.key,
-                      )
-                  }}
-                  onPrint={() => handlePrint(order, items)}
-                />
-              ))
+            return (
+              <StationColumn
+                col={col}
+                station={station}
+                focusedOrderId={focusedOrderId}
+                focusedColumnKey={focusedColumnKey}
+                onAdvanceOrder={onAdvanceOrder}
+                onRefuseOrder={onRefuseOrder}
+                onPrintOrder={onPrintOrder}
+                emptyLabel={emptyQueueLabel}
+              />
             )
           })()}
         </div>

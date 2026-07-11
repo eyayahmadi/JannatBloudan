@@ -151,6 +151,46 @@ html.menu-stable-scroll [data-menu-product-id] {
   }
 }
 
+/* Product modal: freeze background list paint + block interaction behind portal */
+html.menu-modal-open {
+  overflow: hidden !important;
+}
+
+html.menu-modal-open body {
+  overflow: hidden !important;
+}
+
+html.menu-modal-open [data-menu-background] {
+  pointer-events: none;
+  overflow: hidden !important;
+}
+
+html.menu-modal-open .menu-product-card,
+html.menu-modal-open [data-menu-product-id] {
+  animation: none !important;
+  transition: none !important;
+}
+
+@keyframes menu-sheet-in {
+  from {
+    transform: translate3d(0, 100%, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.menu-sheet-panel {
+  animation: menu-sheet-in 0.28s ease-out;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-sheet-panel {
+    animation: none;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {

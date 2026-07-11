@@ -52,7 +52,7 @@ export default function TableMenuHomePage() {
         <StationStatusBanner />
       </div>
 
-      <main className="relative z-0 mx-auto max-w-2xl px-4 py-5 pb-28">
+      <main className="relative z-0 mx-auto max-w-2xl px-4 py-5 pb-28" data-menu-background>
         {offline && !loading ? (
           <QrMenuEmptyState variant="offline" onRetry={loadMenu} />
         ) : loading && menuItems.length === 0 ? (

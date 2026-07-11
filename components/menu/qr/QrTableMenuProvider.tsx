@@ -27,6 +27,7 @@ import {
 } from "@/lib/menu/menu-homepage-sections"
 import { mapApiToQrMenuItem, mergeQrMenuItems } from "@/lib/menu/qr-menu-helpers"
 import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
+import { isMenuModalBlockingRefresh } from "@/lib/menu/menu-modal-guard"
 import { isStableQrMenuPayload } from "@/lib/menu/menu-poll-stable"
 import { getQrFavorites, getQrRecentlyOrdered, pushQrRecentlyOrdered, toggleQrFavorite } from "@/lib/menu/qr-guest-prefs"
 import type { QrCartEntry, QrMenuItem } from "@/lib/menu/qr-menu-types"
@@ -126,13 +127,19 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<QrCartEntry[]>([])
   const [cartOpen, setCartOpen] = useState(false)
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
+  const [detailItemSnapshot, setDetailItemSnapshot] = useState<QrMenuItem | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
 
   const menuItemsRef = useRef<QrMenuItem[]>([])
   const categoryRowsRef = useRef<QrMenuCategoryRow[]>([])
+  const detailItemIdRef = useRef<string | null>(null)
+  const cartOpenRef = useRef(false)
+  const activeOrderFrozenRef = useRef<{ order_number: string; status: OrderStatus } | null>(null)
   menuItemsRef.current = menuItems
   categoryRowsRef.current = categoryRows
+  detailItemIdRef.current = detailItemId
+  cartOpenRef.current = cartOpen
 
   const {
     captureScrollForSilentRefresh,
@@ -149,6 +156,14 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
 
   const loadMenu = useCallback((options?: { silent?: boolean }) => {
     const silent = options?.silent === true
+    if (
+      silent &&
+      (detailItemIdRef.current ||
+        cartOpenRef.current ||
+        isMenuModalBlockingRefresh())
+    ) {
+      return
+    }
     if (!silent) setLoading(true)
     setLoadError(false)
     setOffline(!navigator.onLine)
@@ -223,7 +238,7 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const activeOrder = useMemo(() => {
+  const activeOrderLive = useMemo(() => {
     if (effectiveNumber == null) return null
     const order = orders.find(
       (o) =>
@@ -234,6 +249,12 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
     if (!order) return null
     return { order_number: order.order_number, status: order.status }
   }, [orders, effectiveNumber])
+
+  const backgroundFrozen = !!detailItemId || cartOpen
+  if (!backgroundFrozen) {
+    activeOrderFrozenRef.current = activeOrderLive
+  }
+  const activeOrder = backgroundFrozen ? activeOrderFrozenRef.current : activeOrderLive
 
   const categoryNavItems = useMemo(() => buildQrCategoryNavItems(), [])
 
@@ -247,16 +268,24 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
     [menuItems, homepageSections],
   )
 
-  const detailItem = useMemo(() => {
-    if (!detailItemId) return null
-    return menuItems.find((p) => p.id === detailItemId) ?? null
-  }, [detailItemId, menuItems])
+  const detailItem = detailItemId ? detailItemSnapshot : null
+
+  const setDetailItemIdWithSnapshot = useCallback((id: string | null) => {
+    if (id === null) {
+      setDetailItemId(null)
+      setDetailItemSnapshot(null)
+      return
+    }
+    const item = menuItemsRef.current.find((p) => p.id === id) ?? null
+    if (item) setDetailItemSnapshot(item)
+    setDetailItemId(id)
+  }, [])
 
   useEffect(() => {
-    if (detailItemId && !detailItem && !loading) {
+    if (detailItemId && !detailItemSnapshot && !loading) {
       setDetailItemId(null)
     }
-  }, [detailItemId, detailItem, loading])
+  }, [detailItemId, detailItemSnapshot, loading])
 
   const addLineToCart = useCallback(
     (payload: {
@@ -319,7 +348,10 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
     [addLineToCart],
   )
 
-  const openDetail = useCallback((item: QrMenuItem) => setDetailItemId(item.id), [])
+  const openDetail = useCallback((item: QrMenuItem) => {
+    setDetailItemSnapshot(item)
+    setDetailItemId(item.id)
+  }, [])
 
   const handleToggleFavorite = useCallback((productId: string) => {
     setFavoriteIds(toggleQrFavorite(productId))
@@ -468,8 +500,46 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
     [router, tableId],
   )
 
-  const value: QrTableMenuContextValue = {
-    tableId: String(tableId),
+  const value = useMemo((): QrTableMenuContextValue => {
+    return {
+      tableId: String(tableId),
+      displayLabel,
+      effectiveNumber,
+      menuItems,
+      categoryRows,
+      categoryNavItems,
+      homepageSections,
+      bestsellerItems,
+      todayItems,
+      oftenOrderedWith,
+      loading,
+      loadError,
+      offline,
+      loadMenu,
+      cart,
+      cartCount,
+      cartTotal,
+      cartOpen,
+      setCartOpen,
+      submitting,
+      favoriteIds,
+      detailItemId,
+      setDetailItemId: setDetailItemIdWithSnapshot,
+      detailItem,
+      activeOrder,
+      handleToggleFavorite,
+      getInCartQty,
+      handleQuickAdd,
+      openDetail,
+      increment,
+      decrement,
+      addLineToCart,
+      submitOrder,
+      getCategoryBlock,
+      navigateToCategory,
+    }
+  }, [
+    tableId,
     displayLabel,
     effectiveNumber,
     menuItems,
@@ -487,11 +557,10 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
     cartCount,
     cartTotal,
     cartOpen,
-    setCartOpen,
     submitting,
     favoriteIds,
     detailItemId,
-    setDetailItemId,
+    setDetailItemIdWithSnapshot,
     detailItem,
     activeOrder,
     handleToggleFavorite,
@@ -504,7 +573,7 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
     submitOrder,
     getCategoryBlock,
     navigateToCategory,
-  }
+  ])
 
   return (
     <MenuScrollGuardProvider notifyLayoutShift={notifyLayoutShift}>
