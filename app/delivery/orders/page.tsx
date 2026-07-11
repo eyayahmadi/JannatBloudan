@@ -8,20 +8,21 @@ import { SiteHeader } from "@/components/site/SiteHeader"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 
 type OrderStatus = "received" | "preparing" | "delivering" | "completed"
 
 type Order = {
   id: string
   date: string
-  items: { name: string; quantity: number }[]
+  items: { name: string; name_ar?: string | null; quantity: number }[]
   total: number
   status: OrderStatus
   estimatedTime?: string
 }
 
 type StoredCart = {
-  items?: { name: string; quantity: number; price: number }[]
+  items?: { name: string; name_ar?: string | null; quantity: number; price: number }[]
   summary?: {
     subtotal: number
     tva: number
@@ -71,7 +72,11 @@ export default function OrdersPage() {
       {
         id: "FR-2024-1234",
         date: formattedDate,
-        items: storedOrder.items.map((item) => ({ name: item.name, quantity: item.quantity })),
+        items: storedOrder.items.map((item) => ({
+          name: item.name,
+          name_ar: item.name_ar ?? null,
+          quantity: item.quantity,
+        })),
         total,
         status: "delivering",
         estimatedTime: "15 min",
@@ -116,8 +121,9 @@ export default function OrdersPage() {
                         <h4 className="font-semibold text-slate-900 mb-2">Articles commandés:</h4>
                         <ul className="space-y-1">
                           {order.items.map((item, idx) => (
-                            <li key={idx} className="text-slate-600 text-sm">
-                              {item.quantity}x {item.name}
+                            <li key={idx} className="flex items-start gap-2 text-slate-600 text-sm">
+                              <span className="shrink-0 font-medium">{item.quantity}×</span>
+                              <OrderProductName name={item.name} name_ar={item.name_ar} size="sm" />
                             </li>
                           ))}
                         </ul>
@@ -174,8 +180,9 @@ export default function OrdersPage() {
                       <div className="mb-4">
                         <ul className="space-y-1">
                           {order.items.map((item, idx) => (
-                            <li key={idx} className="text-slate-600 text-sm">
-                              {item.quantity}x {item.name}
+                            <li key={idx} className="flex items-start gap-2 text-slate-600 text-sm">
+                              <span className="shrink-0 font-medium">{item.quantity}×</span>
+                              <OrderProductName name={item.name} name_ar={item.name_ar} size="sm" />
                             </li>
                           ))}
                         </ul>

@@ -47,6 +47,7 @@ function loadOrders(): KitchenOrder[] {
         return {
           id: cast.id ?? `${o.id}-${idx}`,
           name: it.name,
+          name_ar: cast.name_ar,
           quantity: it.quantity,
           notes: it.notes,
           station: cast.station ?? inferStation(it.name),
@@ -285,6 +286,7 @@ class RealtimeOrdersStore {
         items: order.items.map((it, idx) => ({
           id: it.id ?? `${order.id}-${idx}`,
           name: it.name,
+          name_ar: it.name_ar,
           quantity: it.quantity,
           notes: it.notes,
           station: it.station ?? inferStation(it.name),

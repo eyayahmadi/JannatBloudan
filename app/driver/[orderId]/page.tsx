@@ -24,6 +24,7 @@ import { SiteFooter } from "@/components/site/SiteFooter"
 import { PremiumBackdrop } from "@/components/site/PremiumBackdrop"
 import { AIAgentBadge } from "@/components/ai/AIAgentBadge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import DeliveryMapDynamic from "@/components/maps/DeliveryMapDynamic"
@@ -375,9 +376,9 @@ export default function DriverDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-1 text-sm">
                   {delivery.items.map((it, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <span>{it.name}</span>
-                      <span className="text-slate-500">×{it.quantity}</span>
+                    <div key={i} className="flex items-start justify-between gap-2">
+                      <OrderProductName name={it.name} name_ar={it.name_ar} size="sm" />
+                      <span className="shrink-0 text-slate-500">×{it.quantity}</span>
                     </div>
                   ))}
                 </CardContent>

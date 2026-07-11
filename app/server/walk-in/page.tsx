@@ -17,6 +17,7 @@ import { SiteHeader } from "@/components/site/SiteHeader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import {
@@ -140,6 +141,7 @@ export default function ServerWalkInPage() {
           (it: {
             id: string
             name: string
+            name_ar?: string | null
             quantity: number
             unit_price?: number
             notes?: string
@@ -148,6 +150,7 @@ export default function ServerWalkInPage() {
           }) => ({
             id: it.id,
             name: it.name,
+            name_ar: it.name_ar ?? null,
             quantity: it.quantity,
             notes: it.notes,
             unit_price: it.unit_price,
@@ -324,9 +327,12 @@ export default function ServerWalkInPage() {
                         >
                           <div className="flex items-center gap-2">
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
-                                {line.product.name}
-                              </p>
+                              <OrderProductName
+                                name={line.product.name}
+                                name_ar={line.product.name_ar}
+                                size="sm"
+                                truncate
+                              />
                               {line.variant ? (
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                   {formatVariantLabel(line.variant)}

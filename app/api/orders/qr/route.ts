@@ -114,6 +114,7 @@ export async function POST(request: Request) {
             id: it.id,
             productId: it.productId,
             name: it.name,
+            name_ar: it.name_ar ?? null,
             quantity: it.quantity,
             unitPrice: it.unitPrice,
             notes: it.notes,

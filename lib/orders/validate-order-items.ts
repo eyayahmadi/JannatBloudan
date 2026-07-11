@@ -21,6 +21,7 @@ type DbVariant = {
 export type ValidatedOrderItem = {
   productId?: string
   name: string
+  name_ar?: string | null
   quantity: number
   unitPrice: number
   notes?: string | null
@@ -122,7 +123,7 @@ export async function validateAndEnrichOrderItems(
     productIds.length > 0
       ? await supabase
           .from("products")
-          .select("id, name, price, is_available, is_archived, station")
+          .select("id, name, name_ar, price, is_available, is_archived, station")
           .in("id", productIds)
       : { data: [], error: null }
 
@@ -179,6 +180,7 @@ export async function validateAndEnrichOrderItems(
     validated.push({
       productId: it.productId,
       name: String(prod.name),
+      name_ar: (prod as { name_ar?: string | null }).name_ar ?? null,
       quantity: qty,
       unitPrice,
       notes,

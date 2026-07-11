@@ -72,6 +72,7 @@ type OrderItemRow = {
   id: string
   product_id: string | null
   product_name: string
+  product_name_ar: string | null
   quantity: number
   unit_price: number
   subtotal: number | null
@@ -88,6 +89,7 @@ type InvoiceLineRow = {
   order_item_id: string | null
   product_id: string | null
   product_name: string
+  product_name_ar: string | null
   quantity: number
   unit_price: number
   subtotal: number | null
@@ -210,7 +212,7 @@ export async function syncOrderInvoice(
   const { data: rawItems } = await supabase
     .from("order_items")
     .select(
-      "id, product_id, product_name, quantity, unit_price, subtotal, station, station_status, special_instructions, refusal_reason, refusal_note",
+      "id, product_id, product_name, product_name_ar, quantity, unit_price, subtotal, station, station_status, special_instructions, refusal_reason, refusal_note",
     )
     .eq("order_id", orderId)
 
@@ -218,6 +220,7 @@ export async function syncOrderInvoice(
     id: String(r.id),
     product_id: r.product_id ? String(r.product_id) : null,
     product_name: String(r.product_name ?? ""),
+    product_name_ar: r.product_name_ar ? String(r.product_name_ar) : null,
     quantity: Number(r.quantity) || 0,
     unit_price: Number(r.unit_price) || 0,
     subtotal: r.subtotal == null ? null : Number(r.subtotal),
@@ -412,6 +415,7 @@ async function createInvoiceFromOrder(
       order_item_id: it.id,
       product_id: it.product_id,
       product_name: it.product_name,
+      product_name_ar: it.product_name_ar,
       quantity: it.quantity,
       unit_price: it.unit_price,
       subtotal: round2(it.unit_price * it.quantity),
@@ -484,7 +488,7 @@ async function reconcileInvoice(
   const { data: rawLines } = await supabase
     .from("invoice_items")
     .select(
-      "id, invoice_id, order_item_id, product_id, product_name, quantity, unit_price, subtotal, notes, station, line_status, sync_locked",
+      "id, invoice_id, order_item_id, product_id, product_name, product_name_ar, quantity, unit_price, subtotal, notes, station, line_status, sync_locked",
     )
     .eq("invoice_id", invoiceId)
 
@@ -494,6 +498,7 @@ async function reconcileInvoice(
     order_item_id: r.order_item_id ? String(r.order_item_id) : null,
     product_id: r.product_id ? String(r.product_id) : null,
     product_name: String(r.product_name ?? ""),
+    product_name_ar: r.product_name_ar ? String(r.product_name_ar) : null,
     quantity: Number(r.quantity) || 0,
     unit_price: Number(r.unit_price) || 0,
     subtotal: r.subtotal == null ? null : Number(r.subtotal),
@@ -545,6 +550,7 @@ async function reconcileInvoice(
             order_item_id: it.id,
             product_id: it.product_id,
             product_name: it.product_name,
+            product_name_ar: it.product_name_ar,
             quantity: it.quantity,
             unit_price: it.unit_price,
             subtotal,

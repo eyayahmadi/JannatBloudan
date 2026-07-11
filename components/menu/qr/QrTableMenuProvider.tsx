@@ -371,6 +371,7 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
     const items = cart.map((c) => ({
       productId: c.productId,
       name: c.name,
+      name_ar: c.name_ar ?? null,
       quantity: c.quantity,
       unitPrice: c.price,
       variantId: c.variant?.id ?? null,
@@ -386,6 +387,7 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
       items?: Array<{
         id?: string
         name: string
+        name_ar?: string | null
         quantity: number
         unitPrice?: number
         notes?: string
@@ -435,6 +437,7 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
           ? apiItems.map((it, idx) => ({
               id: it.id ?? `${resolvedId}-${idx}`,
               name: it.name,
+              name_ar: it.name_ar ?? null,
               quantity: it.quantity,
               notes: it.notes,
               unit_price: it.unitPrice,

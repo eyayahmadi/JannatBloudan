@@ -11,6 +11,7 @@ import { loadStripe } from "@stripe/stripe-js"
 import { CardElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -21,6 +22,7 @@ type PaymentMethod = "card" | "paypal" | "applepay" | "cash" | "instore"
 type CheckoutCartItem = {
   id: number
   name: string
+  name_ar?: string | null
   price: number
   quantity: number
   image?: string
@@ -99,7 +101,12 @@ function CheckoutContent() {
         body: JSON.stringify({
           orderId,
           customerName: deliveryAddress.street || "Client",
-          items: orderItems.map((item) => ({ name: item.name, quantity: item.quantity, unitPrice: item.price })),
+          items: orderItems.map((item) => ({
+            name: item.name,
+            name_ar: item.name_ar ?? null,
+            quantity: item.quantity,
+            unitPrice: item.price,
+          })),
           subtotal,
           paymentMethod,
         }),
@@ -490,11 +497,12 @@ function CheckoutContent() {
                   <>
                     <div className="space-y-3">
                       {orderItems.map((item, index) => (
-                        <div key={index} className="flex justify-between text-sm">
-                          <span className="text-slate-600">
-                            {item.quantity}x {item.name}
-                          </span>
-                          <span className="font-medium">{item.price.toFixed(2)}ƒ'ª</span>
+                        <div key={index} className="flex justify-between gap-3 text-sm">
+                          <div className="flex min-w-0 items-start gap-2 text-slate-600">
+                            <span className="shrink-0">{item.quantity}×</span>
+                            <OrderProductName name={item.name} name_ar={item.name_ar} size="sm" />
+                          </div>
+                          <span className="shrink-0 font-medium">{item.price.toFixed(2)}€</span>
                         </div>
                       ))}
                     </div>

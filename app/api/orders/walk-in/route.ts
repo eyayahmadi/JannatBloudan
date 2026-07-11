@@ -13,6 +13,7 @@ type WalkInBody = {
   items: Array<{
     productId?: string
     name: string
+    name_ar?: string | null
     quantity: number
     unitPrice?: number
     notes?: string
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
       items: items.map((it) => ({
         productId: it.productId,
         name: it.name,
+        name_ar: it.name_ar ?? null,
         quantity: it.quantity,
         unitPrice: it.unitPrice,
         notes: it.notes ?? null,
@@ -88,6 +90,7 @@ export async function POST(request: Request) {
           items: result.items.map((it) => ({
             id: it.id,
             name: it.name,
+            name_ar: it.name_ar ?? null,
             quantity: it.quantity,
             unitPrice: it.unitPrice,
             notes: it.notes,

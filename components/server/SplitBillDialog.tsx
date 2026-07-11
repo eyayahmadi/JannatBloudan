@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 import type { KitchenOrder } from "@/lib/hooks/useRealtimeOrders"
 
 type SplitBillDialogProps = {
@@ -40,6 +41,7 @@ type AssignableUnit = {
   orderNumber: string
   itemId: string
   name: string
+  name_ar?: string | null
   unitPrice: number
   assignedTo: string | null
 }
@@ -63,6 +65,7 @@ function buildUnitsFromOrders(orders: KitchenOrder[]): AssignableUnit[] {
           orderNumber: o.order_number,
           itemId: it.id,
           name: it.name,
+          name_ar: it.name_ar,
           unitPrice,
           assignedTo: null,
         })
@@ -318,7 +321,12 @@ export function SplitBillDialog({
                       )}
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="truncate font-medium">{u.name}</div>
+                        <OrderProductName
+                          name={u.name}
+                          name_ar={u.name_ar}
+                          truncate
+                          className="min-w-0"
+                        />
                         <div className="text-[10px] text-muted-foreground">
                           {u.orderNumber} · {nf(u.unitPrice)} €
                         </div>

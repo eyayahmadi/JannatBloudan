@@ -6,6 +6,7 @@ import { useParams } from "next/navigation"
 import { ArrowLeft, CheckCircle2, CreditCard, Receipt, Wallet } from "lucide-react"
 
 import { PageShell } from "@/components/site/PageShell"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 import { useRealtimeOrders } from "@/lib/hooks/useRealtimeOrders"
 import { useTableAlerts } from "@/lib/hooks/useTableAlerts"
 
@@ -100,8 +101,13 @@ export default function TableBillPage() {
                       </div>
                       <ul className="mt-1 space-y-0.5 text-sm text-amber-950 dark:text-amber-100">
                         {o.items.map((it, i) => (
-                          <li key={i} className="flex justify-between">
-                            <span>{it.quantity}× {it.name}</span>
+                          <li key={i} className="flex items-start justify-between gap-2">
+                            <span className="shrink-0">{it.quantity}×</span>
+                            <OrderProductName
+                              name={it.name}
+                              name_ar={it.name_ar}
+                              className="flex-1 text-amber-950 dark:text-amber-100"
+                            />
                           </li>
                         ))}
                       </ul>

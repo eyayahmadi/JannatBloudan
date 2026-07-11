@@ -4,9 +4,10 @@ import { useEffect, useState, useCallback } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import { CheckCircle2, Clock, ChefHat, BellRing, PartyPopper } from "lucide-react"
 import { PageShell } from "@/components/site/PageShell"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 import { isLikelyOrderUuid } from "@/lib/orders/guest-tracking"
 
-type OrderItem = { name: string; quantity: number }
+type OrderItem = { name: string; name_ar?: string | null; quantity: number }
 
 type Order = {
   id: string
@@ -115,10 +116,15 @@ export default function OrderConfirmationPage() {
 
               <div className="space-y-2 border-t border-amber-100 pt-4 dark:border-amber-900/30">
                 {order.items.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between text-sm">
-                    <span className="text-amber-900 dark:text-amber-200">
-                      {item.quantity}× {item.name}
+                  <div key={i} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="shrink-0 font-medium text-amber-900 dark:text-amber-200">
+                      {item.quantity}×
                     </span>
+                    <OrderProductName
+                      name={item.name}
+                      name_ar={item.name_ar}
+                      className="flex-1 text-amber-900 dark:text-amber-200"
+                    />
                   </div>
                 ))}
               </div>

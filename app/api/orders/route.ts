@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
       order_id: order.id,
       product_id: item.productId,
       product_name: item.productName,
+      product_name_ar: item.productNameAr?.trim() || item.name_ar?.trim() || null,
       quantity: item.quantity,
       unit_price: item.unitPrice,
       subtotal: item.subtotal,

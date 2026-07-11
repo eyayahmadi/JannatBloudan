@@ -1,8 +1,9 @@
 "use client"
 
 import { SITE } from "@/lib/site-config"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 
-type InvoiceItem = { name: string; quantity: number; unitPrice: number }
+type InvoiceItem = { name: string; name_ar?: string | null; quantity: number; unitPrice: number }
 
 type Props = {
   invoiceNumber: string
@@ -60,7 +61,9 @@ export function InvoicePDF({
         <tbody>
           {items.map((item, i) => (
             <tr key={i} className="border-b border-amber-100/30 dark:border-white/5">
-              <td className="py-2 text-amber-950 dark:text-amber-100">{item.name}</td>
+              <td className="py-2 text-amber-950 dark:text-amber-100">
+                <OrderProductName name={item.name} name_ar={item.name_ar} size="md" />
+              </td>
               <td className="py-2 text-center text-amber-900/80 dark:text-amber-200/80">{item.quantity}</td>
               <td className="py-2 text-right text-amber-900/80 dark:text-amber-200/80">{item.unitPrice.toFixed(2)}€</td>
               <td className="py-2 text-right font-medium text-amber-950 dark:text-amber-100">

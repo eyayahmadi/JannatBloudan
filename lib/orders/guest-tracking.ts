@@ -37,6 +37,7 @@ type DbOrderRow = {
 
 type DbOrderItemRow = {
   product_name: string
+  product_name_ar?: string | null
   quantity: number | string
 }
 
@@ -52,6 +53,7 @@ export function shapeGuestOrderResponse(order: DbOrderRow, items: DbOrderItemRow
     status: mapDbOrderStatusToGuestTracker(order.status),
     items: items.map((it) => ({
       name: it.product_name,
+      name_ar: it.product_name_ar?.trim() || null,
       quantity: typeof it.quantity === "number" ? it.quantity : Number.parseInt(String(it.quantity), 10) || 0,
     })),
     created_at: order.created_at ?? new Date().toISOString(),

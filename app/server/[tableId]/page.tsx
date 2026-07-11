@@ -11,7 +11,7 @@ import { OrderTypeSelector } from "@/components/site/OrderTypeSelector"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 import {
   useRealtimeOrders,
   type KitchenOrderInput,
@@ -24,6 +24,7 @@ import {
   audienceForStationsFromItems,
 } from "@/lib/notifications/audience"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
 import { Combine } from "lucide-react"
 import { useMenuCatalog } from "@/lib/hooks/useMenuCatalog"
 import { StaffMenuPicker } from "@/components/menu/StaffMenuPicker"
@@ -250,6 +251,7 @@ export default function ServerTableOrderPage() {
           (it: {
             id: string
             name: string
+            name_ar?: string | null
             quantity: number
             unit_price?: number
             notes?: string
@@ -258,6 +260,7 @@ export default function ServerTableOrderPage() {
           }) => ({
             id: it.id,
             name: it.name,
+            name_ar: it.name_ar ?? null,
             quantity: it.quantity,
             notes: it.notes,
             unit_price: it.unit_price,
@@ -494,7 +497,12 @@ export default function ServerTableOrderPage() {
                                     )}
                                   >
                                     <span className="font-semibold">×{it.quantity}</span>
-                                    <span className="flex-1 truncate">{it.name}</span>
+                                    <OrderProductName
+                                      name={it.name}
+                                      name_ar={it.name_ar}
+                                      truncate
+                                      className="flex-1 min-w-0"
+                                    />
                                     {it.notes ? (
                                       <span className="text-[10px] italic text-amber-800 dark:text-amber-200">
                                         « {it.notes} »
@@ -600,9 +608,12 @@ export default function ServerTableOrderPage() {
                       >
                         <div className="flex items-center gap-2">
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
-                              {line.product.name}
-                            </p>
+                            <OrderProductName
+                              name={line.product.name}
+                              name_ar={line.product.name_ar}
+                              size="sm"
+                              truncate
+                            />
                             {line.variant ? (
                               <p className="text-xs text-slate-500 dark:text-slate-400">
                                 {formatVariantLabel(line.variant)}

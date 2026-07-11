@@ -49,7 +49,7 @@ export type DeliveryTracking = {
   /** ETA en minutes (calcule) */
   estimated_minutes?: number
   /** Items pour recap */
-  items?: { name: string; quantity: number }[]
+  items?: { name: string; name_ar?: string | null; quantity: number }[]
 }
 
 /**

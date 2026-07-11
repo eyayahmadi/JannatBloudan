@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { useNotifications } from "@/lib/hooks/useNotifications"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 import { useRealtimeOrders } from "@/lib/hooks/useRealtimeOrders"
 import { useTableAlerts } from "@/lib/hooks/useTableAlerts"
 import {
@@ -202,11 +203,20 @@ export default function PosTablesPage() {
                             <td className="py-3 align-top">
                               <div className="space-y-0.5 text-xs text-slate-700 dark:text-slate-300">
                                 {snap.activeOrders.slice(0, 3).map((o) => (
-                                  <div key={o.id}>
+                                  <div key={o.id} className="space-y-0.5">
                                     <span className="font-semibold">#{o.order_number}</span>
-                                    <span className="ml-1 text-slate-500">
-                                      {o.items.map((it) => `${it.quantity}× ${it.name}`).join(", ")}
-                                    </span>
+                                    <ul className="ml-1 space-y-0.5">
+                                      {o.items.map((it) => (
+                                        <li key={it.id} className="flex gap-1">
+                                          <span className="shrink-0">{it.quantity}×</span>
+                                          <OrderProductName
+                                            name={it.name}
+                                            name_ar={it.name_ar}
+                                            className="min-w-0"
+                                          />
+                                        </li>
+                                      ))}
+                                    </ul>
                                   </div>
                                 ))}
                                 {snap.activeOrders.length > 3 ? (

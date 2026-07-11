@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { RealtimeIndicator } from "@/components/realtime/RealtimeIndicator"
 import {
   useRealtimeOrders,
   type KitchenOrder,
@@ -53,7 +54,7 @@ import { AIAgentBadge, type AgentContext } from "@/components/ai/AIAgentBadge"
 import { SPRING_SOFT } from "@/lib/ui/motion"
 import { StationAvailabilityControl } from "@/components/stations/StationAvailabilityControl"
 import { ItemRefuseDialog } from "@/components/stations/ItemRefuseDialog"
-import { RealtimeIndicator } from "@/components/realtime/RealtimeIndicator"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 
 const STATION_TO_AGENT: Record<Station, AgentContext> = {
   KITCHEN: "kitchen",
@@ -263,16 +264,19 @@ function StationItemCard({
                 {item.quantity}x
               </span>
               <div className="flex-1 min-w-0">
-                <p
+                <div
                   className={cn(
-                    "truncate font-medium",
                     isRefused || isReplaced
                       ? "text-slate-500 line-through dark:text-slate-400"
                       : "text-slate-900 dark:text-white",
                   )}
                 >
-                  {item.name}
-                </p>
+                  <OrderProductName
+                    name={item.name}
+                    name_ar={item.name_ar}
+                    truncate
+                  />
+                </div>
                 {item.notes && (
                   <p className="mt-0.5 text-xs italic text-amber-700 dark:text-amber-300">
                     {item.notes}

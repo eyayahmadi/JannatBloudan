@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 import { toast } from "sonner"
 import { FileDown, PiggyBank, Printer, Receipt, Trash2 } from "lucide-react"
 import { CreditInvoiceDialog } from "@/components/caisse/CreditInvoiceDialog"
@@ -33,6 +34,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 type Item = {
   id?: string
   product_name?: string
+  product_name_ar?: string | null
   quantity?: number
   unit_price?: number
   line_status?: string | null
@@ -457,9 +459,16 @@ export function CaisseInvoicesPanel(props: { date: string }) {
               const ls = String(li.line_status ?? "").toLowerCase()
               return (
                 <li key={String(li.id ?? li.product_name)} className="flex flex-wrap items-center justify-between gap-2">
-                  <span>
-                    {li.product_name ?? "—"} × {li.quantity ?? 0} · {Number(li.unit_price ?? 0).toFixed(2)} € / u{" "}
-                    <span className="text-muted-foreground">({ls || "ordered"})</span>
+                  <span className="flex min-w-0 flex-1 items-start gap-2">
+                    <OrderProductName
+                      product_name={li.product_name}
+                      product_name_ar={li.product_name_ar}
+                      className="min-w-0"
+                    />
+                    <span className="shrink-0 text-muted-foreground">
+                      × {li.quantity ?? 0} · {Number(li.unit_price ?? 0).toFixed(2)} € / u{" "}
+                      <span className="text-muted-foreground">({ls || "ordered"})</span>
+                    </span>
                   </span>
                   {li.id && ls !== "cancelled" && ls !== "waste" && ls !== "offered" ? (
                     <Button

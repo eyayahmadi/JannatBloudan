@@ -120,6 +120,7 @@ type DbStationItemRow = {
   station_status?: string | null
   station?: string | null
   product_name?: string | null
+  product_name_ar?: string | null
   quantity?: number | string | null
   unit_price?: number | string | null
   special_instructions?: string | null
@@ -153,6 +154,7 @@ export function mapStationApiItemRow(row: DbStationItemRow): OrderItem {
   return {
     id: String(row.id),
     name: String(row.product_name ?? ""),
+    name_ar: row.product_name_ar?.trim() || undefined,
     quantity:
       typeof row.quantity === "number"
         ? row.quantity

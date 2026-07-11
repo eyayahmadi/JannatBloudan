@@ -11,6 +11,7 @@ import { PageShell } from "@/components/site/PageShell"
 import { SiteFooter } from "@/components/site/SiteFooter"
 import { SiteHeader } from "@/components/site/SiteHeader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 import { Badge } from "@/components/ui/badge"
 import DeliveryMapDynamic from "@/components/maps/DeliveryMapDynamic"
 import { useDeliveryTracking } from "@/lib/hooks/useDeliveryTracking"
@@ -22,6 +23,7 @@ type OrderStatus = "received" | "preparing" | "delivering" | "completed"
 type CheckoutCartItem = {
   id: number
   name: string
+  name_ar?: string | null
   price: number
   quantity: number
   image?: string
@@ -372,8 +374,8 @@ export default function TrackOrderPage() {
                       <div key={index} className="flex justify-between items-center py-2">
                         <div className="flex items-center gap-3">
                           <span className="font-medium text-slate-600">{item.quantity}x</span>
-                          <div className="text-slate-900">
-                            <span className="font-medium">{item.name}</span>
+                          <div className="min-w-0 text-slate-900">
+                            <OrderProductName name={item.name} name_ar={item.name_ar} size="sm" />
                             {item.size && <span className="block text-xs text-slate-500">Taille: {item.size}</span>}
                             {item.serviceType && (
                               <span className="block text-xs text-slate-500">Service: {item.serviceType}</span>

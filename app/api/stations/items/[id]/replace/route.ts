@@ -142,7 +142,7 @@ export async function POST(
   // 2) Récupère le produit de remplacement (prix + station + name)
   const { data: replacementProduct, error: prodErr } = await supabase
     .from("products")
-    .select("id, name, price, station, is_available")
+    .select("id, name, name_ar, price, station, is_available")
     .eq("id", replacementId)
     .maybeSingle()
 
@@ -175,6 +175,7 @@ export async function POST(
       order_id: original.order_id,
       product_id: replacementProduct.id,
       product_name: explicitName || replacementProduct.name,
+      product_name_ar: (replacementProduct as { name_ar?: string | null }).name_ar ?? null,
       quantity: qty,
       unit_price: unitPrice,
       subtotal,

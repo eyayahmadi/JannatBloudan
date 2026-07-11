@@ -17,6 +17,7 @@
 
 import type { KitchenOrder } from "@/lib/hooks/useRealtimeOrders"
 import type { Station } from "@/lib/stations/config"
+import { buildOrderProductNameHtml } from "@/lib/orders/order-product-name"
 
 export type PrintOptions = {
   restaurantName?: string
@@ -215,7 +216,7 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
         <div class="item">
           <div class="item-main">
             <span class="qty">${item.quantity}x</span>
-            <span class="name">${escapeHtml(item.name)}</span>
+            <div class="name">${buildOrderProductNameHtml(item, { uppercaseDe: true })}</div>
           </div>
           ${item.notes ? `<div class="item-notes">&rarr; ${escapeHtml(item.notes)}</div>` : ""}
         </div>
@@ -322,7 +323,10 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
     text-align: center;
     font-weight: bold;
   }
-  .name { flex: 1; text-transform: uppercase; }
+  .name { flex: 1; min-width: 0; }
+  .name-de-wrap { font-weight: bold; text-transform: uppercase; }
+  .name-ar-wrap { margin-top: 2px; font-size: 11px; font-weight: normal; line-height: 1.3; }
+  .name-ar { display: block; }
   .item-notes {
     margin-top: 4px;
     padding: 4px 8px;

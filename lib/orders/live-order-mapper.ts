@@ -21,6 +21,7 @@ type DbOrderRow = {
 type DbOrderItemRow = {
   id: string
   product_name: string
+  product_name_ar?: string | null
   quantity: number | string
   unit_price?: number | string | null
   special_instructions?: string | null
@@ -107,6 +108,7 @@ export function mapDbRowsToKitchenOrders(
       return {
         id: it.id,
         name: it.product_name,
+        name_ar: it.product_name_ar?.trim() || undefined,
         quantity: typeof it.quantity === "number" ? it.quantity : Number.parseInt(String(it.quantity), 10) || 0,
         notes: it.special_instructions?.trim() || undefined,
         station: mapDbStation(it.station, it.product_name),

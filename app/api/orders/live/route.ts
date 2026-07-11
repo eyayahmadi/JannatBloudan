@@ -45,7 +45,7 @@ export async function GET() {
     const { data: items, error: itemsErr } = await supabase
       .from("order_items")
       .select(
-        "id, order_id, product_name, quantity, unit_price, special_instructions, station, station_status, started_at, ready_at, served_at, accepted_at, refusal_reason, refusal_note, refused_at, billable",
+        "id, order_id, product_name, product_name_ar, quantity, unit_price, special_instructions, station, station_status, started_at, ready_at, served_at, accepted_at, refusal_reason, refusal_note, refused_at, billable",
       )
       .in("order_id", orderIds)
 

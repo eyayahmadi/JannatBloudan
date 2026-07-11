@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { StaggerList, StaggerItem, MotionCard } from "@/components/ui/motion-primitives"
 import { useI18n } from "@/lib/i18n/context"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 import { useDeliveryTracking } from "@/lib/hooks/useDeliveryTracking"
 import {
   DELIVERY_STATUS_META,
@@ -221,10 +222,15 @@ function DeliveryCard({ delivery, onAccept }: DeliveryCardProps) {
 
         {delivery.items && delivery.items.length > 0 && (
           <div className="rounded-md bg-slate-50 p-2 text-xs text-slate-600 dark:bg-slate-900/40">
-            {delivery.items
-              .slice(0, 3)
-              .map((it) => `${it.quantity}× ${it.name}`)
-              .join(" · ")}
+            <div className="flex flex-wrap gap-x-2 gap-y-1">
+              {delivery.items.slice(0, 3).map((it, i) => (
+                <span key={i} className="inline-flex items-start gap-1">
+                  {i > 0 ? <span className="text-slate-300">·</span> : null}
+                  <span className="shrink-0">{it.quantity}×</span>
+                  <OrderProductName name={it.name} name_ar={it.name_ar} size="sm" />
+                </span>
+              ))}
+            </div>
             {delivery.items.length > 3 && (
               <span className="text-slate-400"> +{delivery.items.length - 3}</span>
             )}

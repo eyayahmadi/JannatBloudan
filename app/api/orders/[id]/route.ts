@@ -26,6 +26,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         updated_at,
         order_items (
           product_name,
+          product_name_ar,
           quantity
         )
       `,
@@ -42,7 +43,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     }
 
     const items = Array.isArray((order as { order_items?: unknown }).order_items)
-      ? (order as { order_items: Array<{ product_name: string; quantity: number | string }> }).order_items
+      ? (order as { order_items: Array<{ product_name: string; product_name_ar?: string | null; quantity: number | string }> }).order_items
       : []
 
     const { order_items: _, ...rest } = order as typeof order & { order_items?: unknown }

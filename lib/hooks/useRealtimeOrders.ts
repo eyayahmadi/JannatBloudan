@@ -10,6 +10,7 @@ export type OrderType = "qr_self_service" | "server" | "pos" | "delivery"
 export type OrderItem = {
   id: string
   name: string
+  name_ar?: string | null
   quantity: number
   notes?: string
   station: import("@/lib/stations/config").Station
@@ -34,6 +35,7 @@ export type OrderItem = {
 export type OrderItemInput = {
   id?: string
   name: string
+  name_ar?: string | null
   quantity: number
   notes?: string
   station?: import("@/lib/stations/config").Station

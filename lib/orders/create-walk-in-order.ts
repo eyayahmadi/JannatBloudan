@@ -25,6 +25,7 @@ export type CreateWalkInOrderResult = {
     id: string
     productId?: string
     name: string
+    name_ar?: string | null
     quantity: number
     unitPrice: number
     notes?: string | null
@@ -74,6 +75,7 @@ export async function createWalkInOrder(
     order_id: order.id,
     product_id: it.productId,
     product_name: it.name,
+    product_name_ar: it.name_ar?.trim() || null,
     quantity: it.quantity,
     unit_price: it.unitPrice,
     subtotal: it.unitPrice * it.quantity,
@@ -83,7 +85,7 @@ export async function createWalkInOrder(
   const { data: insertedItems, error: itemsErr } = await supabase
     .from("order_items")
     .insert(rows)
-    .select("id, product_id, product_name, quantity, unit_price, special_instructions, station, station_status")
+    .select("id, product_id, product_name, product_name_ar, quantity, unit_price, special_instructions, station, station_status")
 
   if (itemsErr) {
     await supabase.from("orders").delete().eq("id", order.id)
@@ -123,6 +125,7 @@ export async function createWalkInOrder(
       id: String(row.id),
       productId: row.product_id ? String(row.product_id) : undefined,
       name: String(row.product_name),
+      name_ar: row.product_name_ar ? String(row.product_name_ar) : null,
       quantity: Number(row.quantity) || 0,
       unitPrice: Number(row.unit_price) || 0,
       notes: row.special_instructions ?? null,

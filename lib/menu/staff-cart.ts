@@ -54,6 +54,7 @@ export function staffCartToOrderItems(lines: StaffCartLine[]) {
   return lines.map((l) => ({
     productId: l.product.id,
     name: l.product.name,
+    name_ar: l.product.name_ar ?? null,
     quantity: l.quantity,
     unitPrice: l.unitPrice,
     variantId: l.variant?.id ?? null,

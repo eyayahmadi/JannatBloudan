@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/site/SiteHeader"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { OrderProductName } from "@/components/orders/OrderProductName"
 import {
   Search,
   Plus,
@@ -146,6 +147,7 @@ export default function PosPage() {
             (it: {
               id: string
               name: string
+              name_ar?: string | null
               quantity: number
               unit_price?: number
               station?: string
@@ -153,6 +155,7 @@ export default function PosPage() {
             }) => ({
               id: it.id,
               name: it.name,
+              name_ar: it.name_ar ?? null,
               quantity: it.quantity,
               unit_price: it.unit_price,
               station: it.station,
@@ -242,9 +245,12 @@ export default function PosPage() {
                 className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
-                    {line.product.name}
-                  </p>
+                  <OrderProductName
+                    name={line.product.name}
+                    name_ar={line.product.name_ar}
+                    size="sm"
+                    truncate
+                  />
                   {line.variant ? (
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       {formatVariantLabel(line.variant)}
