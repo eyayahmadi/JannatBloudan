@@ -47,3 +47,39 @@ export function recomputeTotalsFromSubtotal(
 ) {
   return calculateInvoiceTotalsFromGrossTtc(grossTtc, discountTtc, vatRate)
 }
+
+const TOTALS_EPS = 0.02
+
+export type InvoiceTotalsFields = {
+  subtotal?: unknown
+  tva_amount?: unknown
+  total?: unknown
+  discount_amount?: unknown
+  gross_before_discount?: unknown
+}
+
+/** Recalcule HT / TVA / TTC à partir des lignes facture (montants menu TTC). */
+export function deriveInvoiceTotalsFromItems(
+  items: InvoiceItemRow[],
+  discountTtc: number,
+  vatRate: number,
+) {
+  const grossTtc = sumActiveSubtotal(items)
+  return recomputeTotalsFromSubtotal(grossTtc, discountTtc, vatRate)
+}
+
+/** True si les totaux stockés ne correspondent plus aux lignes (ex. ancienne formule HT×1.19). */
+export function invoiceTotalsNeedRefresh(
+  inv: InvoiceTotalsFields,
+  items: InvoiceItemRow[],
+  vatRate: number,
+): boolean {
+  const disc = Number(inv.discount_amount ?? 0)
+  const expected = deriveInvoiceTotalsFromItems(items, disc, vatRate)
+  return (
+    Math.abs(Number(inv.total ?? 0) - expected.total) > TOTALS_EPS ||
+    Math.abs(Number(inv.subtotal ?? 0) - expected.subtotalHt) > TOTALS_EPS ||
+    Math.abs(Number(inv.tva_amount ?? 0) - expected.tva_amount) > TOTALS_EPS ||
+    Math.abs(Number(inv.gross_before_discount ?? 0) - expected.grossTtc) > TOTALS_EPS
+  )
+}

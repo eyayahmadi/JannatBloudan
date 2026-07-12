@@ -151,7 +151,9 @@ export async function processInvoicePayment(
     cashier_id: staffUserId,
     payment_method: invoiceMethod,
     payment_stage,
-    payment_split: isSplit && !onlyHospitalityZero ? splitPayload : onlyHospitalityZero ? [{ method: "hospitality", amount: 0 }] : null,
+    payment_split: onlyHospitalityZero
+      ? [{ method: "hospitality", amount: 0 }]
+      : splitPayload,
     updated_at: now,
   }
 

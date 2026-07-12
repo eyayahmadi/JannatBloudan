@@ -16,6 +16,8 @@
     "db:migrate": "node scripts/run-migrations.mjs",
     "db:migrate:env": "node --env-file=.env.local scripts/run-migrations.mjs",
     "test:tax": "node --test scripts/test-tax.mjs",
+    "test:invoice-remaining": "node --test scripts/test-invoice-remaining.mjs",
+    "invoices:recalc-taxes": "node --env-file=.env.local scripts/recalculate-invoice-taxes.mjs",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "i18n:audit": "node scripts/i18n-audit.mjs",

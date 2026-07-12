@@ -11,6 +11,7 @@ import {
   normalizeCreditState,
   type CreditPaymentState,
 } from "@/lib/credit/types"
+import { invoiceAmountPaid, invoiceRemaining as invoiceRemainingAmount } from "@/lib/caisse/invoice-remaining"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -138,12 +139,7 @@ export function CaisseInvoicesPanel(props: { date: string }) {
     return { t, ht, tv }
   }, [])
 
-  const invoiceRemaining = useCallback((inv: Inv) => {
-    const total = Number(inv.total ?? 0)
-    const split = Array.isArray(inv.payment_split) ? inv.payment_split : []
-    const paid = split.reduce((s: number, p: { amount?: number }) => s + Number(p.amount ?? 0), 0)
-    return Math.max(0, total - paid)
-  }, [])
+  const invoiceRemaining = useCallback((inv: Inv) => invoiceRemainingAmount(inv), [])
 
   const isPayable = useCallback((inv: Inv) => {
     const st = String(inv.status ?? "").toLowerCase()
@@ -407,8 +403,7 @@ export function CaisseInvoicesPanel(props: { date: string }) {
   const paymentSummary = useMemo(() => {
     return list.reduce(
       (acc, inv) => {
-        const split = Array.isArray(inv.payment_split) ? inv.payment_split : []
-        const splitPaid = split.reduce((s: number, p: { amount?: number }) => s + Number(p.amount ?? 0), 0)
+        const paid = invoiceAmountPaid(inv)
         const total = Number(inv.total ?? 0)
         const stage = String(inv.payment_stage ?? "").toLowerCase()
         const method = String(inv.payment_method ?? "").toLowerCase()
@@ -418,9 +413,9 @@ export function CaisseInvoicesPanel(props: { date: string }) {
         acc.discounts += discount
         acc.cancelled += cancelled
         if (billType === "hospitality" || billType === "complimentary") acc.hospitality += total
-        if (stage === "paid_cash" || method === "cash") acc.cash += splitPaid || total
-        else if (stage === "paid_card" || method === "card") acc.card += splitPaid || total
-        else if (stage === "paid_online" || method === "online") acc.online += splitPaid || total
+        if (stage === "paid_cash" || method === "cash") acc.cash += paid
+        else if (stage === "paid_card" || method === "card") acc.card += paid
+        else if (stage === "paid_online" || method === "online") acc.online += paid
         acc.unpaid += invoiceRemaining(inv)
         return acc
       },
