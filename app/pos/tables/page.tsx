@@ -1,8 +1,8 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useCallback } from "react"
 import Link from "next/link"
-import { Banknote, CheckCircle2, CreditCard, Printer, Receipt, Search, Wallet, XCircle } from "lucide-react"
+import { Banknote, CheckCircle2, CreditCard, Printer, Receipt, Search, XCircle } from "lucide-react"
 
 import { RequireAuth } from "@/components/auth/RequireAuth"
 import { PageShell } from "@/components/site/PageShell"
@@ -16,6 +16,9 @@ import { useNotifications } from "@/lib/hooks/useNotifications"
 import { OrderProductName } from "@/components/orders/OrderProductName"
 import { useRealtimeOrders } from "@/lib/hooks/useRealtimeOrders"
 import { useTableAlerts } from "@/lib/hooks/useTableAlerts"
+import { useFloorPlanTables } from "@/lib/hooks/useFloorPlanTables"
+import { TableCleaningPanel } from "@/components/floor-plan/TableCleaningPanel"
+import { dispatchRealtimeRefresh } from "@/lib/realtime/bus"
 import {
   computeTableSnapshot,
   TABLE_STATUS_META,
@@ -23,24 +26,57 @@ import {
   type TableStatus,
 } from "@/lib/table-status"
 
-const TABLE_IDS = Array.from({ length: 20 }, (_, i) => i + 1)
-
-type PaymentFilter = "all" | "to_pay" | "requested" | "paid"
+type PaymentFilter = "all" | "to_pay" | "requested" | "paid" | "cleaning"
 
 export default function PosTablesPage() {
   const { orders, updateStatus } = useRealtimeOrders()
   const { alerts, raise, resolveTable } = useTableAlerts()
   const { add: notify } = useNotifications()
+  const { tables: floorTables, reload: reloadTables } = useFloorPlanTables()
 
   const [search, setSearch] = useState("")
   const [filter, setFilter] = useState<PaymentFilter>("all")
 
+  const floorByNumber = useMemo(() => {
+    const m = new Map<number, (typeof floorTables)[number]>()
+    for (const t of floorTables) {
+      const n = Number(t.table_number)
+      if (Number.isFinite(n)) m.set(n, t)
+    }
+    return m
+  }, [floorTables])
+
+  const tableIds = useMemo(() => {
+    const ids = new Set<number>()
+    for (const t of floorTables) {
+      const n = Number(t.table_number)
+      if (Number.isFinite(n)) ids.add(n)
+    }
+    for (const o of orders) {
+      if (o.table_number) ids.add(Number(o.table_number))
+    }
+    return [...ids].sort((a, b) => a - b)
+  }, [floorTables, orders])
+
   const snapshots = useMemo(
     () =>
-      TABLE_IDS.map((id) => computeTableSnapshot(id, orders, alerts)).filter(
-        (s) => s.activeOrders.length > 0 || s.hasBillAlert || s.hasPaymentDone,
-      ),
-    [orders, alerts],
+      tableIds
+        .map((id) => {
+          const row = floorByNumber.get(id)
+          return computeTableSnapshot(id, orders, alerts, {
+            restaurantStatus: row?.restaurant_status,
+            paymentStatusCode: row?.payment_status_code,
+            cleaningSince: row?.cleaning_since,
+          })
+        })
+        .filter(
+          (s) =>
+            s.status === "NEEDS_CLEANING" ||
+            s.activeOrders.length > 0 ||
+            s.hasBillAlert ||
+            s.hasPaymentDone,
+        ),
+    [tableIds, floorByNumber, orders, alerts],
   )
 
   const filtered = useMemo(() => {
@@ -52,20 +88,44 @@ export default function PosTablesPage() {
     if (filter === "to_pay") list = list.filter((s) => s.status !== "PAID")
     if (filter === "requested") list = list.filter((s) => s.hasBillAlert)
     if (filter === "paid") list = list.filter((s) => s.status === "PAID")
+    if (filter === "cleaning") list = list.filter((s) => s.status === "NEEDS_CLEANING")
     return list
   }, [snapshots, search, filter])
 
   const totals = useMemo(() => {
-    const t = { open: 0, paid: 0, requested: 0, sum: 0, cash: 0 }
+    const t = { open: 0, paid: 0, requested: 0, cleaning: 0, sum: 0, cash: 0 }
     snapshots.forEach((s) => {
       t.sum += s.total
       if (s.hasBillAlert) t.requested += 1
-      if (s.status === "PAID") t.paid += 1
+      if (s.status === "NEEDS_CLEANING") t.cleaning += 1
+      else if (s.status === "PAID") t.paid += 1
       else t.open += 1
-      if (s.hasPaymentDone) t.cash += 0 // paiement en ligne déjà compté
+      if (s.hasPaymentDone) t.cash += 0
     })
     return t
   }, [snapshots])
+
+  const markCleaned = useCallback(
+    async (tableId: number) => {
+      const row = floorByNumber.get(tableId)
+      const tid = row?.table_id ?? tableId
+      const res = await fetch("/api/caisse/mark-table-cleaned", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table_id: tid }),
+      })
+      if (res.ok) {
+        dispatchRealtimeRefresh("tables")
+        await reloadTables()
+        notify({
+          type: "payment_received",
+          title: "Table nettoyée",
+          message: `Table ${tableId} — libre`,
+        })
+      }
+    },
+    [floorByNumber, reloadTables, notify],
+  )
 
   function validateCash(tableId: number) {
     const snap = snapshots.find((s) => s.tableId === tableId)
@@ -110,7 +170,7 @@ export default function PosTablesPage() {
             </Button>
           </div>
 
-          <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
             <StatBox label="Tables ouvertes" value={String(totals.open)} tone="yellow" />
             <StatBox
               label="Addition demandée"
@@ -118,6 +178,7 @@ export default function PosTablesPage() {
               tone="rose"
             />
             <StatBox label="Payées" value={String(totals.paid)} tone="green" />
+            <StatBox label="À nettoyer" value={String(totals.cleaning)} tone="teal" />
             <StatBox
               label="Total en attente"
               value={`${totals.sum.toFixed(2)} €`}
@@ -146,6 +207,7 @@ export default function PosTablesPage() {
                     { id: "to_pay", label: "À payer" },
                     { id: "requested", label: "Addition demandée" },
                     { id: "paid", label: "Payées" },
+                    { id: "cleaning", label: "À nettoyer" },
                   ] as const
                 ).map((f) => (
                   <button
@@ -240,7 +302,16 @@ export default function PosTablesPage() {
                             </td>
                             <td className="py-3 align-top">
                               <div className="flex flex-wrap justify-end gap-1.5">
-                                {snap.status === "PAID" ? (
+                                {snap.status === "NEEDS_CLEANING" ? (
+                                  <div className="w-full max-w-xs">
+                                    <TableCleaningPanel
+                                      tableLabel={String(snap.tableId)}
+                                      cleaningSince={snap.cleaningSince}
+                                      onMarkCleaned={() => markCleaned(snap.tableId)}
+                                      compact
+                                    />
+                                  </div>
+                                ) : snap.status === "PAID" ? (
                                   <Button size="sm" variant="outline" disabled>
                                     <CheckCircle2 className="mr-1 h-3 w-3 text-emerald-500" />
                                     Encaissé

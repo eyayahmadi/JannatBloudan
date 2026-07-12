@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
+import { isNeedsCleaningStatus, isTableAvailableForNewSession } from "@/lib/table-lifecycle"
 
 export type EnsureSessionResult = {
   sessionId: string
@@ -14,6 +15,20 @@ export async function ensureTableSession(
   tableId: number,
   audit?: { userId?: string | null; userEmail?: string | null; source: string },
 ): Promise<EnsureSessionResult> {
+  const { data: tableRow } = await supabase
+    .from("restaurant_tables")
+    .select("status, is_active")
+    .eq("id", tableId)
+    .maybeSingle()
+
+  const tableStatus = String((tableRow as { status?: string } | null)?.status ?? "")
+  if (isNeedsCleaningStatus(tableStatus)) {
+    throw new Error("TABLE_NEEDS_CLEANING")
+  }
+  if ((tableRow as { is_active?: boolean } | null)?.is_active === false) {
+    throw new Error("TABLE_OUT_OF_SERVICE")
+  }
+
   const { data: rpcId, error: rpcErr } = await supabase.rpc("ensure_table_session", {
     p_table_id: tableId,
   })
@@ -83,7 +98,7 @@ async function syncTablePointer(supabase: SupabaseClient, tableId: number, sessi
     .eq("id", tableId)
     .maybeSingle()
 
-  const status = row?.status === "FREE" || !row?.status ? "OCCUPIED" : row.status
+  const status = isTableAvailableForNewSession(row?.status) ? "OCCUPIED" : row?.status ?? "OCCUPIED"
 
   await supabase
     .from("restaurant_tables")
@@ -95,10 +110,8 @@ async function syncTablePointer(supabase: SupabaseClient, tableId: number, sessi
     .eq("id", tableId)
 }
 
-/** Libère toutes les tables liées à une session (fusion / pointer). */
+/** Post-close: tables enter CLEANING — not FREE until staff confirms. */
 export async function releaseTablesForSession(supabase: SupabaseClient, sessionId: string) {
-  await supabase
-    .from("restaurant_tables")
-    .update({ status: "FREE", current_session_id: null })
-    .eq("current_session_id", sessionId)
+  const { transitionSessionToNeedsCleaning } = await import("@/lib/table-lifecycle")
+  await transitionSessionToNeedsCleaning(supabase, sessionId, { closeSession: false })
 }

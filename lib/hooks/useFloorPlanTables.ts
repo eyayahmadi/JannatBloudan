@@ -25,6 +25,19 @@ export type FloorPlanTable = {
   payment_status_label?: string
   unified_status?: UnifiedTableStatus
   unified_status_label?: string
+  has_waiter_request_alert?: boolean
+  waiter_request_count?: number
+  waiter_request_latest_at?: string | null
+  has_payment_request_alert?: boolean
+  payment_request_count?: number
+  payment_request_latest_at?: string | null
+  cleaning_since?: string | null
+  service_requests?: Array<{
+    id: string
+    request_type: "WAITER" | "BILL"
+    requested_at: string
+    order_id?: string | null
+  }>
   session?: {
     id?: string
     total?: number

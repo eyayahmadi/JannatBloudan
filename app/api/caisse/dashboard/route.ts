@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
-import { htFromTtcInclusive, vatFromHt } from "@/lib/caisse/vat"
+import { htFromTtcInclusive, vatFromTtc } from "@/lib/caisse/vat"
 import type { VatScope } from "@/lib/caisse/vat"
 import { aggregateElectronicVatFromPaidInvoiceRows, type PayLine } from "@/lib/caisse/split-vat"
 import { netSortieCaisseFromRows } from "@/lib/caisse/cash-movements"
@@ -248,8 +248,8 @@ export async function GET(request: Request) {
     const electronicVat = aggregateElectronicVatFromPaidInvoiceRows(invPaidDay ?? [], paymentsByInvoiceId)
 
     const extraDeclaredCashTaxEur =
-      vatScope === "online_plus_cash_declared" && cashDeclaredHtForTax && cashDeclaredHtForTax > 0
-        ? vatFromHt(cashDeclaredHtForTax, vatRate)
+      vatScope === "online_plus_cash_declared" && declaredOfficial > 0
+        ? vatFromTtc(declaredOfficial, vatRate)
         : 0
 
     const totalTaxDue = Math.round((electronicVat + extraDeclaredCashTaxEur) * 100) / 100

@@ -48,7 +48,7 @@ type DailySummary = {
   orderCount: number
 }
 
-const TVA_RATE = 0.19
+import { calculateTaxFromTtc, DEFAULT_VAT_RATE_PERCENT } from "@/lib/tax/calculate-tax"
 const DAILY_KEY = "jb-pos-daily"
 
 function loadDaily(): DailySummary {
@@ -86,8 +86,8 @@ export default function PosPage() {
   }, [daily])
 
   const subtotal = staffCartTotal(ticket)
-  const tva = subtotal * TVA_RATE
-  const total = subtotal + tva
+  const tax = calculateTaxFromTtc(subtotal, DEFAULT_VAT_RATE_PERCENT)
+  const total = tax.ttc
 
   const addToTicket = useCallback((payload: StaffMenuAddPayload) => {
     setTicket((prev) => mergeStaffCartLine(prev, staffCartLineFromAdd(payload)))
@@ -302,15 +302,19 @@ export default function PosPage() {
       <div className="border-t border-slate-200 px-4 py-3 dark:border-slate-800">
         <div className="space-y-1 text-sm">
           <div className="flex justify-between text-slate-500 dark:text-slate-400">
-            <span>Sous-total</span>
-            <span>{subtotal.toFixed(2)} DT</span>
+            <span>Total TTC</span>
+            <span>{total.toFixed(2)} DT</span>
           </div>
           <div className="flex justify-between text-slate-500 dark:text-slate-400">
-            <span>TVA (19%)</span>
-            <span>{tva.toFixed(2)} DT</span>
+            <span>dont HT</span>
+            <span>{tax.ht.toFixed(2)} DT</span>
+          </div>
+          <div className="flex justify-between text-slate-500 dark:text-slate-400">
+            <span>dont TVA ({DEFAULT_VAT_RATE_PERCENT}%)</span>
+            <span>{tax.tva.toFixed(2)} DT</span>
           </div>
           <div className="flex justify-between border-t border-slate-200 pt-2 text-lg font-bold text-slate-900 dark:border-slate-700 dark:text-white">
-            <span>Total</span>
+            <span>À payer</span>
             <span>{total.toFixed(2)} DT</span>
           </div>
         </div>

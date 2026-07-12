@@ -30,7 +30,7 @@ export const UNIFIED_TABLE_STATUS_META: Record<
   PAYMENT_PENDING: { label: "Paiement en attente", short: "À payer", tone: "rose" },
   PARTIALLY_PAID: { label: "Partiellement payée", short: "Partiel", tone: "orange" },
   PAID: { label: "Payée", short: "Payée", tone: "gray" },
-  CLEANING: { label: "Nettoyage", short: "Nettoyage", tone: "muted" },
+  CLEANING: { label: "À nettoyer", short: "Nettoyage", tone: "teal" },
   CLOSED: { label: "Fermée", short: "Fermée", tone: "gray" },
 }
 
@@ -38,6 +38,7 @@ type OverviewRow = {
   restaurant_status?: string | null
   payment_status_code?: string
   has_payment_request_alert?: boolean
+  cleaning_since?: string | null
   session?: { id?: string } | null
 }
 
@@ -46,7 +47,8 @@ export function mapOverviewToUnifiedStatus(row: OverviewRow): UnifiedTableStatus
   const pay = String(row.payment_status_code ?? "FREE").toUpperCase()
   const db = String(row.restaurant_status ?? "").toUpperCase()
 
-  if (pay === "PAID") return "PAID"
+  if (pay === "NEEDS_CLEANING" || db === "CLEANING" || db === "NEEDS_CLEANING") return "CLEANING"
+  if (pay === "PAID" && db !== "CLEANING") return "PAID"
   if (pay === "PARTIAL") return "PARTIALLY_PAID"
   if (pay === "PAYMENT_REQUESTED" || row.has_payment_request_alert) return "BILL_REQUESTED"
   if (pay === "READY_TO_PAY" || pay === "UNPAID") return "PAYMENT_PENDING"

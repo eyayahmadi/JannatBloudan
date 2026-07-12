@@ -15,6 +15,7 @@ import { OrderProductName } from "@/components/orders/OrderProductName"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { calculateTaxFromTtc, DEFAULT_VAT_RATE_PERCENT } from "@/lib/tax/calculate-tax"
 import { useNotifications } from "@/lib/hooks/useNotifications"
 import { cashierAudience, deliveryAudience } from "@/lib/notifications/audience"
 
@@ -80,8 +81,9 @@ function CheckoutContent() {
 
   const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const deliveryFee = subtotal >= 25 ? 0 : 3.9
-  const tva = subtotal * 0.19
-  const total = subtotal + tva + deliveryFee
+  const menuTax = calculateTaxFromTtc(subtotal, DEFAULT_VAT_RATE_PERCENT)
+  const tva = menuTax.tva
+  const total = menuTax.ttc + deliveryFee
   const hasItems = orderItems.length > 0
   const stripeReady = Boolean(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
 

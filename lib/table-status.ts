@@ -10,9 +10,10 @@ export type TableStatus =
   | "SERVED"
   | "PAYMENT_REQUESTED"
   | "PAID"
+  | "NEEDS_CLEANING"
   | "CALL_SERVER"
 
-export type TableTone = "green" | "yellow" | "orange" | "blue" | "red" | "gray" | "indigo" | "rose"
+export type TableTone = "green" | "yellow" | "orange" | "blue" | "red" | "gray" | "indigo" | "rose" | "teal"
 
 export const TABLE_STATUS_META: Record<
   TableStatus,
@@ -27,6 +28,7 @@ export const TABLE_STATUS_META: Record<
   CALL_SERVER: { label: "Appel serveur", short: "Appel", tone: "red", priority: 9 },
   PAYMENT_REQUESTED: { label: "Paiement demande", short: "Addition", tone: "rose", priority: 8 },
   PAID: { label: "Payee", short: "Payee", tone: "gray", priority: 6 },
+  NEEDS_CLEANING: { label: "À nettoyer", short: "Nettoyage", tone: "teal", priority: 7 },
 }
 
 export const TONE_CARD: Record<TableTone, string> = {
@@ -38,6 +40,7 @@ export const TONE_CARD: Record<TableTone, string> = {
   rose: "border-rose-300 bg-rose-50/90 dark:border-rose-800/50 dark:bg-rose-950/30 animate-pulse",
   red: "border-red-400 bg-red-50 dark:border-red-700/60 dark:bg-red-950/40 animate-pulse",
   gray: "border-slate-200 bg-slate-100/80 dark:border-slate-700 dark:bg-slate-900/40",
+  teal: "border-teal-300 bg-teal-50/90 dark:border-teal-800/50 dark:bg-teal-950/30 animate-service-request-pulse",
 }
 
 export const TONE_BADGE: Record<TableTone, string> = {
@@ -49,6 +52,7 @@ export const TONE_BADGE: Record<TableTone, string> = {
   rose: "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300",
   red: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
   gray: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
+  teal: "bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200",
 }
 
 export type TableSnapshot = {
@@ -58,15 +62,34 @@ export type TableSnapshot = {
   hasBillAlert: boolean
   hasCashierCall: boolean
   hasPaymentDone: boolean
+  waiterRequestAt: string | null
+  billRequestAt: string | null
+  waiterRequestId: string | null
+  billRequestId: string | null
   activeOrders: KitchenOrder[]
   total: number
   lastUpdate: string | null
+  cleaningSince?: string | null
+}
+
+export type TableSnapshotOpts = {
+  restaurantStatus?: string | null
+  paymentStatusCode?: string | null
+  cleaningSince?: string | null
+}
+
+function isDbNeedsCleaning(opts?: TableSnapshotOpts): boolean {
+  if (!opts) return false
+  const db = String(opts.restaurantStatus ?? "").toUpperCase()
+  const pay = String(opts.paymentStatusCode ?? "").toUpperCase()
+  return db === "CLEANING" || db === "NEEDS_CLEANING" || pay === "NEEDS_CLEANING"
 }
 
 export function computeTableSnapshot(
   tableId: number,
   allOrders: KitchenOrder[],
   alerts: TableAlert[],
+  opts?: TableSnapshotOpts,
 ): TableSnapshot {
   const mine = allOrders.filter((o) => o.table_number === tableId)
   const active = mine.filter((o) => o.status !== "cancelled")
@@ -77,8 +100,13 @@ export function computeTableSnapshot(
   const hasCashierCall = tableAlerts.some((a) => a.type === "call_cashier")
   const hasPaymentDone = tableAlerts.some((a) => a.type === "payment_done")
 
+  const waiterAlert = tableAlerts.find((a) => a.type === "call_server")
+  const billAlert = tableAlerts.find((a) => a.type === "request_bill")
+
   let status: TableStatus
-  if (active.length === 0) {
+  if (isDbNeedsCleaning(opts)) {
+    status = "NEEDS_CLEANING"
+  } else if (active.length === 0) {
     status = hasCallAlert || hasCashierCall ? "CALL_SERVER" : "FREE"
   } else if (hasCallAlert || hasCashierCall) {
     status = "CALL_SERVER"
@@ -121,8 +149,13 @@ export function computeTableSnapshot(
     hasBillAlert,
     hasCashierCall,
     hasPaymentDone,
+    waiterRequestAt: waiterAlert?.createdAt ?? null,
+    billRequestAt: billAlert?.createdAt ?? null,
+    waiterRequestId: waiterAlert?.id ?? null,
+    billRequestId: billAlert?.id ?? null,
     activeOrders: active,
     total,
     lastUpdate,
+    cleaningSince: opts?.cleaningSince ?? null,
   }
 }

@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
   const minAmt = Number((offer as { min_order_amount?: unknown }).min_order_amount ?? 0)
   if (Number.isFinite(minAmt) && minAmt > 0 && activeHt < minAmt) {
-    return NextResponse.json({ error: `Montant minimum HT non atteint (${minAmt})` }, { status: 400 })
+    return NextResponse.json({ error: `Montant minimum non atteint (${minAmt} € TTC)` }, { status: 400 })
   }
 
   const limit = (offer as { usage_limit?: number | null }).usage_limit

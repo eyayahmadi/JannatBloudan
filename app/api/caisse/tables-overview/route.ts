@@ -24,7 +24,7 @@ export async function GET() {
     const supabase = createServiceRoleClient()
     const { data: tables, error: tErr } = await supabase
       .from("restaurant_tables")
-      .select("id, table_number, table_code, display_name, zone, plan_zone, status, capacity, current_session_id, is_active")
+      .select("id, table_number, table_code, display_name, zone, plan_zone, status, capacity, current_session_id, is_active, cleaning_since")
       .order("table_number")
 
     if (tErr) return NextResponse.json({ tables: [], error: tErr.message })
@@ -116,8 +116,14 @@ export async function GET() {
 
     const { data: billAlerts } = await supabase
       .from("table_alerts")
-      .select("id, table_id, type, created_at, resolved_at")
+      .select("id, table_id, type, created_at, resolved_at, order_id")
       .eq("type", "request_bill")
+      .is("resolved_at", null)
+
+    const { data: waiterAlerts } = await supabase
+      .from("table_alerts")
+      .select("id, table_id, type, created_at, resolved_at, order_id")
+      .eq("type", "call_server")
       .is("resolved_at", null)
 
     const { data: cashierAlerts } = await supabase
@@ -126,15 +132,73 @@ export async function GET() {
       .eq("type", "call_cashier")
       .is("resolved_at", null)
 
-    const requestByTable = new Map<number, { count: number; latestAt: string | null }>()
+    type AlertAgg = { count: number; latestAt: string | null; latestId: string | null }
+    const emptyAgg = (): AlertAgg => ({ count: 0, latestAt: null, latestId: null })
+
+    const billByTable = new Map<number, AlertAgg>()
     for (const a of billAlerts ?? []) {
       const tableId = Number((a as { table_id?: number }).table_id ?? 0)
       if (!Number.isFinite(tableId) || tableId <= 0) continue
-      const prev = requestByTable.get(tableId) ?? { count: 0, latestAt: null }
+      const prev = billByTable.get(tableId) ?? emptyAgg()
       const createdAt = String((a as { created_at?: string | null }).created_at ?? "")
-      requestByTable.set(tableId, {
+      const id = String((a as { id?: string }).id ?? "")
+      const isNewer = !prev.latestAt || createdAt > prev.latestAt
+      billByTable.set(tableId, {
         count: prev.count + 1,
-        latestAt: !prev.latestAt || createdAt > prev.latestAt ? createdAt : prev.latestAt,
+        latestAt: isNewer ? createdAt : prev.latestAt,
+        latestId: isNewer ? id : prev.latestId,
+      })
+    }
+
+    const waiterByTable = new Map<number, AlertAgg>()
+    for (const a of waiterAlerts ?? []) {
+      const tableId = Number((a as { table_id?: number }).table_id ?? 0)
+      if (!Number.isFinite(tableId) || tableId <= 0) continue
+      const prev = waiterByTable.get(tableId) ?? emptyAgg()
+      const createdAt = String((a as { created_at?: string | null }).created_at ?? "")
+      const id = String((a as { id?: string }).id ?? "")
+      const isNewer = !prev.latestAt || createdAt > prev.latestAt
+      waiterByTable.set(tableId, {
+        count: prev.count + 1,
+        latestAt: isNewer ? createdAt : prev.latestAt,
+        latestId: isNewer ? id : prev.latestId,
+      })
+    }
+
+    const serviceRequestsByTable = new Map<
+      number,
+      Array<{ id: string; request_type: "WAITER" | "BILL"; requested_at: string; order_id: string | null }>
+    >()
+    const pushServiceRequest = (
+      tableId: number,
+      row: { id: string; request_type: "WAITER" | "BILL"; requested_at: string; order_id: string | null },
+    ) => {
+      const list = serviceRequestsByTable.get(tableId) ?? []
+      list.push(row)
+      serviceRequestsByTable.set(tableId, list)
+    }
+    for (const a of waiterAlerts ?? []) {
+      const tableId = Number((a as { table_id?: number }).table_id ?? 0)
+      if (!Number.isFinite(tableId) || tableId <= 0) continue
+      pushServiceRequest(tableId, {
+        id: String((a as { id?: string }).id ?? ""),
+        request_type: "WAITER",
+        requested_at: String((a as { created_at?: string }).created_at ?? ""),
+        order_id: (a as { order_id?: string | null }).order_id
+          ? String((a as { order_id?: string }).order_id)
+          : null,
+      })
+    }
+    for (const a of billAlerts ?? []) {
+      const tableId = Number((a as { table_id?: number }).table_id ?? 0)
+      if (!Number.isFinite(tableId) || tableId <= 0) continue
+      pushServiceRequest(tableId, {
+        id: String((a as { id?: string }).id ?? ""),
+        request_type: "BILL",
+        requested_at: String((a as { created_at?: string }).created_at ?? ""),
+        order_id: (a as { order_id?: string | null }).order_id
+          ? String((a as { order_id?: string }).order_id)
+          : null,
       })
     }
 
@@ -188,8 +252,10 @@ export async function GET() {
       const tableId = Number((t as { id?: number }).id ?? 0)
       const sid = String(sess?.id ?? "")
       const fin = sid ? invoicesBySession.get(sid) : undefined
-      const alert = requestByTable.get(tableId)
+      const alert = billByTable.get(tableId)
+      const waiterAlert = waiterByTable.get(tableId)
       const cashierAlert = cashierByTable.get(tableId)
+      const serviceRequests = serviceRequestsByTable.get(tableId) ?? []
       const mergeInfo = sid ? mergesBySession.get(sid) : null
 
       let paymentStage = "libre"
@@ -202,17 +268,28 @@ export async function GET() {
         | "PAID"
         | "UNPAID"
         | "PARTIAL"
+        | "NEEDS_CLEANING"
         | "CLOSED" = "FREE"
 
       const restaurantStatus = String((t as { status?: string | null }).status ?? "").toUpperCase()
+      const cleaningSince = (t as { cleaning_since?: string | null }).cleaning_since ?? null
+      const isCleaning =
+        restaurantStatus === "CLEANING" ||
+        restaurantStatus === "NEEDS_CLEANING" ||
+        Boolean(cleaningSince)
+
       const totalDue = Number(fin?.finalTotal ?? sess?.total ?? 0)
       const paidAmount = Number(fin?.paidAmount ?? (sess?.paid ? totalDue : 0))
       const remainingAmount = Math.max(0, totalDue - paidAmount)
       const hasRequestedBill = Boolean(alert?.count) || Boolean(fin?.paymentRequested)
+      const hasWaiterRequest = Boolean(waiterAlert?.count)
       const hasPartial = (fin?.partialInvoices ?? 0) > 0 || (paidAmount > 0.001 && remainingAmount > 0.001)
       const sessionPaid = Boolean(sess?.paid) || (remainingAmount <= 0.001 && totalDue > 0)
 
-      if (!sess) {
+      if (isCleaning && !sess) {
+        paymentStage = "à nettoyer"
+        paymentStatusCode = "NEEDS_CLEANING"
+      } else if (!sess) {
         paymentStage = "libre"
         paymentStatusCode = "FREE"
       } else if (sessionPaid) {
@@ -243,11 +320,18 @@ export async function GET() {
         is_active: (t as { is_active?: boolean | null }).is_active !== false,
         zone: t.zone,
         restaurant_status: (t as { status?: string | null }).status ?? null,
+        cleaning_since: cleaningSince,
         payment_status_label: paymentStage,
         payment_status_code: paymentStatusCode,
         has_payment_request_alert: hasRequestedBill,
         payment_request_count: alert?.count ?? 0,
         payment_request_latest_at: alert?.latestAt ?? null,
+        payment_request_alert_id: alert?.latestId ?? null,
+        has_waiter_request_alert: hasWaiterRequest,
+        waiter_request_count: waiterAlert?.count ?? 0,
+        waiter_request_latest_at: waiterAlert?.latestAt ?? null,
+        waiter_request_alert_id: waiterAlert?.latestId ?? null,
+        service_requests: serviceRequests,
         has_cashier_call_alert: Boolean(cashierAlert?.count),
         cashier_call_count: cashierAlert?.count ?? 0,
         cashier_call_latest_at: cashierAlert?.latestAt ?? null,

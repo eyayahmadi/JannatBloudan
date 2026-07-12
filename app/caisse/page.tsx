@@ -53,6 +53,7 @@ import { PremiumStatCard, PremiumSection } from "@/components/ui/premium"
 import { FadeIn } from "@/components/ui/motion-primitives"
 import { useAuth } from "@/lib/context/AuthContext"
 import { cn } from "@/lib/utils"
+import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
 
 type DashboardPayload = {
   ok?: boolean
@@ -173,7 +174,13 @@ export default function CaisseModulePage() {
     const id = window.setInterval(() => {
       void loadTables()
     }, 4000)
-    return () => window.clearInterval(id)
+    const unsub = onRealtimeRefresh((scope) => {
+      if (scopeMatches(["tables", "alerts"], scope)) void loadTables()
+    })
+    return () => {
+      window.clearInterval(id)
+      unsub()
+    }
   }, [loadTables])
 
   useEffect(() => {
@@ -206,7 +213,14 @@ export default function CaisseModulePage() {
   }, [searchParams, tables])
 
   const requestAlertsCount = useMemo(
-    () => tables.reduce((sum, t) => sum + Number(t.payment_request_count ?? 0), 0),
+    () =>
+      tables.reduce(
+        (sum, t) =>
+          sum +
+          Number(t.payment_request_count ?? 0) +
+          Number((t as { waiter_request_count?: number }).waiter_request_count ?? 0),
+        0,
+      ),
     [tables],
   )
   const cashierCallCount = useMemo(

@@ -46,10 +46,19 @@ import {
   TABLE_STATUS_META,
   TONE_BADGE,
   TONE_CARD,
+  type TableSnapshot,
 } from "@/lib/table-status"
 import { JANNAT_TABLES } from "@/lib/admin/jannat-tables-data"
 import { JANNAT_TABLE_ZONES, ZONE_LABELS_FR } from "@/lib/admin/restaurant-tables"
 import { useFloorPlanTables, type FloorPlanTable } from "@/lib/hooks/useFloorPlanTables"
+import type { TableAlert } from "@/lib/hooks/useTableAlerts"
+import type { ServiceRequestType } from "@/lib/table/service-requests"
+import { TableCleaningPanel, CLEANING_CARD_RING } from "@/components/floor-plan/TableCleaningPanel"
+import {
+  ServiceRequestBadges,
+  mapAlertsToServiceRequests,
+  useServiceRequestVisuals,
+} from "@/components/floor-plan/ServiceRequestIndicators"
 
 const ZONES: Record<string, { label: string; color: string }> = {
   terrasse: { label: "Terrasse", color: "text-amber-600 dark:text-amber-400" },
@@ -77,6 +86,26 @@ const FALLBACK_TABLE_NUMBERS = JANNAT_TABLES.map((t) => t.table_number)
 
 type OverviewTable = FloorPlanTable
 
+function resolveServerTableHref(
+  code: string,
+  snap: TableSnapshot,
+  floorRow?: FloorPlanTable,
+): string {
+  const pay = String(floorRow?.payment_status_code ?? "").toUpperCase()
+  const db = String(floorRow?.restaurant_status ?? "").toUpperCase()
+  if (pay === "NEEDS_CLEANING" || db === "CLEANING" || snap.status === "NEEDS_CLEANING") {
+    return `/server/${code}?view=cleaning`
+  }
+  if (pay === "FREE" && snap.status === "FREE") return `/server/${code}/menu`
+  return `/server/${code}`
+}
+
+function isTableNeedsCleaning(floorRow?: FloorPlanTable): boolean {
+  const pay = String(floorRow?.payment_status_code ?? "").toUpperCase()
+  const db = String(floorRow?.restaurant_status ?? "").toUpperCase()
+  return pay === "NEEDS_CLEANING" || db === "CLEANING"
+}
+
 export type ServerFloorPlanProps = {
   /** Intégré dans StaffWorkspaceShell : pas de PageShell ni SiteHeader externes */
   layout?: "full" | "workspace"
@@ -84,10 +113,11 @@ export type ServerFloorPlanProps = {
 
 export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
   const { orders, transferTableNumber, clearTableOrders } = useRealtimeOrders()
-  const { alerts, raise, transferTableAlerts, resolveTable } = useTableAlerts()
+  const { alerts, raise, transferTableAlerts, resolveTable, acknowledge } = useTableAlerts()
   const { groups, addGroup, releaseGroup, releaseGroupByTable, groupOf } = useMergeGroups()
   const { user } = useAuth()
-  const canOpenCaisse = user && ["ADMIN", "CASHIER"].includes(normalizeRole(user.role))
+  const staffRole = user ? normalizeRole(user.role) : null
+  const canOpenCaisse = user && ["ADMIN", "CASHIER"].includes(staffRole ?? "")
 
   const [transferOpen, setTransferOpen] = useState(false)
   const [callOpen, setCallOpen] = useState(false)
@@ -119,9 +149,26 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
     return FALLBACK_TABLE_NUMBERS
   }, [floorTables])
 
+  const floorByNumber = useMemo(() => {
+    const m = new Map<number, (typeof floorTables)[number]>()
+    for (const t of floorTables) {
+      const n = Number(t.table_number)
+      if (Number.isFinite(n)) m.set(n, t)
+    }
+    return m
+  }, [floorTables])
+
   const snapshots = useMemo(
-    () => tableNumbers.map((id) => computeTableSnapshot(id, orders, alerts)),
-    [tableNumbers, orders, alerts],
+    () =>
+      tableNumbers.map((id) => {
+        const row = floorByNumber.get(id)
+        return computeTableSnapshot(id, orders, alerts, {
+          restaurantStatus: row?.restaurant_status,
+          paymentStatusCode: row?.payment_status_code,
+          cleaningSince: row?.cleaning_since,
+        })
+      }),
+    [tableNumbers, floorByNumber, orders, alerts],
   )
 
   const visibleSnapshots = useMemo(() => {
@@ -133,7 +180,7 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
     const c = { libres: 0, actives: 0, aServir: 0, alertes: 0 }
     snapshots.forEach((s) => {
       if (s.status === "FREE") c.libres += 1
-      else c.actives += 1
+      else if (s.status !== "NEEDS_CLEANING") c.actives += 1
       if (s.status === "READY") c.aServir += 1
       if (s.hasCallAlert || s.hasBillAlert || s.hasCashierCall) c.alertes += 1
     })
@@ -363,38 +410,35 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
 
   const releaseTable = useCallback(
     async (tableNumber: number) => {
-      const removed = clearTableOrders(tableNumber)
-      resolveTable(String(tableNumber))
-
-      // Si cette table fait partie d'un groupe fusionné, on dissout le groupe :
-      // chaque table redevient indépendante et libre.
-      const dissolved = releaseGroupByTable(tableNumber)
-
-      const row = overview.find((t) => Number(t.table_number) === Number(tableNumber))
-      if (row?.session?.id && canOpenCaisse) {
-        try {
-          const res = await fetch("/api/caisse/close-table", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ session_id: row.session.id }),
-          })
-          if (!res.ok && res.status !== 409) {
-            const j = await res.json().catch(() => ({}))
-            toast.message(typeof j.error === "string" ? j.error : "Session caisse non clôturée")
-          }
-        } catch {
-          /* ignore */
+      const row = floorTables.find((t) => Number(t.table_number) === Number(tableNumber))
+      const tableDbId = row?.table_id
+      if (tableDbId && isTableNeedsCleaning(row)) {
+        const res = await fetch("/api/caisse/mark-table-cleaned", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ table_id: tableDbId }),
+        })
+        if (!res.ok) {
+          toast.error("Impossible de confirmer le nettoyage")
+          return
         }
+        toast.success(`Table ${tableNumber} libre`)
+        void reloadFloor()
         void loadOverview()
+        return
       }
 
+      const removed = clearTableOrders(tableNumber)
+      resolveTable(String(tableNumber))
+      const dissolved = releaseGroupByTable(tableNumber)
       toast.success(
-        `Table ${tableNumber} libérée${removed > 0 ? ` (${removed} commande${removed > 1 ? "s" : ""})` : ""}${
-          dissolved > 0 ? " — groupe dissous, tables indépendantes" : ""
+        `Table ${tableNumber} — alertes effacées${removed > 0 ? ` (${removed} cmd local)` : ""}${
+          dissolved > 0 ? " — groupe dissous" : ""
         }`,
       )
+      void reloadFloor()
     },
-    [canOpenCaisse, clearTableOrders, loadOverview, overview, releaseGroupByTable, resolveTable],
+    [clearTableOrders, floorTables, loadOverview, releaseGroupByTable, reloadFloor, resolveTable],
   )
 
   const toolbar = (
@@ -748,7 +792,7 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
 
       <div className="mb-4 flex flex-wrap gap-2">
         {(
-          ["FREE", "ORDERING", "IN_KITCHEN", "READY", "SERVED", "PAYMENT_REQUESTED", "CALL_SERVER", "PAID"] as const
+          ["FREE", "ORDERING", "IN_KITCHEN", "READY", "SERVED", "PAYMENT_REQUESTED", "CALL_SERVER", "PAID", "NEEDS_CLEANING"] as const
         ).map((s) => {
           const meta = TABLE_STATUS_META[s]
           return (
@@ -799,119 +843,54 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
             : snap
           const displaySnap = isMember ? mainSnap : snap
           const meta = TABLE_STATUS_META[displaySnap.status]
-          const canRelease = displaySnap.status === "PAID" && !isMember
+          const floorRow = floorTables.find((t) => Number(t.table_number) === snap.tableId)
+          const needsCleaning = isTableNeedsCleaning(floorRow) || displaySnap.status === "NEEDS_CLEANING"
+          const canRelease = needsCleaning && !isMember
           const targetHref = isMember
-            ? `/server/${group?.mainTable ?? snap.tableId}`
-            : `/server/${code}`
+            ? `/server/${group?.mainTable ?? snap.tableId}${needsCleaning ? "?view=cleaning" : ""}`
+            : resolveServerTableHref(code, displaySnap, floorRow)
           const groupedRing = group
             ? "ring-2 ring-violet-300 dark:ring-violet-700/70 ring-offset-1 ring-offset-white/40 dark:ring-offset-slate-950/40"
             : ""
           return (
-            <div key={snap.tableId} className="relative">
-              <Link
-                href={targetHref}
-                className={cn(
-                  "group relative flex flex-col items-center gap-2 rounded-2xl border p-4 shadow-sm transition",
-                  "hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]",
-                  TONE_CARD[meta.tone],
-                  groupedRing,
-                )}
-              >
-                <span className="text-2xl font-bold text-slate-900 dark:text-white">{code}</span>
-                <span className={cn("text-xs font-medium", zone.color)}>{zone.label}</span>
-                {(() => {
-                  const cap = floorTables.find((t) => Number(t.table_number) === snap.tableId)?.capacity
-                  return cap ? (
-                    <span className="text-[10px] text-slate-500">{cap} pers.</span>
-                  ) : null
-                })()}
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                    TONE_BADGE[meta.tone],
-                  )}
-                >
-                  {meta.short}
-                </span>
-                {displaySnap.total > 0 ? (
-                  <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                    {displaySnap.total.toFixed(2)}€
-                  </span>
-                ) : null}
-                {group ? (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-800 dark:bg-violet-950/40 dark:text-violet-200"
-                    title={`Groupe : tables ${group.members.join(", ")}`}
-                  >
-                    <Combine className="h-3 w-3" />
-                    {isMain
-                      ? `Principale · groupe ${group.members.join("+")}`
-                      : `Fusionnée → table ${group.mainTable}`}
-                  </span>
-                ) : null}
-
-                <div className="absolute right-1.5 top-1.5 flex items-center gap-1">
-                  {displaySnap.hasCashierCall ? (
-                    <span className="rounded-full bg-amber-500 p-1 text-white shadow" title="Appel caisse">
-                      <Landmark className="h-3 w-3" />
-                    </span>
-                  ) : null}
-                  {displaySnap.hasCallAlert ? (
-                    <span className="rounded-full bg-red-500 p-1 text-white shadow" title="Appel serveur">
-                      <HandPlatter className="h-3 w-3" />
-                    </span>
-                  ) : null}
-                  {displaySnap.hasBillAlert ? (
-                    <span className="rounded-full bg-rose-500 p-1 text-white shadow" title="Addition">
-                      <Receipt className="h-3 w-3" />
-                    </span>
-                  ) : null}
-                  {displaySnap.activeOrders.some((o) => o.status === "ready") ? (
-                    <span className="rounded-full bg-blue-500 p-1 text-white shadow" title="Commande prête">
-                      <Utensils className="h-3 w-3" />
-                    </span>
-                  ) : null}
-                </div>
-              </Link>
-              {canRelease ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    void releaseTable(snap.tableId)
-                  }}
-                  className="absolute inset-x-2 bottom-2 inline-flex items-center justify-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                  title="Libérer la table"
-                >
-                  <CircleCheck className="h-3 w-3" />
-                  Table libre
-                </button>
-              ) : isMain && group ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    const ok = window.confirm(
-                      `Dissoudre le groupe (tables ${group.members.join(", ")}) ?\n\nLes commandes restent sur la table principale ${group.mainTable}. Les autres tables redeviennent indépendantes (libres).`,
-                    )
-                    if (!ok) return
-                    releaseGroup(group.id)
-                    toast.success(
-                      `Groupe dissous — table ${group.mainTable} conserve la commande, ${group.members.filter((m) => m !== group.mainTable).join(", ")} libre${
-                        group.members.length > 2 ? "s" : ""
-                      }`,
-                    )
-                  }}
-                  className="absolute inset-x-2 bottom-2 inline-flex items-center justify-center gap-1 rounded-md bg-violet-600 px-2 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-400"
-                  title="Dissoudre le groupe (avant paiement)"
-                >
-                  <Unlink className="h-3 w-3" />
-                  Libérer le groupe
-                </button>
-              ) : null}
-            </div>
+            <ServerPlanTableCell
+              key={snap.tableId}
+              snap={snap}
+              displaySnap={displaySnap}
+              meta={meta}
+              code={code}
+              zone={zone}
+              floorTables={floorTables}
+              group={group}
+              isMain={isMain}
+              isMember={isMember}
+              groupedRing={groupedRing}
+              targetHref={targetHref}
+              canRelease={canRelease}
+              floorRow={floorRow}
+              needsCleaning={needsCleaning}
+              alerts={alerts.filter((a) => a.tableId === String(snap.tableId) && !a.resolvedAt)}
+              staffRole={staffRole}
+              onAcknowledge={async (id) => {
+                const { ok } = await acknowledge(id)
+                if (ok) toast.success("Demande traitée")
+                else toast.error("Impossible d'acquitter la demande")
+              }}
+              onRelease={() => void releaseTable(snap.tableId)}
+              onReleaseGroup={() => {
+                if (!group) return
+                const ok = window.confirm(
+                  `Dissoudre le groupe (tables ${group.members.join(", ")}) ?\n\nLes commandes restent sur la table principale ${group.mainTable}. Les autres tables redeviennent indépendantes (libres).`,
+                )
+                if (!ok) return
+                releaseGroup(group.id)
+                toast.success(
+                  `Groupe dissous — table ${group.mainTable} conserve la commande, ${group.members.filter((m) => m !== group.mainTable).join(", ")} libre${
+                    group.members.length > 2 ? "s" : ""
+                  }`,
+                )
+              }}
+            />
           )
         })}
       </div>
@@ -949,6 +928,159 @@ export function ServerFloorPlan({ layout = "full" }: ServerFloorPlanProps) {
       </div>
       <AIAgentBadge context="server" />
     </PageShell>
+  )
+}
+
+function ServerPlanTableCell({
+  snap,
+  displaySnap,
+  meta,
+  code,
+  zone,
+  floorTables,
+  group,
+  isMain,
+  isMember,
+  groupedRing,
+  targetHref,
+  canRelease,
+  floorRow,
+  needsCleaning,
+  alerts,
+  staffRole,
+  onAcknowledge,
+  onRelease,
+  onReleaseGroup,
+}: {
+  snap: TableSnapshot
+  displaySnap: TableSnapshot
+  meta: (typeof TABLE_STATUS_META)[keyof typeof TABLE_STATUS_META]
+  code: string
+  zone: { label: string; color: string }
+  floorTables: FloorPlanTable[]
+  group: { id: string; mainTable: number; members: number[] } | null
+  isMain: boolean
+  isMember: boolean
+  groupedRing: string
+  targetHref: string
+  canRelease: boolean
+  floorRow?: FloorPlanTable
+  needsCleaning: boolean
+  alerts: TableAlert[]
+  staffRole: string | null
+  onAcknowledge: (id: string, requestType: ServiceRequestType) => void | Promise<void>
+  onRelease: () => void
+  onReleaseGroup: () => void
+}) {
+  const serviceRequests = mapAlertsToServiceRequests(alerts, snap.tableId)
+  const { ringClass } = useServiceRequestVisuals(serviceRequests)
+  const cleaningRing = needsCleaning ? CLEANING_CARD_RING : null
+
+  return (
+    <div className="relative">
+      <Link
+        href={targetHref}
+        className={cn(
+          "group relative flex flex-col items-center gap-2 rounded-2xl border p-4 shadow-sm transition",
+          "hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]",
+          cleaningRing ?? ringClass ?? TONE_CARD[meta.tone],
+          groupedRing,
+        )}
+      >
+        <span className="text-2xl font-bold text-slate-900 dark:text-white">{code}</span>
+        <span className={cn("text-xs font-medium", zone.color)}>{zone.label}</span>
+        {(() => {
+          const cap = floorTables.find((t) => Number(t.table_number) === snap.tableId)?.capacity
+          return cap ? <span className="text-[10px] text-slate-500">{cap} pers.</span> : null
+        })()}
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+            TONE_BADGE[meta.tone],
+          )}
+        >
+          {meta.short}
+        </span>
+        {displaySnap.total > 0 ? (
+          <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+            {displaySnap.total.toFixed(2)}€
+          </span>
+        ) : null}
+        {group ? (
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-800 dark:bg-violet-950/40 dark:text-violet-200"
+            title={`Groupe : tables ${group.members.join(", ")}`}
+          >
+            <Combine className="h-3 w-3" />
+            {isMain
+              ? `Principale · groupe ${group.members.join("+")}`
+              : `Fusionnée → table ${group.mainTable}`}
+          </span>
+        ) : null}
+
+        {needsCleaning ? (
+          <div className="w-full px-1 pt-1" onClick={(e) => e.preventDefault()}>
+            <TableCleaningPanel
+              tableLabel={code}
+              cleaningSince={(floorRow as { cleaning_since?: string | null } | undefined)?.cleaning_since}
+              compact
+              onMarkCleaned={onRelease}
+            />
+          </div>
+        ) : serviceRequests.length > 0 ? (
+          <div className="w-full px-1 pt-1" onClick={(e) => e.preventDefault()}>
+            <ServiceRequestBadges
+              requests={serviceRequests}
+              staffRole={staffRole}
+              onAcknowledge={onAcknowledge}
+              compact
+            />
+          </div>
+        ) : null}
+
+        <div className="absolute right-1.5 top-1.5 flex items-center gap-1">
+          {displaySnap.hasCashierCall ? (
+            <span className="rounded-full bg-amber-500 p-1 text-white shadow" title="Appel caisse">
+              <Landmark className="h-3 w-3" />
+            </span>
+          ) : null}
+          {displaySnap.activeOrders.some((o) => o.status === "ready") ? (
+            <span className="rounded-full bg-blue-500 p-1 text-white shadow" title="Commande prête">
+              <Utensils className="h-3 w-3" />
+            </span>
+          ) : null}
+        </div>
+      </Link>
+      {canRelease ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onRelease()
+          }}
+          className="absolute inset-x-2 bottom-2 inline-flex items-center justify-center gap-1 rounded-md bg-teal-600 px-2 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-400"
+          title="Confirmer nettoyage"
+        >
+          <CircleCheck className="h-3 w-3" />
+          Table nettoyée
+        </button>
+      ) : isMain && group ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onReleaseGroup()
+          }}
+          className="absolute inset-x-2 bottom-2 inline-flex items-center justify-center gap-1 rounded-md bg-violet-600 px-2 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-400"
+          title="Dissoudre le groupe (avant paiement)"
+        >
+          <Unlink className="h-3 w-3" />
+          Libérer le groupe
+        </button>
+      ) : null}
+    </div>
   )
 }
 

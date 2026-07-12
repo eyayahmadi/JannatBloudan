@@ -52,7 +52,7 @@ export const STATUS_LABELS_FR: Record<string, string> = {
   FREE: "Libre",
   OCCUPIED: "Occupée",
   RESERVED: "Réservée",
-  CLEANING: "Nettoyage",
+  CLEANING: "À nettoyer",
   DISABLED: "Désactivée (voir interrupteur)",
   ORDERING: "Commande en cours",
   IN_KITCHEN: "En préparation",

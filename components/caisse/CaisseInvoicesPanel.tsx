@@ -352,7 +352,7 @@ export function CaisseInvoicesPanel(props: { date: string }) {
       toast.error(typeof j?.error === "string" ? j.error : "Offre impossible")
       return
     }
-    toast.success(`Offre appliquée — rabais ${Number(j.amount_saved ?? 0).toFixed(2)} € HT équivalent`)
+    toast.success(`Offre appliquée — rabais ${Number(j.amount_saved ?? 0).toFixed(2)} €`)
     setOfferOpen(null)
     setOfferCode("")
     setOfferNote("")

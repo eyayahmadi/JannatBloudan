@@ -13,7 +13,7 @@ function pctDiscount(subtotalHt: number, pct: number): number {
 }
 
 /**
- * Réduction monétaire sur un sous-total HT (lignes) — approximation caisse MVP.
+ * Réduction monétaire sur un sous-total TTC (prix menu) — approximation caisse MVP.
  * Pour les offres complexes (BXGY, combo, …) on accepte un % équivalent en `value_num` ou `meta.equivalent_percent`.
  */
 export function discountAmountForOffer(subtotalHt: number, offer: OfferLike, refTime: Date = new Date()): number {

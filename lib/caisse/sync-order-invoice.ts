@@ -373,7 +373,7 @@ async function createInvoiceFromOrder(
       .filter((it) => lineStatusForStation(it.station_status).billable)
       .reduce((s, it) => s + it.unit_price * it.quantity, 0),
   )
-  const { tva_amount, total } = recomputeTotalsFromSubtotal(activeSubtotal, 0, TVA_RATE_DEFAULT)
+  const { subtotalHt, tva_amount, total } = recomputeTotalsFromSubtotal(activeSubtotal, 0, TVA_RATE_DEFAULT)
   const invoiceId = generateInvoiceId()
 
   const { error: invErr } = await supabase.from("invoices").insert({
@@ -383,7 +383,7 @@ async function createInvoiceFromOrder(
     customer_name:
       order.customer_name ??
       (order.table_number != null ? `Table ${order.table_number}` : "Client"),
-    subtotal: activeSubtotal,
+    subtotal: subtotalHt,
     tva_rate: TVA_RATE_DEFAULT,
     tva_amount,
     discount_amount: 0,
@@ -628,7 +628,7 @@ async function reconcileInvoice(
       discount_amount: totals.discount_amount,
       tva_amount: totals.tva_amount,
       total: totals.total,
-      gross_before_discount: totals.subtotalHt,
+      gross_before_discount: activeHt,
       updated_at: now,
     })
     .eq("id", invoiceId)

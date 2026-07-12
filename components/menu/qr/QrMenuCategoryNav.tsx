@@ -10,6 +10,8 @@ type QrMenuCategoryNavProps = {
   tableId: string
   activeSlug?: string | null
   className?: string
+  /** Override category href (e.g. staff `/server/.../menu/...`). */
+  hrefForCategory?: (slug: string) => string
 }
 
 function CategoryPill({
@@ -52,6 +54,7 @@ export function QrMenuCategoryNav({
   tableId,
   activeSlug = null,
   className,
+  hrefForCategory,
 }: QrMenuCategoryNavProps) {
   const router = useRouter()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -90,7 +93,9 @@ export function QrMenuCategoryNav({
             key={category.slug}
             category={category}
             active={activeSlug === category.slug}
-            onSelect={() => router.push(`/table/${tableId}/menu/${category.slug}`)}
+            onSelect={() =>
+              router.push(hrefForCategory?.(category.slug) ?? `/table/${tableId}/menu/${category.slug}`)
+            }
             chipRef={(el) => {
               chipRefs.current[category.slug] = el
             }}

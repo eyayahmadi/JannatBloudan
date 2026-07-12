@@ -44,7 +44,7 @@ type SummaryResponse = {
   source: string
 }
 
-const TVA_RATE = 0.19
+import { calculateTaxFromTtc, DEFAULT_VAT_RATE_PERCENT } from "@/lib/tax/calculate-tax"
 
 const formatCurrency = (v: number) => {
   const parts = v.toFixed(2).split(".")
@@ -106,7 +106,7 @@ export default function FinancePage() {
 
   const revenue = summary?.totalRevenue ?? 0
   const totalExpenses = summary?.totalExpenses ?? 0
-  const tvaCollected = revenue * TVA_RATE
+  const tvaCollected = calculateTaxFromTtc(revenue, DEFAULT_VAT_RATE_PERCENT).tva
   const netProfit = revenue - totalExpenses - tvaCollected
   const margin = revenue > 0 ? ((revenue - totalExpenses) / revenue) * 100 : 0
 

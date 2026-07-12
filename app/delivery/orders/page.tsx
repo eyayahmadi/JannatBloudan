@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { OrderProductName } from "@/components/orders/OrderProductName"
+import { calculateTaxFromTtc, DEFAULT_VAT_RATE_PERCENT } from "@/lib/tax/calculate-tax"
 
 type OrderStatus = "received" | "preparing" | "delivering" | "completed"
 
@@ -64,9 +65,10 @@ export default function OrdersPage() {
     ).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
 
     const subtotal = storedOrder.summary?.subtotal ?? storedOrder.items.reduce((s, i) => s + i.price * i.quantity, 0)
-    const tva = storedOrder.summary?.tva ?? subtotal * 0.19
     const deliveryFee = storedOrder.summary?.deliveryFee ?? (subtotal >= 25 ? 0 : 3.9)
-    const total = storedOrder.summary?.total ?? subtotal + tva + deliveryFee
+    const menuTax = calculateTaxFromTtc(subtotal, DEFAULT_VAT_RATE_PERCENT)
+    const tva = storedOrder.summary?.tva ?? menuTax.tva
+    const total = storedOrder.summary?.total ?? menuTax.ttc + deliveryFee
 
     return [
       {

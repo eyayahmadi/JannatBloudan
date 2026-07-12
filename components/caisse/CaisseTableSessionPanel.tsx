@@ -131,7 +131,7 @@ export function CaisseTableSessionPanel(props: {
       toast.error(typeof j?.error === "string" ? j.error : "Clôture refusée")
       return
     }
-    toast.success("Table clôturée. Session archivée et table libérée.")
+    toast.success("Session clôturée — table en attente de nettoyage (À nettoyer).")
     onRefreshParents()
     void load()
   }

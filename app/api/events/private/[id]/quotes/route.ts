@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import { recomputeTotalsFromSubtotal } from "@/lib/caisse/recalc-invoice"
+import { DEFAULT_VAT_RATE_FRACTION } from "@/lib/tax/calculate-tax"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -29,7 +31,7 @@ export async function POST(request: Request, { params }: Params) {
   try {
     const body = await request.json()
     const lineItems: any[] = Array.isArray(body.lineItems) ? body.lineItems : []
-    const subtotal: number =
+    const grossTtc: number =
       typeof body.subtotal === "number"
         ? body.subtotal
         : lineItems.reduce((s, it) => {
@@ -39,13 +41,10 @@ export async function POST(request: Request, { params }: Params) {
                 : Number(it.qty ?? 0) * Number(it.unit_price ?? 0)
             return s + line
           }, 0)
-    const tvaRate = typeof body.tvaRate === "number" ? body.tvaRate : 0.19
+    const tvaRate = typeof body.tvaRate === "number" ? body.tvaRate : DEFAULT_VAT_RATE_FRACTION
     const discountAmount = body.discountAmount ?? 0
-    const tvaAmount = subtotal * tvaRate
-    const total =
-      typeof body.total === "number"
-        ? body.total
-        : subtotal + tvaAmount - discountAmount
+    const totals = recomputeTotalsFromSubtotal(grossTtc, discountAmount, tvaRate)
+    const total = typeof body.total === "number" ? body.total : totals.total
 
     if (!hasServerSupabaseEnv()) {
       return NextResponse.json({
@@ -53,10 +52,10 @@ export async function POST(request: Request, { params }: Params) {
           id: `DEV-LOCAL-${Date.now()}`,
           request_id: requestId,
           line_items: lineItems,
-          subtotal,
+          subtotal: totals.subtotalHt,
           tva_rate: tvaRate,
-          tva_amount: tvaAmount,
-          discount_amount: discountAmount,
+          tva_amount: totals.tva_amount,
+          discount_amount: totals.discount_amount,
           total,
           status: "draft",
           created_at: new Date().toISOString(),
@@ -71,10 +70,10 @@ export async function POST(request: Request, { params }: Params) {
       .insert({
         request_id: requestId,
         line_items: lineItems,
-        subtotal,
+        subtotal: totals.subtotalHt,
         tva_rate: tvaRate,
-        tva_amount: tvaAmount,
-        discount_amount: discountAmount,
+        tva_amount: totals.tva_amount,
+        discount_amount: totals.discount_amount,
         total,
         deposit_amount: body.depositAmount ?? Math.round(total * 0.3 * 100) / 100,
         valid_until: body.validUntil ?? null,

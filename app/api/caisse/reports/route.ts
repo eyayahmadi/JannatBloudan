@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
-import { htFromTtcInclusive, vatFromHt } from "@/lib/caisse/vat"
+import { vatFromTtc } from "@/lib/caisse/vat"
 import type { VatScope } from "@/lib/caisse/vat"
 import { aggregateElectronicVatFromPaidInvoiceRows, type PayLine } from "@/lib/caisse/split-vat"
 import { netSortieCaisseFromRows } from "@/lib/caisse/cash-movements"
@@ -75,7 +75,7 @@ export async function GET(request: Request) {
     let extraCash = 0
     const decl = closing ? Number((closing as { cash_declared_official?: number }).cash_declared_official ?? 0) : 0
     if (vatScope === "online_plus_cash_declared" && decl > 0) {
-      extraCash = vatFromHt(htFromTtcInclusive(decl, vatRate), vatRate)
+      extraCash = vatFromTtc(decl, vatRate)
     }
 
     const { data: cashMovs } = await supabase

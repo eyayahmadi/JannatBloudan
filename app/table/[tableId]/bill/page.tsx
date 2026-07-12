@@ -9,6 +9,7 @@ import { PageShell } from "@/components/site/PageShell"
 import { OrderProductName } from "@/components/orders/OrderProductName"
 import { useRealtimeOrders } from "@/lib/hooks/useRealtimeOrders"
 import { useTableAlerts } from "@/lib/hooks/useTableAlerts"
+import { calculateTaxFromTtc, DEFAULT_VAT_RATE_PERCENT } from "@/lib/tax/calculate-tax"
 
 export default function TableBillPage() {
   const { tableId } = useParams<{ tableId: string }>()
@@ -24,9 +25,9 @@ export default function TableBillPage() {
       ),
     [orders, tableId],
   )
-  const total = tableOrders.reduce((s, o) => s + o.total, 0)
-  const tax = Math.round(total * 0.1 * 100) / 100
-  const grandTotal = Math.round((total + tax) * 100) / 100
+  const totalTtc = tableOrders.reduce((s, o) => s + o.total, 0)
+  const tax = calculateTaxFromTtc(totalTtc, DEFAULT_VAT_RATE_PERCENT)
+  const grandTotal = tax.ttc
 
   function pay() {
     if (method === "server") {
@@ -119,15 +120,19 @@ export default function TableBillPage() {
 
                   <div className="space-y-1 border-t border-amber-100 pt-3 text-sm dark:border-amber-900/30">
                     <div className="flex justify-between text-amber-800 dark:text-amber-300">
-                      <span>Sous-total</span>
-                      <span>{total.toFixed(2)}€</span>
+                      <span>Total TTC</span>
+                      <span>{grandTotal.toFixed(2)}€</span>
                     </div>
                     <div className="flex justify-between text-amber-800 dark:text-amber-300">
-                      <span>TVA (10%)</span>
-                      <span>{tax.toFixed(2)}€</span>
+                      <span>dont HT</span>
+                      <span>{tax.ht.toFixed(2)}€</span>
+                    </div>
+                    <div className="flex justify-between text-amber-800 dark:text-amber-300">
+                      <span>dont TVA ({DEFAULT_VAT_RATE_PERCENT}%)</span>
+                      <span>{tax.tva.toFixed(2)}€</span>
                     </div>
                     <div className="flex justify-between text-base font-bold text-amber-950 dark:text-white">
-                      <span>Total</span>
+                      <span>À payer</span>
                       <span>{grandTotal.toFixed(2)}€</span>
                     </div>
                   </div>

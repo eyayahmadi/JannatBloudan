@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import type { ReactNode } from "react"
 import {
   AlertTriangle,
@@ -26,6 +26,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { JANNAT_TABLE_ZONES, ZONE_LABELS_FR } from "@/lib/admin/restaurant-tables"
 import { cn } from "@/lib/utils"
 import { RealtimeIndicator } from "@/components/realtime/RealtimeIndicator"
+import {
+  ServiceRequestBadges,
+  serviceRequestsFromOverview,
+  useServiceRequestVisuals,
+} from "@/components/floor-plan/ServiceRequestIndicators"
+import { useAuth } from "@/lib/context/AuthContext"
+import { normalizeRole } from "@/lib/auth/roles"
+import { useTableAlerts } from "@/lib/hooks/useTableAlerts"
+import { TableCleaningPanel } from "@/components/floor-plan/TableCleaningPanel"
+import { toast } from "sonner"
 
 export type FloorTable = {
   table_id?: number
@@ -34,6 +44,7 @@ export type FloorTable = {
   display_name?: string | null
   is_active?: boolean
   zone?: string
+  cleaning_since?: string | null
   restaurant_status?: string | null
   payment_stage?: string
   payment_status_label?: string
@@ -44,6 +55,17 @@ export type FloorTable = {
   has_cashier_call_alert?: boolean
   cashier_call_count?: number
   cashier_call_latest_at?: string | null
+  has_waiter_request_alert?: boolean
+  waiter_request_count?: number
+  waiter_request_latest_at?: string | null
+  waiter_request_alert_id?: string | null
+  payment_request_alert_id?: string | null
+  service_requests?: Array<{
+    id: string
+    request_type: "WAITER" | "BILL"
+    requested_at: string
+    order_id?: string | null
+  }>
   merged_count?: number
   merged_from_table_ids?: number[]
   guests_or_sessions_count?: number
@@ -70,6 +92,7 @@ type StatusKey =
   | "PAID"
   | "UNPAID"
   | "PARTIAL"
+  | "NEEDS_CLEANING"
   | "CLOSED"
 
 type StatusMeta = {
@@ -157,6 +180,15 @@ const STATUS_META: Record<StatusKey, StatusMeta> = {
     dot: "bg-neutral-400",
     accent: "from-neutral-50 via-white to-white",
   },
+  NEEDS_CLEANING: {
+    label: "À nettoyer",
+    short: "Nettoyage",
+    ring: "border-teal-400 ring-2 ring-teal-400/45 shadow-[0_0_0_4px_rgba(20,184,166,0.12)] animate-service-request-pulse",
+    badge: "bg-teal-100 text-teal-900 border-teal-300 dark:bg-teal-950/50 dark:text-teal-100",
+    dot: "bg-teal-500 animate-pulse",
+    accent: "from-teal-50/90 via-white to-white",
+    glow: "shadow-[0_0_0_4px_rgba(20,184,166,0.12)]",
+  },
 }
 
 function nf(v: unknown) {
@@ -187,6 +219,23 @@ export function CaisseFloorPlan({
   isAdminLike: boolean
   onOpenTable: (table: FloorTable) => void
 }) {
+  const { user } = useAuth()
+  const staffRole = user ? normalizeRole(user.role) : null
+  const { acknowledge } = useTableAlerts()
+  const markCleaned = useCallback(async (tableId: number) => {
+    const res = await fetch("/api/caisse/mark-table-cleaned", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ table_id: tableId }),
+    })
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}))
+      toast.error(typeof j?.error === "string" ? j.error : "Échec confirmation nettoyage")
+      return false
+    }
+    toast.success("Table libre — prête pour un nouveau client")
+    return true
+  }, [])
   const [statusFilter, setStatusFilter] = useState<string>("ALL")
   const [zoneFilter, setZoneFilter] = useState<string>("ALL")
   const [search, setSearch] = useState("")
@@ -349,6 +398,13 @@ export function CaisseFloorPlan({
               <TableCard
                 key={`${t.table_id ?? t.table_number}`}
                 t={t}
+                staffRole={staffRole}
+                onAcknowledge={async (id) => {
+                  const { ok } = await acknowledge(id)
+                  if (ok) toast.success("Demande traitée")
+                  else toast.error("Impossible d'acquitter la demande")
+                }}
+                onMarkCleaned={markCleaned}
                 onOpen={() => onOpenTable(t)}
               />
             ))}
@@ -390,12 +446,21 @@ function Chip({
 function TableCard({
   t,
   onOpen,
+  staffRole,
+  onAcknowledge,
+  onMarkCleaned,
 }: {
   t: FloorTable
   onOpen: () => void
+  staffRole?: string | null
+  onAcknowledge?: (id: string) => void | Promise<void>
+  onMarkCleaned?: (tableId: number) => void | Promise<boolean>
 }) {
+  const serviceRequests = serviceRequestsFromOverview(t)
+  const { ringClass } = useServiceRequestVisuals(serviceRequests)
   const code = (String(t.payment_status_code ?? "FREE").toUpperCase() as StatusKey)
   const meta = STATUS_META[code] ?? STATUS_META.FREE
+  const needsCleaning = code === "NEEDS_CLEANING"
   const total = Number(t.session?.total ?? 0)
   const paid = Number(t.session?.paid_amount ?? 0)
   const remaining = Number(t.session?.remaining_amount ?? Math.max(0, total - paid))
@@ -403,7 +468,11 @@ function TableCard({
   const isMerged = (t.merged_count ?? 0) > 0
   const elapsedLabel = elapsed(t.session?.opened_at ?? null)
   const sessionId = t.session?.id ? String(t.session.id) : null
-  const hasAlert = Boolean(t.has_payment_request_alert) || Boolean(t.has_cashier_call_alert)
+  const hasAlert =
+    Boolean(t.has_payment_request_alert) ||
+    Boolean(t.has_cashier_call_alert) ||
+    Boolean(t.has_waiter_request_alert) ||
+    serviceRequests.length > 0
   const progressPaid = total > 0.001 ? Math.min(100, Math.round((paid / total) * 100)) : 0
 
   const openDetail = onOpen
@@ -413,9 +482,9 @@ function TableCard({
       className={cn(
         "group relative flex flex-col gap-3 overflow-hidden rounded-2xl border bg-gradient-to-b p-3.5 shadow-sm transition-all duration-200",
         "hover:-translate-y-0.5 hover:shadow-md focus-within:-translate-y-0.5",
-        meta.ring,
-        meta.accent,
-        meta.glow,
+        ringClass ?? meta.ring,
+        ringClass ? "bg-white dark:bg-neutral-900/80" : meta.accent,
+        !ringClass && meta.glow,
         t.is_active === false && "opacity-60",
       )}
     >
@@ -515,13 +584,25 @@ function TableCard({
         </div>
       ) : null}
 
-      {hasAlert ? (
+      {needsCleaning ? (
+        <TableCleaningPanel
+          tableLabel={String(t.table_code ?? t.table_number ?? "")}
+          cleaningSince={t.cleaning_since}
+          compact
+          onMarkCleaned={async () => {
+            const tid = Number(t.table_id)
+            if (Number.isFinite(tid)) await onMarkCleaned?.(tid)
+          }}
+        />
+      ) : serviceRequests.length > 0 ? (
+        <ServiceRequestBadges
+          requests={serviceRequests}
+          staffRole={staffRole}
+          onAcknowledge={onAcknowledge}
+          compact
+        />
+      ) : hasAlert ? (
         <div className="flex flex-wrap gap-1.5">
-          {t.has_payment_request_alert ? (
-            <span className="inline-flex items-center gap-1 rounded-md bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-900 dark:bg-orange-900/40 dark:text-orange-100">
-              <BellRing className="h-3 w-3 animate-pulse" /> Addition ({t.payment_request_count ?? 1})
-            </span>
-          ) : null}
           {t.has_cashier_call_alert ? (
             <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
               <BellRing className="h-3 w-3 animate-pulse" /> Caisse ({t.cashier_call_count ?? 1})

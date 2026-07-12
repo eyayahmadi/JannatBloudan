@@ -41,6 +41,7 @@ import { MenuCardSkeletonGrid } from "@/components/site/MenuCardSkeleton"
 import { MobileCartBar } from "@/components/site/MobileCartBar"
 import { useRecommendations, trackItemView } from "@/lib/hooks/useRecommendations"
 import { track } from "@/lib/hooks/useTrack"
+import { calculateTaxFromTtc, DEFAULT_VAT_RATE_PERCENT } from "@/lib/tax/calculate-tax"
 import { toast } from "sonner"
 
 import { useDeliveryMenu } from "@/lib/hooks/useDeliveryMenu"
@@ -288,8 +289,9 @@ export default function DeliveryPage() {
     4,
   )
   const subtotal = cartTotal
-  const tva = subtotal * 0.19
-  const totalWithTax = subtotal + tva + deliveryFee
+  const menuTax = calculateTaxFromTtc(subtotal, DEFAULT_VAT_RATE_PERCENT)
+  const tva = menuTax.tva
+  const totalWithTax = menuTax.ttc + deliveryFee
 
   // Keep the checkout page in sync by persisting cart + summary data
   useEffect(() => {

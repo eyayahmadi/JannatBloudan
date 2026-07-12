@@ -6,6 +6,7 @@ import {
   type StaffPaymentCtx,
 } from "@/lib/caisse/resolve-staff-user-id"
 import { sanitizePaymentRefs } from "@/lib/caisse/sanitize-payment-refs"
+import { transitionSessionToNeedsCleaning } from "@/lib/table-lifecycle"
 
 const EPS = 0.03
 
@@ -189,6 +190,7 @@ export async function processInvoicePayment(
       const sessMethod =
         isSplit ? "split" : String(parts[0]?.method ?? "cash").toLowerCase() === "hospitality" ? "hospitality" : parts[0].method === "online" ? "online" : parts[0].method === "card" ? "card" : "cash"
       await supabase.from("table_sessions").update({ paid: true, payment_method: sessMethod }).eq("id", sessionId)
+      await transitionSessionToNeedsCleaning(supabase, sessionId, { closeSession: true })
     }
   }
 

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import { recomputeTotalsFromSubtotal } from "@/lib/caisse/recalc-invoice"
+import { DEFAULT_VAT_RATE_FRACTION } from "@/lib/tax/calculate-tax"
 
 type InvoiceInput = {
   orderId?: string | null
@@ -85,16 +87,15 @@ export async function POST(request: Request) {
     const body = (await request.json()) as InvoiceInput
     const items = body.items ?? []
 
-    const subtotal =
+    const grossTtc =
       typeof body.subtotal === "number"
         ? body.subtotal
         : items.reduce((s, it) => s + it.quantity * it.unitPrice, 0)
 
-    const tvaRate = typeof body.tvaRate === "number" ? body.tvaRate : 0.19
+    const tvaRate = typeof body.tvaRate === "number" ? body.tvaRate : DEFAULT_VAT_RATE_FRACTION
     const discountAmount = body.discountAmount ?? 0
-    const tvaAmount = subtotal * tvaRate
-    const total =
-      typeof body.total === "number" ? body.total : subtotal + tvaAmount - discountAmount
+    const totals = recomputeTotalsFromSubtotal(grossTtc, discountAmount, tvaRate)
+    const total = typeof body.total === "number" ? body.total : totals.total
 
     const id = generateInvoiceId()
     const base = {
@@ -105,11 +106,12 @@ export async function POST(request: Request) {
       customer_name: body.customerName ?? "Client",
       customer_email: body.customerEmail ?? null,
       customer_phone: body.customerPhone ?? null,
-      subtotal,
+      subtotal: totals.subtotalHt,
       tva_rate: tvaRate,
-      tva_amount: tvaAmount,
-      discount_amount: discountAmount,
+      tva_amount: totals.tva_amount,
+      discount_amount: totals.discount_amount,
       total,
+      gross_before_discount: totals.grossTtc,
       status: body.status ?? "validated",
       payment_method: body.paymentMethod ?? "card",
       cashier_id: body.cashierId ?? null,

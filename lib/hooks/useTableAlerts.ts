@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
+import {
+  deriveServiceRequestStatus,
+  type ServiceRequestStatus,
+  type ServiceRequestType,
+} from "@/lib/table/service-requests"
 
 export type TableAlertType = "call_server" | "request_bill" | "help" | "payment_done" | "call_cashier"
 
@@ -12,6 +17,12 @@ export type TableAlert = {
   message: string
   createdAt: string
   resolvedAt?: string
+  acknowledgedAt?: string
+  acknowledgedBy?: string | null
+  orderId?: string | null
+  sessionId?: string | null
+  requestType?: ServiceRequestType | null
+  status?: ServiceRequestStatus
 }
 
 const STORAGE_KEY = "jb-table-alerts"
@@ -31,14 +42,26 @@ function persist(items: TableAlert[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items.slice(0, 200)))
 }
 
-function mapServer(a: any): TableAlert {
+function mapServer(a: Record<string, unknown>): TableAlert {
+  const type = (a.type ?? a.alert_type) as TableAlertType
+  const resolvedAt = (a.resolvedAt ?? a.resolved_at) as string | undefined
+  const acknowledgedAt = (a.acknowledgedAt ?? a.acknowledged_at) as string | undefined
   return {
     id: String(a.id),
     tableId: String(a.tableId ?? a.table_id),
-    type: a.type ?? a.alert_type,
-    message: a.message ?? "",
-    createdAt: a.createdAt ?? a.created_at,
-    resolvedAt: a.resolvedAt ?? a.resolved_at ?? undefined,
+    type,
+    message: String(a.message ?? ""),
+    createdAt: String(a.createdAt ?? a.created_at),
+    resolvedAt: resolvedAt ?? undefined,
+    acknowledgedAt: acknowledgedAt ?? undefined,
+    acknowledgedBy: a.acknowledgedBy ?? a.acknowledged_by ? String(a.acknowledgedBy ?? a.acknowledged_by) : null,
+    orderId: a.orderId ?? a.order_id ? String(a.orderId ?? a.order_id) : null,
+    sessionId: a.sessionId ?? a.session_id ? String(a.sessionId ?? a.session_id) : null,
+    requestType: (a.requestType as ServiceRequestType | null) ?? null,
+    status: deriveServiceRequestStatus({
+      resolved_at: resolvedAt,
+      acknowledged_at: acknowledgedAt,
+    }),
   }
 }
 
@@ -48,7 +71,7 @@ async function fetchRemote(): Promise<TableAlert[] | null> {
     if (!res.ok) return null
     const data = await res.json()
     if (data.source === "supabase" && Array.isArray(data.alerts)) {
-      return data.alerts.map(mapServer)
+      return data.alerts.map((a: Record<string, unknown>) => mapServer(a))
     }
     return null
   } catch {
@@ -60,12 +83,10 @@ export function useTableAlerts() {
   const [alerts, setAlerts] = useState<TableAlert[]>(load)
   const remoteActiveRef = useRef(false)
 
-  // Persistance locale (cache hors ligne + fallback)
   useEffect(() => {
     persist(alerts)
   }, [alerts])
 
-  // Sync cross-tab via storage event
   useEffect(() => {
     const handler = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
@@ -80,7 +101,6 @@ export function useTableAlerts() {
     return () => window.removeEventListener("storage", handler)
   }, [])
 
-  // Polling Supabase (multi-appareil)
   const [remoteSynced, setRemoteSynced] = useState(false)
   const [remoteAuthoritative, setRemoteAuthoritative] = useState(false)
 
@@ -109,11 +129,17 @@ export function useTableAlerts() {
   }, [])
 
   const raiseAsync = useCallback(
-    async (input: Omit<TableAlert, "id" | "createdAt" | "resolvedAt">): Promise<{ ok: boolean }> => {
+    async (
+      input: Omit<TableAlert, "id" | "createdAt" | "resolvedAt" | "acknowledgedAt" | "status"> & {
+        orderId?: string | null
+        sessionId?: string | null
+      },
+    ): Promise<{ ok: boolean }> => {
       const optimistic: TableAlert = {
         ...input,
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         createdAt: new Date().toISOString(),
+        status: "PENDING",
       }
       setAlerts((prev) => [optimistic, ...prev])
 
@@ -125,6 +151,8 @@ export function useTableAlerts() {
             tableId: Number(input.tableId),
             type: input.type,
             message: input.message,
+            orderId: input.orderId ?? null,
+            sessionId: input.sessionId ?? null,
           }),
         })
         if (!res.ok) {
@@ -134,9 +162,7 @@ export function useTableAlerts() {
         const data = (await res.json()) as { alert?: Record<string, unknown> }
         if (data.alert) {
           const serverAlert = mapServer(data.alert)
-          setAlerts((prev) =>
-            prev.map((a) => (a.id === optimistic.id ? serverAlert : a)),
-          )
+          setAlerts((prev) => prev.map((a) => (a.id === optimistic.id ? serverAlert : a)))
         }
         return { ok: true }
       } catch {
@@ -148,15 +174,15 @@ export function useTableAlerts() {
   )
 
   const raise = useCallback(
-    (input: Omit<TableAlert, "id" | "createdAt" | "resolvedAt">) => {
+    (input: Omit<TableAlert, "id" | "createdAt" | "resolvedAt" | "acknowledgedAt" | "status">) => {
       const optimistic: TableAlert = {
         ...input,
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         createdAt: new Date().toISOString(),
+        status: "PENDING",
       }
       setAlerts((prev) => [optimistic, ...prev])
 
-      // Fire-and-forget vers API (reconcilie au prochain poll)
       void fetch("/api/table-alerts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -172,41 +198,84 @@ export function useTableAlerts() {
     [],
   )
 
-  const resolve = useCallback((id: string) => {
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, resolvedAt: new Date().toISOString() } : a)),
-    )
-    void fetch("/api/table-alerts", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    }).catch(() => {})
-  }, [])
-
-  const resolveTable = useCallback((tableId: string, type?: TableAlertType) => {
+  const patchLocalResolved = useCallback((matcher: (a: TableAlert) => boolean) => {
+    const now = new Date().toISOString()
     setAlerts((prev) =>
       prev.map((a) =>
-        a.tableId === String(tableId) && !a.resolvedAt && (!type || a.type === type)
-          ? { ...a, resolvedAt: new Date().toISOString() }
+        matcher(a) && !a.resolvedAt
+          ? { ...a, resolvedAt: now, acknowledgedAt: now, status: "RESOLVED" as const }
           : a,
       ),
     )
-    void fetch("/api/table-alerts", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tableId: Number(tableId), type }),
-    }).catch(() => {})
   }, [])
+
+  const resolve = useCallback(
+    (id: string) => {
+      patchLocalResolved((a) => a.id === id)
+      void fetch("/api/table-alerts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action: "resolve" }),
+      }).catch(() => {})
+    },
+    [patchLocalResolved],
+  )
+
+  const acknowledge = useCallback(
+    async (id: string): Promise<{ ok: boolean }> => {
+      patchLocalResolved((a) => a.id === id)
+      try {
+        const res = await fetch("/api/table-alerts", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, action: "acknowledge" }),
+        })
+        return { ok: res.ok }
+      } catch {
+        return { ok: false }
+      }
+    },
+    [patchLocalResolved],
+  )
+
+  const resolveTable = useCallback(
+    (tableId: string, type?: TableAlertType) => {
+      patchLocalResolved(
+        (a) => a.tableId === String(tableId) && (!type || a.type === type),
+      )
+      void fetch("/api/table-alerts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tableId: Number(tableId), type, action: "resolve" }),
+      }).catch(() => {})
+    },
+    [patchLocalResolved],
+  )
+
+  const acknowledgeTable = useCallback(
+    async (tableId: string, type?: TableAlertType): Promise<{ ok: boolean }> => {
+      patchLocalResolved(
+        (a) => a.tableId === String(tableId) && (!type || a.type === type),
+      )
+      try {
+        const res = await fetch("/api/table-alerts", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tableId: Number(tableId), type, action: "acknowledge" }),
+        })
+        return { ok: res.ok }
+      } catch {
+        return { ok: false }
+      }
+    },
+    [patchLocalResolved],
+  )
 
   const activeByTable = useCallback(
     (tableId: string) => alerts.filter((a) => a.tableId === String(tableId) && !a.resolvedAt),
     [alerts],
   )
 
-  /**
-   * Réaffecte toutes les alertes ouvertes d'une table à une autre.
-   * Mise à jour locale uniquement (les alertes Supabase passent par /api/table-alerts).
-   */
   const transferTableAlerts = useCallback((from: string, to: string) => {
     if (!from || !to || from === to) return
     setAlerts((prev) =>
@@ -224,7 +293,9 @@ export function useTableAlerts() {
     raise,
     raiseAsync,
     resolve,
+    acknowledge,
     resolveTable,
+    acknowledgeTable,
     transferTableAlerts,
     activeByTable,
     remoteSynced,

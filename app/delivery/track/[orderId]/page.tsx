@@ -17,6 +17,7 @@ import DeliveryMapDynamic from "@/components/maps/DeliveryMapDynamic"
 import { useDeliveryTracking } from "@/lib/hooks/useDeliveryTracking"
 import { useI18n } from "@/lib/i18n/context"
 import { haversineKm } from "@/lib/delivery/types"
+import { calculateTaxFromTtc, DEFAULT_VAT_RATE_PERCENT } from "@/lib/tax/calculate-tax"
 
 type OrderStatus = "received" | "preparing" | "delivering" | "completed"
 
@@ -243,8 +244,9 @@ export default function TrackOrderPage() {
 
   const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const deliveryFee = subtotal >= 25 ? 0 : 3.9
-  const tva = subtotal * 0.19
-  const total = subtotal + tva + deliveryFee
+  const menuTax = calculateTaxFromTtc(subtotal, DEFAULT_VAT_RATE_PERCENT)
+  const tva = menuTax.tva
+  const total = menuTax.ttc + deliveryFee
   const hasItems = orderItems.length > 0
   const currentStep = statusConfig[orderStatus].step
   const estimatedMinutes = Math.max(0, Math.ceil(etaSeconds / 60))

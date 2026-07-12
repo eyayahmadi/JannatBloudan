@@ -14,6 +14,7 @@ import {
   parseGuestServiceAlertMessage,
   staffServiceNotificationBody,
 } from "@/lib/table/guest-service-alerts"
+import { SERVICE_REQUEST_LABELS } from "@/lib/table/service-requests"
 import { isLikelyOrderUuid } from "@/lib/orders/guest-tracking"
 import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
 import { STATION_META, type Station } from "@/lib/stations/config"
@@ -103,7 +104,7 @@ export function useWorkflowNotifications(enabled = true) {
           : `Table ${a.tableId} — ${a.message || "Customer requests the bill."}`
         notificationsStore.add({
           type: "payment_received",
-          title: "Bill request",
+          title: `${SERVICE_REQUEST_LABELS.BILL.emoji} ${SERVICE_REQUEST_LABELS.BILL.en}`,
           message: body,
           audience: [...new Set([...serverAudience(), ...cashierAudience()])],
         })
@@ -114,7 +115,7 @@ export function useWorkflowNotifications(enabled = true) {
           : `Table ${a.tableId} — ${a.message || "Customer requests a waiter."}`
         notificationsStore.add({
           type: "info",
-          title: "Waiter request",
+          title: `${SERVICE_REQUEST_LABELS.WAITER.emoji} ${SERVICE_REQUEST_LABELS.WAITER.en}`,
           message: body,
           audience: serverAudience(),
         })

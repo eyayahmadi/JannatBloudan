@@ -2,24 +2,32 @@
  * Fiscalité configurable : hors cash par défaut pour TVA à payer ; option partie cash déclarée.
  */
 
+import {
+  calculateTaxFromTtc,
+  normalizeVatRatePercent,
+  roundMoney,
+} from "@/lib/tax/calculate-tax"
+
 export type VatScope = "online_only" | "online_plus_cash_declared"
 
-function normRate(rate: number) {
-  return rate > 1 ? rate / 100 : rate
-}
-
-/** TVA sur montant HT. */
-export function vatFromHt(ht: number, rate: number): number {
-  const r = normRate(rate)
-  if (!Number.isFinite(ht) || ht <= 0) return 0
-  return Math.round(ht * r * 100) / 100
-}
-
-/** HT à partir du TTC (prix TI). */
+/** HT à partir du TTC (prix menu / montant tax-inclusive). */
 export function htFromTtcInclusive(ttcInclusive: number, rate: number): number {
-  const r = normRate(rate)
-  if (!Number.isFinite(ttcInclusive) || ttcInclusive <= 0 || r <= 0) return 0
-  return Math.round((ttcInclusive / (1 + r)) * 100) / 100
+  if (!Number.isFinite(ttcInclusive) || ttcInclusive <= 0) return 0
+  return calculateTaxFromTtc(ttcInclusive, normalizeVatRatePercent(rate)).ht
+}
+
+/** TVA extraite du TTC (ne pas utiliser HT × taux — prix menu déjà TTC). */
+export function vatFromTtc(ttc: number, rate: number): number {
+  if (!Number.isFinite(ttc) || ttc <= 0) return 0
+  return calculateTaxFromTtc(ttc, normalizeVatRatePercent(rate)).tva
+}
+
+/** TVA à partir du HT (reconstruit via TTC = HT × (1+taux)). */
+export function vatFromHt(ht: number, rate: number): number {
+  if (!Number.isFinite(ht) || ht <= 0) return 0
+  const pct = normalizeVatRatePercent(rate)
+  const ttc = roundMoney(ht * (1 + pct / 100))
+  return calculateTaxFromTtc(ttc, pct).tva
 }
 
 function meth(m?: string | null) {
@@ -56,7 +64,6 @@ export function sumTaxesToPayFromInvoiceRows(
   for (const inv of invoices) {
     if ((inv.status ?? "").toLowerCase() !== "paid") continue
     if (isCashPaymentMethod(inv.payment_method)) continue
-    // Ne compte la TVA embarquée que si le mode est bien un encaissement « traçuable » hors espèces
     if (!isElectronicPaymentMethod(inv.payment_method)) continue
     electronicVat += Number(inv.tva_amount ?? 0) || 0
   }
@@ -70,6 +77,6 @@ export function sumTaxesToPayFromInvoiceRows(
     extraCashDeclareVat = vatFromHt(opts.cashDeclaredHtForTax, opts.vatRate)
   }
 
-  const totalVatDue = Math.round((electronicVat + extraCashDeclareVat) * 100) / 100
+  const totalVatDue = roundMoney(electronicVat + extraCashDeclareVat)
   return { electronicVat, extraCashDeclareVat, totalVatDue }
 }
