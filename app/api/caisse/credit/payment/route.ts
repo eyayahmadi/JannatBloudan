@@ -4,6 +4,8 @@ import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { recordCreditPayment } from "@/lib/credit/process-credit"
 import { CREDIT_PAYMENT_METHODS } from "@/lib/credit/types"
 import type { CreditPaymentMethod } from "@/lib/credit/types"
+import { friendlyPaymentError } from "@/lib/caisse/friendly-payment-error"
+import { staffPaymentCtxFromAuth } from "@/lib/caisse/resolve-staff-user-id"
 
 const ALLOW = ["ADMIN", "CASHIER"] as const
 
@@ -34,11 +36,7 @@ export async function POST(request: Request) {
   const supabase = createServiceRoleClient()
   const result = await recordCreditPayment(
     supabase,
-    {
-      userId: guard.user.id,
-      userEmail: guard.user.email ?? null,
-      role: guard.role,
-    },
+    staffPaymentCtxFromAuth(guard.user, guard.role),
     {
       invoiceId,
       amount,
@@ -48,7 +46,7 @@ export async function POST(request: Request) {
   )
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status })
+    return NextResponse.json({ error: friendlyPaymentError(result.error) }, { status: result.status })
   }
 
   return NextResponse.json({

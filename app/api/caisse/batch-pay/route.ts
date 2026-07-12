@@ -4,6 +4,7 @@ import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { processInvoicePayment, type PayPart } from "@/lib/caisse/process-payment"
 import { friendlyPaymentError } from "@/lib/caisse/friendly-payment-error"
+import { staffPaymentCtxFromAuth } from "@/lib/caisse/resolve-staff-user-id"
 
 const ALLOW = ["ADMIN", "CASHIER"] as const
 
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = createServiceRoleClient()
-  const ctx = { userId: guard.user.id, userEmail: guard.user.email ?? null, role: guard.role }
+  const ctx = staffPaymentCtxFromAuth(guard.user, guard.role)
   const done: Record<string, unknown>[] = []
 
   for (const s of settlements) {

@@ -4,6 +4,8 @@ import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
 import { processInvoicePayment } from "@/lib/caisse/process-payment"
 import { recomputeTotalsFromSubtotal, sumActiveSubtotal, type InvoiceItemRow } from "@/lib/caisse/recalc-invoice"
+import { friendlyPaymentError } from "@/lib/caisse/friendly-payment-error"
+import { staffPaymentCtxFromAuth } from "@/lib/caisse/resolve-staff-user-id"
 
 const ALLOW = ["ADMIN", "CASHIER"] as const
 
@@ -106,16 +108,17 @@ export async function POST(request: Request) {
     metadata: { reason, billing_type: billingType },
   })
 
-  const payResult = await processInvoicePayment(supabase, {
-    userId: guard.user.id,
-    userEmail: guard.user.email ?? null,
-    role: guard.role,
-  }, invoiceId, [{ method: "hospitality", amount: 0 }])
+  const payResult = await processInvoicePayment(
+    supabase,
+    staffPaymentCtxFromAuth(guard.user, guard.role),
+    invoiceId,
+    [{ method: "hospitality", amount: 0 }],
+  )
 
   if (!payResult.ok) {
     return NextResponse.json(
       {
-        error: payResult.error,
+        error: friendlyPaymentError(payResult.error),
         warning: "Facture marquée hospitalité mais encaissement à compléter",
         invoice: after,
       },

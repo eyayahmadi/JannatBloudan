@@ -4,6 +4,8 @@ import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { markInvoiceAsCredit } from "@/lib/credit/process-credit"
 import { CREDIT_PAYMENT_METHODS, CREDIT_REASONS } from "@/lib/credit/types"
 import type { CreditPaymentMethod, CreditReason } from "@/lib/credit/types"
+import { friendlyPaymentError } from "@/lib/caisse/friendly-payment-error"
+import { staffPaymentCtxFromAuth } from "@/lib/caisse/resolve-staff-user-id"
 
 const ALLOW = ["ADMIN", "CASHIER", "SERVER"] as const
 
@@ -40,11 +42,7 @@ export async function POST(request: Request) {
   const supabase = createServiceRoleClient()
   const result = await markInvoiceAsCredit(
     supabase,
-    {
-      userId: guard.user.id,
-      userEmail: guard.user.email ?? null,
-      role: guard.role,
-    },
+    staffPaymentCtxFromAuth(guard.user, guard.role),
     {
       invoiceId,
       partialPayments: partials,
@@ -59,7 +57,7 @@ export async function POST(request: Request) {
   )
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status })
+    return NextResponse.json({ error: friendlyPaymentError(result.error) }, { status: result.status })
   }
 
   return NextResponse.json({

@@ -11,8 +11,20 @@ export function friendlyPaymentError(
   if (!DB_ERROR_RE.test(msg)) return msg
 
   const lower = msg.toLowerCase()
-  if (lower.includes("processed_by") || lower.includes("cashier_id") || lower.includes("foreign key")) {
+  if (lower.includes("processed_by") || lower.includes("cashier_id") || lower.includes("recorded_by")) {
     return "Impossible d'associer le caissier à cet encaissement. Le paiement n'a pas été enregistré — contactez un administrateur."
+  }
+  if (lower.includes("guest_session_id")) {
+    return "Session invité invalide sur cette facture. Réessayez ou contactez un administrateur."
+  }
+  if (lower.includes("session_id") && lower.includes("foreign key")) {
+    return "Session table invalide sur cette facture. Réessayez ou contactez un administrateur."
+  }
+  if (lower.includes("order_id") && lower.includes("foreign key")) {
+    return "Commande liée introuvable. Réessayez ou contactez un administrateur."
+  }
+  if (lower.includes("foreign key")) {
+    return "Données liées invalides — le paiement n'a pas été enregistré. Contactez un administrateur."
   }
   if (lower.includes("duplicate") || lower.includes("23505")) {
     return "Cet encaissement semble déjà enregistré."

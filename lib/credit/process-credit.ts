@@ -1,7 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
 import { friendlyPaymentError } from "@/lib/caisse/friendly-payment-error"
-import { resolveStaffUserId } from "@/lib/caisse/resolve-staff-user-id"
+import {
+  ensureStaffUserIdFromCtx,
+  type StaffPaymentCtx,
+} from "@/lib/caisse/resolve-staff-user-id"
+import { sanitizePaymentRefs } from "@/lib/caisse/sanitize-payment-refs"
 import {
   CREDIT_PAYMENT_METHODS,
   CREDIT_REASONS,
@@ -14,7 +18,7 @@ import {
 const VALID_METHODS = new Set(CREDIT_PAYMENT_METHODS as readonly string[])
 const VALID_REASONS = new Set(CREDIT_REASONS as readonly string[])
 
-type Ctx = { userId: string; userEmail: string | null; role: string }
+type Ctx = StaffPaymentCtx
 
 export type MarkAsCreditInput = {
   invoiceId: string
@@ -126,20 +130,25 @@ export async function markInvoiceAsCredit(
 
   const now = new Date().toISOString()
   const dueAt = normalizeDueAt(input.dueAt)
-  const staffUserId = await resolveStaffUserId(supabase, ctx.userId, ctx.userEmail)
+  const staffUserId = await ensureStaffUserIdFromCtx(supabase, ctx)
+  const refs = await sanitizePaymentRefs(supabase, {
+    session_id: (inv as { session_id?: string | null }).session_id ?? null,
+    order_id: (inv as { order_id?: string | null }).order_id ?? null,
+    guest_session_id: (inv as { guest_session_id?: string | null }).guest_session_id ?? null,
+  })
 
   for (const p of parts) {
     const { error: payErr } = await supabase.from("payments").insert({
       invoice_id: input.invoiceId,
-      session_id: (inv as { session_id?: string | null }).session_id ?? null,
-      order_id: (inv as { order_id?: string | null }).order_id ?? null,
+      session_id: refs.session_id,
+      order_id: refs.order_id,
       amount: round2(Number(p.amount)),
       currency: "EUR",
       method: p.method,
       status: "succeeded",
       provider: "manual",
       processed_by: staffUserId,
-      processed_at: now,
+      processed_at: staffUserId ? now : null,
     })
     if (payErr) {
       console.error("[credit] partial payment failed:", payErr)
@@ -190,7 +199,7 @@ export async function markInvoiceAsCredit(
   }
 
   await insertCaisseAudit(supabase, {
-    userId: ctx.userId,
+    userId: staffUserId,
     userEmail: ctx.userEmail,
     action: "credit_invoice_created",
     entityType: "invoices",
@@ -261,21 +270,26 @@ export async function recordCreditPayment(
   }
 
   const now = new Date().toISOString()
-  const staffUserId = await resolveStaffUserId(supabase, ctx.userId, ctx.userEmail)
+  const staffUserId = await ensureStaffUserIdFromCtx(supabase, ctx)
+  const refs = await sanitizePaymentRefs(supabase, {
+    session_id: (inv as { session_id?: string | null }).session_id ?? null,
+    order_id: (inv as { order_id?: string | null }).order_id ?? null,
+    guest_session_id: (inv as { guest_session_id?: string | null }).guest_session_id ?? null,
+  })
 
   const { data: payRow, error: payErr } = await supabase
     .from("payments")
     .insert({
       invoice_id: input.invoiceId,
-      session_id: (inv as { session_id?: string | null }).session_id ?? null,
-      order_id: (inv as { order_id?: string | null }).order_id ?? null,
+      session_id: refs.session_id,
+      order_id: refs.order_id,
       amount,
       currency: "EUR",
       method: input.method,
       status: "succeeded",
       provider: "manual",
       processed_by: staffUserId,
-      processed_at: now,
+      processed_at: staffUserId ? now : null,
       provider_payload: { kind: "credit_recovery" } as Record<string, unknown>,
     })
     .select("id")
@@ -293,7 +307,7 @@ export async function recordCreditPayment(
     method: input.method,
     payment_id: (payRow as { id?: string } | null)?.id ?? null,
     note: input.note ?? null,
-    recorded_by: ctx.userId,
+    recorded_by: staffUserId,
   })
 
   if (ccpErr) {
@@ -319,7 +333,7 @@ export async function recordCreditPayment(
   }
 
   await insertCaisseAudit(supabase, {
-    userId: ctx.userId,
+    userId: staffUserId,
     userEmail: ctx.userEmail,
     action: "credit_payment_recorded",
     entityType: "invoices",

@@ -42,7 +42,7 @@ import {
 import { notificationsStore } from "@/lib/notifications/notifications-store"
 import { useStationAvailability } from "@/lib/hooks/useStationAvailability"
 import { useI18n } from "@/lib/i18n/context"
-import { printKitchenTicket } from "@/lib/print/kitchen-ticket"
+import { printStationTicket } from "@/lib/print/kitchen-ticket"
 import { SITE } from "@/lib/site-config"
 import {
   NEXT_ITEM_STATUS,
@@ -638,7 +638,7 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
   const handlePrint = useCallback(
     (order: KitchenOrder, stationItems: OrderItem[]) => {
       const stationOnlyOrder: KitchenOrder = { ...order, items: stationItems }
-      const ok = printKitchenTicket(stationOnlyOrder, {
+      const ok = printStationTicket(stationOnlyOrder, {
         restaurantName: SITE.name,
         locale,
         station,

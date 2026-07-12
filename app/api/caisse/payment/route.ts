@@ -3,6 +3,7 @@ import { createServiceRoleClient, requireRoles } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { processInvoicePayment } from "@/lib/caisse/process-payment"
 import { friendlyPaymentError } from "@/lib/caisse/friendly-payment-error"
+import { staffPaymentCtxFromAuth } from "@/lib/caisse/resolve-staff-user-id"
 
 const ALLOW = ["ADMIN", "CASHIER"] as const
 
@@ -37,11 +38,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = createServiceRoleClient()
-  const result = await processInvoicePayment(supabase, {
-    userId: guard.user.id,
-    userEmail: guard.user.email ?? null,
-    role: guard.role,
-  }, invoiceId, parts)
+  const result = await processInvoicePayment(supabase, staffPaymentCtxFromAuth(guard.user, guard.role), invoiceId, parts)
 
   if (!result.ok) {
     return NextResponse.json({ error: friendlyPaymentError(result.error) }, { status: result.status })

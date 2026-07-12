@@ -1,7 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
 import { friendlyPaymentError } from "@/lib/caisse/friendly-payment-error"
-import { resolveStaffUserId } from "@/lib/caisse/resolve-staff-user-id"
+import {
+  ensureStaffUserIdFromCtx,
+  type StaffPaymentCtx,
+} from "@/lib/caisse/resolve-staff-user-id"
+import { sanitizePaymentRefs } from "@/lib/caisse/sanitize-payment-refs"
 
 const EPS = 0.03
 
@@ -15,7 +19,7 @@ const METHODS = new Set(["cash", "card", "online", "wallet", "hospitality"])
  */
 export async function processInvoicePayment(
   supabase: SupabaseClient,
-  ctx: { userId: string; userEmail: string | null; role: string },
+  ctx: StaffPaymentCtx,
   invoiceId: string,
   parts: PayPart[],
   opts?: { payment_batch_id?: string | null },
@@ -74,27 +78,39 @@ export async function processInvoicePayment(
     }
   }
 
-  const staffUserId = await resolveStaffUserId(supabase, ctx.userId, ctx.userEmail)
+  const staffUserId = await ensureStaffUserIdFromCtx(supabase, ctx)
   const now = new Date().toISOString()
   const uniqueMethods = new Set(parts.map((p) => p.method.toLowerCase()))
   const isSplit = parts.length > 1 || uniqueMethods.size > 1
 
   const splitPayload = parts.map((p) => ({ method: p.method, amount: p.amount }))
+  const invoiceGuestSessionId = (inv as { guest_session_id?: string | null }).guest_session_id ?? null
+  const baseRefs = await sanitizePaymentRefs(supabase, {
+    session_id: (inv as { session_id?: string | null }).session_id ?? null,
+    order_id: (inv as { order_id?: string | null }).order_id ?? null,
+    guest_session_id: invoiceGuestSessionId,
+  })
 
   for (const p of parts) {
+    const partGuestId = p.guest_session_id ?? invoiceGuestSessionId
+    const refs =
+      partGuestId && partGuestId !== invoiceGuestSessionId
+        ? await sanitizePaymentRefs(supabase, { ...baseRefs, guest_session_id: partGuestId })
+        : baseRefs
+
     const payRow = {
       invoice_id: invoiceId,
-      session_id: (inv as { session_id?: string | null }).session_id ?? null,
-      order_id: (inv as { order_id?: string | null }).order_id ?? null,
+      session_id: refs.session_id,
+      order_id: refs.order_id,
       amount: p.amount,
       currency: "EUR",
       method: p.method === "wallet" ? "wallet" : p.method,
       status: "succeeded",
       provider: "manual",
       processed_by: staffUserId,
-      processed_at: now,
+      processed_at: staffUserId ? now : null,
       payment_batch_id: opts?.payment_batch_id ?? null,
-      guest_session_id: p.guest_session_id ?? (inv as { guest_session_id?: string | null }).guest_session_id ?? null,
+      guest_session_id: refs.guest_session_id,
     }
     const { error: pErr } = await supabase.from("payments").insert(payRow)
     if (pErr) {

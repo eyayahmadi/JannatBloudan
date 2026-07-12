@@ -1,24 +1,51 @@
 /**
- * Station Ticket Printer
- * -----------------------
- * Ouvre une fenetre pop-up discrete avec un ticket formate pour imprimante
- * (58mm ou 80mm thermique, ou imprimante bureau A4).
+ * Station production tickets (Kitchen / Bar / Shisha).
+ * Print popup → window.print() (thermal 58/80mm or A4 PDF).
  *
- * Supporte 3 types de tickets :
- *   - KITCHEN : ticket cuisine (ambre)
- *   - BAR     : ticket bar (cyan)
- *   - SHISHA  : ticket chicha (violet)
+ * Preparation only — never prices, totals, tax, discounts, or payment info.
+ * Financial amounts belong on customer receipts and cashier invoices only.
  *
- * Utilisation:
- *   printKitchenTicket(order, { restaurantName: "Joseph Bechara", locale: "fr", station: "BAR" })
- *
- * Le ticket production (cuisine / bar / chicha) n'affiche aucun prix —
- * preparation uniquement. Totaux et tarifs : ticket client / facture caisse.
+ * @example
+ *   printStationTicket(order, { station: "BAR", locale: "de" })
  */
 
-import type { KitchenOrder } from "@/lib/hooks/useRealtimeOrders"
+import type { KitchenOrder, OrderItem, OrderType } from "@/lib/hooks/useRealtimeOrders"
 import type { Station } from "@/lib/stations/config"
 import { buildTicketItemNameHtml } from "@/lib/orders/order-product-name"
+
+/** Fields allowed on production tickets — excludes all financial data. */
+type ProductionTicketItem = Pick<
+  OrderItem,
+  "id" | "name" | "name_ar" | "quantity" | "notes" | "station"
+>
+
+type ProductionTicketOrder = {
+  order_number: string
+  table_number: number | null
+  order_type: OrderType
+  created_at: string
+  customer_name?: string
+  items: ProductionTicketItem[]
+}
+
+/** Strip totals, unit prices, and other payment fields before rendering. */
+export function sanitizeProductionTicketOrder(order: KitchenOrder): ProductionTicketOrder {
+  return {
+    order_number: order.order_number,
+    table_number: order.table_number,
+    order_type: order.order_type,
+    created_at: order.created_at,
+    customer_name: order.customer_name,
+    items: order.items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      name_ar: item.name_ar,
+      quantity: item.quantity,
+      notes: item.notes,
+      station: item.station,
+    })),
+  }
+}
 
 export type PrintOptions = {
   restaurantName?: string
@@ -81,7 +108,7 @@ const LABELS = {
     order: "N° ticket",
     table: "Table",
     type: "Type commande",
-    received: "Heure",
+    received: "Heure réception",
     customerTable: "Client / Table",
     notes: "Notes",
     printed: "Imprime le",
@@ -97,7 +124,7 @@ const LABELS = {
     order: "Ticket #",
     table: "Table",
     type: "Order type",
-    received: "Time",
+    received: "Received",
     customerTable: "Customer / Table",
     notes: "Notes",
     printed: "Printed at",
@@ -113,7 +140,7 @@ const LABELS = {
     order: "رقم التذكرة",
     table: "طاولة",
     type: "نوع الطلب",
-    received: "الوقت",
+    received: "وقت الاستلام",
     customerTable: "العميل / الطاولة",
     notes: "ملاحظات",
     printed: "طُبعت في",
@@ -129,7 +156,7 @@ const LABELS = {
     order: "Ticket-Nr.",
     table: "Tisch",
     type: "Bestelltyp",
-    received: "Uhrzeit",
+    received: "Empfangen um",
     customerTable: "Kunde / Tisch",
     notes: "Notizen",
     printed: "Gedruckt am",
@@ -191,7 +218,16 @@ const PRINT_HINT: Record<"fr" | "en" | "ar" | "de", string> = {
   de: "Falls der Druck nicht startet, drücken Sie Strg+P / Cmd+P",
 }
 
+export function buildStationTicketHTML(order: KitchenOrder, options: PrintOptions = {}): string {
+  return buildProductionTicketHTML(sanitizeProductionTicketOrder(order), options)
+}
+
+/** @deprecated Use buildStationTicketHTML — kept for existing imports */
 export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOptions = {}): string {
+  return buildStationTicketHTML(order, options)
+}
+
+function buildProductionTicketHTML(ticket: ProductionTicketOrder, options: PrintOptions = {}): string {
   const { restaurantName = "Joseph Bechara", locale = "fr", station } = options
   const L = LABELS[locale]
   const isRtl = locale === "ar"
@@ -201,9 +237,9 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
   // Sinon, on deduit la station depuis les items (si tous d'une meme station).
   const effectiveStation: Station =
     station ??
-    (order.items.length > 0 &&
-    order.items.every((it) => it.station === order.items[0].station)
-      ? order.items[0].station
+    (ticket.items.length > 0 &&
+    ticket.items.every((it) => it.station === ticket.items[0].station)
+      ? ticket.items[0].station
       : "KITCHEN")
 
   const stationCfg = STATION_PRINT[effectiveStation]
@@ -211,26 +247,30 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
   const accent = stationCfg.accent
   const emoji = stationCfg.emoji
 
-  const itemsHtml = order.items
+  const itemsHtml = ticket.items
     .map(
       (item) => `
         <div class="item">
           <div class="item-main">
             ${buildTicketItemNameHtml(item, item.quantity)}
           </div>
-          ${item.notes ? `<div class="item-notes">&rarr; ${escapeHtml(item.notes)}</div>` : ""}
+          ${
+            item.notes
+              ? `<div class="item-notes"><span class="item-notes-label">${L.notes}:</span> ${escapeHtml(item.notes).replace(/\n/g, "<br/>")}</div>`
+              : ""
+          }
         </div>
       `,
     )
     .join("")
 
-  const customerTableValue = order.customer_name?.trim() ?? ""
+  const customerTableValue = ticket.customer_name?.trim() ?? ""
 
   return `<!DOCTYPE html>
 <html lang="${locale}" dir="${isRtl ? "rtl" : "ltr"}">
 <head>
 <meta charset="UTF-8" />
-<title>${ticketTitle} #${escapeHtml(order.order_number)}</title>
+<title>${ticketTitle} #${escapeHtml(ticket.order_number)}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   @page {
@@ -351,6 +391,12 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
     border: 1px solid #999;
     font-size: 11px;
     font-style: italic;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .item-notes-label {
+    font-style: normal;
+    font-weight: bold;
   }
   .footer {
     margin-top: 10px;
@@ -391,26 +437,26 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
       <div class="restaurant">${escapeHtml(restaurantName)}</div>
       <div class="station-badge">${emoji} ${ticketTitle}</div>
       <div class="title">*** ${ticketTitle} ***</div>
-      <div class="order-number">#${escapeHtml(order.order_number)}</div>
+      <div class="order-number">#${escapeHtml(ticket.order_number)}</div>
     </div>
 
     <div class="meta">
       <div class="meta-row">
         <strong>${L.order}:</strong>
-        <span>#${escapeHtml(order.order_number)}</span>
+        <span>#${escapeHtml(ticket.order_number)}</span>
       </div>
       ${
-        order.table_number !== null && order.table_number !== undefined
-          ? `<div class="meta-row"><strong>${L.table}:</strong><span>${escapeHtml(String(order.table_number))}</span></div>`
+        ticket.table_number !== null && ticket.table_number !== undefined
+          ? `<div class="meta-row"><strong>${L.table}:</strong><span>${escapeHtml(String(ticket.table_number))}</span></div>`
           : ""
       }
       <div class="meta-row">
         <strong>${L.type}:</strong>
-        <span>${L.types[order.order_type] ?? order.order_type}</span>
+        <span>${L.types[ticket.order_type] ?? ticket.order_type}</span>
       </div>
       <div class="meta-row">
         <strong>${L.received}:</strong>
-        <span>${formatTime(order.created_at, locale)}</span>
+        <span>${formatTime(ticket.created_at, locale)}</span>
       </div>
       ${
         customerTableValue
@@ -430,12 +476,19 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
 }
 
 /**
+ * Print a Kitchen / Bar / Shisha production ticket (no financial data).
+ */
+export function printStationTicket(order: KitchenOrder, options: PrintOptions = {}): boolean {
+  return printKitchenTicket(order, options)
+}
+
+/**
  * Ouvre une fenetre pop-up et lance l'impression.
  * Fonctionne sans popup-blocker si appelee dans un event handler user-initiated.
  */
 export function printKitchenTicket(order: KitchenOrder, options: PrintOptions = {}): boolean {
   const { autoClose = true } = options
-  const html = buildKitchenTicketHTML(order, options)
+  const html = buildStationTicketHTML(order, options)
 
   try {
     const win = window.open("", "_blank", "width=420,height=640,scrollbars=yes")
