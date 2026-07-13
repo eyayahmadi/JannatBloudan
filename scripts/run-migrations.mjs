@@ -88,6 +88,7 @@ const NUMBERED_MIGRATIONS = [
   "59-order-item-bilingual-names.sql",
   "60-service-request-alerts.sql",
   "61-table-cleaning-lifecycle.sql",
+  "62-order-item-options-snapshot.sql",
 ]
 
 /** Après le schéma : durcissement rôles puis correctif signup / RLS audit (idempotent). */

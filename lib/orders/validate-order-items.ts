@@ -7,6 +7,13 @@ import {
 } from "@/lib/stations/availability"
 import { stationBlockMessage } from "@/lib/menu/station-order-block"
 import type { PersistOrderItemInput } from "@/lib/orders/create-table-order"
+import {
+  formatBilingualPair,
+  optionsSnapshotFromNotes,
+  type OrderItemModifierSnapshot,
+  type OrderItemOptionsSnapshot,
+  type OrderItemVariantSnapshot,
+} from "@/lib/orders/order-item-options"
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -16,6 +23,17 @@ type DbVariant = {
   name_de: string
   name_ar: string | null
   price: number
+  group_name_de: string
+  group_name_ar: string | null
+}
+
+type DbModifier = {
+  id: string
+  name_de: string
+  name_ar: string | null
+  price: number
+  group_name_de: string
+  group_name_ar: string | null
 }
 
 export type ValidatedOrderItem = {
@@ -25,6 +43,7 @@ export type ValidatedOrderItem = {
   quantity: number
   unitPrice: number
   notes?: string | null
+  options_snapshot: OrderItemOptionsSnapshot
 }
 
 async function loadStationStatusMap(
@@ -50,12 +69,21 @@ async function loadVariantsByProductId(
 
   const { data: groups, error: groupErr } = await supabase
     .from("product_variant_groups")
-    .select("id, product_id")
+    .select("id, product_id, name_de, name_ar")
     .in("product_id", productIds)
   if (groupErr || !groups?.length) return out
 
   const groupIds = groups.map((g) => String(g.id))
-  const groupToProduct = new Map(groups.map((g) => [String(g.id), String(g.product_id)]))
+  const groupMeta = new Map(
+    groups.map((g) => [
+      String(g.id),
+      {
+        product_id: String(g.product_id),
+        group_name_de: String(g.name_de),
+        group_name_ar: (g.name_ar as string | null) ?? null,
+      },
+    ]),
+  )
 
   const { data: variants, error: varErr } = await supabase
     .from("product_variants")
@@ -66,16 +94,68 @@ async function loadVariantsByProductId(
   if (varErr || !variants?.length) return out
 
   for (const v of variants) {
-    const productId = groupToProduct.get(String(v.group_id))
-    if (!productId) continue
-    const list = out.get(productId) ?? []
+    const meta = groupMeta.get(String(v.group_id))
+    if (!meta) continue
+    const list = out.get(meta.product_id) ?? []
     list.push({
       id: String(v.id),
       name_de: String(v.name_de),
       name_ar: (v.name_ar as string | null) ?? null,
       price: Number(v.price) || 0,
+      group_name_de: meta.group_name_de,
+      group_name_ar: meta.group_name_ar,
     })
-    out.set(productId, list)
+    out.set(meta.product_id, list)
+  }
+  return out
+}
+
+async function loadModifiersByProductId(
+  supabase: SupabaseClient,
+  productIds: string[],
+): Promise<Map<string, DbModifier[]>> {
+  const out = new Map<string, DbModifier[]>()
+  if (productIds.length === 0) return out
+
+  const { data: groups, error: groupErr } = await supabase
+    .from("product_modifier_groups")
+    .select("id, product_id, name_de, name_ar")
+    .in("product_id", productIds)
+  if (groupErr || !groups?.length) return out
+
+  const groupIds = groups.map((g) => String(g.id))
+  const groupMeta = new Map(
+    groups.map((g) => [
+      String(g.id),
+      {
+        product_id: String(g.product_id),
+        group_name_de: String(g.name_de),
+        group_name_ar: (g.name_ar as string | null) ?? null,
+      },
+    ]),
+  )
+
+  const { data: modifiers, error: modErr } = await supabase
+    .from("product_modifiers")
+    .select("id, group_id, name_de, name_ar, price, display_order")
+    .in("group_id", groupIds)
+    .eq("is_available", true)
+    .order("display_order", { ascending: true })
+  if (modErr || !modifiers?.length) return out
+
+  for (const m of modifiers) {
+    const meta = groupMeta.get(String(m.group_id))
+    if (!meta) continue
+    const list = out.get(meta.product_id) ?? []
+    list.push({
+      id: String(m.id),
+      name_de: String(m.name_de),
+      name_ar: (m.name_ar as string | null) ?? null,
+      price: Number(m.price) || 0,
+      group_name_de: meta.group_name_de,
+      group_name_ar: meta.group_name_ar,
+    })
+    out.set(meta.product_id, list)
   }
   return out
 }
@@ -96,16 +176,116 @@ function variantFromNotes(notes: string | null | undefined, variants: DbVariant[
   )
 }
 
-function resolveVariant(
-  item: PersistOrderItemInput,
-  variants: DbVariant[],
-): DbVariant | null {
+function resolveVariant(item: PersistOrderItemInput, variants: DbVariant[]): DbVariant | null {
   if (variants.length === 0) return null
   if (item.variantId && UUID_RE.test(item.variantId)) {
     const byId = variants.find((v) => v.id === item.variantId)
     if (byId) return byId
   }
   return variantFromNotes(item.notes, variants)
+}
+
+function extractCustomerNote(notes: string | null | undefined): string | null {
+  if (!notes?.trim()) return null
+  for (const line of notes.split("\n")) {
+    const trimmed = line.trim()
+    if (/^note:/i.test(trimmed)) {
+      return trimmed.replace(/^note:\s*/i, "").trim() || null
+    }
+  }
+  return null
+}
+
+function extractExtraLabels(notes: string | null | undefined): string[] {
+  if (!notes?.trim()) return []
+  return notes
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith("+"))
+    .map((l) => l.replace(/^\+\s*/, "").split(" / ")[0]?.trim())
+    .filter((l): l is string => Boolean(l))
+}
+
+function resolveModifiersFromNotes(
+  notes: string | null | undefined,
+  modifiers: DbModifier[],
+  productName: string,
+): OrderItemModifierSnapshot[] {
+  const labels = extractExtraLabels(notes)
+  const out: OrderItemModifierSnapshot[] = []
+  for (const label of labels) {
+    const match =
+      modifiers.find((m) => m.name_de === label) ??
+      modifiers.find((m) => label.startsWith(m.name_de))
+    if (match) {
+      out.push({
+        id: match.id,
+        group_name_de: match.group_name_de,
+        group_name_ar: match.group_name_ar,
+        name_de: match.name_de,
+        name_ar: match.name_ar,
+      })
+      if (!match.name_ar) {
+        console.warn(
+          `[validate-order-items] Missing Arabic for modifier "${match.name_de}" on « ${productName} »`,
+        )
+      }
+    } else {
+      out.push({
+        group_name_de: "Extras",
+        group_name_ar: "الإضافات",
+        name_de: label,
+        name_ar: null,
+      })
+      console.warn(
+        `[validate-order-items] Unknown modifier "${label}" on « ${productName} » — DE only`,
+      )
+    }
+  }
+  return out
+}
+
+function buildOptionsSnapshot(args: {
+  variant: DbVariant | null
+  modifiers: OrderItemModifierSnapshot[]
+  customerNote: string | null
+  productName: string
+}): OrderItemOptionsSnapshot {
+  let variantSnap: OrderItemVariantSnapshot | null = null
+  if (args.variant) {
+    variantSnap = {
+      id: args.variant.id,
+      group_name_de: args.variant.group_name_de,
+      group_name_ar: args.variant.group_name_ar,
+      name_de: args.variant.name_de,
+      name_ar: args.variant.name_ar,
+    }
+    if (!args.variant.name_ar) {
+      console.warn(
+        `[validate-order-items] Missing Arabic for variant "${args.variant.name_de}" on « ${args.productName} »`,
+      )
+    }
+  }
+
+  return {
+    variant: variantSnap,
+    modifiers: args.modifiers,
+    customer_note: args.customerNote,
+  }
+}
+
+function notesFromSnapshot(snapshot: OrderItemOptionsSnapshot): string | null {
+  const lines: string[] = []
+  if (snapshot.variant) {
+    lines.push(
+      `Size: ${formatBilingualPair(snapshot.variant.name_de, snapshot.variant.name_ar)}`,
+    )
+  }
+  for (const mod of snapshot.modifiers) {
+    lines.push(`+ ${formatBilingualPair(mod.name_de, mod.name_ar)}`)
+  }
+  if (snapshot.customer_note) lines.push(`Note: ${snapshot.customer_note}`)
+  return lines.length > 0 ? lines.join("\n") : null
 }
 
 /** Valide produits + stations avant insertion commande (prix DB, dispo, station ouverte). */
@@ -131,6 +311,7 @@ export async function validateAndEnrichOrderItems(
 
   const productMap = new Map((products ?? []).map((p) => [String(p.id), p]))
   const variantsByProductId = await loadVariantsByProductId(supabase, productIds)
+  const modifiersByProductId = await loadModifiersByProductId(supabase, productIds)
   const stationMap = await loadStationStatusMap(supabase)
   const validated: ValidatedOrderItem[] = []
 
@@ -160,30 +341,44 @@ export async function validateAndEnrichOrderItems(
     }
 
     const variants = variantsByProductId.get(it.productId) ?? []
+    const modifiers = modifiersByProductId.get(it.productId) ?? []
     let unitPrice = Number(prod.price) || 0
-    let notes = it.notes ?? null
 
-    if (variants.length > 0) {
-      const variant = resolveVariant(it, variants)
-      if (!variant) {
-        throw new Error(`Taille requise pour « ${prod.name} »`)
-      }
-      unitPrice = variant.price
-      if (!notes?.includes("Size:")) {
-        const sizeLabel = variant.name_ar
-          ? `${variant.name_de} / ${variant.name_ar}`
-          : variant.name_de
-        notes = notes?.trim() ? `Size: ${sizeLabel}\n${notes.trim()}` : `Size: ${sizeLabel}`
-      }
+    const variant = variants.length > 0 ? resolveVariant(it, variants) : null
+    if (variants.length > 0 && !variant) {
+      throw new Error(`Taille requise pour « ${prod.name} »`)
     }
+    if (variant) unitPrice = variant.price
+
+    const customerNote = extractCustomerNote(it.notes)
+    const modifierSnaps = resolveModifiersFromNotes(it.notes, modifiers, String(prod.name))
+
+    let options_snapshot = buildOptionsSnapshot({
+      variant,
+      modifiers: modifierSnaps,
+      customerNote,
+      productName: String(prod.name),
+    })
+
+    if (!options_snapshot.variant && modifierSnaps.length === 0 && !customerNote && it.notes?.trim()) {
+      options_snapshot = optionsSnapshotFromNotes(it.notes, String(prod.name))
+    }
+
+    for (const mod of modifierSnaps) {
+      const dbMod = modifiers.find((m) => m.id === mod.id)
+      if (dbMod) unitPrice += dbMod.price
+    }
+
+    const notes = notesFromSnapshot(options_snapshot)
 
     validated.push({
       productId: it.productId,
       name: String(prod.name),
       name_ar: (prod as { name_ar?: string | null }).name_ar ?? null,
       quantity: qty,
-      unitPrice,
+      unitPrice: Math.round(unitPrice * 100) / 100,
       notes,
+      options_snapshot,
     })
   }
 

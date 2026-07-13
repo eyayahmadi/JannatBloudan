@@ -10,6 +10,7 @@ export const ORDER_ITEM_KDS_SELECT = [
   "quantity",
   "unit_price",
   "special_instructions",
+  "options_snapshot",
   "station",
   "station_status",
   "started_at",

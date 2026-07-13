@@ -33,6 +33,10 @@ export function formatVariantLabel(variant: CartVariant): string {
   return variant.name_ar ? `${variant.name} / ${variant.name_ar}` : variant.name
 }
 
+export function formatExtraLabel(extra: CartExtra): string {
+  return extra.name_ar ? `${extra.name} / ${extra.name_ar}` : extra.name
+}
+
 export function formatKitchenTicketNotes(
   extras: CartExtra[],
   variant?: CartVariant | null,
@@ -40,7 +44,7 @@ export function formatKitchenTicketNotes(
 ): string | null {
   const lines: string[] = []
   if (variant) lines.push(`Size: ${formatVariantLabel(variant)}`)
-  if (extras.length > 0) lines.push(...extras.map((e) => `+ ${e.name}`))
+  if (extras.length > 0) lines.push(...extras.map((e) => `+ ${formatExtraLabel(e)}`))
   const note = customerNote?.trim()
   if (note) lines.push(`Note: ${note}`)
   return lines.length > 0 ? lines.join("\n") : null

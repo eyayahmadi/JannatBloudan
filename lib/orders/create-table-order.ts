@@ -111,6 +111,7 @@ export async function createTableOrder(
       unit_price: it.unitPrice,
       subtotal: it.unitPrice * it.quantity,
       special_instructions: it.notes ?? null,
+      options_snapshot: it.options_snapshot,
     }
     if (it.productId && UUID_RE.test(it.productId)) {
       row.product_id = it.productId
@@ -121,7 +122,7 @@ export async function createTableOrder(
   const { data: insertedItems, error: itemsErr } = await supabase
     .from("order_items")
     .insert(rows)
-    .select("id, product_id, product_name, product_name_ar, quantity, unit_price, special_instructions, station, station_status")
+    .select("id, product_id, product_name, product_name_ar, quantity, unit_price, special_instructions, options_snapshot, station, station_status")
 
   if (itemsErr) {
     await supabase.from("orders").delete().eq("id", order.id)

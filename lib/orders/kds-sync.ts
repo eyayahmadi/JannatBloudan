@@ -1,4 +1,5 @@
 import type { KitchenOrder, OrderItem } from "@/lib/hooks/useRealtimeOrders"
+import { parseOptionsSnapshotJson } from "@/lib/orders/order-item-options"
 import type { ItemStatus } from "@/lib/stations/config"
 import { isBillableItemStatus } from "@/lib/stations/config"
 import { isLikelyOrderUuid } from "@/lib/orders/guest-tracking"
@@ -206,6 +207,7 @@ type DbStationItemRow = {
   quantity?: number | string | null
   unit_price?: number | string | null
   special_instructions?: string | null
+  options_snapshot?: unknown
   started_at?: string | null
   ready_at?: string | null
   served_at?: string | null
@@ -242,6 +244,7 @@ export function mapStationApiItemRow(row: DbStationItemRow): OrderItem {
         ? row.quantity
         : Number.parseInt(String(row.quantity ?? "1"), 10) || 1,
     notes: row.special_instructions?.trim() || undefined,
+    options_snapshot: parseOptionsSnapshotJson(row.options_snapshot) ?? undefined,
     station: (String(row.station ?? "KITCHEN").toUpperCase() || "KITCHEN") as OrderItem["station"],
     item_status: status,
     unit_price:

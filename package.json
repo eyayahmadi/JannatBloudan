@@ -19,6 +19,7 @@
     "test:invoice-remaining": "node --test scripts/test-invoice-remaining.mjs",
     "test:prep-ticket": "node --test scripts/test-prep-ticket.mjs",
     "invoices:recalc-taxes": "node --env-file=.env.local scripts/recalculate-invoice-taxes.mjs",
+    "menu:audit:bilingual-options": "node --env-file=.env.local scripts/audit-menu-bilingual-options.mjs",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "i18n:audit": "node scripts/i18n-audit.mjs",

@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils"
 import {
-  buildTicketOptionsHtml,
-  parseKitchenTicketNotes,
+  buildTicketOptionsHtmlFromItem,
 } from "@/lib/print/ticket-notes"
 
 /** Produit commandé avec libellés DE (+ AR optionnel). */
@@ -65,14 +64,20 @@ export function buildOrderProductNameHtml(
  * Arabe en premier, allemand en dessous, quantité très visible, pas de prix.
  */
 export function buildPrepTicketItemHtml(
-  item: BilingualOrderProduct & { notes?: string | null },
+  item: BilingualOrderProduct & {
+    notes?: string | null
+    options_snapshot?: unknown
+  },
   quantity: number,
 ): string {
   const { de, ar } = resolveOrderProductNames(item)
   const qty = Math.max(1, Math.floor(Number(quantity) || 1))
   const labelDe = de || "—"
-  const parsed = item.notes?.trim() ? parseKitchenTicketNotes(item.notes) : null
-  const optsHtml = parsed ? buildTicketOptionsHtml(parsed) : ""
+  const optsHtml = buildTicketOptionsHtmlFromItem({
+    options_snapshot: item.options_snapshot,
+    notes: item.notes,
+    logContext: labelDe,
+  })
 
   const arBlock = ar
     ? `<div class="item-name-ar" dir="rtl">${escapeOrderProductHtml(ar)}</div>`

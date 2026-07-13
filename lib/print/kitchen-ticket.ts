@@ -12,7 +12,7 @@ import { buildPrepTicketItemHtml } from "@/lib/orders/order-product-name"
 /** Fields allowed on production tickets — excludes all financial data. */
 type ProductionTicketItem = Pick<
   OrderItem,
-  "id" | "name" | "name_ar" | "quantity" | "notes" | "station"
+  "id" | "name" | "name_ar" | "quantity" | "notes" | "options_snapshot" | "station"
 >
 
 type ProductionTicketOrder = {
@@ -34,6 +34,7 @@ export function sanitizeProductionTicketOrder(order: KitchenOrder): ProductionTi
       name_ar: item.name_ar,
       quantity: item.quantity,
       notes: item.notes,
+      options_snapshot: item.options_snapshot,
       station: item.station,
     })),
   }
@@ -224,30 +225,48 @@ const TICKET_STYLES = `
     padding-top: 4px;
     border-top: 1px dashed #000;
   }
-  .opt-row {
-    font-weight: 700;
-    line-height: 1.25;
-    margin-top: 2px;
+  .opt-group {
+    margin-top: 4px;
+  }
+  .opt-group-head {
+    font-weight: 900;
+    line-height: 1.2;
+    margin-bottom: 2px;
     word-wrap: break-word;
     overflow-wrap: anywhere;
     white-space: normal;
   }
-  .opt-row-ar {
+  .opt-group-de {
+    font-size: 17px;
+  }
+  .opt-group-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
     font-size: 18px;
-    text-align: right;
     direction: rtl;
     unicode-bidi: isolate;
   }
-  .opt-row-de {
-    font-size: 17px;
+  .opt-group-sep {
+    font-size: 16px;
   }
-  .opt-label {
-    font-weight: 900;
-    margin-inline-end: 4px;
+  .opt-val-de {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.25;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
-  .opt-value {
-    font-weight: 700;
+  .opt-val-ar {
+    font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 1.25;
+    text-align: right;
+    direction: rtl;
+    unicode-bidi: isolate;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
   .item-sep {
     border-bottom: 2px dashed #000;

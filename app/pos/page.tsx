@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { OrderProductName } from "@/components/orders/OrderProductName"
+import { OrderItemOptions } from "@/components/orders/OrderItemOptions"
 import {
   Search,
   Plus,
@@ -37,7 +38,7 @@ import {
   type StaffCartLine,
   type StaffMenuAddPayload,
 } from "@/lib/menu/staff-cart"
-import { formatVariantLabel } from "@/lib/menu/cart-line"
+import { optionsSnapshotFromCart } from "@/lib/orders/order-item-options"
 
 type TicketLine = StaffCartLine
 
@@ -249,13 +250,15 @@ export default function PosPage() {
                     name={line.product.name}
                     name_ar={line.product.name_ar}
                     size="sm"
-                    truncate
                   />
-                  {line.variant ? (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {formatVariantLabel(line.variant)}
-                    </p>
-                  ) : null}
+                  <OrderItemOptions
+                    options_snapshot={optionsSnapshotFromCart({
+                      variant: line.variant,
+                      extras: line.extras,
+                      customerNote: line.note,
+                    })}
+                    size="sm"
+                  />
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {line.unitPrice.toFixed(2)} DT
                   </p>

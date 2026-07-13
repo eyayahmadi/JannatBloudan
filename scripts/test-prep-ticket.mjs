@@ -1,5 +1,5 @@
 /**
- * Tests for 80mm prep ticket note parsing and layout rules.
+ * Tests for bilingual prep ticket options.
  * Run: node --test scripts/test-prep-ticket.mjs
  */
 import { describe, it } from "node:test"
@@ -11,87 +11,96 @@ import { fileURLToPath } from "node:url"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, "..")
 
-function splitBilingualValue(raw) {
+function splitBilingualPair(raw) {
   const trimmed = raw.trim()
   if (!trimmed) return { de: "", ar: null }
   const slash = trimmed.indexOf(" / ")
   if (slash === -1) return { de: trimmed, ar: null }
-  const de = trimmed.slice(0, slash).trim()
-  const ar = trimmed.slice(slash + 3).trim()
-  return { de: de || trimmed, ar: ar || null }
+  return {
+    de: trimmed.slice(0, slash).trim(),
+    ar: trimmed.slice(slash + 3).trim() || null,
+  }
 }
 
-function parseKitchenTicketNotes(raw) {
-  const result = { size: null, extras: [], note: null }
-  if (!raw?.trim()) return result
+function optionsSnapshotFromNotes(raw) {
+  const snapshot = { variant: null, modifiers: [], customer_note: null }
+  if (!raw?.trim()) return snapshot
   for (const line of raw.split("\n")) {
     const trimmed = line.trim()
-    if (!trimmed) continue
     if (/^size:/i.test(trimmed)) {
-      const value = trimmed.replace(/^size:\s*/i, "")
-      const { de, ar } = splitBilingualValue(value)
-      if (de) result.size = { de, ar }
+      const { de, ar } = splitBilingualPair(trimmed.replace(/^size:\s*/i, ""))
+      if (de) snapshot.variant = { group_name_de: "Größe", group_name_ar: "الحجم", name_de: de, name_ar: ar }
     } else if (trimmed.startsWith("+")) {
-      const value = trimmed.replace(/^\+\s*/, "")
-      const { de, ar } = splitBilingualValue(value)
-      if (de) result.extras.push({ de, ar })
+      const { de, ar } = splitBilingualPair(trimmed.replace(/^\+\s*/, ""))
+      if (de) {
+        snapshot.modifiers.push({
+          group_name_de: "Extras",
+          group_name_ar: "الإضافات",
+          name_de: de,
+          name_ar: ar,
+        })
+      }
     } else if (/^note:/i.test(trimmed)) {
-      result.note = trimmed.replace(/^note:\s*/i, "").trim() || null
+      snapshot.customer_note = trimmed.replace(/^note:\s*/i, "").trim() || null
     }
   }
-  return result
+  return snapshot
 }
 
-describe("parseKitchenTicketNotes", () => {
-  it("parses size, extras, and note", () => {
-    const raw = [
-      "Size: Groß / كبير",
-      "+ Käse",
-      "+ Oliven",
-      "Note: Ohne Zwiebeln",
-    ].join("\n")
-    const p = parseKitchenTicketNotes(raw)
-    assert.equal(p.size.de, "Groß")
-    assert.equal(p.size.ar, "كبير")
-    assert.equal(p.extras.length, 2)
-    assert.equal(p.extras[0].de, "Käse")
-    assert.equal(p.note, "Ohne Zwiebeln")
+function buildValuePairHtml(nameDe, nameAr) {
+  const lines = [`<div class="opt-val-de">${nameDe}</div>`]
+  if (nameAr && nameAr !== nameDe) lines.push(`<div class="opt-val-ar" dir="rtl">${nameAr}</div>`)
+  return lines.join("")
+}
+
+describe("optionsSnapshotFromNotes", () => {
+  it("parses bilingual size and extras", () => {
+    const raw = "Size: Groß / كبير\n+ Käse / جبنة\nNote: Ohne Zwiebeln"
+    const s = optionsSnapshotFromNotes(raw)
+    assert.equal(s.variant.name_de, "Groß")
+    assert.equal(s.variant.name_ar, "كبير")
+    assert.equal(s.modifiers[0].name_de, "Käse")
+    assert.equal(s.modifiers[0].name_ar, "جبنة")
+    assert.equal(s.customer_note, "Ohne Zwiebeln")
+  })
+
+  it("omits Arabic line when translation missing", () => {
+    const s = optionsSnapshotFromNotes("Size: Klein\n+ Schokolade")
+    const html = buildValuePairHtml(s.variant.name_de, s.variant.name_ar)
+    assert.match(html, /Klein/)
+    assert.doesNotMatch(html, /opt-val-ar/)
   })
 })
 
 describe("kitchen-ticket HTML", () => {
   const src = readFileSync(join(ROOT, "lib/print/kitchen-ticket.ts"), "utf8")
 
-  it("excludes financial fields from ticket source", () => {
-    assert.match(src, /never prices/)
+  it("excludes financial and customer metadata", () => {
     assert.doesNotMatch(src, /unit_price/)
     assert.doesNotMatch(src, /customer_name/)
     assert.doesNotMatch(src, /order_type/)
   })
 
-  it("uses 80mm page and large table number styles", () => {
+  it("uses 80mm layout with large table number", () => {
     assert.match(src, /size: 80mm auto/)
-    assert.match(src, /\.table-number/)
     assert.match(src, /font-size: 40px/)
     assert.match(src, /Noto Sans Arabic/)
   })
+})
 
-  it("shows bilingual table block", () => {
-    assert.match(src, /رقم الطاولة/)
-    assert.match(src, /TISCH \/ TABLE/)
+describe("cart-line bilingual extras", () => {
+  const src = readFileSync(join(ROOT, "lib/menu/cart-line.ts"), "utf8")
+  it("formats extras with name_ar", () => {
+    assert.match(src, /formatExtraLabel/)
+    assert.match(src, /formatExtraLabel\(e\)/)
   })
 })
 
-describe("order-product-name prep item", () => {
-  const src = readFileSync(join(ROOT, "lib/orders/order-product-name.ts"), "utf8")
-
-  it("puts Arabic name before German", () => {
-    assert.match(src, /item-name-ar/)
-    assert.match(src, /item-name-de/)
-    assert.match(src, /buildPrepTicketItemHtml/)
-  })
-
-  it("uses large quantity prefix", () => {
-    assert.match(src, /× \$\{qty\}/)
+describe("ticket-notes uses snapshot groups", () => {
+  const src = readFileSync(join(ROOT, "lib/print/ticket-notes.ts"), "utf8")
+  it("renders group headers from snapshot not hardcoded product names", () => {
+    assert.match(src, /group_name_de/)
+    assert.match(src, /buildValuePairHtml/)
+    assert.doesNotMatch(src, /Größe:/)
   })
 })

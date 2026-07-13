@@ -63,6 +63,7 @@ import { StationAvailabilityControl } from "@/components/stations/StationAvailab
 import { ItemRefuseDialog } from "@/components/stations/ItemRefuseDialog"
 import { StationBoardToast } from "@/components/stations/StationBoardToast"
 import { OrderProductName } from "@/components/orders/OrderProductName"
+import { OrderItemOptions } from "@/components/orders/OrderItemOptions"
 
 const STATION_TO_AGENT: Record<Station, AgentContext> = {
   KITCHEN: "kitchen",
@@ -322,11 +323,14 @@ const StationItemCard = memo(function StationItemCard({
                     truncate
                   />
                 </div>
-                {item.notes && (
-                  <p className="mt-0.5 text-xs italic text-amber-700 dark:text-amber-300">
-                    {item.notes}
-                  </p>
-                )}
+                {item.notes || item.options_snapshot ? (
+                  <OrderItemOptions
+                    options_snapshot={item.options_snapshot}
+                    notes={item.notes}
+                    logContext={item.name}
+                    size="sm"
+                  />
+                ) : null}
                 {isRefused && item.refusal_reason_code && (
                   <p className="mt-0.5 text-[11px] font-semibold text-red-700 dark:text-red-300">
                     <Ban className="me-1 inline h-3 w-3" />

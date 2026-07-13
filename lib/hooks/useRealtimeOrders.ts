@@ -2,6 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from "react"
 import type { ItemStatus } from "@/lib/stations/config"
+import type { OrderItemOptionsSnapshot } from "@/lib/orders/order-item-options"
 import { realtimeOrdersStore } from "@/lib/orders/realtime-orders-store"
 
 export type OrderStatus = "received" | "preparing" | "ready" | "delivering" | "completed" | "cancelled"
@@ -13,6 +14,7 @@ export type OrderItem = {
   name_ar?: string | null
   quantity: number
   notes?: string
+  options_snapshot?: OrderItemOptionsSnapshot | null
   station: import("@/lib/stations/config").Station
   item_status: ItemStatus
   unit_price?: number

@@ -1,3 +1,4 @@
+import { parseOptionsSnapshotJson } from "@/lib/orders/order-item-options"
 import type { KitchenOrder, OrderStatus, OrderType } from "@/lib/hooks/useRealtimeOrders"
 import type { ItemStatus, Station } from "@/lib/stations/config"
 import { inferStation } from "@/lib/stations/inference"
@@ -25,6 +26,7 @@ type DbOrderItemRow = {
   quantity: number | string
   unit_price?: number | string | null
   special_instructions?: string | null
+  options_snapshot?: unknown
   station?: string | null
   station_status?: string | null
   started_at?: string | null
@@ -111,6 +113,7 @@ export function mapDbRowsToKitchenOrders(
         name_ar: it.product_name_ar?.trim() || undefined,
         quantity: typeof it.quantity === "number" ? it.quantity : Number.parseInt(String(it.quantity), 10) || 0,
         notes: it.special_instructions?.trim() || undefined,
+        options_snapshot: parseOptionsSnapshotJson(it.options_snapshot) ?? undefined,
         station: mapDbStation(it.station, it.product_name),
         item_status: itemStatus,
         unit_price:

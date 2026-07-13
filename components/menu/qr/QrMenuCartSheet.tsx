@@ -2,7 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion"
 import { ChevronRight, Minus, Plus, ShoppingBag, X } from "lucide-react"
-import { formatVariantLabel } from "@/lib/menu/cart-line"
+import { OrderItemOptions } from "@/components/orders/OrderItemOptions"
+import { optionsSnapshotFromCart } from "@/lib/orders/order-item-options"
 import { isPlaceholderImage } from "@/lib/menu/menu-display"
 import type { QrCartEntry } from "@/lib/menu/qr-menu-types"
 
@@ -162,21 +163,14 @@ export function QrMenuCartSheet({
                                 {item.name_ar}
                               </p>
                             ) : null}
-                            {item.variant ? (
-                              <p className="text-xs text-amber-700/75 dark:text-amber-400/75">
-                                {formatVariantLabel(item.variant)}
-                              </p>
-                            ) : null}
-                            {item.extras.length > 0 ? (
-                              <p className="text-xs text-amber-700/75 dark:text-amber-400/75">
-                                {item.extras.map((e) => `+ ${e.name}`).join(", ")}
-                              </p>
-                            ) : null}
-                            {item.note ? (
-                              <p className="mt-0.5 text-xs italic text-amber-800/70 dark:text-amber-300/70">
-                                „{item.note}"
-                              </p>
-                            ) : null}
+                            <OrderItemOptions
+                              options_snapshot={optionsSnapshotFromCart({
+                                variant: item.variant,
+                                extras: item.extras,
+                                customerNote: item.note,
+                              })}
+                              size="sm"
+                            />
                             <div className="mt-1 space-y-0.5 text-[10px] text-amber-700/65 dark:text-amber-400/65">
                               <p>Basis: {base.toFixed(2)} €{extrasTotal > 0 ? ` · Extras: +${extrasTotal.toFixed(2)} €` : ""}</p>
                               <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
