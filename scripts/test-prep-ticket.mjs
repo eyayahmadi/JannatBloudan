@@ -75,23 +75,22 @@ describe("optionsSnapshotFromNotes", () => {
 describe("kitchen-ticket HTML", () => {
   const src = readFileSync(join(ROOT, "lib/print/kitchen-ticket.ts"), "utf8")
 
-  it("excludes financial and customer metadata", () => {
-    assert.doesNotMatch(src, /unit_price/)
-    assert.doesNotMatch(src, /customer_name/)
-    assert.doesNotMatch(src, /order_type/)
+  it("includes classic receipt metadata and total", () => {
+    assert.match(src, /\.total/)
+    assert.match(src, /customer_name/)
+    assert.match(src, /order_type/)
+    assert.match(src, /DT/)
   })
 
-  it("uses compact receipt layout with boxed ticket number", () => {
+  it("uses classic receipt layout with station badge and total", () => {
     assert.match(src, /size: 80mm auto/)
     assert.match(src, /margin: 2mm/)
     assert.match(src, /width: 76mm/)
-    assert.match(src, /\.ticket[\s\S]*width: 100%/)
-    assert.match(src, /max-width: none/)
-    assert.doesNotMatch(src, /58mm|60mm|280px/)
-    assert.match(src, /\.order-number/)
-    assert.match(src, /\.meta-row/)
-    assert.match(src, /\.item-options-box/)
-    assert.match(src, /Noto Sans Arabic/)
+    assert.match(src, /station-badge/)
+    assert.match(src, /\.total/)
+    assert.match(src, /color: #000/)
+    assert.doesNotMatch(src, /#0891b2|#d97706|#7c3aed/)
+    assert.match(src, /Courier New/)
   })
 })
 
