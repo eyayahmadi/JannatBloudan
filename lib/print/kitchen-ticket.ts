@@ -115,11 +115,13 @@ const TICKET_STYLES = `
   body {
     font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
     font-weight: 700;
-    font-size: 16px;
-    line-height: 1.2;
+    font-size: 14px;
+    line-height: 1.22;
     padding: 2mm 1mm;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
   }
-  .ticket { width: 100%; }
+  .ticket { width: 100%; max-width: 100%; overflow: hidden; }
 
   .header {
     text-align: center;
@@ -128,7 +130,7 @@ const TICKET_STYLES = `
     border-bottom: 2px solid #000;
   }
   .restaurant {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -136,13 +138,13 @@ const TICKET_STYLES = `
   }
   .station-title-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 22px;
+    font-size: 19px;
     font-weight: 900;
-    line-height: 1.15;
+    line-height: 1.18;
     direction: rtl;
   }
   .station-title-de {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 900;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -150,7 +152,7 @@ const TICKET_STYLES = `
   }
   .order-ref {
     margin-top: 6px;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 900;
     letter-spacing: 0.5px;
   }
@@ -164,20 +166,20 @@ const TICKET_STYLES = `
   }
   .table-label-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 22px;
+    font-size: 19px;
     font-weight: 900;
     direction: rtl;
-    line-height: 1.15;
+    line-height: 1.18;
   }
   .table-label-de {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 900;
     letter-spacing: 1px;
     text-transform: uppercase;
     margin-top: 2px;
   }
   .table-number {
-    font-size: 40px;
+    font-size: 36px;
     font-weight: 900;
     line-height: 1;
     margin-top: 4px;
@@ -189,84 +191,98 @@ const TICKET_STYLES = `
   }
   .prep-item {
     padding: 6px 0 4px;
+    max-width: 100%;
   }
   .item-qty {
-    font-size: 34px;
+    font-size: 30px;
     font-weight: 900;
     line-height: 1;
     margin-bottom: 4px;
   }
   .item-names {
     width: 100%;
+    max-width: 100%;
   }
   .item-name-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 900;
-    line-height: 1.2;
+    line-height: 1.22;
     word-wrap: break-word;
     overflow-wrap: anywhere;
+    word-break: break-word;
     white-space: normal;
     text-align: right;
     direction: rtl;
     unicode-bidi: isolate;
     margin-bottom: 3px;
+    max-width: 100%;
   }
   .item-name-de {
-    font-size: 24px;
+    font-size: 21px;
     font-weight: 900;
-    line-height: 1.2;
+    line-height: 1.22;
     word-wrap: break-word;
     overflow-wrap: anywhere;
+    word-break: break-word;
     white-space: normal;
+    max-width: 100%;
   }
   .item-opts {
     margin-top: 5px;
     padding-top: 4px;
     border-top: 1px dashed #000;
+    max-width: 100%;
   }
   .opt-group {
     margin-top: 4px;
+    max-width: 100%;
   }
   .opt-group-head {
     font-weight: 900;
-    line-height: 1.2;
+    line-height: 1.22;
     margin-bottom: 2px;
     word-wrap: break-word;
     overflow-wrap: anywhere;
+    word-break: break-word;
     white-space: normal;
+    max-width: 100%;
   }
   .opt-group-de {
-    font-size: 17px;
+    font-size: 15px;
   }
   .opt-group-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 18px;
+    font-size: 16px;
     direction: rtl;
     unicode-bidi: isolate;
   }
   .opt-group-sep {
-    font-size: 16px;
+    font-size: 14px;
   }
   .opt-val-de {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
-    line-height: 1.25;
+    line-height: 1.28;
     word-wrap: break-word;
     overflow-wrap: anywhere;
+    word-break: break-word;
     white-space: normal;
+    max-width: 100%;
   }
   .opt-val-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 19px;
+    font-size: 17px;
     font-weight: 800;
-    line-height: 1.25;
+    line-height: 1.28;
     text-align: right;
     direction: rtl;
     unicode-bidi: isolate;
     word-wrap: break-word;
     overflow-wrap: anywhere;
+    word-break: break-word;
     white-space: normal;
+    max-width: 100%;
   }
   .item-sep {
     border-bottom: 2px dashed #000;
@@ -278,7 +294,7 @@ const TICKET_STYLES = `
 
   .order-time {
     text-align: center;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 900;
     margin-top: 8px;
     padding-top: 6px;

@@ -83,7 +83,7 @@ describe("kitchen-ticket HTML", () => {
 
   it("uses 80mm layout with large table number", () => {
     assert.match(src, /size: 80mm auto/)
-    assert.match(src, /font-size: 40px/)
+    assert.match(src, /font-size: 36px/)
     assert.match(src, /Noto Sans Arabic/)
   })
 })
