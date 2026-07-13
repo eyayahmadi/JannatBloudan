@@ -102,32 +102,43 @@ const TICKET_STYLES = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
   @page {
     size: 80mm auto;
-    margin: 2mm;
+    margin: 0;
   }
-  html, body {
-    width: 76mm;
-    max-width: 76mm;
+  html {
+    width: 80mm;
+    max-width: 80mm;
+  }
+  body {
+    width: 100%;
+    max-width: 80mm;
     color: #000;
     background: #fff;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-  }
-  body {
     font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
     font-weight: 700;
     font-size: 14px;
     line-height: 1.22;
-    padding: 2mm 1mm;
+    margin: 0 auto;
+    padding: 1mm 0;
     overflow-wrap: break-word;
     word-wrap: break-word;
+    overflow-x: visible;
   }
-  .ticket { width: 100%; max-width: 100%; overflow: hidden; }
+  .ticket {
+    width: 96%;
+    max-width: 96%;
+    margin: 0 auto;
+    padding: 0;
+    overflow: visible;
+  }
 
   .header {
     text-align: center;
     padding-bottom: 4px;
     margin-bottom: 6px;
     border-bottom: 2px solid #000;
+    width: 100%;
   }
   .restaurant {
     font-size: 18px;
@@ -167,6 +178,7 @@ const TICKET_STYLES = `
     padding: 6px 0;
     border-top: 2px solid #000;
     border-bottom: 2px solid #000;
+    width: 100%;
   }
   .table-label-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
@@ -195,10 +207,13 @@ const TICKET_STYLES = `
 
   .items {
     margin: 4px 0;
+    width: 100%;
   }
   .prep-item {
     padding: 6px 0 4px;
+    width: 100%;
     max-width: 100%;
+    overflow: visible;
   }
   .item-qty {
     font-size: 17px;
@@ -210,6 +225,7 @@ const TICKET_STYLES = `
   .item-names {
     width: 100%;
     max-width: 100%;
+    overflow: visible;
   }
   .item-name-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
@@ -217,14 +233,16 @@ const TICKET_STYLES = `
     font-weight: 900;
     line-height: 1.22;
     word-wrap: break-word;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     word-break: break-word;
     white-space: normal;
     text-align: right;
     direction: rtl;
     unicode-bidi: isolate;
     margin-bottom: 3px;
+    width: 100%;
     max-width: 100%;
+    overflow: visible;
     color: #000;
   }
   .item-name-de {
@@ -232,32 +250,40 @@ const TICKET_STYLES = `
     font-weight: 900;
     line-height: 1.22;
     word-wrap: break-word;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     word-break: break-word;
     white-space: normal;
+    width: 100%;
     max-width: 100%;
+    overflow: visible;
     color: #000;
   }
   .item-opts {
     margin-top: 5px;
     padding-top: 4px;
     border-top: 1px dashed #000;
+    width: 100%;
     max-width: 100%;
+    overflow: visible;
     color: #000;
   }
   .opt-group {
     margin-top: 4px;
+    width: 100%;
     max-width: 100%;
+    overflow: visible;
   }
   .opt-group-head {
     font-weight: 900;
     line-height: 1.22;
     margin-bottom: 2px;
     word-wrap: break-word;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     word-break: break-word;
     white-space: normal;
+    width: 100%;
     max-width: 100%;
+    overflow: visible;
     color: #000;
   }
   .opt-group-de {
@@ -277,10 +303,12 @@ const TICKET_STYLES = `
     font-weight: 800;
     line-height: 1.28;
     word-wrap: break-word;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     word-break: break-word;
     white-space: normal;
+    width: 100%;
     max-width: 100%;
+    overflow: visible;
     color: #000;
   }
   .opt-val-ar {
@@ -292,10 +320,12 @@ const TICKET_STYLES = `
     direction: rtl;
     unicode-bidi: isolate;
     word-wrap: break-word;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     word-break: break-word;
     white-space: normal;
+    width: 100%;
     max-width: 100%;
+    overflow: visible;
     color: #000;
   }
   .item-sep {
@@ -317,10 +347,15 @@ const TICKET_STYLES = `
   }
 
   @media screen {
+    html {
+      width: auto;
+      max-width: none;
+    }
     body {
-      max-width: 320px;
+      width: 80mm;
+      max-width: 80mm;
       margin: 12px auto;
-      padding: 14px;
+      padding: 2mm 0;
       box-shadow: 0 4px 24px rgba(0,0,0,0.18);
     }
     .print-hint {
@@ -336,7 +371,20 @@ const TICKET_STYLES = `
   }
   @media print {
     .print-hint { display: none !important; }
-    body { margin: 0; padding: 0; box-shadow: none; }
+    html, body {
+      width: 80mm !important;
+      max-width: 80mm !important;
+      margin: 0 !important;
+      padding: 0.5mm 0 !important;
+      box-shadow: none !important;
+    }
+    .ticket {
+      width: 96% !important;
+      max-width: 96% !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+      overflow: visible !important;
+    }
   }
 `
 
@@ -378,7 +426,7 @@ function buildProductionTicketHTML(ticket: ProductionTicketOrder, options: Print
 <html lang="${locale}">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=320" />
+<meta name="viewport" content="width=80mm, initial-scale=1" />
 <title>${escapeHtml(stationTitle)} #${escapeHtml(ticket.order_number)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
