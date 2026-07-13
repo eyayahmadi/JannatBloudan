@@ -1,4 +1,8 @@
 import { cn } from "@/lib/utils"
+import {
+  buildTicketOptionsHtml,
+  parseKitchenTicketNotes,
+} from "@/lib/print/ticket-notes"
 
 /** Produit commandé avec libellés DE (+ AR optionnel). */
 export type BilingualOrderProduct = {
@@ -57,9 +61,39 @@ export function buildOrderProductNameHtml(
 }
 
 /**
- * HTML ligne article pour tickets station (58/80mm) :
- *   Ligne 1 : nom DE + quantité à droite
- *   Ligne 2 : nom AR (RTL), si présent
+ * HTML article pour tickets de préparation 80 mm (cuisine / bar / shisha).
+ * Arabe en premier, allemand en dessous, quantité très visible, pas de prix.
+ */
+export function buildPrepTicketItemHtml(
+  item: BilingualOrderProduct & { notes?: string | null },
+  quantity: number,
+): string {
+  const { de, ar } = resolveOrderProductNames(item)
+  const qty = Math.max(1, Math.floor(Number(quantity) || 1))
+  const labelDe = de || "—"
+  const parsed = item.notes?.trim() ? parseKitchenTicketNotes(item.notes) : null
+  const optsHtml = parsed ? buildTicketOptionsHtml(parsed) : ""
+
+  const arBlock = ar
+    ? `<div class="item-name-ar" dir="rtl">${escapeOrderProductHtml(ar)}</div>`
+    : ""
+
+  return [
+    `<div class="prep-item">`,
+    `<div class="item-qty">× ${qty}</div>`,
+    `<div class="item-names">`,
+    arBlock,
+    `<div class="item-name-de">${escapeOrderProductHtml(labelDe)}</div>`,
+    `</div>`,
+    optsHtml,
+    `</div>`,
+    `<div class="item-sep" aria-hidden="true"></div>`,
+  ].join("")
+}
+
+/**
+ * @deprecated Use buildPrepTicketItemHtml for station prep tickets.
+ * Kept for legacy invoice/caisse layouts.
  */
 export function buildTicketItemNameHtml(
   item: BilingualOrderProduct,

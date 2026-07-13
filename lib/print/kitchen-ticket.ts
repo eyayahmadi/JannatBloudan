@@ -1,17 +1,13 @@
 /**
- * Station production tickets (Kitchen / Bar / Shisha).
- * Print popup → window.print() (thermal 58/80mm or A4 PDF).
+ * Station production tickets (Kitchen / Bar / Shisha) — 80 mm thermal.
+ * Print popup → window.print() (Epson TM-m30III via browser driver).
  *
  * Preparation only — never prices, totals, tax, discounts, or payment info.
- * Financial amounts belong on customer receipts and cashier invoices only.
- *
- * @example
- *   printStationTicket(order, { station: "BAR", locale: "de" })
  */
 
-import type { KitchenOrder, OrderItem, OrderType } from "@/lib/hooks/useRealtimeOrders"
+import type { KitchenOrder, OrderItem } from "@/lib/hooks/useRealtimeOrders"
 import type { Station } from "@/lib/stations/config"
-import { buildTicketItemNameHtml } from "@/lib/orders/order-product-name"
+import { buildPrepTicketItemHtml } from "@/lib/orders/order-product-name"
 
 /** Fields allowed on production tickets — excludes all financial data. */
 type ProductionTicketItem = Pick<
@@ -22,9 +18,7 @@ type ProductionTicketItem = Pick<
 type ProductionTicketOrder = {
   order_number: string
   table_number: number | null
-  order_type: OrderType
   created_at: string
-  customer_name?: string
   items: ProductionTicketItem[]
 }
 
@@ -33,9 +27,7 @@ export function sanitizeProductionTicketOrder(order: KitchenOrder): ProductionTi
   return {
     order_number: order.order_number,
     table_number: order.table_number,
-    order_type: order.order_type,
     created_at: order.created_at,
-    customer_name: order.customer_name,
     items: order.items.map((item) => ({
       id: item.id,
       name: item.name,
@@ -50,124 +42,22 @@ export function sanitizeProductionTicketOrder(order: KitchenOrder): ProductionTi
 export type PrintOptions = {
   restaurantName?: string
   locale?: "fr" | "en" | "ar" | "de"
-  /** Si true, ferme la fenetre apres impression. Default: true */
   autoClose?: boolean
-  /** Texte personnalise pour le label "TICKET CUISINE" */
   title?: string
-  /** Station concernee — ajuste titre, emoji et couleur */
   station?: Station
 }
 
-/**
- * Configuration visuelle par station — titre, emoji, couleur accent.
- * Les titres sont remplaces par leur traduction i18n si disponible.
- */
 const STATION_PRINT: Record<
   Station,
   {
-    emoji: string
-    accent: string
-    titles: Record<"fr" | "en" | "ar" | "de", string>
+    titleAr: string
+    titleDe: string
   }
 > = {
-  KITCHEN: {
-    emoji: "🍽️",
-    accent: "#d97706", // amber-600
-    titles: {
-      fr: "TICKET CUISINE",
-      en: "KITCHEN TICKET",
-      ar: "تذكرة المطبخ",
-      de: "KÜCHENTICKET",
-    },
-  },
-  BAR: {
-    emoji: "🍹",
-    accent: "#0891b2", // cyan-600
-    titles: {
-      fr: "TICKET BAR",
-      en: "BAR TICKET",
-      ar: "تذكرة البار",
-      de: "BAR-TICKET",
-    },
-  },
-  SHISHA: {
-    emoji: "💨",
-    accent: "#7c3aed", // violet-600
-    titles: {
-      fr: "TICKET CHICHA",
-      en: "SHISHA TICKET",
-      ar: "تذكرة الشيشة",
-      de: "SHISHA-TICKET",
-    },
-  },
+  KITCHEN: { titleAr: "مطبخ", titleDe: "KÜCHE" },
+  BAR: { titleAr: "بار", titleDe: "BAR" },
+  SHISHA: { titleAr: "شيشة", titleDe: "SHISHA" },
 }
-
-const LABELS = {
-  fr: {
-    title: "TICKET CUISINE",
-    order: "N° ticket",
-    table: "Table",
-    type: "Type commande",
-    received: "Heure réception",
-    customerTable: "Client / Table",
-    notes: "Notes",
-    printed: "Imprime le",
-    types: {
-      qr_self_service: "QR (self-service)",
-      server: "Serveur",
-      pos: "Caisse",
-      delivery: "Livraison",
-    },
-  },
-  en: {
-    title: "KITCHEN TICKET",
-    order: "Ticket #",
-    table: "Table",
-    type: "Order type",
-    received: "Received",
-    customerTable: "Customer / Table",
-    notes: "Notes",
-    printed: "Printed at",
-    types: {
-      qr_self_service: "QR (self-service)",
-      server: "Waiter",
-      pos: "POS",
-      delivery: "Delivery",
-    },
-  },
-  ar: {
-    title: "تذكرة المطبخ",
-    order: "رقم التذكرة",
-    table: "طاولة",
-    type: "نوع الطلب",
-    received: "وقت الاستلام",
-    customerTable: "العميل / الطاولة",
-    notes: "ملاحظات",
-    printed: "طُبعت في",
-    types: {
-      qr_self_service: "QR (خدمة ذاتية)",
-      server: "نادل",
-      pos: "صندوق",
-      delivery: "توصيل",
-    },
-  },
-  de: {
-    title: "KÜCHENTICKET",
-    order: "Ticket-Nr.",
-    table: "Tisch",
-    type: "Bestelltyp",
-    received: "Empfangen um",
-    customerTable: "Kunde / Tisch",
-    notes: "Notizen",
-    printed: "Gedruckt am",
-    types: {
-      qr_self_service: "QR (Selbstbedienung)",
-      server: "Kellner",
-      pos: "Kasse",
-      delivery: "Lieferung",
-    },
-  },
-} as const
 
 function escapeHtml(str: string): string {
   return str
@@ -191,7 +81,7 @@ function resolveIntlLocale(locale: string): string {
   }
 }
 
-function formatTime(iso: string, locale: string): string {
+function formatOrderTime(iso: string, locale: string): string {
   const d = new Date(iso)
   return d.toLocaleTimeString(resolveIntlLocale(locale), {
     hour: "2-digit",
@@ -200,298 +90,285 @@ function formatTime(iso: string, locale: string): string {
   })
 }
 
-function formatDateTime(iso: string, locale: string): string {
-  const d = new Date(iso)
-  return d.toLocaleString(resolveIntlLocale(locale), {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
-
 const PRINT_HINT: Record<"fr" | "en" | "ar" | "de", string> = {
-  fr: "Si l'impression ne demarre pas, pressez Ctrl+P / Cmd+P",
+  fr: "Si l'impression ne démarre pas, pressez Ctrl+P / Cmd+P",
   en: "If printing does not start, press Ctrl+P / Cmd+P",
   ar: "إذا لم تبدأ الطباعة، اضغط Ctrl+P / Cmd+P",
-  de: "Falls der Druck nicht startet, drücken Sie Strg+P / Cmd+P",
+  de: "Falls der Druck nicht startet, Strg+P / Cmd+P",
 }
+
+const TICKET_STYLES = `
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  @page {
+    size: 80mm auto;
+    margin: 2mm;
+  }
+  html, body {
+    width: 76mm;
+    max-width: 76mm;
+    color: #000;
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.2;
+    padding: 2mm 1mm;
+  }
+  .ticket { width: 100%; }
+
+  .header {
+    text-align: center;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+    border-bottom: 2px solid #000;
+  }
+  .restaurant {
+    font-size: 18px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .station-title-ar {
+    font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1.15;
+    direction: rtl;
+  }
+  .station-title-de {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .order-ref {
+    margin-top: 6px;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+  }
+
+  .table-block {
+    text-align: center;
+    margin: 8px 0 10px;
+    padding: 6px 0;
+    border-top: 2px solid #000;
+    border-bottom: 2px solid #000;
+  }
+  .table-label-ar {
+    font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    direction: rtl;
+    line-height: 1.15;
+  }
+  .table-label-de {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .table-number {
+    font-size: 40px;
+    font-weight: 900;
+    line-height: 1;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .items {
+    margin: 4px 0;
+  }
+  .prep-item {
+    padding: 6px 0 4px;
+  }
+  .item-qty {
+    font-size: 34px;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .item-names {
+    width: 100%;
+  }
+  .item-name-ar {
+    font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1.2;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    text-align: right;
+    direction: rtl;
+    unicode-bidi: isolate;
+    margin-bottom: 3px;
+  }
+  .item-name-de {
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1.2;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  .item-opts {
+    margin-top: 5px;
+    padding-top: 4px;
+    border-top: 1px dashed #000;
+  }
+  .opt-row {
+    font-weight: 700;
+    line-height: 1.25;
+    margin-top: 2px;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  .opt-row-ar {
+    font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+    font-size: 18px;
+    text-align: right;
+    direction: rtl;
+    unicode-bidi: isolate;
+  }
+  .opt-row-de {
+    font-size: 17px;
+  }
+  .opt-label {
+    font-weight: 900;
+    margin-inline-end: 4px;
+  }
+  .opt-value {
+    font-weight: 700;
+  }
+  .item-sep {
+    border-bottom: 2px dashed #000;
+    margin: 4px 0;
+  }
+  .items .prep-item:last-of-type + .item-sep {
+    display: none;
+  }
+
+  .order-time {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 900;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 2px solid #000;
+  }
+
+  @media screen {
+    body {
+      max-width: 320px;
+      margin: 12px auto;
+      padding: 14px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    }
+    .print-hint {
+      text-align: center;
+      padding: 8px;
+      margin-bottom: 10px;
+      background: #000;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 4px;
+    }
+  }
+  @media print {
+    .print-hint { display: none !important; }
+    body { margin: 0; padding: 0; box-shadow: none; }
+  }
+`
 
 export function buildStationTicketHTML(order: KitchenOrder, options: PrintOptions = {}): string {
   return buildProductionTicketHTML(sanitizeProductionTicketOrder(order), options)
 }
 
-/** @deprecated Use buildStationTicketHTML — kept for existing imports */
+/** @deprecated Use buildStationTicketHTML */
 export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOptions = {}): string {
   return buildStationTicketHTML(order, options)
 }
 
 function buildProductionTicketHTML(ticket: ProductionTicketOrder, options: PrintOptions = {}): string {
-  const { restaurantName = "Joseph Bechara", locale = "fr", station } = options
-  const L = LABELS[locale]
-  const isRtl = locale === "ar"
+  const { restaurantName = "Jannat Bloudan", locale = "de" } = options
   const printHint = PRINT_HINT[locale]
 
-  // Si une station est specifiee, on adapte le titre + l'emoji + la couleur.
-  // Sinon, on deduit la station depuis les items (si tous d'une meme station).
   const effectiveStation: Station =
-    station ??
+    options.station ??
     (ticket.items.length > 0 &&
     ticket.items.every((it) => it.station === ticket.items[0].station)
       ? ticket.items[0].station
       : "KITCHEN")
 
   const stationCfg = STATION_PRINT[effectiveStation]
-  const ticketTitle = options.title ?? stationCfg.titles[locale]
-  const accent = stationCfg.accent
-  const emoji = stationCfg.emoji
+  const stationTitle = options.title ?? `${stationCfg.titleAr} / ${stationCfg.titleDe}`
 
   const itemsHtml = ticket.items
-    .map(
-      (item) => `
-        <div class="item">
-          <div class="item-main">
-            ${buildTicketItemNameHtml(item, item.quantity)}
-          </div>
-          ${
-            item.notes
-              ? `<div class="item-notes"><span class="item-notes-label">${L.notes}:</span> ${escapeHtml(item.notes).replace(/\n/g, "<br/>")}</div>`
-              : ""
-          }
-        </div>
-      `,
-    )
+    .map((item) => buildPrepTicketItemHtml(item, item.quantity))
     .join("")
 
-  const customerTableValue = ticket.customer_name?.trim() ?? ""
+  const tableDisplay =
+    ticket.table_number !== null && ticket.table_number !== undefined
+      ? escapeHtml(String(ticket.table_number))
+      : "—"
+
+  const orderTime = formatOrderTime(ticket.created_at, locale)
 
   return `<!DOCTYPE html>
-<html lang="${locale}" dir="${isRtl ? "rtl" : "ltr"}">
+<html lang="${locale}">
 <head>
 <meta charset="UTF-8" />
-<title>${ticketTitle} #${escapeHtml(ticket.order_number)}</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  @page {
-    size: 80mm auto;
-    margin: 4mm;
-  }
-  body {
-    font-family: 'Courier New', 'Consolas', monospace;
-    font-size: 13px;
-    color: #000;
-    background: #fff;
-    padding: 8px;
-    width: 72mm;
-  }
-  .ticket { width: 100%; }
-  .header {
-    text-align: center;
-    padding-bottom: 8px;
-    border-bottom: 2px dashed #000;
-    margin-bottom: 10px;
-  }
-  .restaurant {
-    font-size: 14px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 4px;
-  }
-  .station-badge {
-    display: inline-block;
-    margin: 4px 0;
-    padding: 4px 10px;
-    font-size: 11px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: #fff;
-    background: ${accent};
-    border-radius: 4px;
-  }
-  .title {
-    font-size: 16px;
-    font-weight: bold;
-    margin: 6px 0;
-    letter-spacing: 2px;
-    color: ${accent};
-  }
-  .order-number {
-    font-size: 24px;
-    font-weight: bold;
-    margin: 6px 0;
-    padding: 6px;
-    border: 3px solid ${accent};
-    display: inline-block;
-    min-width: 80%;
-    color: ${accent};
-  }
-  .meta {
-    margin: 10px 0;
-    font-size: 12px;
-    line-height: 1.6;
-  }
-  .meta-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .meta-row strong { font-weight: bold; }
-  .items {
-    padding: 10px 0;
-    border-top: 1px solid #000;
-    border-bottom: 1px solid #000;
-    margin: 10px 0;
-  }
-  .item {
-    margin-bottom: 8px;
-    padding-bottom: 6px;
-    border-bottom: 1px dotted #999;
-  }
-  .item:last-child { border-bottom: none; }
-  .item-main {
-    font-size: 12px;
-    font-weight: bold;
-    line-height: 1.25;
-  }
-  .item-name { width: 100%; min-width: 0; }
-  .name-de-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 6px;
-  }
-  .name-de {
-    flex: 1;
-    min-width: 0;
-    font-weight: bold;
-    word-break: break-word;
-  }
-  .qty-inline {
-    flex-shrink: 0;
-    font-weight: bold;
-    white-space: nowrap;
-  }
-  .name-ar-wrap {
-    margin-top: 1px;
-    font-size: 10px;
-    font-weight: normal;
-    line-height: 1.25;
-    text-align: right;
-    direction: rtl;
-    unicode-bidi: isolate;
-  }
-  .name-ar { display: block; }
-  .item-notes {
-    margin-top: 4px;
-    padding: 4px 8px;
-    background: #ffff99;
-    border: 1px solid #999;
-    font-size: 11px;
-    font-style: italic;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .item-notes-label {
-    font-style: normal;
-    font-weight: bold;
-  }
-  .footer {
-    margin-top: 10px;
-    padding-top: 6px;
-    border-top: 1px dashed #999;
-    font-size: 10px;
-    text-align: center;
-    color: #666;
-  }
-  @media screen {
-    body {
-      max-width: 360px;
-      margin: 16px auto;
-      padding: 20px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
-      background: #fff;
-    }
-    .print-hint {
-      text-align: center;
-      padding: 8px;
-      margin-bottom: 12px;
-      background: #fef3c7;
-      color: #92400e;
-      font-size: 11px;
-      border-radius: 4px;
-    }
-  }
-  @media print {
-    .print-hint { display: none; }
-    body { margin: 0; padding: 2mm; box-shadow: none; max-width: none; }
-  }
-</style>
+<meta name="viewport" content="width=320" />
+<title>${escapeHtml(stationTitle)} #${escapeHtml(ticket.order_number)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@700;900&display=swap" rel="stylesheet" />
+<style>${TICKET_STYLES}</style>
 </head>
 <body>
   <div class="print-hint">${printHint}</div>
   <div class="ticket">
-    <div class="header">
+    <header class="header">
       <div class="restaurant">${escapeHtml(restaurantName)}</div>
-      <div class="station-badge">${emoji} ${ticketTitle}</div>
-      <div class="title">*** ${ticketTitle} ***</div>
-      <div class="order-number">#${escapeHtml(ticket.order_number)}</div>
-    </div>
+      <div class="station-title-ar" dir="rtl">${escapeHtml(stationCfg.titleAr)}</div>
+      <div class="station-title-de">${escapeHtml(stationCfg.titleDe)}</div>
+      <div class="order-ref">#${escapeHtml(ticket.order_number)}</div>
+    </header>
 
-    <div class="meta">
-      <div class="meta-row">
-        <strong>${L.order}:</strong>
-        <span>#${escapeHtml(ticket.order_number)}</span>
-      </div>
-      ${
-        ticket.table_number !== null && ticket.table_number !== undefined
-          ? `<div class="meta-row"><strong>${L.table}:</strong><span>${escapeHtml(String(ticket.table_number))}</span></div>`
-          : ""
-      }
-      <div class="meta-row">
-        <strong>${L.type}:</strong>
-        <span>${L.types[ticket.order_type] ?? ticket.order_type}</span>
-      </div>
-      <div class="meta-row">
-        <strong>${L.received}:</strong>
-        <span>${formatTime(ticket.created_at, locale)}</span>
-      </div>
-      ${
-        customerTableValue
-          ? `<div class="meta-row"><strong>${L.customerTable}:</strong><span>${escapeHtml(customerTableValue)}</span></div>`
-          : ""
-      }
-    </div>
+    <section class="table-block">
+      <div class="table-label-ar" dir="rtl">رقم الطاولة</div>
+      <div class="table-label-de">TISCH / TABLE</div>
+      <div class="table-number">${tableDisplay}</div>
+    </section>
 
-    <div class="items">${itemsHtml}</div>
+    <section class="items">${itemsHtml}</section>
 
-    <div class="footer">
-      ${L.printed}: ${formatDateTime(new Date().toISOString(), locale)}
-    </div>
+    <footer class="order-time">${orderTime}</footer>
   </div>
 </body>
 </html>`
 }
 
-/**
- * Print a Kitchen / Bar / Shisha production ticket (no financial data).
- */
 export function printStationTicket(order: KitchenOrder, options: PrintOptions = {}): boolean {
   return printKitchenTicket(order, options)
 }
 
-/**
- * Ouvre une fenetre pop-up et lance l'impression.
- * Fonctionne sans popup-blocker si appelee dans un event handler user-initiated.
- */
 export function printKitchenTicket(order: KitchenOrder, options: PrintOptions = {}): boolean {
   const { autoClose = true } = options
   const html = buildStationTicketHTML(order, options)
 
   try {
-    const win = window.open("", "_blank", "width=420,height=640,scrollbars=yes")
+    const win = window.open("", "_blank", "width=360,height=720,scrollbars=yes")
     if (!win) {
       console.warn("[printKitchenTicket] popup bloque")
       return false
@@ -501,12 +378,10 @@ export function printKitchenTicket(order: KitchenOrder, options: PrintOptions = 
     win.document.close()
     win.focus()
 
-    // Lance l'impression apres le chargement
     const doPrint = () => {
       try {
         win.print()
         if (autoClose) {
-          // petit delai pour laisser l'impression se lancer
           setTimeout(() => {
             try {
               win.close()
@@ -521,9 +396,9 @@ export function printKitchenTicket(order: KitchenOrder, options: PrintOptions = 
     }
 
     if (win.document.readyState === "complete") {
-      setTimeout(doPrint, 100)
+      setTimeout(doPrint, 250)
     } else {
-      win.addEventListener("load", () => setTimeout(doPrint, 100))
+      win.addEventListener("load", () => setTimeout(doPrint, 250))
     }
 
     return true
