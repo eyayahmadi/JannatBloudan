@@ -1,7 +1,5 @@
 import { cn } from "@/lib/utils"
-import {
-  buildTicketOptionsHtmlFromItem,
-} from "@/lib/print/ticket-notes"
+import { buildTicketOptionsHtmlFromItem } from "@/lib/print/ticket-notes"
 
 /** Produit commandé avec libellés DE (+ AR optionnel). */
 export type BilingualOrderProduct = {
@@ -59,10 +57,7 @@ export function buildOrderProductNameHtml(
   ].join("")
 }
 
-/**
- * HTML article pour tickets de préparation 80 mm (cuisine / bar / shisha).
- * Arabe en premier, allemand en dessous, quantité très visible, pas de prix.
- */
+/** HTML article — ticket compact : DE + qty à droite, AR dessous, options encadrées. */
 export function buildPrepTicketItemHtml(
   item: BilingualOrderProduct & {
     notes?: string | null
@@ -70,42 +65,23 @@ export function buildPrepTicketItemHtml(
   },
   quantity: number,
 ): string {
-  const { de, ar } = resolveOrderProductNames(item)
-  const qty = Math.max(1, Math.floor(Number(quantity) || 1))
-  const labelDe = de || "—"
+  const nameHtml = buildTicketItemNameHtml(item, quantity)
   const optsHtml = buildTicketOptionsHtmlFromItem({
     options_snapshot: item.options_snapshot,
     notes: item.notes,
-    logContext: labelDe,
+    logContext: String(item.name ?? item.product_name ?? ""),
   })
 
-  const arBlock = ar
-    ? `<div class="item-name-ar" dir="rtl">${escapeOrderProductHtml(ar)}</div>`
-    : ""
-
-  return [
-    `<div class="prep-item">`,
-    `<div class="item-qty">× ${qty}</div>`,
-    `<div class="item-names">`,
-    arBlock,
-    `<div class="item-name-de">${escapeOrderProductHtml(labelDe)}</div>`,
-    `</div>`,
-    optsHtml,
-    `</div>`,
-    `<div class="item-sep" aria-hidden="true"></div>`,
-  ].join("")
+  return [`<div class="item">`, `<div class="item-main">${nameHtml}</div>`, optsHtml, `</div>`].join("")
 }
 
-/**
- * @deprecated Use buildPrepTicketItemHtml for station prep tickets.
- * Kept for legacy invoice/caisse layouts.
- */
+/** Ligne produit : nom DE + quantité à droite, nom AR en dessous. */
 export function buildTicketItemNameHtml(
   item: BilingualOrderProduct,
   quantity: number,
 ): string {
   const { de, ar } = resolveOrderProductNames(item)
-  const qty = `${Math.max(1, Math.floor(Number(quantity) || 1))}x`
+  const qty = `${Math.max(1, Math.floor(Number(quantity) || 1))}×`
   const label = de || "—"
 
   return [

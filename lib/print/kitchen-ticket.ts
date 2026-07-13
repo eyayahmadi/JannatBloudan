@@ -91,6 +91,24 @@ function formatOrderTime(iso: string, locale: string): string {
   })
 }
 
+function formatDateTime(iso: string, locale: string): string {
+  const d = new Date(iso)
+  return d.toLocaleString(resolveIntlLocale(locale), {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+
+const LABELS = {
+  fr: { order: "N° ticket", table: "Table", received: "Reçu à", printed: "Imprimé le" },
+  en: { order: "Ticket #", table: "Table", received: "Received", printed: "Printed at" },
+  ar: { order: "رقم التذكرة", table: "طاولة", received: "وقت الاستلام", printed: "طُبعت في" },
+  de: { order: "Ticket-Nr.", table: "Tisch", received: "Empfangen", printed: "Gedruckt am" },
+} as const
+
 const PRINT_HINT: Record<"fr" | "en" | "ar" | "de", string> = {
   fr: "Si l'impression ne démarre pas, pressez Ctrl+P / Cmd+P",
   en: "If printing does not start, press Ctrl+P / Cmd+P",
@@ -100,14 +118,8 @@ const PRINT_HINT: Record<"fr" | "en" | "ar" | "de", string> = {
 
 const TICKET_STYLES = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  @page {
-    size: 80mm auto;
-    margin: 0;
-  }
-  html {
-    width: 80mm;
-    max-width: 80mm;
-  }
+  @page { size: 80mm auto; margin: 0; }
+  html { width: 80mm; max-width: 80mm; }
   body {
     width: 100%;
     max-width: 80mm;
@@ -117,13 +129,12 @@ const TICKET_STYLES = `
     print-color-adjust: exact;
     font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
     font-weight: 700;
-    font-size: 14px;
-    line-height: 1.22;
+    font-size: 13px;
+    line-height: 1.3;
     margin: 0 auto;
     padding: 1mm 0;
     overflow-wrap: break-word;
     word-wrap: break-word;
-    overflow-x: visible;
   }
   .ticket {
     width: 96%;
@@ -135,228 +146,228 @@ const TICKET_STYLES = `
 
   .header {
     text-align: center;
-    padding-bottom: 4px;
-    margin-bottom: 6px;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
     border-bottom: 2px solid #000;
     width: 100%;
   }
   .restaurant {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 4px;
+    color: #000;
+  }
+  .station-title {
+    font-size: 15px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
     color: #000;
   }
   .station-title-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 20px;
     font-weight: 900;
-    line-height: 1.18;
     direction: rtl;
+    display: inline;
     color: #000;
   }
-  .station-title-de {
-    font-size: 19px;
-    font-weight: 900;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-top: 2px;
+  .station-title-sep {
+    margin: 0 4px;
     color: #000;
   }
-  .order-ref {
-    margin-top: 6px;
-    font-size: 18px;
+  .order-number {
+    font-size: 22px;
     font-weight: 900;
+    margin: 4px auto 0;
+    padding: 8px 6px;
+    border: 3px solid #000;
+    display: inline-block;
+    min-width: 88%;
+    color: #000;
     letter-spacing: 0.5px;
-    color: #000;
   }
 
-  .table-block {
-    text-align: center;
-    margin: 8px 0 10px;
-    padding: 6px 0;
-    border-top: 2px solid #000;
-    border-bottom: 2px solid #000;
-    width: 100%;
-  }
-  .table-label-ar {
-    font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+  .meta {
+    margin: 8px 0;
     font-size: 12px;
-    font-weight: 900;
-    direction: rtl;
-    line-height: 1.18;
+    line-height: 1.5;
+    width: 100%;
     color: #000;
   }
-  .table-label-de {
-    font-size: 11px;
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+  .meta-row strong {
     font-weight: 900;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-top: 2px;
+    flex-shrink: 0;
     color: #000;
   }
-  .table-number {
-    font-size: 36px;
+  .meta-row span {
+    font-weight: 700;
+    text-align: right;
+    word-break: break-word;
+    color: #000;
+  }
+  .meta-table-val {
+    font-size: 22px;
     font-weight: 900;
-    line-height: 1;
-    margin-top: 4px;
-    letter-spacing: 1px;
     color: #000;
   }
 
   .items {
-    margin: 4px 0;
+    padding: 8px 0;
+    border-top: 2px solid #000;
+    border-bottom: 2px solid #000;
+    margin: 8px 0;
     width: 100%;
   }
-  .prep-item {
-    padding: 6px 0 4px;
+  .item {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px dotted #000;
     width: 100%;
-    max-width: 100%;
     overflow: visible;
   }
-  .item-qty {
-    font-size: 17px;
-    font-weight: 900;
-    line-height: 1;
-    margin-bottom: 4px;
+  .item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .item-main {
+    width: 100%;
     color: #000;
   }
-  .item-names {
+  .item-name {
     width: 100%;
-    max-width: 100%;
-    overflow: visible;
+    min-width: 0;
   }
-  .item-name-ar {
-    font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 14px;
+  .name-de-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+  }
+  .name-de {
+    flex: 1;
+    min-width: 0;
+    font-size: 16px;
     font-weight: 900;
-    line-height: 1.22;
+    line-height: 1.25;
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
-    white-space: normal;
+    color: #000;
+  }
+  .qty-inline {
+    flex-shrink: 0;
+    font-size: 18px;
+    font-weight: 900;
+    white-space: nowrap;
+    color: #000;
+  }
+  .name-ar-wrap {
+    margin-top: 2px;
+    width: 100%;
+  }
+  .name-ar {
+    display: block;
+    font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.25;
     text-align: right;
     direction: rtl;
     unicode-bidi: isolate;
-    margin-bottom: 3px;
-    width: 100%;
-    max-width: 100%;
-    overflow: visible;
-    color: #000;
-  }
-  .item-name-de {
-    font-size: 12px;
-    font-weight: 900;
-    line-height: 1.22;
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
-    white-space: normal;
-    width: 100%;
-    max-width: 100%;
-    overflow: visible;
     color: #000;
   }
-  .item-opts {
+
+  .item-options-box {
     margin-top: 5px;
-    padding-top: 4px;
-    border-top: 1px dashed #000;
+    padding: 5px 6px;
+    border: 1px solid #000;
+    background: #fff;
     width: 100%;
-    max-width: 100%;
-    overflow: visible;
     color: #000;
   }
   .opt-group {
-    margin-top: 4px;
+    margin-top: 3px;
     width: 100%;
-    max-width: 100%;
-    overflow: visible;
+  }
+  .opt-group:first-child {
+    margin-top: 0;
   }
   .opt-group-head {
     font-weight: 900;
-    line-height: 1.22;
+    line-height: 1.25;
     margin-bottom: 2px;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
     word-break: break-word;
-    white-space: normal;
-    width: 100%;
-    max-width: 100%;
-    overflow: visible;
     color: #000;
   }
   .opt-group-de {
-    font-size: 9px;
+    font-size: 11px;
+    font-weight: 900;
+    color: #000;
   }
   .opt-group-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 9px;
+    font-size: 11px;
+    font-weight: 900;
     direction: rtl;
     unicode-bidi: isolate;
+    color: #000;
   }
   .opt-group-sep {
-    font-size: 8px;
+    font-size: 11px;
+    color: #000;
   }
   .opt-val-de {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 800;
-    line-height: 1.28;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    line-height: 1.3;
     word-break: break-word;
-    white-space: normal;
-    width: 100%;
-    max-width: 100%;
-    overflow: visible;
     color: #000;
   }
   .opt-val-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 800;
-    line-height: 1.28;
+    line-height: 1.3;
     text-align: right;
     direction: rtl;
     unicode-bidi: isolate;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
     word-break: break-word;
-    white-space: normal;
-    width: 100%;
-    max-width: 100%;
-    overflow: visible;
     color: #000;
   }
-  .item-sep {
-    border-bottom: 2px dashed #000;
-    margin: 4px 0;
-  }
-  .items .prep-item:last-of-type + .item-sep {
-    display: none;
-  }
 
-  .order-time {
-    text-align: center;
-    font-size: 11px;
-    font-weight: 900;
+  .footer {
     margin-top: 8px;
     padding-top: 6px;
-    border-top: 2px solid #000;
+    border-top: 1px dashed #000;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
     color: #000;
   }
 
   @media screen {
-    html {
-      width: auto;
-      max-width: none;
-    }
+    html { width: auto; max-width: none; }
     body {
       width: 80mm;
       max-width: 80mm;
       margin: 12px auto;
       padding: 2mm 0;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      box-shadow: 0 4px 24px #00000030;
     }
     .print-hint {
       text-align: center;
@@ -382,8 +393,6 @@ const TICKET_STYLES = `
       width: 96% !important;
       max-width: 96% !important;
       margin: 0 auto !important;
-      padding: 0 !important;
-      overflow: visible !important;
     }
   }
 `
@@ -399,6 +408,7 @@ export function buildKitchenTicketHTML(order: KitchenOrder, options: PrintOption
 
 function buildProductionTicketHTML(ticket: ProductionTicketOrder, options: PrintOptions = {}): string {
   const { restaurantName = "Jannat Bloudan", locale = "de" } = options
+  const L = LABELS[locale]
   const printHint = PRINT_HINT[locale]
 
   const effectiveStation: Station =
@@ -409,7 +419,6 @@ function buildProductionTicketHTML(ticket: ProductionTicketOrder, options: Print
       : "KITCHEN")
 
   const stationCfg = STATION_PRINT[effectiveStation]
-  const stationTitle = options.title ?? `${stationCfg.titleAr} / ${stationCfg.titleDe}`
 
   const itemsHtml = ticket.items
     .map((item) => buildPrepTicketItemHtml(item, item.quantity))
@@ -420,14 +429,20 @@ function buildProductionTicketHTML(ticket: ProductionTicketOrder, options: Print
       ? escapeHtml(String(ticket.table_number))
       : "—"
 
-  const orderTime = formatOrderTime(ticket.created_at, locale)
+  const receivedTime = formatOrderTime(ticket.created_at, locale)
+  const printedAt = formatDateTime(new Date().toISOString(), locale)
+
+  const tableMetaRow =
+    ticket.table_number !== null && ticket.table_number !== undefined
+      ? `<div class="meta-row"><strong>${L.table}:</strong><span class="meta-table-val">${tableDisplay}</span></div>`
+      : ""
 
   return `<!DOCTYPE html>
 <html lang="${locale}">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=80mm, initial-scale=1" />
-<title>${escapeHtml(stationTitle)} #${escapeHtml(ticket.order_number)}</title>
+<title>${escapeHtml(stationCfg.titleDe)} #${escapeHtml(ticket.order_number)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@700;900&display=swap" rel="stylesheet" />
@@ -438,20 +453,23 @@ function buildProductionTicketHTML(ticket: ProductionTicketOrder, options: Print
   <div class="ticket">
     <header class="header">
       <div class="restaurant">${escapeHtml(restaurantName)}</div>
-      <div class="station-title-ar" dir="rtl">${escapeHtml(stationCfg.titleAr)}</div>
-      <div class="station-title-de">${escapeHtml(stationCfg.titleDe)}</div>
-      <div class="order-ref">#${escapeHtml(ticket.order_number)}</div>
+      <div class="station-title">
+        <span class="station-title-ar" dir="rtl">${escapeHtml(stationCfg.titleAr)}</span>
+        <span class="station-title-sep">/</span>
+        <span>${escapeHtml(stationCfg.titleDe)}</span>
+      </div>
+      <div class="order-number">#${escapeHtml(ticket.order_number)}</div>
     </header>
 
-    <section class="table-block">
-      <div class="table-label-ar" dir="rtl">رقم الطاولة</div>
-      <div class="table-label-de">TISCH / TABLE</div>
-      <div class="table-number">${tableDisplay}</div>
+    <section class="meta">
+      <div class="meta-row"><strong>${L.order}:</strong><span>#${escapeHtml(ticket.order_number)}</span></div>
+      ${tableMetaRow}
+      <div class="meta-row"><strong>${L.received}:</strong><span>${receivedTime}</span></div>
     </section>
 
     <section class="items">${itemsHtml}</section>
 
-    <footer class="order-time">${orderTime}</footer>
+    <footer class="footer">${L.printed}: ${printedAt}</footer>
   </div>
 </body>
 </html>`

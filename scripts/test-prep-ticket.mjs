@@ -81,9 +81,11 @@ describe("kitchen-ticket HTML", () => {
     assert.doesNotMatch(src, /order_type/)
   })
 
-  it("uses 80mm layout with large table number", () => {
+  it("uses compact receipt layout with boxed ticket number", () => {
     assert.match(src, /size: 80mm auto/)
-    assert.match(src, /font-size: 36px/)
+    assert.match(src, /\.order-number/)
+    assert.match(src, /\.meta-row/)
+    assert.match(src, /\.item-options-box/)
     assert.match(src, /Noto Sans Arabic/)
   })
 })
