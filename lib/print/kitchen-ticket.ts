@@ -194,10 +194,11 @@ const TICKET_STYLES = `
     max-width: 100%;
   }
   .item-qty {
-    font-size: 30px;
+    font-size: 25px;
     font-weight: 900;
     line-height: 1;
     margin-bottom: 4px;
+    color: #000;
   }
   .item-names {
     width: 100%;
@@ -205,7 +206,7 @@ const TICKET_STYLES = `
   }
   .item-name-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 900;
     line-height: 1.22;
     word-wrap: break-word;
@@ -217,9 +218,10 @@ const TICKET_STYLES = `
     unicode-bidi: isolate;
     margin-bottom: 3px;
     max-width: 100%;
+    color: #000;
   }
   .item-name-de {
-    font-size: 21px;
+    font-size: 17px;
     font-weight: 900;
     line-height: 1.22;
     word-wrap: break-word;
@@ -227,12 +229,14 @@ const TICKET_STYLES = `
     word-break: break-word;
     white-space: normal;
     max-width: 100%;
+    color: #000;
   }
   .item-opts {
     margin-top: 5px;
     padding-top: 4px;
     border-top: 1px dashed #000;
     max-width: 100%;
+    color: #000;
   }
   .opt-group {
     margin-top: 4px;
@@ -247,21 +251,22 @@ const TICKET_STYLES = `
     word-break: break-word;
     white-space: normal;
     max-width: 100%;
+    color: #000;
   }
   .opt-group-de {
-    font-size: 15px;
+    font-size: 12px;
   }
   .opt-group-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 16px;
+    font-size: 13px;
     direction: rtl;
     unicode-bidi: isolate;
   }
   .opt-group-sep {
-    font-size: 14px;
+    font-size: 11px;
   }
   .opt-val-de {
-    font-size: 16px;
+    font-size: 12px;
     font-weight: 800;
     line-height: 1.28;
     word-wrap: break-word;
@@ -269,10 +274,11 @@ const TICKET_STYLES = `
     word-break: break-word;
     white-space: normal;
     max-width: 100%;
+    color: #000;
   }
   .opt-val-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 17px;
+    font-size: 13px;
     font-weight: 800;
     line-height: 1.28;
     text-align: right;
@@ -283,6 +289,7 @@ const TICKET_STYLES = `
     word-break: break-word;
     white-space: normal;
     max-width: 100%;
+    color: #000;
   }
   .item-sep {
     border-bottom: 2px dashed #000;
