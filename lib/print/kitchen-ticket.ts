@@ -130,31 +130,35 @@ const TICKET_STYLES = `
     border-bottom: 2px solid #000;
   }
   .restaurant {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 4px;
+    color: #000;
   }
   .station-title-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 19px;
+    font-size: 20px;
     font-weight: 900;
     line-height: 1.18;
     direction: rtl;
+    color: #000;
   }
   .station-title-de {
-    font-size: 18px;
+    font-size: 19px;
     font-weight: 900;
     letter-spacing: 1px;
     text-transform: uppercase;
     margin-top: 2px;
+    color: #000;
   }
   .order-ref {
     margin-top: 6px;
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 900;
     letter-spacing: 0.5px;
+    color: #000;
   }
 
   .table-block {
@@ -166,17 +170,19 @@ const TICKET_STYLES = `
   }
   .table-label-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 19px;
+    font-size: 12px;
     font-weight: 900;
     direction: rtl;
     line-height: 1.18;
+    color: #000;
   }
   .table-label-de {
-    font-size: 16px;
+    font-size: 11px;
     font-weight: 900;
     letter-spacing: 1px;
     text-transform: uppercase;
     margin-top: 2px;
+    color: #000;
   }
   .table-number {
     font-size: 36px;
@@ -184,6 +190,7 @@ const TICKET_STYLES = `
     line-height: 1;
     margin-top: 4px;
     letter-spacing: 1px;
+    color: #000;
   }
 
   .items {
@@ -194,7 +201,7 @@ const TICKET_STYLES = `
     max-width: 100%;
   }
   .item-qty {
-    font-size: 25px;
+    font-size: 17px;
     font-weight: 900;
     line-height: 1;
     margin-bottom: 4px;
@@ -206,7 +213,7 @@ const TICKET_STYLES = `
   }
   .item-name-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 20px;
+    font-size: 14px;
     font-weight: 900;
     line-height: 1.22;
     word-wrap: break-word;
@@ -221,7 +228,7 @@ const TICKET_STYLES = `
     color: #000;
   }
   .item-name-de {
-    font-size: 17px;
+    font-size: 12px;
     font-weight: 900;
     line-height: 1.22;
     word-wrap: break-word;
@@ -254,19 +261,19 @@ const TICKET_STYLES = `
     color: #000;
   }
   .opt-group-de {
-    font-size: 12px;
+    font-size: 9px;
   }
   .opt-group-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 13px;
+    font-size: 9px;
     direction: rtl;
     unicode-bidi: isolate;
   }
   .opt-group-sep {
-    font-size: 11px;
+    font-size: 8px;
   }
   .opt-val-de {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 800;
     line-height: 1.28;
     word-wrap: break-word;
@@ -278,7 +285,7 @@ const TICKET_STYLES = `
   }
   .opt-val-ar {
     font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif;
-    font-size: 13px;
+    font-size: 10px;
     font-weight: 800;
     line-height: 1.28;
     text-align: right;
@@ -301,11 +308,12 @@ const TICKET_STYLES = `
 
   .order-time {
     text-align: center;
-    font-size: 16px;
+    font-size: 11px;
     font-weight: 900;
     margin-top: 8px;
     padding-top: 6px;
     border-top: 2px solid #000;
+    color: #000;
   }
 
   @media screen {
