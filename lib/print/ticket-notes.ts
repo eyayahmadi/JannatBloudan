@@ -84,7 +84,7 @@ export function buildTicketOptionsHtml(snapshot: OrderItemOptionsSnapshot): stri
   }
 
   if (!blocks.length) return ""
-  return `<div class="item-options-box">${blocks.join("")}</div>`
+  return `<div class="item-options-box options-box">${blocks.join("")}</div>`
 }
 
 export function buildTicketOptionsHtmlFromItem(input: {

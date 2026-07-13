@@ -72,7 +72,7 @@ export function buildPrepTicketItemHtml(
     logContext: String(item.name ?? item.product_name ?? ""),
   })
 
-  return [`<div class="item">`, `<div class="item-main">${nameHtml}</div>`, optsHtml, `</div>`].join("")
+  return [`<div class="item product-row">`, `<div class="item-main">${nameHtml}</div>`, optsHtml, `</div>`].join("")
 }
 
 /** Ligne produit : nom DE + quantité à droite, nom AR en dessous. */

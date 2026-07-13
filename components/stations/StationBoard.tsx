@@ -642,15 +642,16 @@ export function StationBoard({ station, layout = "full", allowedRoles }: Station
   const handlePrint = useCallback(
     (order: KitchenOrder, stationItems: OrderItem[]) => {
       const stationOnlyOrder: KitchenOrder = { ...order, items: stationItems }
-      const ok = printStationTicket(stationOnlyOrder, {
+      void printStationTicket(stationOnlyOrder, {
         restaurantName: SITE.name,
         locale,
         station,
+      }).then((ok) => {
+        if (!ok) {
+          setToast("Impossible d'ouvrir la fenetre d'impression")
+          setTimeout(() => setToast(null), 3000)
+        }
       })
-      if (!ok) {
-        setToast("Impossible d'ouvrir la fenetre d'impression")
-        setTimeout(() => setToast(null), 3000)
-      }
     },
     [locale, station],
   )

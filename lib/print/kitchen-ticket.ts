@@ -5,6 +5,9 @@
  * Preparation only — never prices, totals, tax, discounts, or payment info.
  */
 
+/** Bump when ticket HTML/CSS changes — visible in printed HTML for cache debugging. */
+export const TICKET_LAYOUT_VERSION = "compact-receipt-v6-fullwidth"
+
 import type { KitchenOrder, OrderItem } from "@/lib/hooks/useRealtimeOrders"
 import type { Station } from "@/lib/stations/config"
 import { buildPrepTicketItemHtml } from "@/lib/orders/order-product-name"
@@ -118,30 +121,52 @@ const PRINT_HINT: Record<"fr" | "en" | "ar" | "de", string> = {
 
 const TICKET_STYLES = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  @page { size: 80mm auto; margin: 0; }
-  html { width: 80mm; max-width: 80mm; }
+  @page {
+    size: 80mm auto;
+    margin: 2mm;
+  }
+  html,
   body {
-    width: 100%;
-    max-width: 80mm;
+    width: 76mm;
+    max-width: 76mm;
+    margin: 0;
+    padding: 0;
     color: #000;
     background: #fff;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    overflow-x: visible;
+  }
+  body {
     font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
     font-weight: 700;
     font-size: 13px;
     line-height: 1.3;
-    margin: 0 auto;
-    padding: 1mm 0;
     overflow-wrap: break-word;
     word-wrap: break-word;
   }
   .ticket {
-    width: 96%;
-    max-width: 96%;
-    margin: 0 auto;
+    width: 100%;
+    max-width: none;
+    margin: 0;
     padding: 0;
     overflow: visible;
+  }
+  .ticket-section,
+  .header,
+  .meta,
+  .items,
+  .footer,
+  .item,
+  .product-row,
+  .item-main,
+  .item-name,
+  .name-de-row,
+  .item-options-box,
+  .options-box {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
   }
 
   .header {
@@ -149,7 +174,6 @@ const TICKET_STYLES = `
     padding-bottom: 6px;
     margin-bottom: 8px;
     border-bottom: 2px solid #000;
-    width: 100%;
   }
   .restaurant {
     font-size: 16px;
@@ -181,11 +205,11 @@ const TICKET_STYLES = `
   .order-number {
     font-size: 22px;
     font-weight: 900;
-    margin: 4px auto 0;
-    padding: 8px 6px;
+    margin: 4px 0 0;
+    padding: 8px 0;
     border: 3px solid #000;
-    display: inline-block;
-    min-width: 88%;
+    display: block;
+    width: 100%;
     color: #000;
     letter-spacing: 0.5px;
   }
@@ -194,7 +218,6 @@ const TICKET_STYLES = `
     margin: 8px 0;
     font-size: 12px;
     line-height: 1.5;
-    width: 100%;
     color: #000;
   }
   .meta-row {
@@ -226,13 +249,11 @@ const TICKET_STYLES = `
     border-top: 2px solid #000;
     border-bottom: 2px solid #000;
     margin: 8px 0;
-    width: 100%;
   }
   .item {
     margin-bottom: 8px;
     padding-bottom: 6px;
     border-bottom: 1px dotted #000;
-    width: 100%;
     overflow: visible;
   }
   .item:last-child {
@@ -292,12 +313,12 @@ const TICKET_STYLES = `
     color: #000;
   }
 
-  .item-options-box {
+  .item-options-box,
+  .options-box {
     margin-top: 5px;
-    padding: 5px 6px;
+    padding: 4px 0;
     border: 1px solid #000;
     background: #fff;
-    width: 100%;
     color: #000;
   }
   .opt-group {
@@ -361,17 +382,17 @@ const TICKET_STYLES = `
   }
 
   @media screen {
-    html { width: auto; max-width: none; }
+    html, body {
+      width: 76mm;
+      max-width: 76mm;
+    }
     body {
-      width: 80mm;
-      max-width: 80mm;
       margin: 12px auto;
-      padding: 2mm 0;
       box-shadow: 0 4px 24px #00000030;
     }
     .print-hint {
       text-align: center;
-      padding: 8px;
+      padding: 8px 4px;
       margin-bottom: 10px;
       background: #000;
       color: #fff;
@@ -383,16 +404,40 @@ const TICKET_STYLES = `
   @media print {
     .print-hint { display: none !important; }
     html, body {
-      width: 80mm !important;
-      max-width: 80mm !important;
+      width: 76mm !important;
+      max-width: 76mm !important;
       margin: 0 !important;
-      padding: 0.5mm 0 !important;
+      padding: 0 !important;
       box-shadow: none !important;
     }
+    .ticket,
+    .ticket-section,
+    .header,
+    .meta,
+    .items,
+    .footer,
+    .item,
+    .product-row,
+    .item-main,
+    .item-name,
+    .name-de-row,
+    .item-options-box,
+    .options-box {
+      width: 100% !important;
+      max-width: none !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      box-sizing: border-box !important;
+    }
     .ticket {
-      width: 96% !important;
-      max-width: 96% !important;
-      margin: 0 auto !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .order-number {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
     }
   }
 `
@@ -448,10 +493,11 @@ function buildProductionTicketHTML(ticket: ProductionTicketOrder, options: Print
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@700;900&display=swap" rel="stylesheet" />
 <style>${TICKET_STYLES}</style>
 </head>
-<body>
+<body data-ticket-layout="${TICKET_LAYOUT_VERSION}">
+  <!-- ticket-layout:${TICKET_LAYOUT_VERSION} -->
   <div class="print-hint">${printHint}</div>
   <div class="ticket">
-    <header class="header">
+    <header class="header ticket-section">
       <div class="restaurant">${escapeHtml(restaurantName)}</div>
       <div class="station-title">
         <span class="station-title-ar" dir="rtl">${escapeHtml(stationCfg.titleAr)}</span>
@@ -461,28 +507,25 @@ function buildProductionTicketHTML(ticket: ProductionTicketOrder, options: Print
       <div class="order-number">#${escapeHtml(ticket.order_number)}</div>
     </header>
 
-    <section class="meta">
+    <section class="meta ticket-section">
       <div class="meta-row"><strong>${L.order}:</strong><span>#${escapeHtml(ticket.order_number)}</span></div>
       ${tableMetaRow}
       <div class="meta-row"><strong>${L.received}:</strong><span>${receivedTime}</span></div>
     </section>
 
-    <section class="items">${itemsHtml}</section>
+    <section class="items ticket-section">${itemsHtml}</section>
 
-    <footer class="footer">${L.printed}: ${printedAt}</footer>
+    <footer class="footer ticket-section">${L.printed}: ${printedAt}</footer>
   </div>
 </body>
 </html>`
 }
 
-export function printStationTicket(order: KitchenOrder, options: PrintOptions = {}): boolean {
+export function printStationTicket(order: KitchenOrder, options: PrintOptions = {}): Promise<boolean> {
   return printKitchenTicket(order, options)
 }
 
-export function printKitchenTicket(order: KitchenOrder, options: PrintOptions = {}): boolean {
-  const { autoClose = true } = options
-  const html = buildStationTicketHTML(order, options)
-
+function openPrintWindow(html: string, autoClose = true): boolean {
   try {
     const win = window.open("", "_blank", "width=360,height=720,scrollbars=yes")
     if (!win) {
@@ -511,10 +554,12 @@ export function printKitchenTicket(order: KitchenOrder, options: PrintOptions = 
       }
     }
 
+    // Wait for fonts/layout (Arabic) before print.
+    const delay = 400
     if (win.document.readyState === "complete") {
-      setTimeout(doPrint, 250)
+      setTimeout(doPrint, delay)
     } else {
-      win.addEventListener("load", () => setTimeout(doPrint, 250))
+      win.addEventListener("load", () => setTimeout(doPrint, delay))
     }
 
     return true
@@ -522,4 +567,42 @@ export function printKitchenTicket(order: KitchenOrder, options: PrintOptions = 
     console.error("[printKitchenTicket] exception:", err)
     return false
   }
+}
+
+/** Fetch fresh HTML from server (avoids stale client bundle), then print. */
+export async function printKitchenTicket(
+  order: KitchenOrder,
+  options: PrintOptions = {},
+): Promise<boolean> {
+  const { autoClose = true, restaurantName, locale, station, title } = options
+  let html: string | null = null
+
+  try {
+    const res = await fetch("/api/stations/print-ticket", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        order,
+        restaurantName,
+        locale,
+        station,
+        title,
+      }),
+      cache: "no-store",
+    })
+    if (res.ok) {
+      const payload = (await res.json()) as { html?: string }
+      if (typeof payload.html === "string" && payload.html.includes("order-number")) {
+        html = payload.html
+      }
+    }
+  } catch (err) {
+    console.warn("[printKitchenTicket] server HTML fallback:", err)
+  }
+
+  if (!html) {
+    html = buildStationTicketHTML(order, options)
+  }
+
+  return openPrintWindow(html, autoClose)
 }

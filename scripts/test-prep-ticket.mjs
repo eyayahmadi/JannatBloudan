@@ -83,6 +83,11 @@ describe("kitchen-ticket HTML", () => {
 
   it("uses compact receipt layout with boxed ticket number", () => {
     assert.match(src, /size: 80mm auto/)
+    assert.match(src, /margin: 2mm/)
+    assert.match(src, /width: 76mm/)
+    assert.match(src, /\.ticket[\s\S]*width: 100%/)
+    assert.match(src, /max-width: none/)
+    assert.doesNotMatch(src, /58mm|60mm|280px/)
     assert.match(src, /\.order-number/)
     assert.match(src, /\.meta-row/)
     assert.match(src, /\.item-options-box/)
