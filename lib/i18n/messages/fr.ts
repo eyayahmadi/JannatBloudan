@@ -1,4 +1,7 @@
 import { landing as landingMessages } from "./landing/landing.fr"
+import { adminMessages } from "./admin/fr"
+import { workspaceMessages } from "./workspace/fr"
+import { caisseMessages } from "./caisse/fr"
 
 export const fr = {
   common: {
@@ -321,6 +324,10 @@ export const fr = {
     noResults: "Aucun plat trouvé.",
     unavailableBadge: "Indisponible",
     resetFilters: "Réinitialiser filtres",
+    openFilters: "Filtres",
+    applyFilters: "Appliquer les filtres",
+    publicHeroSubtitle:
+      "Cuisine syro-libanaise — entrées, grillades, desserts, boissons et chicha.",
     filtersTitle: "Filtres",
     categoryLabel: "Catégorie",
     categoryAll: "Toutes les catégories",
@@ -491,19 +498,23 @@ export const fr = {
     newOrderToast: "DING ! Nouvelle commande !",
     table: "Table",
     orderNumber: "Commande",
-    createdAt: "Recue",
+    createdAt: "Reçue",
+    guestAtTable: "Client table {n}",
     notes: "Notes",
     ticket: {
       title: "TICKET CUISINE",
-      printedAt: "Imprime le",
+      printedAt: "Imprimé le",
       orderType: {
-        qr_self_service: "QR",
+        qr_self_service: "QR (self-service)",
         server: "Serveur",
         pos: "Caisse",
         delivery: "Livraison",
       },
     },
   },
+  admin: adminMessages,
+  workspace: workspaceMessages,
+  caisse: caisseMessages,
 } as const
 
 // Widen les littéraux (chaque chaîne devient `string`) afin que les autres

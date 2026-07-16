@@ -46,17 +46,17 @@ function CategoryCard({
   )
 }
 
-/** Large colored category cards — navigation only, opens category page. */
+/** Large colored category cards — single horizontal swipeable row (QR only). */
 export function QrMenuCategoryCards({ tableId, className }: QrMenuCategoryCardsProps) {
   const router = useRouter()
 
   return (
     <section className={cn("space-y-3", className)} aria-label="Kategorien">
-      <div className="flex gap-3 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden">
+      <div className="flex flex-nowrap gap-3 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {QR_CATEGORY_NAV_CARDS.map((card) => (
           <div
             key={card.slug}
-            className="w-[72%] min-w-[11.5rem] max-w-[16rem] sm:w-auto sm:min-w-0 sm:max-w-none"
+            className="w-[72%] min-w-[11.5rem] max-w-[16rem] shrink-0 snap-start"
           >
             <CategoryCard
               card={card}

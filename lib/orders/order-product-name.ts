@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils"
 import { buildTicketOptionsHtmlFromItem } from "@/lib/print/ticket-notes"
+import { normalizeProductLabel } from "@/lib/orders/sanitize-display-text"
 
 /** Produit commandé avec libellés DE (+ AR optionnel). */
 export type BilingualOrderProduct = {
@@ -13,8 +14,8 @@ export function resolveOrderProductNames(item: BilingualOrderProduct): {
   de: string
   ar: string | null
 } {
-  const de = String(item.name ?? item.product_name ?? "").trim()
-  const arRaw = String(item.name_ar ?? item.product_name_ar ?? "").trim()
+  const de = normalizeProductLabel(item.name ?? item.product_name ?? "")
+  const arRaw = normalizeProductLabel(item.name_ar ?? item.product_name_ar ?? "")
 
   if (!de && arRaw) {
     return { de: arRaw, ar: null }

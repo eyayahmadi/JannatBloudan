@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { resolveRestaurantTableFromRef } from "@/lib/restaurant/resolve-table"
 import { createTableOrder } from "@/lib/orders/create-table-order"
+import { tableGuestCustomerName } from "@/lib/orders/customer-display"
 
 type QrOrderInput = {
   id?: string
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
       })),
       total: body.total,
       orderNumber: body.orderNumber,
-      customerName: body.customerName ?? `Client Table ${tableNumberForOrder}`,
+      customerName: body.customerName ?? tableGuestCustomerName(tableNumberForOrder),
       notes: body.notes ?? null,
       source: "qr_self_service",
     })

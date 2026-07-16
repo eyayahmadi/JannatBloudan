@@ -1091,182 +1091,97 @@
       ]
     },
     {
-      "file": "app/admin/menu/page.tsx",
-      "hits": [
-        {
-          "kind": "jsx-text",
-          "text": "Catégories",
-          "line": 469
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Nouvelle catégorie",
-          "line": 477
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Aucune catégorie.",
-          "line": 510
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Aucun plat trouvé.",
-          "line": 778
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Nom du plat",
-          "line": 799
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Catégorie",
-          "line": 857
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Sélectionner...",
-          "line": 865
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Visible sur le menu client",
-          "line": 889
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Intensité (piment)",
-          "line": 902
-        },
-        {
-          "kind": "jsx-text",
-          "text": "— Non renseigné",
-          "line": 910
-        },
-        {
-          "kind": "jsx-text",
-          "text": "épicé",
-          "line": 913
-        },
-        {
-          "kind": "jsx-text",
-          "text": "par unité de plat",
-          "line": 977
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Ingrédient",
-          "line": 992
-        },
-        {
-          "kind": "attr:title",
-          "text": "Gestion du menu",
-          "line": 448
-        },
-        {
-          "kind": "attr:placeholder",
-          "text": "Rechercher un plat, tag ou description...",
-          "line": 566
-        },
-        {
-          "kind": "attr:placeholder",
-          "text": "Décrivez le plat...",
-          "line": 823
-        },
-        {
-          "kind": "attr:placeholder",
-          "text": "Qté",
-          "line": 1003
-        }
-      ]
-    },
-    {
       "file": "components/caisse/CaisseInvoicesPanel.tsx",
       "hits": [
         {
           "kind": "jsx-text",
           "text": "Impayé:",
-          "line": 347
+          "line": 464
         },
         {
           "kind": "jsx-text",
           "text": "Réductions:",
-          "line": 348
+          "line": 465
         },
         {
           "kind": "jsx-text",
           "text": "Offert/Hospitalité:",
-          "line": 349
+          "line": 466
         },
         {
           "kind": "jsx-text",
           "text": "Annulé:",
-          "line": 350
+          "line": 467
         },
         {
           "kind": "jsx-text",
           "text": "N° facture",
-          "line": 357
+          "line": 475
         },
         {
           "kind": "jsx-text",
           "text": "Client",
-          "line": 358
+          "line": 476
         },
         {
           "kind": "jsx-text",
           "text": "Déjà payé:",
-          "line": 449
+          "line": 566
         },
         {
           "kind": "jsx-text",
           "text": "Espèces",
-          "line": 541
+          "line": 682
         },
         {
           "kind": "jsx-text",
           "text": "Hospitalité / offert (0 €)",
-          "line": 544
+          "line": 685
         },
         {
           "kind": "jsx-text",
           "text": "Espèces",
-          "line": 568
+          "line": 715
         },
         {
           "kind": "jsx-text",
           "text": "Hospitalité / offert (0 €)",
-          "line": 571
+          "line": 718
         },
         {
           "kind": "jsx-text",
           "text": "Espèces",
-          "line": 584
+          "line": 731
         },
         {
           "kind": "jsx-text",
           "text": "Hospitalité / offert (0 €)",
-          "line": 587
+          "line": 734
         },
         {
           "kind": "jsx-text",
           "text": "Annuler une ligne article",
-          "line": 659
+          "line": 821
         },
         {
           "kind": "jsx-text",
           "text": "Conséquence",
-          "line": 663
+          "line": 825
         },
         {
           "kind": "jsx-text",
           "text": "Annulé avant préparation",
-          "line": 672
+          "line": 834
         },
         {
           "kind": "jsx-text",
           "text": "Gaspillage / perte (déjà préparé)",
-          "line": 673
+          "line": 835
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Sélectionner ${inv.id}",
+          "line": 499
         }
       ]
     },
@@ -1357,96 +1272,6 @@
           "kind": "attr:placeholder",
           "text": "Bonjour, vous avez une facture en attente…",
           "line": 677
-        }
-      ]
-    },
-    {
-      "file": "components/server/ServerFloorPlan.tsx",
-      "hits": [
-        {
-          "kind": "jsx-text",
-          "text": "Transfert de table",
-          "line": 420
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Table d&apos;origine (occupée)",
-          "line": 428
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Table destination (libre)",
-          "line": 451
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Appeler la caisse",
-          "line": 504
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Numéro de table",
-          "line": 511
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Fusionner des tables",
-          "line": 547
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Table principale (destinataire)",
-          "line": 556
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Tables à fusionner (au moins 1)",
-          "line": 582
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Plan de salle — Service",
-          "line": 873
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Plan de salle — Service",
-          "line": 890
-        },
-        {
-          "kind": "attr:placeholder",
-          "text": "Ex. client préfère le fond de salle",
-          "line": 479
-        },
-        {
-          "kind": "attr:placeholder",
-          "text": "Ex. clients regroupés sur une grande table",
-          "line": 642
-        },
-        {
-          "kind": "attr:title",
-          "text": "Dissoudre le groupe",
-          "line": 710
-        },
-        {
-          "kind": "attr:title",
-          "text": "Appel serveur",
-          "line": 807
-        },
-        {
-          "kind": "attr:title",
-          "text": "Commande prête",
-          "line": 817
-        },
-        {
-          "kind": "attr:title",
-          "text": "Libérer la table",
-          "line": 832
-        },
-        {
-          "kind": "attr:title",
-          "text": "Dissoudre le groupe (avant paiement)",
-          "line": 855
         }
       ]
     },
@@ -1612,6 +1437,86 @@
           "kind": "jsx-text",
           "text": "Ajoutez des favoris en commandant depuis le menu.",
           "line": 705
+        }
+      ]
+    },
+    {
+      "file": "components/server/ServerFloorPlan.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Transfert de table",
+          "line": 492
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Table d&apos;origine (occupée)",
+          "line": 500
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Table destination (libre)",
+          "line": 523
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Appeler la caisse",
+          "line": 576
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Numéro de table",
+          "line": 583
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Fusionner des tables",
+          "line": 619
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Table principale (destinataire)",
+          "line": 628
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Tables à fusionner (au moins 1)",
+          "line": 654
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Plan de salle — Service",
+          "line": 905
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Plan de salle — Service",
+          "line": 922
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ex. client préfère le fond de salle",
+          "line": 551
+        },
+        {
+          "kind": "attr:placeholder",
+          "text": "Ex. clients regroupés sur une grande table",
+          "line": 714
+        },
+        {
+          "kind": "attr:title",
+          "text": "Dissoudre le groupe",
+          "line": 782
+        },
+        {
+          "kind": "attr:title",
+          "text": "Commande prête",
+          "line": 1048
+        },
+        {
+          "kind": "attr:title",
+          "text": "Dissoudre le groupe (avant paiement)",
+          "line": 1077
         }
       ]
     },
@@ -1891,57 +1796,57 @@
         {
           "kind": "jsx-text",
           "text": "Désactivée",
-          "line": 331
+          "line": 427
         },
         {
           "kind": "jsx-text",
           "text": "Aucune table dans cette zone de plan.",
-          "line": 405
+          "line": 524
         },
         {
           "kind": "jsx-text",
           "text": "N° table",
-          "line": 449
+          "line": 567
         },
         {
           "kind": "jsx-text",
           "text": "Capacité max",
-          "line": 458
+          "line": 576
         },
         {
           "kind": "jsx-text",
           "text": "Nom affiché (optionnel)",
-          "line": 467
+          "line": 585
         },
         {
           "kind": "jsx-text",
           "text": "Zone métier",
-          "line": 480
+          "line": 598
         },
         {
           "kind": "jsx-text",
           "text": "Statut (réf. caisse)",
-          "line": 521
+          "line": 639
         },
         {
           "kind": "jsx-text",
           "text": "Table active (QR utilisable)",
-          "line": 542
+          "line": 660
         },
         {
           "kind": "jsx-text",
           "text": "URL des QR&nbsp;:",
-          "line": 592
+          "line": 735
         },
         {
           "kind": "attr:title",
           "text": "Regénère les QR codes avec l'URL publique actuelle",
-          "line": 278
+          "line": 334
         },
         {
           "kind": "attr:placeholder",
           "text": "ex. t12 ou vip-nord",
-          "line": 475
+          "line": 593
         }
       ]
     },
@@ -1951,57 +1856,57 @@
         {
           "kind": "jsx-text",
           "text": "Factures journée",
-          "line": 493
+          "line": 507
         },
         {
           "kind": "jsx-text",
           "text": "Estimation TVA (règle admin)",
-          "line": 509
+          "line": 523
         },
         {
           "kind": "jsx-text",
           "text": "Dernière clôture (date)",
-          "line": 532
+          "line": 546
         },
         {
           "kind": "jsx-text",
           "text": "Pas encore clôturée aujourd’hui.",
-          "line": 541
+          "line": 555
         },
         {
           "kind": "jsx-text",
           "text": "Aucune alerte automatique détectée.",
-          "line": 565
+          "line": 579
         },
         {
           "kind": "jsx-text",
           "text": "Tickets événements (jour sélectionné)",
-          "line": 673
+          "line": 687
         },
         {
           "kind": "jsx-text",
           "text": "Espèces comptées (physique)",
-          "line": 705
+          "line": 719
         },
         {
           "kind": "jsx-text",
           "text": "Espèces déclarées (officiel)",
-          "line": 715
+          "line": 729
         },
         {
           "kind": "jsx-text",
           "text": "Commentaire (écart, incident)",
-          "line": 726
+          "line": 740
         },
         {
           "kind": "jsx-text",
           "text": "Avance salarié (sortie instantanée en caisse)",
-          "line": 1049
+          "line": 1063
         },
         {
           "kind": "attr:title",
           "text": "Synthèse du jour",
-          "line": 389
+          "line": 403
         }
       ]
     },
@@ -2011,57 +1916,57 @@
         {
           "kind": "jsx-text",
           "text": "Téléphone",
-          "line": 261
+          "line": 270
         },
         {
           "kind": "jsx-text",
           "text": "Paiement sécurisé en ligne",
-          "line": 317
+          "line": 326
         },
         {
           "kind": "jsx-text",
           "text": "Paiement rapide avec Apple Pay",
-          "line": 353
+          "line": 362
         },
         {
           "kind": "jsx-text",
           "text": "Espèces à la livraison",
-          "line": 369
+          "line": 378
         },
         {
           "kind": "jsx-text",
           "text": "Payer à la caisse du restaurant",
-          "line": 386
+          "line": 395
         },
         {
           "kind": "jsx-text",
           "text": "Payez sur place au retrait",
-          "line": 387
+          "line": 396
         },
         {
           "kind": "jsx-text",
           "text": "Récapitulatif",
-          "line": 479
+          "line": 488
         },
         {
           "kind": "jsx-text",
           "text": "Votre panier est vide.",
-          "line": 484
+          "line": 493
         },
         {
           "kind": "jsx-text",
           "text": "Retour au menu",
-          "line": 486
+          "line": 495
         },
         {
           "kind": "jsx-text",
           "text": "Facture PDF envoyée par email",
-          "line": 533
+          "line": 543
         },
         {
           "kind": "attr:placeholder",
           "text": "123 Rue de la République",
-          "line": 232
+          "line": 241
         }
       ]
     },
@@ -2071,57 +1976,57 @@
         {
           "kind": "jsx-text",
           "text": "Tous",
-          "line": 1165
+          "line": 395
         },
         {
           "kind": "jsx-text",
           "text": "Type de service",
-          "line": 1438
+          "line": 671
         },
         {
           "kind": "jsx-text",
           "text": "Votre panier",
-          "line": 1496
+          "line": 729
         },
         {
           "kind": "jsx-text",
           "text": "Votre panier est vide",
-          "line": 1505
+          "line": 738
         },
         {
           "kind": "jsx-text",
           "text": "Ajoutez des plats pour commencer votre commande",
-          "line": 1506
+          "line": 739
         },
         {
           "kind": "jsx-text",
           "text": "Parcourir le menu",
-          "line": 1507
+          "line": 740
         },
         {
           "kind": "jsx-text",
           "text": "Frais de livraison",
-          "line": 1573
+          "line": 806
         },
         {
           "kind": "attr:placeholder",
           "text": "Rechercher un plat…",
-          "line": 1097
+          "line": 327
         },
         {
           "kind": "attr:title",
           "text": "Nos créations",
-          "line": 1144
+          "line": 374
         },
         {
           "kind": "attr:placeholder",
           "text": "Ex: Sans oignons, bien cuit...",
-          "line": 1468
+          "line": 701
         },
         {
           "kind": "attr:aria-label",
           "text": "${cartItemsCount} articles dans le panier",
-          "line": 1129
+          "line": 359
         }
       ]
     },
@@ -2236,97 +2141,47 @@
         {
           "kind": "jsx-text",
           "text": "Commande",
-          "line": 260
+          "line": 264
         },
         {
           "kind": "jsx-text",
           "text": "Suivi de commande",
-          "line": 272
+          "line": 276
         },
         {
           "kind": "jsx-text",
           "text": "Details de la commande",
-          "line": 359
+          "line": 363
         },
         {
           "kind": "jsx-text",
           "text": "Nous n'avons pas retrouve les details de cette commande.",
-          "line": 364
+          "line": 368
         },
         {
           "kind": "jsx-text",
           "text": "Retour au menu",
-          "line": 366
+          "line": 370
         },
         {
           "kind": "jsx-text",
           "text": "Votre livreur",
-          "line": 423
+          "line": 427
         },
         {
           "kind": "jsx-text",
           "text": "99084 Erfurt, Thüringen",
-          "line": 456
+          "line": 460
         },
         {
           "kind": "jsx-text",
           "text": "Votre commande arrive bientot !",
-          "line": 469
+          "line": 473
         },
         {
           "kind": "jsx-text",
           "text": "Besoin d'aide avec votre commande ?",
-          "line": 476
-        }
-      ]
-    },
-    {
-      "file": "app/server/[tableId]/page.tsx",
-      "hits": [
-        {
-          "kind": "jsx-text",
-          "text": "· cette table est la principale du groupe.",
-          "line": 342
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Ajoutez des plats",
-          "line": 633
-        },
-        {
-          "kind": "attr:title",
-          "text": "Annuler la commande complète",
-          "line": 466
-        },
-        {
-          "kind": "attr:title",
-          "text": "Modifier quantité",
-          "line": 511
-        },
-        {
-          "kind": "attr:title",
-          "text": "Modifier note / allergie",
-          "line": 520
-        },
-        {
-          "kind": "attr:title",
-          "text": "Annuler cet item avec raison",
-          "line": 531
-        },
-        {
-          "kind": "attr:placeholder",
-          "text": "Rechercher un produit...",
-          "line": 559
-        },
-        {
-          "kind": "attr:placeholder",
-          "text": "Note / allergie (ex. sans oignon, sans gluten…)",
-          "line": 672
-        },
-        {
-          "kind": "attr:title",
-          "text": "Table ${tableId}",
-          "line": 287
+          "line": 480
         }
       ]
     },
@@ -2651,37 +2506,77 @@
         {
           "kind": "jsx-text",
           "text": "Mes commandes",
-          "line": 89
+          "line": 96
         },
         {
           "kind": "jsx-text",
           "text": "Suivi en temps réel de vos livraisons.",
-          "line": 90
+          "line": 97
         },
         {
           "kind": "jsx-text",
           "text": "Articles commandés:",
-          "line": 116
+          "line": 123
         },
         {
           "kind": "jsx-text",
           "text": "Voir détails",
-          "line": 190
+          "line": 199
         },
         {
           "kind": "jsx-text",
           "text": "Aucune commande",
-          "line": 204
+          "line": 213
         },
         {
           "kind": "jsx-text",
           "text": "Commencez à commander pour voir vos commandes ici",
-          "line": 205
+          "line": 214
         },
         {
           "kind": "jsx-text",
           "text": "Parcourir le menu",
-          "line": 207
+          "line": 216
+        }
+      ]
+    },
+    {
+      "file": "app/server/[tableId]/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "· cette table est la principale du groupe.",
+          "line": 341
+        },
+        {
+          "kind": "attr:title",
+          "text": "Annuler la commande complète",
+          "line": 453
+        },
+        {
+          "kind": "attr:title",
+          "text": "Modifier quantité",
+          "line": 502
+        },
+        {
+          "kind": "attr:title",
+          "text": "Modifier note / allergie",
+          "line": 511
+        },
+        {
+          "kind": "attr:title",
+          "text": "Annuler cet item avec raison",
+          "line": 522
+        },
+        {
+          "kind": "attr:title",
+          "text": "Table ${displayLabel}",
+          "line": 245
+        },
+        {
+          "kind": "attr:title",
+          "text": "Table ${displayLabel}",
+          "line": 269
         }
       ]
     },
@@ -2691,37 +2586,32 @@
         {
           "kind": "jsx-text",
           "text": "À emporter",
-          "line": 246
+          "line": 243
         },
         {
           "kind": "jsx-text",
           "text": "Téléphone",
-          "line": 247
+          "line": 244
         },
         {
           "kind": "jsx-text",
           "text": "Ajoutez des plats",
-          "line": 372
+          "line": 319
         },
         {
           "kind": "attr:title",
           "text": "Commande sans table",
-          "line": 191
+          "line": 188
         },
         {
           "kind": "attr:placeholder",
           "text": "Ex. à venir chercher dans 20 min",
-          "line": 283
-        },
-        {
-          "kind": "attr:placeholder",
-          "text": "Rechercher un produit...",
-          "line": 294
+          "line": 280
         },
         {
           "kind": "attr:placeholder",
           "text": "Note / allergie (ex. sans oignon)",
-          "line": 428
+          "line": 383
         }
       ]
     },
@@ -2922,6 +2812,31 @@
           "kind": "jsx-text",
           "text": "Serveur",
           "line": 516
+        }
+      ]
+    },
+    {
+      "file": "app/admin/menu/products/page.tsx",
+      "hits": [
+        {
+          "kind": "attr:aria-label",
+          "text": "Verfügbarkeit",
+          "line": 488
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Löschen",
+          "line": 494
+        },
+        {
+          "kind": "attr:title",
+          "text": "Menu Management",
+          "line": 505
+        },
+        {
+          "kind": "attr:title",
+          "text": "Produkt löschen",
+          "line": 651
         }
       ]
     },
@@ -3281,37 +3196,37 @@
         {
           "kind": "jsx-text",
           "text": "Table",
-          "line": 176
+          "line": 239
         },
         {
           "kind": "attr:placeholder",
           "text": "Table...",
-          "line": 135
+          "line": 197
         },
         {
           "kind": "attr:title",
           "text": "Ignorer la demande",
-          "line": 261
+          "line": 342
         }
       ]
     },
     {
-      "file": "app/table/[tableId]/menu/page.tsx",
+      "file": "app/table/[tableId]/bill/page.tsx",
       "hits": [
         {
           "kind": "jsx-text",
-          "text": "Menu",
-          "line": 167
+          "text": "Récapitulatif",
+          "line": 91
         },
         {
           "kind": "jsx-text",
-          "text": "Voir le panier",
-          "line": 288
+          "text": "Aucune commande sur cette table.",
+          "line": 94
         },
         {
           "kind": "jsx-text",
-          "text": "Ajoutez des plats pour commencer",
-          "line": 318
+          "text": "À payer",
+          "line": 135
         }
       ]
     },
@@ -3352,6 +3267,66 @@
           "kind": "jsx-text",
           "text": "Téléphone",
           "line": 110
+        }
+      ]
+    },
+    {
+      "file": "components/admin/menu/ProductFormExtrasPanel.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Speichern Sie das Produkt zuerst, dann Extras hinzufügen.",
+          "line": 48
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Extras für Waffle, Crêpe, Pancake usw.",
+          "line": 83
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Name (DE)",
+          "line": 119
+        }
+      ]
+    },
+    {
+      "file": "components/admin/menu/ProductFormModal.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Name (DE)",
+          "line": 148
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Beschreibung (DE)",
+          "line": 157
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Strg/Cmd + Klick für Mehrfachauswahl",
+          "line": 245
+        }
+      ]
+    },
+    {
+      "file": "components/admin/menu/ProductFormVariantsPanel.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Speichern Sie das Produkt zuerst, dann Varianten hinzufügen.",
+          "line": 48
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Größen: Klein/Groß, Glas/Kanne, 0.25L/0.75L …",
+          "line": 83
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Variante (DE)",
+          "line": 112
         }
       ]
     },
@@ -3441,6 +3416,66 @@
       ]
     },
     {
+      "file": "app/admin/menu/categories/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Name (DE)",
+          "line": 201
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Löschen",
+          "line": 187
+        }
+      ]
+    },
+    {
+      "file": "app/admin/menu/extras/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Wählen…",
+          "line": 112
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Name (DE)",
+          "line": 121
+        }
+      ]
+    },
+    {
+      "file": "app/admin/menu/recommendations/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Wählen…",
+          "line": 71
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Strg/Cmd + Klick für Mehrfachauswahl",
+          "line": 97
+        }
+      ]
+    },
+    {
+      "file": "app/admin/menu/variants/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Wählen…",
+          "line": 83
+        },
+        {
+          "kind": "attr:title",
+          "text": "Varianten (Größen)",
+          "line": 73
+        }
+      ]
+    },
+    {
       "file": "app/admin/settings/page.tsx",
       "hits": [
         {
@@ -3456,32 +3491,17 @@
       ]
     },
     {
-      "file": "app/table/[tableId]/bill/page.tsx",
-      "hits": [
-        {
-          "kind": "jsx-text",
-          "text": "Récapitulatif",
-          "line": 89
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Aucune commande sur cette table.",
-          "line": 92
-        }
-      ]
-    },
-    {
       "file": "app/table/[tableId]/order/page.tsx",
       "hits": [
         {
           "kind": "jsx-text",
           "text": "Commande annulée",
-          "line": 135
+          "line": 144
         },
         {
           "kind": "jsx-text",
           "text": "Chargement de la commande…",
-          "line": 217
+          "line": 238
         }
       ]
     },
@@ -3501,17 +3521,47 @@
       ]
     },
     {
+      "file": "components/admin/menu/CategoryFormModal.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Name (DE)",
+          "line": 79
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Beschreibung (Untertitel Menü)",
+          "line": 88
+        }
+      ]
+    },
+    {
+      "file": "components/admin/TablesQrPrintCenter.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Capacité",
+          "line": 114
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Scannez pour commander",
+          "line": 168
+        }
+      ]
+    },
+    {
       "file": "components/caisse/CaisseFloorPlan.tsx",
       "hits": [
         {
           "kind": "jsx-text",
           "text": "Gérer QR",
-          "line": 283
+          "line": 333
         },
         {
           "kind": "jsx-text",
           "text": "Payé",
-          "line": 492
+          "line": 562
         }
       ]
     },
@@ -3531,17 +3581,47 @@
       ]
     },
     {
+      "file": "components/menu/qr/QrMenuSearchOverlay.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Zurück",
+          "line": 91
+        },
+        {
+          "kind": "attr:aria-label",
+          "text": "Zurück zur Startseite",
+          "line": 88
+        }
+      ]
+    },
+    {
+      "file": "components/menu/qr/QrProductDetailSheet.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Größe wählen",
+          "line": 207
+        },
+        {
+          "kind": "jsx-text",
+          "text": "Extras wählen",
+          "line": 241
+        }
+      ]
+    },
+    {
       "file": "components/server/SplitBillDialog.tsx",
       "hits": [
         {
           "kind": "jsx-text",
           "text": "Table concernée",
-          "line": 212
+          "line": 215
         },
         {
           "kind": "attr:placeholder",
           "text": "Nom de la personne ${idx + 1} (ex. Sami)",
-          "line": 275
+          "line": 278
         }
       ]
     },
@@ -3581,12 +3661,12 @@
         {
           "kind": "jsx-text",
           "text": "Client",
-          "line": 47
+          "line": 48
         },
         {
           "kind": "jsx-text",
           "text": "Validée",
-          "line": 91
+          "line": 94
         }
       ]
     },
@@ -3751,6 +3831,16 @@
       ]
     },
     {
+      "file": "app/admin/menu/homepage/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Produkt hinzufügen…",
+          "line": 99
+        }
+      ]
+    },
+    {
       "file": "app/admin/purchases/page.tsx",
       "hits": [
         {
@@ -3794,9 +3884,9 @@
       "file": "app/pos/page.tsx",
       "hits": [
         {
-          "kind": "attr:placeholder",
-          "text": "Rechercher un produit...",
-          "line": 216
+          "kind": "jsx-text",
+          "text": "À payer",
+          "line": 320
         }
       ]
     },
@@ -3807,6 +3897,26 @@
           "kind": "jsx-text",
           "text": "JSON brut — débogage uniquement.",
           "line": 44
+        }
+      ]
+    },
+    {
+      "file": "components/admin/menu/MenuAdminShell.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Menu Management",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "file": "components/admin/menu/ProductAttributePicker.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Verfügbarkeit",
+          "line": 37
         }
       ]
     },
@@ -3841,22 +3951,52 @@
       ]
     },
     {
+      "file": "components/menu/qr/QrMenuCartSheet.tsx",
+      "hits": [
+        {
+          "kind": "attr:aria-label",
+          "text": "Menge erhöhen",
+          "line": 210
+        }
+      ]
+    },
+    {
+      "file": "components/menu/qr/QrMenuHero.tsx",
+      "hits": [
+        {
+          "kind": "attr:aria-label",
+          "text": "Zurück",
+          "line": 56
+        }
+      ]
+    },
+    {
+      "file": "components/menu/qr/QrMenuSearch.tsx",
+      "hits": [
+        {
+          "kind": "attr:aria-label",
+          "text": "Suche löschen",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "file": "components/menu/StaffMenuPicker.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Menu wird geladen…",
+          "line": 62
+        }
+      ]
+    },
+    {
       "file": "components/site/BloudanLogoMark.tsx",
       "hits": [
         {
           "kind": "jsx-text",
           "text": "Bloudan — relief et forêts",
           "line": 116
-        }
-      ]
-    },
-    {
-      "file": "components/site/NotificationCenter.tsx",
-      "hits": [
-        {
-          "kind": "attr:title",
-          "text": "Vue administrateur — toutes les notifications de tous les rôles",
-          "line": 50
         }
       ]
     },
@@ -3881,6 +4021,6 @@
       ]
     }
   ],
-  "totalStrings": 669,
-  "totalFiles": 107
+  "totalStrings": 681,
+  "totalFiles": 123
 }

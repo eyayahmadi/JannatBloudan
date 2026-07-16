@@ -18,57 +18,89 @@ import type { AppRole } from "@/lib/auth/roles"
 
 export type WorkspaceNavItem = {
   id: string
-  label: string
+  labelKey: string
   href: string
   icon: LucideIcon
-  /** Si défini, affiché comme badge discret (ex. bientôt) */
-  hint?: string
+  hintKey?: string
 }
 
 const SERVER_NAV: WorkspaceNavItem[] = [
-  { id: "tables", label: "Plan de salle & tables", href: "/server/tables", icon: LayoutGrid },
-  { id: "walk-in", label: "Commande sans table", href: "/server/walk-in", icon: PackageOpen },
+  { id: "tables", labelKey: "workspace.nav.server.tables", href: "/server/tables", icon: LayoutGrid },
+  { id: "walk-in", labelKey: "workspace.nav.server.walkIn", href: "/server/walk-in", icon: PackageOpen },
 ]
 
 const KITCHEN_NAV: WorkspaceNavItem[] = [
-  { id: "orders", label: "Commandes cuisine (KDS)", href: "/kitchen/orders", icon: ChefHat },
+  { id: "orders", labelKey: "workspace.nav.kitchen.orders", href: "/kitchen/orders", icon: ChefHat },
 ]
 
-const BAR_NAV: WorkspaceNavItem[] = [{ id: "orders", label: "Commandes bar", href: "/bar/orders", icon: Wine }]
+const BAR_NAV: WorkspaceNavItem[] = [
+  { id: "orders", labelKey: "workspace.nav.bar.orders", href: "/bar/orders", icon: Wine },
+]
 
-const SHISHA_NAV: WorkspaceNavItem[] = [{ id: "orders", label: "Commandes chicha", href: "/shisha/orders", icon: Wind }]
+const SHISHA_NAV: WorkspaceNavItem[] = [
+  { id: "orders", labelKey: "workspace.nav.shisha.orders", href: "/shisha/orders", icon: Wind },
+]
 
 const CASHIER_NAV: WorkspaceNavItem[] = [
-  { id: "caisse", label: "Caisse — synthèse", href: "/caisse?tab=vue", icon: Banknote },
-  { id: "pos", label: "POS", href: "/pos", icon: Monitor },
+  { id: "caisse", labelKey: "workspace.nav.cashier.caisse", href: "/caisse?tab=vue", icon: Banknote },
+  { id: "pos", labelKey: "workspace.nav.cashier.pos", href: "/pos", icon: Monitor },
   {
     id: "encaisser",
-    label: "Tables à encaisser",
+    labelKey: "workspace.nav.cashier.encaisser",
     href: "/caisse?tab=encaisser",
     icon: Receipt,
-    hint: "addition demandée · partiel · non payée",
+    hintKey: "workspace.nav.cashier.encaisserHint",
   },
-  { id: "tables", label: "Tables & sessions", href: "/caisse?tab=tables", icon: Table2, hint: "onglet Tables" },
-  { id: "factures", label: "Factures du jour", href: "/caisse?tab=factures", icon: Banknote, hint: "onglet Factures" },
-  { id: "externes", label: "Entrées externes", href: "/caisse?tab=externes", icon: Truck, hint: "Lieferando · Wolt · virements" },
-  { id: "mouvements", label: "Mouvements caisse", href: "/caisse?tab=mouvements", icon: Wallet, hint: "sorties / avances" },
-  { id: "cloture", label: "Clôture caisse", href: "/caisse?tab=cloture", icon: Banknote, hint: "fin de service" },
+  {
+    id: "tables",
+    labelKey: "workspace.nav.cashier.tables",
+    href: "/caisse?tab=tables",
+    icon: Table2,
+    hintKey: "workspace.nav.cashier.tablesHint",
+  },
+  {
+    id: "factures",
+    labelKey: "workspace.nav.cashier.factures",
+    href: "/caisse?tab=factures",
+    icon: Banknote,
+    hintKey: "workspace.nav.cashier.facturesHint",
+  },
+  {
+    id: "externes",
+    labelKey: "workspace.nav.cashier.externes",
+    href: "/caisse?tab=externes",
+    icon: Truck,
+    hintKey: "workspace.nav.cashier.externesHint",
+  },
+  {
+    id: "mouvements",
+    labelKey: "workspace.nav.cashier.mouvements",
+    href: "/caisse?tab=mouvements",
+    icon: Wallet,
+    hintKey: "workspace.nav.cashier.mouvementsHint",
+  },
+  {
+    id: "cloture",
+    labelKey: "workspace.nav.cashier.cloture",
+    href: "/caisse?tab=cloture",
+    icon: Banknote,
+    hintKey: "workspace.nav.cashier.clotureHint",
+  },
 ]
 
 const DELIVERY_NAV: WorkspaceNavItem[] = [
-  { id: "dash", label: "Livraisons assignées", href: "/delivery/dashboard", icon: Truck },
-  { id: "driver", label: "Vue chauffeur (carte)", href: "/driver", icon: MapPin },
+  { id: "dash", labelKey: "workspace.nav.delivery.dash", href: "/delivery/dashboard", icon: Truck },
+  { id: "driver", labelKey: "workspace.nav.delivery.driver", href: "/driver", icon: MapPin },
 ]
 
-/** Liens rapides lorsqu’un ADMIN ouvre l’interface équipe (hors AdminPortalShell). */
 const ADMIN_WORKSPACE_NAV: WorkspaceNavItem[] = [
-  { id: "admin", label: "Admin ERP", href: "/admin", icon: ClipboardList },
-  { id: "tables", label: "Plan salle", href: "/server/tables", icon: LayoutGrid },
-  { id: "kitchen", label: "Cuisine (KDS)", href: "/kitchen/orders", icon: ChefHat },
-  { id: "bar", label: "Bar", href: "/bar/orders", icon: Wine },
-  { id: "shisha", label: "Chicha", href: "/shisha/orders", icon: Wind },
-  { id: "caisse", label: "Caisse", href: "/caisse", icon: Banknote },
-  { id: "delivery", label: "Livraison", href: "/delivery/dashboard", icon: Truck },
+  { id: "admin", labelKey: "workspace.nav.admin.erp", href: "/admin", icon: ClipboardList },
+  { id: "tables", labelKey: "workspace.nav.admin.tables", href: "/server/tables", icon: LayoutGrid },
+  { id: "kitchen", labelKey: "workspace.nav.admin.kitchen", href: "/kitchen/orders", icon: ChefHat },
+  { id: "bar", labelKey: "workspace.nav.admin.bar", href: "/bar/orders", icon: Wine },
+  { id: "shisha", labelKey: "workspace.nav.admin.shisha", href: "/shisha/orders", icon: Wind },
+  { id: "caisse", labelKey: "workspace.nav.admin.caisse", href: "/caisse", icon: Banknote },
+  { id: "delivery", labelKey: "workspace.nav.admin.delivery", href: "/delivery/dashboard", icon: Truck },
 ]
 
 export function workspaceNavForRole(role: AppRole): WorkspaceNavItem[] {

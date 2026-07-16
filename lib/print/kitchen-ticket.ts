@@ -4,12 +4,14 @@
  */
 
 /** Bump when ticket HTML/CSS changes — visible in printed HTML for cache debugging. */
-export const TICKET_LAYOUT_VERSION = "classic-receipt-v7-black"
+export const TICKET_LAYOUT_VERSION = "classic-receipt-v8-no-price"
 
 import type { KitchenOrder, OrderItem, OrderType } from "@/lib/hooks/useRealtimeOrders"
 import type { Station } from "@/lib/stations/config"
 import { resolveOrderProductNames } from "@/lib/orders/order-product-name"
 import { buildTicketOptionsHtmlFromItem } from "@/lib/print/ticket-notes"
+import { normalizeOrderNumber } from "@/lib/orders/sanitize-display-text"
+import { resolveOrderCustomerDisplay } from "@/lib/orders/customer-display"
 
 export type PrintOptions = {
   restaurantName?: string
@@ -59,10 +61,9 @@ const LABELS = {
   fr: {
     table: "Table",
     type: "Type",
-    received: "Recue",
+    received: "Reçue",
     client: "Client",
-    total: "Total",
-    printed: "Imprime le",
+    printed: "Imprimé le",
     types: {
       qr_self_service: "QR (self-service)",
       server: "Serveur",
@@ -75,7 +76,6 @@ const LABELS = {
     type: "Type",
     received: "Received",
     client: "Client",
-    total: "Total",
     printed: "Printed at",
     types: {
       qr_self_service: "QR (self-service)",
@@ -89,7 +89,6 @@ const LABELS = {
     type: "نوع",
     received: "استُلم",
     client: "العميل",
-    total: "المجموع",
     printed: "طُبعت في",
     types: {
       qr_self_service: "QR (خدمة ذاتية)",
@@ -103,7 +102,6 @@ const LABELS = {
     type: "Typ",
     received: "Empfangen",
     client: "Kunde",
-    total: "Gesamt",
     printed: "Gedruckt am",
     types: {
       qr_self_service: "QR (Self-Service)",
@@ -177,19 +175,6 @@ function resolveStation(order: KitchenOrder, station?: Station): Station {
 function orderTypeLabel(locale: PrintOptions["locale"], orderType: OrderType): string {
   const L = LABELS[locale ?? "fr"]
   return L.types[orderType] ?? orderType
-}
-
-function computeTicketTotal(order: KitchenOrder): number {
-  const priced = order.items.reduce((sum, item) => {
-    const price = Number(item.unit_price)
-    if (Number.isFinite(price) && price > 0) {
-      return sum + price * item.quantity
-    }
-    return sum
-  }, 0)
-  if (priced > 0) return Math.round(priced * 100) / 100
-  const total = Number(order.total)
-  return Number.isFinite(total) ? total : 0
 }
 
 function buildClassicItemHtml(item: OrderItem): string {
@@ -423,18 +408,6 @@ const TICKET_STYLES = `
     unicode-bidi: isolate;
     text-align: right;
   }
-  .total {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 8px;
-    padding: 8px 0;
-    font-weight: 900;
-    font-size: 14px;
-    border-top: 2px dashed #000;
-    margin-top: 4px;
-    color: #000;
-  }
   .footer {
     margin-top: 8px;
     padding-top: 6px;
@@ -508,9 +481,9 @@ export function buildStationTicketHTML(order: KitchenOrder, options: PrintOption
   const stationCfg = STATION_PRINT[effectiveStation]
   const ticketTitle = options.title ?? stationCfg.titles[locale]
   const emoji = stationCfg.emoji
+  const orderNumber = normalizeOrderNumber(order.order_number)
 
   const itemsHtml = order.items.map((item) => buildClassicItemHtml(item)).join("")
-  const total = computeTicketTotal(order)
   const receivedTime = formatOrderTime(order.created_at, locale)
   const printedAt = formatDateTime(new Date().toISOString(), locale)
 
@@ -519,8 +492,13 @@ export function buildStationTicketHTML(order: KitchenOrder, options: PrintOption
       ? `<div class="meta-row"><strong>${L.table}:</strong><span>${escapeHtml(String(order.table_number))}</span></div>`
       : ""
 
-  const clientMetaRow = order.customer_name
-    ? `<div class="meta-row"><strong>${L.client}:</strong><span>${escapeHtml(order.customer_name)}</span></div>`
+  const clientDisplay = resolveOrderCustomerDisplay(
+    order.customer_name,
+    order.table_number,
+    locale,
+  )
+  const clientMetaRow = clientDisplay
+    ? `<div class="meta-row"><strong>${L.client}:</strong><span>${escapeHtml(clientDisplay)}</span></div>`
     : ""
 
   return `<!DOCTYPE html>
@@ -528,7 +506,7 @@ export function buildStationTicketHTML(order: KitchenOrder, options: PrintOption
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>${escapeHtml(ticketTitle)} #${escapeHtml(order.order_number)}</title>
+<title>${escapeHtml(ticketTitle)} #${escapeHtml(orderNumber)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@700;900&display=swap" rel="stylesheet" />
@@ -542,7 +520,7 @@ export function buildStationTicketHTML(order: KitchenOrder, options: PrintOption
       <div class="restaurant">${escapeHtml(restaurantName)}</div>
       <div class="station-badge">${emoji} ${escapeHtml(ticketTitle)}</div>
       <div class="title">*** ${escapeHtml(ticketTitle)} ***</div>
-      <div class="order-number">#${escapeHtml(order.order_number)}</div>
+      <div class="order-number">#${escapeHtml(orderNumber)}</div>
     </header>
 
     <section class="meta">
@@ -559,11 +537,6 @@ export function buildStationTicketHTML(order: KitchenOrder, options: PrintOption
     </section>
 
     <section class="items">${itemsHtml}</section>
-
-    <div class="total">
-      <span>${L.total}</span>
-      <span>${total.toFixed(2)} DT</span>
-    </div>
 
     <footer class="footer">${L.printed}: ${printedAt}</footer>
   </div>

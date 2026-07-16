@@ -16,18 +16,30 @@ import {
 import Link from "next/link"
 import { useAdminPortal } from "@/components/admin/admin-portal-context"
 import { RequireAuth } from "@/components/auth/RequireAuth"
+import { useI18n } from "@/lib/i18n/context"
+import { formatMessage } from "@/lib/i18n/format-message"
+import { resolveLocalizedName } from "@/lib/i18n/localized-name"
+import type { Locale } from "@/lib/i18n/config"
+import { resolveOrderCustomerDisplay } from "@/lib/orders/customer-display"
 import { AIAgentBadge } from "@/components/ai/AIAgentBadge"
-import { MotionCard, CountUp, StaggerList, StaggerItem } from "@/components/ui/motion-primitives"
+import { MotionCard, CountUp } from "@/components/ui/motion-primitives"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
 type StatCard = {
+  id: string
   title: string
   value: string
   change: number
   icon: React.ElementType
   color: string
+}
+
+type RevenueChartPoint = {
+  dayKey: (typeof DAY_KEYS)[number]
+  dateKey: string
+  amount: number
 }
 
 type DashboardPeriod = "today" | "week" | "month"
@@ -38,7 +50,12 @@ type OrderItem = {
   subtotal?: number
   product_name?: string | null
   products?: {
+    id?: string | null
     name?: string | null
+    name_de?: string | null
+    name_fr?: string | null
+    name_en?: string | null
+    name_ar?: string | null
   } | null
 }
 
@@ -47,6 +64,7 @@ type Order = {
   order_number?: string | null
   customer_name?: string | null
   customer_email?: string | null
+  table_number?: number | null
   status?: string | null
   total: number | string
   created_at: string
@@ -57,10 +75,15 @@ type Order = {
 type Product = {
   id: string
   name: string
+  name_de?: string | null
+  name_fr?: string | null
+  name_en?: string | null
+  name_ar?: string | null
   stock_quantity?: number | string | null
 }
 
 type TopProduct = {
+  id: string
   name: string
   sales: number
   revenue: number
@@ -128,6 +151,26 @@ const calcChange = (current: number, previous: number) => {
   return Number((((current - previous) / previous) * 100).toFixed(1))
 }
 
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const
+const CHART_BAR_AREA_PX = 160
+
+function WidgetSkeleton({ className }: { className?: string }) {
+  return <div className={`animate-pulse rounded-lg bg-slate-200/60 dark:bg-slate-700/40 ${className ?? ""}`} />
+}
+
+const resolveIntlLocale = (locale: Locale): string => {
+  switch (locale) {
+    case "ar":
+      return "ar-TN"
+    case "en":
+      return "en-GB"
+    case "de":
+      return "de-DE"
+    default:
+      return "fr-FR"
+  }
+}
+
 const getAverageRating = (orders: Order[]) => {
   const ratings = orders
     .map((order) => (typeof order.rating === "number" ? order.rating : null))
@@ -139,42 +182,57 @@ const getAverageRating = (orders: Order[]) => {
 
 export default function AdminDashboard() {
   const { dashboardPeriod: selectedPeriod } = useAdminPortal()
+  const { t, locale } = useI18n()
   const [orders, setOrders] = useState<Order[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<"orders" | "products" | "generic" | null>(null)
   const [overviewExtras, setOverviewExtras] = useState({
     reservationsToday: 0,
     upcomingEvents: 0,
   })
 
   useEffect(() => {
+    let cancelled = false
+
     const loadDashboard = async () => {
       try {
         setLoading(true)
+        setLoadError(null)
         const [ordersResponse, productsResponse] = await Promise.all([fetch("/api/orders"), fetch("/api/products")])
 
+        if (cancelled) return
+
         if (!ordersResponse.ok) {
-          throw new Error("Impossible de charger les commandes")
+          setLoadError("orders")
+          return
         }
         if (!productsResponse.ok) {
-          throw new Error("Impossible de charger les produits")
+          setLoadError("products")
+          return
         }
 
         const ordersPayload = await ordersResponse.json()
         const productsPayload = await productsResponse.json()
 
+        if (cancelled) return
+
         setOrders(ordersPayload.orders ?? [])
         setProducts(productsPayload.products ?? [])
       } catch (error) {
+        if (cancelled) return
         console.error(error)
-        setOrders([])
-        setProducts([])
+        setLoadError("generic")
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     void loadDashboard()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   useEffect(() => {
@@ -219,6 +277,37 @@ export default function AdminDashboard() {
     }
   }, [orders, selectedPeriod])
 
+  const translateStatus = (status: string) => {
+    const normalized = normalizeText(status)
+    switch (normalized) {
+      case "livree":
+      case "livre":
+      case "delivered":
+        return t("admin.dashboard.status.delivered")
+      case "en cours":
+      case "in progress":
+        return t("admin.dashboard.status.inProgress")
+      case "en preparation":
+      case "in preparation":
+        return t("admin.dashboard.status.inPreparation")
+      case "preparation":
+        return t("admin.dashboard.status.preparation")
+      case "prete":
+      case "ready":
+        return t("admin.dashboard.status.ready")
+      case "en attente":
+      case "pending":
+        return t("admin.dashboard.status.pending")
+      default:
+        return status
+    }
+  }
+
+  const isPendingStatus = (status: string) => {
+    const normalized = normalizeText(status)
+    return normalized === "en attente" || normalized === "pending"
+  }
+
   const stats = useMemo((): StatCard[] => {
     const revenue = periodOrders.reduce((sum, order) => sum + toNumber(order.total), 0)
     const previousRevenue = previousOrders.reduce((sum, order) => sum + toNumber(order.total), 0)
@@ -238,13 +327,14 @@ export default function AdminDashboard() {
 
     const periodTitle =
       selectedPeriod === "today"
-        ? "Revenus du jour"
+        ? t("admin.dashboard.stats.revenueToday")
         : selectedPeriod === "week"
-          ? "Revenus de la semaine"
-          : "Revenus du mois"
+          ? t("admin.dashboard.stats.revenueWeek")
+          : t("admin.dashboard.stats.revenueMonth")
 
     return [
       {
+        id: "revenue",
         title: periodTitle,
         value: loading ? "-" : formatCurrency(revenue),
         change: calcChange(revenue, previousRevenue),
@@ -252,33 +342,35 @@ export default function AdminDashboard() {
         color: "text-green-600",
       },
       {
-        title: "Commandes",
+        id: "orders",
+        title: t("admin.dashboard.stats.orders"),
         value: loading ? "-" : orderCount.toString(),
         change: calcChange(orderCount, previousOrderCount),
         icon: ShoppingBag,
         color: "text-blue-600",
       },
       {
-        title: "Clients",
+        id: "customers",
+        title: t("admin.dashboard.stats.customers"),
         value: loading ? "-" : customerKeys.size.toString(),
         change: calcChange(customerKeys.size, previousCustomerKeys.size),
         icon: Users,
         color: "text-purple-600",
       },
       {
-        title: "Note moyenne",
+        id: "rating",
+        title: t("admin.dashboard.stats.averageRating"),
         value: loading ? "-" : averageRating ? averageRating.toFixed(1) : "-",
         change: averageRating && previousAverageRating ? calcChange(averageRating, previousAverageRating) : 0,
         icon: Star,
         color: "text-yellow-600",
       },
     ]
-  }, [loading, periodOrders, previousOrders, selectedPeriod])
+  }, [loading, periodOrders, previousOrders, selectedPeriod, t])
 
-  const revenueData = useMemo(() => {
-    const labels = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"]
+  const revenueChartPoints = useMemo((): RevenueChartPoint[] => {
     const today = new Date()
-    const items: { day: string; amount: number }[] = []
+    const items: RevenueChartPoint[] = []
 
     for (let offset = 6; offset >= 0; offset -= 1) {
       const date = new Date(today)
@@ -295,23 +387,33 @@ export default function AdminDashboard() {
         })
         .reduce((sum, order) => sum + toNumber(order.total), 0)
 
-      items.push({ day: labels[date.getDay()], amount })
+      items.push({
+        dayKey: DAY_KEYS[date.getDay()],
+        dateKey: date.toISOString().slice(0, 10),
+        amount,
+      })
     }
 
     return items
   }, [orders])
 
-  const maxRevenue = Math.max(1, ...revenueData.map((data) => data.amount))
+  const maxRevenue = Math.max(1, ...revenueChartPoints.map((point) => point.amount))
 
   const topProducts = useMemo((): TopProduct[] => {
     const aggregateSales = (ordersList: Order[]) => {
-      const map = new Map<string, { sales: number; revenue: number }>()
+      const map = new Map<string, { name: string; sales: number; revenue: number }>()
       ordersList.forEach((order) => {
         order.order_items?.forEach((item) => {
-          const name = item.product_name || item.products?.name || "Produit"
-          const current = map.get(name) || { sales: 0, revenue: 0 }
+          const productKey = String(item.products?.id ?? item.product_name ?? "unknown")
+          const name = resolveLocalizedName(
+            item.products ?? { name: item.product_name },
+            locale,
+            t("admin.dashboard.defaults.product"),
+          )
+          const current = map.get(productKey) || { name, sales: 0, revenue: 0 }
           const revenue = toNumber(item.subtotal) || toNumber(item.unit_price) * toNumber(item.quantity)
-          map.set(name, {
+          map.set(productKey, {
+            name: current.name || name,
             sales: current.sales + toNumber(item.quantity),
             revenue: current.revenue + revenue,
           })
@@ -324,11 +426,12 @@ export default function AdminDashboard() {
     const previous = aggregateSales(previousOrders)
 
     return Array.from(current.entries())
-      .map(([name, value]) => {
-        const previousValue = previous.get(name)
+      .map(([id, value]) => {
+        const previousValue = previous.get(id)
         const trend = previousValue ? calcChange(value.revenue, previousValue.revenue) : 0
         return {
-          name,
+          id,
+          name: value.name,
           sales: value.sales,
           revenue: value.revenue,
           trend,
@@ -336,30 +439,37 @@ export default function AdminDashboard() {
       })
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5)
-  }, [periodOrders, previousOrders])
+  }, [periodOrders, previousOrders, locale, t])
 
   const recentOrders = useMemo(() => {
     return [...periodOrders]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 5)
-      .map((order) => ({
-        id: order.order_number || `#${order.id.slice(0, 6)}`,
-        customer: order.customer_name || order.customer_email || "Client",
-        items: order.order_items?.reduce((sum, item) => sum + toNumber(item.quantity), 0) ?? 0,
-        total: toNumber(order.total),
-        status: order.status || "en attente",
-        time: new Date(order.created_at).toLocaleTimeString("fr-FR", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      }))
-  }, [periodOrders])
+      .map((order) => {
+        const rawStatus = order.status || "en attente"
+        return {
+          id: order.order_number || `#${order.id.slice(0, 6)}`,
+          customer:
+            resolveOrderCustomerDisplay(order.customer_name, order.table_number, locale) ??
+            order.customer_email ??
+            t("admin.dashboard.defaults.customer"),
+          items: order.order_items?.reduce((sum, item) => sum + toNumber(item.quantity), 0) ?? 0,
+          total: toNumber(order.total),
+          rawStatus,
+          status: translateStatus(rawStatus),
+          time: new Date(order.created_at).toLocaleTimeString(resolveIntlLocale(locale), {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        }
+      })
+  }, [periodOrders, locale, t])
 
   const inventoryAlerts = useMemo((): InventoryAlert[] => {
     const sorted = [...products]
       .filter((product) => product.stock_quantity !== null && product.stock_quantity !== undefined)
       .map((product) => ({
-        name: product.name,
+        name: resolveLocalizedName(product, locale, product.name),
         stock: toNumber(product.stock_quantity),
       }))
       .sort((a, b) => a.stock - b.stock)
@@ -370,12 +480,12 @@ export default function AdminDashboard() {
       return {
         item: item.name,
         stock: item.stock,
-        unit: "unites",
+        unit: t("admin.dashboard.inventoryAlerts.units"),
         threshold,
         status: item.stock <= 5 ? "critical" : "warning",
       }
     })
-  }, [products])
+  }, [products, locale, t])
 
   const getStatusColor = (status: string) => {
     const normalized = normalizeText(status)
@@ -396,24 +506,43 @@ export default function AdminDashboard() {
 
   const revenueVal = periodOrders.reduce((sum, order) => sum + toNumber(order.total), 0)
 
+  const dashboardErrorMessage =
+    loadError === "orders"
+      ? t("admin.dashboard.errors.loadOrders")
+      : loadError === "products"
+        ? t("admin.dashboard.errors.loadProducts")
+        : loadError === "generic"
+          ? t("admin.dashboard.errors.loadDashboard")
+          : null
+
   return (
-    <RequireAuth roles={["ADMIN"]} fallback={<div className="p-6 text-center">Chargement...</div>}>
+    <RequireAuth roles={["ADMIN"]} fallback={<div className="p-6 text-center">{t("admin.dashboard.loading")}</div>}>
       <div className="animate-fade-up space-y-8">
         <div className="border-b border-[color:var(--lux-bordeaux)]/10 pb-6 dark:border-zinc-800">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-900/45 dark:text-amber-200/50">
-            Vue d&apos;ensemble
+            {t("admin.dashboard.eyebrow")}
           </p>
           <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-amber-950 dark:text-amber-50 sm:text-3xl">
-            Tableau de bord principal
+            {t("admin.dashboard.title")}
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-amber-900/65 dark:text-amber-200/65">
-            Indicateurs clés, alertes et suggestions. Période :{" "}
+            {t("admin.dashboard.subtitle")}{" "}
             <span className="font-medium text-amber-950 dark:text-amber-100">
-              {selectedPeriod === "today" ? "aujourd&apos;hui" : selectedPeriod === "week" ? "cette semaine" : "ce mois"}
+              {selectedPeriod === "today"
+                ? t("admin.dashboard.periodToday")
+                : selectedPeriod === "week"
+                  ? t("admin.dashboard.periodWeek")
+                  : t("admin.dashboard.periodMonth")}
             </span>
-            . Utilisez le menu à gauche pour ouvrir chaque module sans quitter le portail.
+            . {t("admin.dashboard.subtitleHint")}
           </p>
         </div>
+
+        {dashboardErrorMessage ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
+            {dashboardErrorMessage}
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           <Link
@@ -421,118 +550,147 @@ export default function AdminDashboard() {
             className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
           >
             <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
-              Chiffre ({selectedPeriod === "today" ? "jour" : selectedPeriod === "week" ? "sem." : "mois"})
+              {t("admin.dashboard.quickLinks.revenue.title")} (
+              {selectedPeriod === "today"
+                ? t("admin.dashboard.periodShort.day")
+                : selectedPeriod === "week"
+                  ? t("admin.dashboard.periodShort.week")
+                  : t("admin.dashboard.periodShort.month")}
+              )
             </p>
-            <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50">
+            <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50" translate="no">
               {loading ? "—" : formatCurrencyDetailed(revenueVal)}
             </p>
-            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Encaissements & TVA — détail finances</p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">
+              {t("admin.dashboard.quickLinks.revenue.subtitle")}
+            </p>
           </Link>
           <Link
             href="/pos"
             className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
           >
             <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
-              Commandes
+              {t("admin.dashboard.quickLinks.orders.title")}
             </p>
-            <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50">
+            <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50" translate="no">
               {loading ? "—" : periodOrders.length}
             </p>
-            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Ouvrir le POS</p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">
+              {t("admin.dashboard.quickLinks.orders.subtitle")}
+            </p>
           </Link>
           <Link
             href="/admin/ai/reservation"
             className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
           >
             <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
-              Résas. aujourd&apos;hui
+              {t("admin.dashboard.quickLinks.reservationsToday.title")}
             </p>
             <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50">
               {overviewExtras.reservationsToday}
             </p>
-            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Tables & planning</p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">
+              {t("admin.dashboard.quickLinks.reservationsToday.subtitle")}
+            </p>
           </Link>
           <Link
             href="/admin/inventory"
             className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
           >
             <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
-              Alertes stock
+              {t("admin.dashboard.quickLinks.stockAlerts.title")}
             </p>
             <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50">
               {inventoryAlerts.length}
             </p>
-            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Gérer l&apos;inventaire</p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">
+              {t("admin.dashboard.quickLinks.stockAlerts.subtitle")}
+            </p>
           </Link>
           <Link
             href="/admin/events"
             className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
           >
             <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
-              Événements à venir
+              {t("admin.dashboard.quickLinks.upcomingEvents.title")}
             </p>
             <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50">
               {overviewExtras.upcomingEvents}
             </p>
-            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Billets & calendrier</p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">
+              {t("admin.dashboard.quickLinks.upcomingEvents.subtitle")}
+            </p>
           </Link>
           <Link
             href="/admin/supplier-invoices"
             className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
           >
             <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
-              Factures fourn.
+              {t("admin.dashboard.quickLinks.supplierInvoices.title")}
             </p>
             <p className="mt-1 font-display text-xl font-semibold text-amber-950 dark:text-amber-50">→</p>
-            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">OCR & validation</p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">
+              {t("admin.dashboard.quickLinks.supplierInvoices.subtitle")}
+            </p>
           </Link>
           <Link
             href="/caisse"
             className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
           >
             <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
-              Caisse
+              {t("admin.dashboard.quickLinks.cashRegister.title")}
             </p>
-            <p className="mt-1 font-display text-lg font-semibold text-amber-950 dark:text-amber-50">Synthèse jour</p>
-            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Encaissements & écarts</p>
+            <p className="mt-1 font-display text-lg font-semibold text-amber-950 dark:text-amber-50">
+              {t("admin.dashboard.quickLinks.cashRegister.value")}
+            </p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">
+              {t("admin.dashboard.quickLinks.cashRegister.subtitle")}
+            </p>
           </Link>
           <Link
             href="/admin/staff"
             className="group rounded-2xl border border-amber-900/10 bg-gradient-to-br from-white to-[color:var(--lux-cream)]/40 p-4 shadow-sm transition hover:border-[color:var(--lux-gold)]/35 dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-900/40"
           >
             <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900/50 dark:text-amber-200/50">
-              Équipe
+              {t("admin.dashboard.quickLinks.team.title")}
             </p>
-            <p className="mt-1 font-display text-lg font-semibold text-amber-950 dark:text-amber-50">Personnel</p>
-            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">Planning & stations</p>
+            <p className="mt-1 font-display text-lg font-semibold text-amber-950 dark:text-amber-50">
+              {t("admin.dashboard.quickLinks.team.value")}
+            </p>
+            <p className="mt-1 text-[11px] text-amber-900/55 dark:text-amber-200/55">
+              {t("admin.dashboard.quickLinks.team.subtitle")}
+            </p>
           </Link>
           <Link
             href="/admin/ai"
             className="group rounded-2xl border border-[color:var(--lux-gold)]/35 bg-gradient-to-br from-[color:var(--lux-bordeaux)]/10 to-[color:var(--lux-cream)]/50 p-4 shadow-sm transition hover:shadow-[var(--lux-shadow-gold)] dark:border-[color:var(--lux-gold)]/25 dark:from-zinc-900 dark:to-zinc-800/80"
           >
             <p className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--lux-bordeaux)] dark:text-amber-200/70">
-              IA & insights
+              {t("admin.dashboard.quickLinks.aiInsights.title")}
             </p>
-            <p className="mt-1 font-display text-lg font-semibold text-amber-950 dark:text-amber-50">Centre IA</p>
-            <p className="mt-1 text-[11px] text-amber-900/60 dark:text-amber-200/55">Agents, prévisions, anomalies</p>
+            <p className="mt-1 font-display text-lg font-semibold text-amber-950 dark:text-amber-50">
+              {t("admin.dashboard.quickLinks.aiInsights.value")}
+            </p>
+            <p className="mt-1 text-[11px] text-amber-900/60 dark:text-amber-200/55">
+              {t("admin.dashboard.quickLinks.aiInsights.subtitle")}
+            </p>
           </Link>
         </div>
 
-        {/* Stats Grid — animated premium KPI cards */}
+        {/* Stats Grid — KPI cards (no stagger: avoids blank cards on locale change) */}
         <div id="admin-analytics" className="scroll-mt-28">
-        <StaggerList className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => {
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {stats.map((stat) => {
             const Icon = stat.icon
             const isNumeric = /[0-9]/.test(stat.value) && stat.value !== "-"
             const numeric = isNumeric
               ? parseFloat(stat.value.replace(/[^0-9.-]/g, "")) || 0
               : 0
-            const hasEuro = /€/.test(stat.value)
+            const hasCurrency = /\bEUR\b|€/i.test(stat.value)
             const hasPercent = stat.value.endsWith("%")
-            const decimals = stat.value.includes(".") ? 1 : 0
+            const decimals = stat.value.includes(".") ? (stat.id === "rating" ? 1 : 2) : 0
             return (
-              <StaggerItem key={index}>
-                <MotionCard className="relative h-full p-6 shimmer-gold">
+              <MotionCard key={stat.id} className="relative p-6 shimmer-gold">
                   <div className="flex items-start justify-between mb-4">
                     <div
                       className={`p-3 rounded-xl bg-[color-mix(in_srgb,var(--lux-gold)_12%,transparent)] ${stat.color}`}
@@ -559,12 +717,14 @@ export default function AdminDashboard() {
                   <p className="text-sm text-amber-900/70 mb-1 dark:text-amber-200/70">
                     {stat.title}
                   </p>
-                  <p className="text-3xl font-bold text-amber-950 dark:text-amber-50 numeric-display">
-                    {isNumeric ? (
+                  <p className="text-3xl font-bold text-amber-950 dark:text-amber-50 numeric-display" translate="no">
+                    {loading ? (
+                      <WidgetSkeleton className="inline-block h-9 w-28" />
+                    ) : isNumeric ? (
                       <CountUp
                         value={numeric}
-                        prefix={hasEuro ? "€" : ""}
-                        suffix={hasPercent ? "%" : ""}
+                        prefix={hasCurrency ? "" : ""}
+                        suffix={hasCurrency ? " EUR" : hasPercent ? "%" : ""}
                         decimals={decimals}
                       />
                     ) : (
@@ -573,57 +733,107 @@ export default function AdminDashboard() {
                   </p>
                   <div className="hairline-gold mt-4" />
                 </MotionCard>
-              </StaggerItem>
             )
           })}
-        </StaggerList>
+        </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Revenue Chart */}
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Revenus sur 7 jours</CardTitle>
+              <CardTitle>{t("admin.dashboard.charts.revenue7Days")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64 flex items-end justify-between gap-4">
-                {revenueData.map((data, index) => (
-                  <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                    <div className="w-full bg-slate-100 rounded-lg overflow-hidden h-full flex flex-col justify-end">
+              {loading ? (
+                <div className="flex w-full items-end gap-2 sm:gap-3" style={{ minHeight: "12rem" }}>
+                  {Array.from({ length: 7 }).map((_, index) => (
+                    <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                      <WidgetSkeleton className="h-40 w-full rounded-lg" />
+                      <WidgetSkeleton className="h-3 w-10 rounded" />
+                      <WidgetSkeleton className="h-3 w-14 rounded" />
+                    </div>
+                  ))}
+                </div>
+              ) : dashboardErrorMessage ? (
+                <div className="flex min-h-[12rem] items-center justify-center text-sm text-red-600 dark:text-red-400">
+                  {dashboardErrorMessage}
+                </div>
+              ) : (
+                <div
+                  className="flex w-full items-end gap-2 sm:gap-3"
+                  style={{ minHeight: "12rem" }}
+                  data-no-translate
+                  translate="no"
+                >
+                  {revenueChartPoints.map((point) => {
+                    const dayLabel = t(`admin.dashboard.days.${point.dayKey}`)
+                    const barHeightPx =
+                      point.amount > 0
+                        ? Math.max(Math.round((point.amount / maxRevenue) * CHART_BAR_AREA_PX), 4)
+                        : 0
+                    return (
                       <div
-                        className="bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-500 hover:from-blue-700 hover:to-blue-500"
-                        style={{ height: `${(data.amount / maxRevenue) * 100}%` }}
-                      />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xs font-medium text-slate-900">{data.day}</p>
-                      <p className="text-xs text-slate-600">{formatCurrency(data.amount)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                        key={point.dateKey}
+                        className="flex min-w-0 flex-1 flex-col items-center gap-2"
+                      >
+                        <div
+                          className="relative flex w-full items-end rounded-lg bg-slate-100 dark:bg-slate-800/50"
+                          style={{ height: CHART_BAR_AREA_PX }}
+                        >
+                          <div
+                            className="w-full rounded-t-lg bg-gradient-to-t from-blue-600 to-blue-400 transition-[height] duration-300 hover:from-blue-700 hover:to-blue-500"
+                            style={{ height: barHeightPx }}
+                            title={`${dayLabel}: ${formatCurrency(point.amount)}`}
+                          />
+                        </div>
+                        <div className="shrink-0 text-center">
+                          <p className="text-xs font-medium text-slate-900 dark:text-slate-100">{dayLabel}</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400" translate="no">
+                            {formatCurrency(point.amount)}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+              {!loading && !dashboardErrorMessage && orders.length > 0 && revenueChartPoints.every((p) => p.amount === 0) ? (
+                <p className="mt-3 text-center text-xs text-slate-500">{t("admin.dashboard.chartsNoData")}</p>
+              ) : null}
             </CardContent>
           </Card>
 
           {/* Top Products */}
           <Card>
             <CardHeader>
-              <CardTitle>Top Produits</CardTitle>
+              <CardTitle>{t("admin.dashboard.charts.topProducts")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {loading ? (
-                  <div className="text-sm text-slate-500">Chargement...</div>
+                  <div className="space-y-3">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div key={index} className="flex items-center justify-between gap-3">
+                        <WidgetSkeleton className="h-10 flex-1 rounded-lg" />
+                        <WidgetSkeleton className="h-8 w-16 rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : dashboardErrorMessage ? (
+                  <div className="text-sm text-red-600 dark:text-red-400">{dashboardErrorMessage}</div>
                 ) : topProducts.length === 0 ? (
-                  <div className="text-sm text-slate-500">Aucun produit vendu.</div>
+                  <div className="text-sm text-slate-500">{t("admin.dashboard.topProducts.empty")}</div>
                 ) : (
-                  topProducts.map((product, index) => (
-                    <div key={index} className="flex items-center justify-between">
+                  topProducts.map((product) => (
+                    <div key={product.id} className="flex items-center justify-between">
                       <div className="flex-1">
                         <p className="font-medium text-slate-900 text-sm">{product.name}</p>
-                        <p className="text-xs text-slate-600">{product.sales} ventes</p>
+                        <p className="text-xs text-slate-600">
+                          {formatMessage(t("admin.dashboard.topProducts.sales"), { count: product.sales })}
+                        </p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right" translate="no">
                         <p className="font-bold text-slate-900 text-sm">{formatCurrencyDetailed(product.revenue)}</p>
                         <div
                           className={`flex items-center gap-1 text-xs ${
@@ -651,22 +861,28 @@ export default function AdminDashboard() {
           <Card className="lg:col-span-2">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Commandes recentes</CardTitle>
+                <CardTitle>{t("admin.dashboard.recentOrders.title")}</CardTitle>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/pos">Voir tout (POS)</Link>
+                  <Link href="/pos">{t("admin.dashboard.recentOrders.viewAll")}</Link>
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {loading ? (
-                  <div className="text-sm text-slate-500">Chargement...</div>
+                  <div className="space-y-3">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <WidgetSkeleton key={index} className="h-16 w-full rounded-lg" />
+                    ))}
+                  </div>
+                ) : dashboardErrorMessage ? (
+                  <div className="text-sm text-red-600 dark:text-red-400">{dashboardErrorMessage}</div>
                 ) : recentOrders.length === 0 ? (
-                  <div className="text-sm text-slate-500">Aucune commande pour cette periode.</div>
+                  <div className="text-sm text-slate-500">{t("admin.dashboard.recentOrders.empty")}</div>
                 ) : (
-                  recentOrders.map((order, index) => (
+                  recentOrders.map((order) => (
                     <div
-                      key={index}
+                      key={order.id}
                       className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
                     >
                       <div className="flex items-center gap-4">
@@ -676,11 +892,13 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-sm text-slate-600">{order.items} articles</p>
+                        <div className="text-right" translate="no">
+                          <p className="text-sm text-slate-600">
+                            {formatMessage(t("admin.dashboard.recentOrders.articles"), { count: order.items })}
+                          </p>
                           <p className="font-bold text-slate-900">{formatCurrencyDetailed(order.total)}</p>
                         </div>
-                        <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                        <Badge className={getStatusColor(order.rawStatus)}>{order.status}</Badge>
                         <p className="text-sm text-slate-500 w-12">{order.time}</p>
                       </div>
                     </div>
@@ -694,21 +912,27 @@ export default function AdminDashboard() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Alertes Stock</CardTitle>
+                <CardTitle>{t("admin.dashboard.inventoryAlerts.title")}</CardTitle>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/admin/inventory">Gerer</Link>
+                  <Link href="/admin/inventory">{t("admin.dashboard.inventoryAlerts.manage")}</Link>
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {loading ? (
-                  <div className="text-sm text-slate-500">Chargement...</div>
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <WidgetSkeleton key={index} className="h-14 w-full rounded-lg" />
+                    ))}
+                  </div>
+                ) : dashboardErrorMessage ? (
+                  <div className="text-sm text-red-600 dark:text-red-400">{dashboardErrorMessage}</div>
                 ) : inventoryAlerts.length === 0 ? (
-                  <div className="text-sm text-slate-500">Aucune alerte de stock.</div>
+                  <div className="text-sm text-slate-500">{t("admin.dashboard.inventoryAlerts.empty")}</div>
                 ) : (
-                  inventoryAlerts.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  inventoryAlerts.map((item) => (
+                    <div key={item.item} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                       <div className="flex items-center gap-3">
                         <div
                           className={`p-2 rounded-lg ${item.status === "critical" ? "bg-red-100" : "bg-orange-100"}`}
@@ -720,12 +944,15 @@ export default function AdminDashboard() {
                         <div>
                           <p className="font-medium text-slate-900 text-sm">{item.item}</p>
                           <p className="text-xs text-slate-600">
-                            Stock: {item.stock} {item.unit}
+                            {formatMessage(t("admin.dashboard.inventoryAlerts.stock"), {
+                              stock: item.stock,
+                              unit: item.unit,
+                            })}
                           </p>
                         </div>
                       </div>
                       <Button size="sm" variant="outline">
-                        Commander
+                        {t("admin.dashboard.inventoryAlerts.order")}
                       </Button>
                     </div>
                   ))
@@ -741,7 +968,7 @@ export default function AdminDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-orange-600" />
-                Alertes intelligentes
+                {t("admin.dashboard.alerts.title")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -752,8 +979,12 @@ export default function AdminDashboard() {
                       <AlertTriangle className="w-4 h-4 text-red-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-red-900 dark:text-red-200 text-sm">Aucune commande</p>
-                      <p className="text-xs text-red-700 dark:text-red-400">Aucune commande enregistree pour cette periode. Verifiez le systeme.</p>
+                      <p className="font-medium text-red-900 dark:text-red-200 text-sm">
+                        {t("admin.dashboard.alerts.noOrders.title")}
+                      </p>
+                      <p className="text-xs text-red-700 dark:text-red-400">
+                        {t("admin.dashboard.alerts.noOrders.description")}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -763,8 +994,14 @@ export default function AdminDashboard() {
                       <AlertTriangle className="w-4 h-4 text-red-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-red-900 dark:text-red-200 text-sm">Rupture de stock critique</p>
-                      <p className="text-xs text-red-700 dark:text-red-400">{inventoryAlerts.filter(a => a.status === "critical").length} produit(s) en rupture critique. Commandez immediatement.</p>
+                      <p className="font-medium text-red-900 dark:text-red-200 text-sm">
+                        {t("admin.dashboard.alerts.criticalStock.title")}
+                      </p>
+                      <p className="text-xs text-red-700 dark:text-red-400">
+                        {formatMessage(t("admin.dashboard.alerts.criticalStock.description"), {
+                          count: inventoryAlerts.filter(a => a.status === "critical").length,
+                        })}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -774,19 +1011,29 @@ export default function AdminDashboard() {
                       <TrendingDown className="w-4 h-4 text-orange-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-orange-900 dark:text-orange-200 text-sm">Baisse de revenus</p>
-                      <p className="text-xs text-orange-700 dark:text-orange-400">Les revenus sont en baisse de {Math.abs(stats[0].change)}% par rapport a la periode precedente.</p>
+                      <p className="font-medium text-orange-900 dark:text-orange-200 text-sm">
+                        {t("admin.dashboard.alerts.revenueDrop.title")}
+                      </p>
+                      <p className="text-xs text-orange-700 dark:text-orange-400">
+                        {formatMessage(t("admin.dashboard.alerts.revenueDrop.description"), {
+                          percent: Math.abs(stats[0].change),
+                        })}
+                      </p>
                     </div>
                   </div>
                 )}
-                {recentOrders.length > 0 && recentOrders.some(o => o.status === "en attente") && (
+                {recentOrders.length > 0 && recentOrders.some(o => isPendingStatus(o.rawStatus)) && (
                   <div className="flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800/30">
                     <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/40">
                       <AlertTriangle className="w-4 h-4 text-yellow-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-yellow-900 dark:text-yellow-200 text-sm">Commandes en attente</p>
-                      <p className="text-xs text-yellow-700 dark:text-yellow-400">Des commandes sont en attente depuis plus longtemps que la normale.</p>
+                      <p className="font-medium text-yellow-900 dark:text-yellow-200 text-sm">
+                        {t("admin.dashboard.alerts.pendingOrders.title")}
+                      </p>
+                      <p className="text-xs text-yellow-700 dark:text-yellow-400">
+                        {t("admin.dashboard.alerts.pendingOrders.description")}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -796,8 +1043,12 @@ export default function AdminDashboard() {
                       <Star className="w-4 h-4 text-green-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-green-900 dark:text-green-200 text-sm">Tout va bien</p>
-                      <p className="text-xs text-green-700 dark:text-green-400">Aucune alerte critique. Les operations se deroulent normalement.</p>
+                      <p className="font-medium text-green-900 dark:text-green-200 text-sm">
+                        {t("admin.dashboard.alerts.allGood.title")}
+                      </p>
+                      <p className="text-xs text-green-700 dark:text-green-400">
+                        {t("admin.dashboard.alerts.allGood.description")}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -809,30 +1060,50 @@ export default function AdminDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-blue-600" />
-                Suggestions d&apos;optimisation
+                {t("admin.dashboard.suggestions.title")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {topProducts.length > 0 && (
                   <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800/30">
-                    <p className="font-medium text-blue-900 dark:text-blue-200 text-sm">Mettre en avant &quot;{topProducts[0]?.name}&quot;</p>
-                    <p className="text-xs text-blue-700 dark:text-blue-400">Ce plat genere le plus de revenus. Envisagez de le promouvoir en homepage et sur les reseaux sociaux.</p>
+                    <p className="font-medium text-blue-900 dark:text-blue-200 text-sm">
+                      {formatMessage(t("admin.dashboard.suggestions.promoteTop.title"), {
+                        name: topProducts[0]?.name ?? "",
+                      })}
+                    </p>
+                    <p className="text-xs text-blue-700 dark:text-blue-400">
+                      {t("admin.dashboard.suggestions.promoteTop.description")}
+                    </p>
                   </div>
                 )}
                 {topProducts.length > 1 && topProducts[topProducts.length - 1]?.trend < 0 && (
                   <div className="p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800/30">
-                    <p className="font-medium text-purple-900 dark:text-purple-200 text-sm">Revoir le prix de &quot;{topProducts[topProducts.length - 1]?.name}&quot;</p>
-                    <p className="text-xs text-purple-700 dark:text-purple-400">Ce produit est en baisse. Considerez une promotion ou un ajustement de recette.</p>
+                    <p className="font-medium text-purple-900 dark:text-purple-200 text-sm">
+                      {formatMessage(t("admin.dashboard.suggestions.reviewPrice.title"), {
+                        name: topProducts[topProducts.length - 1]?.name ?? "",
+                      })}
+                    </p>
+                    <p className="text-xs text-purple-700 dark:text-purple-400">
+                      {t("admin.dashboard.suggestions.reviewPrice.description")}
+                    </p>
                   </div>
                 )}
                 <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-800/30">
-                  <p className="font-medium text-emerald-900 dark:text-emerald-200 text-sm">Optimiser les heures de pointe</p>
-                  <p className="text-xs text-emerald-700 dark:text-emerald-400">Analysez les heures de commande pour ajuster le personnel et reduire les temps d&apos;attente.</p>
+                  <p className="font-medium text-emerald-900 dark:text-emerald-200 text-sm">
+                    {t("admin.dashboard.suggestions.peakHours.title")}
+                  </p>
+                  <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                    {t("admin.dashboard.suggestions.peakHours.description")}
+                  </p>
                 </div>
                 <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800/30">
-                  <p className="font-medium text-amber-900 dark:text-amber-200 text-sm">Programme de fidelite</p>
-                  <p className="text-xs text-amber-700 dark:text-amber-400">Les clients reguliers generent 60% du chiffre. Renforcez le programme de fidelite pour augmenter la retention.</p>
+                  <p className="font-medium text-amber-900 dark:text-amber-200 text-sm">
+                    {t("admin.dashboard.suggestions.loyalty.title")}
+                  </p>
+                  <p className="text-xs text-amber-700 dark:text-amber-400">
+                    {t("admin.dashboard.suggestions.loyalty.description")}
+                  </p>
                 </div>
               </div>
             </CardContent>

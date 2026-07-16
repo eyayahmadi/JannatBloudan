@@ -1,5 +1,6 @@
 import type { KitchenOrder, OrderItem } from "@/lib/hooks/useRealtimeOrders"
 import { parseOptionsSnapshotJson } from "@/lib/orders/order-item-options"
+import { normalizeProductLabel } from "@/lib/orders/sanitize-display-text"
 import type { ItemStatus } from "@/lib/stations/config"
 import { isBillableItemStatus } from "@/lib/stations/config"
 import { isLikelyOrderUuid } from "@/lib/orders/guest-tracking"
@@ -178,9 +179,9 @@ function pickNewerItemShell(local: OrderItem, incoming: OrderItem): OrderItem {
 }
 
 function coalesceItemFields(local: OrderItem, incoming: OrderItem): OrderItem {
-  const name = String(incoming.name ?? "").trim() || local.name
+  const name = normalizeProductLabel(incoming.name) || local.name
   const name_ar =
-    String(incoming.name_ar ?? "").trim() || String(local.name_ar ?? "").trim() || undefined
+    normalizeProductLabel(incoming.name_ar) || normalizeProductLabel(local.name_ar) || undefined
   const quantity = Number(incoming.quantity) > 0 ? incoming.quantity : local.quantity
   return {
     ...pickNewerItemShell(local, incoming),
@@ -237,8 +238,8 @@ export function mapStationApiItemRow(row: DbStationItemRow): OrderItem {
 
   return {
     id: String(row.id),
-    name: String(row.product_name ?? ""),
-    name_ar: row.product_name_ar?.trim() || undefined,
+    name: normalizeProductLabel(row.product_name),
+    name_ar: normalizeProductLabel(row.product_name_ar) || undefined,
     quantity:
       typeof row.quantity === "number"
         ? row.quantity

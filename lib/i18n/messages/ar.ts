@@ -1,5 +1,8 @@
 import type { Messages } from "./fr"
 import { landing } from "./landing/landing.ar"
+import { adminMessages } from "./admin/ar"
+import { workspaceMessages } from "./workspace/ar"
+import { caisseMessages } from "./caisse/ar"
 
 export const ar: Messages = {
   common: {
@@ -319,6 +322,10 @@ export const ar: Messages = {
     noResults: "لا توجد أطباق مطابقة.",
     unavailableBadge: "غير متوفر",
     resetFilters: "إعادة ضبط الفلاتر",
+    openFilters: "فلاتر",
+    applyFilters: "تطبيق الفلاتر",
+    publicHeroSubtitle:
+      "مطبخ سوري لبناني — مقبلات، مشاوي، حلويات، مشروبات وشيشة.",
     filtersTitle: "عوامل التصفية",
     categoryLabel: "الفئة",
     categoryAll: "جميع الفئات",
@@ -490,16 +497,20 @@ export const ar: Messages = {
     table: "طاولة",
     orderNumber: "طلب",
     createdAt: "استُلم",
+    guestAtTable: "عميل طاولة {n}",
     notes: "ملاحظات",
     ticket: {
       title: "تذكرة المطبخ",
       printedAt: "طُبعت في",
       orderType: {
-        qr_self_service: "QR",
+        qr_self_service: "QR (خدمة ذاتية)",
         server: "نادل",
         pos: "صندوق",
         delivery: "توصيل",
       },
     },
   },
+  admin: adminMessages,
+  workspace: workspaceMessages,
+  caisse: caisseMessages,
 }

@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/context/AuthContext"
 import { normalizeRole, type AppRole } from "@/lib/auth/roles"
 import { workspaceNavForRole } from "@/lib/nav/role-workspace-nav"
+import { useI18n } from "@/lib/i18n/context"
 
 export type StaffWorkspaceShellProps = {
   children: ReactNode
@@ -29,16 +30,25 @@ export function StaffWorkspaceShell({ children, navRole, title, subtitle }: Staf
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { user, logout } = useAuth()
+  const { t } = useI18n()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const role = navRole ?? (user ? normalizeRole(user.role) : "CLIENT")
-  const items = useMemo(() => workspaceNavForRole(role), [role])
+  const items = useMemo(
+    () =>
+      workspaceNavForRole(role).map((item) => ({
+        ...item,
+        label: t(item.labelKey),
+        hint: item.hintKey ? t(item.hintKey) : undefined,
+      })),
+    [role, t],
+  )
 
   const closeMobile = useCallback(() => setMobileOpen(false), [])
 
   const renderNav = (onNavigate?: () => void) => (
-    <nav className="flex flex-col gap-0.5 p-2" aria-label="Navigation espace équipe">
+    <nav className="flex flex-col gap-0.5 p-2" aria-label={t("workspace.shell.navLabel")}>
       {items.map((item) => {
         const Icon = item.icon
         // item.href peut contenir un query (ex. "/caisse?tab=tables") :
@@ -99,7 +109,7 @@ export function StaffWorkspaceShell({ children, navRole, title, subtitle }: Staf
         )}
       >
         <div className="flex items-center gap-2 border-b border-amber-900/10 px-3 py-3">
-          <Link href="/" className="flex min-w-0 flex-1 items-center gap-2" aria-label="Accueil">
+          <Link href="/" className="flex min-w-0 flex-1 items-center gap-2" aria-label={t("workspace.shell.home")}>
             <span
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-md ring-2 ring-white/60"
               style={{ background: "var(--lux-gradient-ink)" }}
@@ -109,7 +119,7 @@ export function StaffWorkspaceShell({ children, navRole, title, subtitle }: Staf
             {!collapsed ? (
               <div className="min-w-0 leading-tight">
                 <p className="truncate text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--lux-bordeaux)]">
-                  Équipe
+                  {t("workspace.shell.team")}
                 </p>
                 <p className="truncate text-[11px] text-amber-900/55">{role}</p>
               </div>
@@ -121,7 +131,7 @@ export function StaffWorkspaceShell({ children, navRole, title, subtitle }: Staf
             size="icon"
             className="hidden h-8 w-8 shrink-0 md:inline-flex"
             onClick={() => setCollapsed((c) => !c)}
-            aria-label={collapsed ? "Étendre le menu" : "Réduire le menu"}
+            aria-label={collapsed ? t("workspace.shell.expandMenu") : t("workspace.shell.collapseMenu")}
           >
             {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </Button>
@@ -137,7 +147,7 @@ export function StaffWorkspaceShell({ children, navRole, title, subtitle }: Staf
               onClick={() => void logout()}
             >
               <LogOut className="h-4 w-4" />
-              {!collapsed ? <span>Déconnexion</span> : null}
+              {!collapsed ? <span>{t("workspace.shell.logout")}</span> : null}
             </Button>
           </div>
         ) : null}
@@ -150,12 +160,12 @@ export function StaffWorkspaceShell({ children, navRole, title, subtitle }: Staf
               <SheetTrigger asChild>
                 <Button type="button" variant="outline" size="sm" className="md:hidden">
                   <Menu className="mr-2 h-4 w-4" />
-                  Menu
+                  {t("workspace.shell.menu")}
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[min(20rem,90vw)] p-0">
                 <SheetHeader className="border-b border-amber-900/10 px-4 py-3 text-left">
-                  <SheetTitle className="font-display text-base">Espace équipe</SheetTitle>
+                  <SheetTitle className="font-display text-base">{t("workspace.shell.title")}</SheetTitle>
                   <p className="text-xs text-amber-900/55">{role}</p>
                 </SheetHeader>
                 <ScrollArea className="h-[calc(100vh-5rem)]">{renderNav(closeMobile)}</ScrollArea>

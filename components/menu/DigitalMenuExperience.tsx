@@ -16,15 +16,6 @@ import {
   SlidersHorizontal,
   RotateCcw,
 } from "lucide-react"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
 import { useMenuCart } from "@/contexts/MenuCartContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -56,6 +47,13 @@ import {
   useSilentScrollRestore,
   MenuScrollGuardProvider,
 } from "@/lib/menu/use-menu-scroll-preservation"
+import {
+  PublicMenuAdvancedFiltersSheet,
+  countAdvancedFilters,
+  defaultAdvancedFilters,
+  readAdvancedFiltersFromState,
+  type PublicAdvancedFiltersDraft,
+} from "@/components/menu/public/PublicMenuAdvancedFiltersSheet"
 
 type CatalogCategoryRow = {
   id: string
@@ -109,6 +107,8 @@ export function DigitalMenuExperience() {
   const [attributeFilter, setAttributeFilter] = useState<QrAttributeFilterId>("all")
   const [stationFilter, setStationFilter] = useState<"all" | Station>("all")
   const [sortBy, setSortBy] = useState<MenuSortId>("recommended")
+  const [filtersSheetOpen, setFiltersSheetOpen] = useState(false)
+  const [draftFilters, setDraftFilters] = useState<PublicAdvancedFiltersDraft>(defaultAdvancedFilters)
   const [placing, setPlacing] = useState(false)
   const [customizeItemId, setCustomizeItemId] = useState<string | null>(null)
   const [customizeItemSnapshot, setCustomizeItemSnapshot] = useState<DigitalMenuProduct | null>(null)
@@ -348,8 +348,87 @@ export function DigitalMenuExperience() {
     setAttributeFilter("all")
     setStationFilter("all")
     setSortBy("recommended")
+    setDraftFilters(defaultAdvancedFilters())
     scrollNav()
   }, [scrollNav])
+
+  const advancedFilterCount = useMemo(
+    () =>
+      countAdvancedFilters(
+        readAdvancedFiltersFromState({
+          categorySlug,
+          priceMin,
+          priceMax,
+          sortBy,
+          stationFilter,
+          availableOnly,
+          popularOnly,
+          newOnly,
+          spicyOnly,
+          vegetarianOnly,
+        }),
+      ),
+    [
+      categorySlug,
+      priceMin,
+      priceMax,
+      sortBy,
+      stationFilter,
+      availableOnly,
+      popularOnly,
+      newOnly,
+      spicyOnly,
+      vegetarianOnly,
+    ],
+  )
+
+  const openFiltersSheet = useCallback(() => {
+    setDraftFilters(
+      readAdvancedFiltersFromState({
+        categorySlug,
+        priceMin,
+        priceMax,
+        sortBy,
+        stationFilter,
+        availableOnly,
+        popularOnly,
+        newOnly,
+        spicyOnly,
+        vegetarianOnly,
+      }),
+    )
+    setFiltersSheetOpen(true)
+  }, [
+    categorySlug,
+    priceMin,
+    priceMax,
+    sortBy,
+    stationFilter,
+    availableOnly,
+    popularOnly,
+    newOnly,
+    spicyOnly,
+    vegetarianOnly,
+  ])
+
+  const applyDraftFilters = useCallback(() => {
+    setCategorySlug(draftFilters.categorySlug)
+    setPriceMin(draftFilters.priceMin)
+    setPriceMax(draftFilters.priceMax)
+    setSortBy(draftFilters.sortBy)
+    setStationFilter(draftFilters.stationFilter)
+    setAvailableOnly(draftFilters.availableOnly)
+    setPopularOnly(draftFilters.popularOnly)
+    setNewOnly(draftFilters.newOnly)
+    setSpicyOnly(draftFilters.spicyOnly)
+    setVegetarianOnly(draftFilters.vegetarianOnly)
+    setFiltersSheetOpen(false)
+    scrollNav()
+  }, [draftFilters, scrollNav])
+
+  const resetDraftFilters = useCallback(() => {
+    setDraftFilters(defaultAdvancedFilters())
+  }, [])
 
   const showcaseVisible =
     section === "all" &&
@@ -543,6 +622,21 @@ export function DigitalMenuExperience() {
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="relative gap-1"
+                onClick={openFiltersSheet}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                {t("menu.openFilters")}
+                {advancedFilterCount > 0 ? (
+                  <span className="ml-0.5 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                    {advancedFilterCount}
+                  </span>
+                ) : null}
+              </Button>
               <Button type="button" variant="outline" size="sm" className="gap-1" onClick={resetFilters}>
                 <RotateCcw className="h-3.5 w-3.5" />
                 {t("menu.resetFilters")}
@@ -584,107 +678,6 @@ export function DigitalMenuExperience() {
                 </Button>
               )
             })}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
-            <SlidersHorizontal className="h-4 w-4 shrink-0" />
-            <span className="text-xs font-medium uppercase tracking-wide">{t("menu.filtersTitle")}</span>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs text-muted-foreground">{t("menu.categoryLabel")}</Label>
-              <Select value={categorySlug} onValueChange={handleCategorySlugChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t("menu.categoryAll")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("menu.categoryAll")}</SelectItem>
-                  {categoriesForSection.map((c) => (
-                    <SelectItem key={c.id} value={c.slug}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">{t("menu.priceMin")}</Label>
-              <Input
-                inputMode="decimal"
-                placeholder="0"
-                value={priceMin}
-                onChange={(e) => setPriceMin(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">{t("menu.priceMax")}</Label>
-              <Input
-                inputMode="decimal"
-                placeholder="∞"
-                value={priceMax}
-                onChange={(e) => setPriceMax(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs text-muted-foreground">{t("menu.sortLabel")}</Label>
-              <Select value={sortBy} onValueChange={(v) => setSortBy(v as MenuSortId)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recommended">{t("menu.sort.recommended")}</SelectItem>
-                  <SelectItem value="name">{t("menu.sort.name")}</SelectItem>
-                  <SelectItem value="price_asc">{t("menu.sort.price_asc")}</SelectItem>
-                  <SelectItem value="price_desc">{t("menu.sort.price_desc")}</SelectItem>
-                  <SelectItem value="popular">{t("menu.sort.popular")}</SelectItem>
-                  <SelectItem value="new">{t("menu.sort.new")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5 sm:col-span-2 lg:col-span-2 xl:col-span-2">
-              <Label className="text-xs text-muted-foreground">{t("menu.stationLabel")}</Label>
-              <Select
-                value={stationFilter}
-                onValueChange={(v) => setStationFilter(v as "all" | Station)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("stations.allStations")}</SelectItem>
-                  <SelectItem value="KITCHEN">{t("stations.kitchen")}</SelectItem>
-                  <SelectItem value="BAR">{t("stations.bar")}</SelectItem>
-                  <SelectItem value="SHISHA">{t("stations.shisha")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <Checkbox checked={availableOnly} onCheckedChange={(v) => setAvailableOnly(v === true)} />
-              {t("menu.filterAvailable")}
-            </label>
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <Checkbox checked={popularOnly} onCheckedChange={(v) => setPopularOnly(v === true)} />
-              {t("menu.popularFilter")}
-            </label>
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <Checkbox checked={newOnly} onCheckedChange={(v) => setNewOnly(v === true)} />
-              {t("menu.filterNew")}
-            </label>
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <Checkbox checked={spicyOnly} onCheckedChange={(v) => setSpicyOnly(v === true)} />
-              {t("menu.filterSpicy")}
-            </label>
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <Checkbox
-                checked={vegetarianOnly}
-                onCheckedChange={(v) => setVegetarianOnly(v === true)}
-              />
-              {t("menu.filterVegetarian")}
-            </label>
           </div>
 
           {activeChips.length > 0 && (
@@ -983,6 +976,16 @@ export function DigitalMenuExperience() {
           </motion.aside>
         )}
       </AnimatePresence>
+
+      <PublicMenuAdvancedFiltersSheet
+        open={filtersSheetOpen}
+        onOpenChange={setFiltersSheetOpen}
+        draft={draftFilters}
+        onDraftChange={(patch) => setDraftFilters((prev) => ({ ...prev, ...patch }))}
+        categories={categoriesForSection}
+        onApply={applyDraftFilters}
+        onResetDraft={resetDraftFilters}
+      />
 
       <ProductCustomizationModal
         open={!!customizeItemId}

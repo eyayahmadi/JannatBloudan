@@ -14,6 +14,7 @@ import { useParams, useRouter } from "next/navigation"
 import type { OrderStatus } from "@/lib/hooks/useRealtimeOrders"
 import { useRealtimeOrders } from "@/lib/hooks/useRealtimeOrders"
 import { useResolvedRestaurantTable } from "@/lib/hooks/useResolvedRestaurantTable"
+import { tableGuestCustomerName } from "@/lib/orders/customer-display"
 import type { QrMenuCategoryRow } from "@/lib/menu/qr-table-category-chips"
 import {
   buildQrCategoryNavItems,
@@ -491,7 +492,7 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
           : items.map((i, idx) => ({ id: `${resolvedId}-${idx}`, name: i.name, quantity: i.quantity })),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      customer_name: `Gast Tisch ${effectiveNumber}`,
+      customer_name: tableGuestCustomerName(effectiveNumber),
       total: typeof serverOrder?.total === "number" ? serverOrder.total : cartTotal,
     })
 

@@ -64,6 +64,10 @@ import { ItemRefuseDialog } from "@/components/stations/ItemRefuseDialog"
 import { StationBoardToast } from "@/components/stations/StationBoardToast"
 import { OrderProductName } from "@/components/orders/OrderProductName"
 import { OrderItemOptions } from "@/components/orders/OrderItemOptions"
+import {
+  normalizeOrderNumber,
+} from "@/lib/orders/sanitize-display-text"
+import { resolveOrderCustomerDisplay } from "@/lib/orders/customer-display"
 
 const STATION_TO_AGENT: Record<Station, AgentContext> = {
   KITCHEN: "kitchen",
@@ -242,8 +246,11 @@ const StationItemCard = memo(function StationItemCard({
   const showLateSlot = columnKey === "preparing"
 
   const typeLabel = t(`kitchen.ticket.orderType.${order.order_type}`, order.order_type)
-
-  void locale
+  const customerLabel = resolveOrderCustomerDisplay(
+    order.customer_name,
+    order.table_number,
+    locale,
+  )
 
   return (
     <div
@@ -257,9 +264,9 @@ const StationItemCard = memo(function StationItemCard({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-slate-900 dark:text-white">
-            #{order.order_number}
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          <span className="break-all text-lg font-bold text-slate-900 dark:text-white">
+            #{normalizeOrderNumber(order.order_number)}
           </span>
           {order.table_number !== null && (
             <Badge variant="outline" className="text-xs">
@@ -277,9 +284,9 @@ const StationItemCard = memo(function StationItemCard({
         </Badge>
       </div>
 
-      {order.customer_name && (
+      {customerLabel && (
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          {order.customer_name}
+          {customerLabel}
         </p>
       )}
 
@@ -298,7 +305,7 @@ const StationItemCard = memo(function StationItemCard({
             <li
               key={item.id}
               className={cn(
-                "flex items-start gap-2 rounded-lg p-2 text-sm",
+                "rounded-lg p-2 text-sm",
                 isRefused
                   ? "bg-red-100/60 dark:bg-red-950/40 ring-1 ring-red-300/50"
                   : isReplaced
@@ -306,59 +313,63 @@ const StationItemCard = memo(function StationItemCard({
                     : "bg-white/50 dark:bg-black/20",
               )}
             >
-              <span className="shrink-0 rounded bg-slate-900 px-1.5 py-0.5 text-xs font-bold text-white dark:bg-white dark:text-slate-900">
-                {item.quantity}x
-              </span>
-              <div className="flex-1 min-w-0">
-                <div
-                  className={cn(
-                    isRefused || isReplaced
-                      ? "text-slate-500 line-through dark:text-slate-400"
-                      : "text-slate-900 dark:text-white",
-                  )}
-                >
-                  <OrderProductName
-                    name={item.name}
-                    name_ar={item.name_ar}
-                    truncate
-                  />
-                </div>
-                {item.notes || item.options_snapshot ? (
-                  <OrderItemOptions
-                    options_snapshot={item.options_snapshot}
-                    notes={item.notes}
-                    logContext={item.name}
-                    size="sm"
-                  />
-                ) : null}
-                {isRefused && item.refusal_reason_code && (
-                  <p className="mt-0.5 text-[11px] font-semibold text-red-700 dark:text-red-300">
-                    <Ban className="me-1 inline h-3 w-3" />
-                    {t(
-                      `stations.refusalReason.${camel(item.refusal_reason_code)}`,
-                      item.refusal_reason_code,
+              <div className="flex min-w-0 items-start gap-2">
+                <span className="shrink-0 rounded bg-slate-900 px-2 py-0.5 text-xs font-bold text-white dark:bg-white dark:text-slate-900">
+                  {item.quantity}x
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div
+                    className={cn(
+                      isRefused || isReplaced
+                        ? "text-slate-500 line-through dark:text-slate-400"
+                        : "text-slate-900 dark:text-white",
                     )}
-                    {item.refusal_note ? ` — ${item.refusal_note}` : ""}
-                  </p>
-                )}
-                {isReplaced && (
-                  <p className="mt-0.5 text-[11px] font-semibold text-purple-700 dark:text-purple-300">
-                    <Repeat className="me-1 inline h-3 w-3" />
-                    {t("stations.replacedNotice", "Remplacé")}
-                  </p>
-                )}
+                  >
+                    <OrderProductName
+                      name={item.name}
+                      name_ar={item.name_ar}
+                      truncate={false}
+                    />
+                  </div>
+                  {item.notes || item.options_snapshot ? (
+                    <OrderItemOptions
+                      options_snapshot={item.options_snapshot}
+                      notes={item.notes}
+                      logContext={item.name}
+                      size="sm"
+                    />
+                  ) : null}
+                  {isRefused && item.refusal_reason_code && (
+                    <p className="mt-0.5 text-[11px] font-semibold text-red-700 dark:text-red-300">
+                      <Ban className="me-1 inline h-3 w-3" />
+                      {t(
+                        `stations.refusalReason.${camel(item.refusal_reason_code)}`,
+                        item.refusal_reason_code,
+                      )}
+                      {item.refusal_note ? ` — ${item.refusal_note}` : ""}
+                    </p>
+                  )}
+                  {isReplaced && (
+                    <p className="mt-0.5 text-[11px] font-semibold text-purple-700 dark:text-purple-300">
+                      <Repeat className="me-1 inline h-3 w-3" />
+                      {t("stations.replacedNotice", "Remplacé")}
+                    </p>
+                  )}
+                </div>
               </div>
-              <StationItemActionButtons
-                item={item}
-                next={next}
-                canAdvance={canAdvance}
-                canRefuse={canRefuse}
-                colors={colors}
-                columnKey={columnKey}
-                orderId={order.id}
-                onAdvanceOrder={onAdvanceOrder}
-                onRefuseOrder={onRefuseOrder}
-              />
+              <div className="mt-2 flex justify-end">
+                <StationItemActionButtons
+                  item={item}
+                  next={next}
+                  canAdvance={canAdvance}
+                  canRefuse={canRefuse}
+                  colors={colors}
+                  columnKey={columnKey}
+                  orderId={order.id}
+                  onAdvanceOrder={onAdvanceOrder}
+                  onRefuseOrder={onRefuseOrder}
+                />
+              </div>
             </li>
           )
         })}

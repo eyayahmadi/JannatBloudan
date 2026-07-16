@@ -1,5 +1,8 @@
 import type { Messages } from "./fr"
 import { landing } from "./landing/landing.de"
+import { adminMessages } from "./admin/de"
+import { workspaceMessages } from "./workspace/de"
+import { caisseMessages } from "./caisse/de"
 
 export const de: Messages = {
   common: {
@@ -320,6 +323,10 @@ export const de: Messages = {
     noResults: "Keine Gerichte gefunden.",
     unavailableBadge: "Nicht verfügbar",
     resetFilters: "Filter zurücksetzen",
+    openFilters: "Filter",
+    applyFilters: "Filter anwenden",
+    publicHeroSubtitle:
+      "Syrisch-libanesische Küche — Vorspeisen, Grillades, Desserts, Getränke und Shisha.",
     filtersTitle: "Filter",
     categoryLabel: "Kategorie",
     categoryAll: "Alle Kategorien",
@@ -491,16 +498,20 @@ export const de: Messages = {
     table: "Tisch",
     orderNumber: "Bestellung",
     createdAt: "Erhalten",
+    guestAtTable: "Gast Tisch {n}",
     notes: "Notizen",
     ticket: {
       title: "KÜCHENTICKET",
       printedAt: "Gedruckt am",
       orderType: {
-        qr_self_service: "QR",
+        qr_self_service: "QR (Self-Service)",
         server: "Kellner",
         pos: "Kasse",
         delivery: "Lieferung",
       },
     },
   },
+  admin: adminMessages,
+  workspace: workspaceMessages,
+  caisse: caisseMessages,
 }

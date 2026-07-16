@@ -3,6 +3,7 @@ import { insertCaisseAudit } from "@/lib/caisse/audit"
 import { ensureTableSession } from "@/lib/table-sessions/ensure-session"
 import { validateAndEnrichOrderItems } from "@/lib/orders/validate-order-items"
 import { syncOrderInvoice } from "@/lib/caisse/sync-order-invoice"
+import { tableGuestCustomerName } from "@/lib/orders/customer-display"
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -84,7 +85,7 @@ export async function createTableOrder(
     .from("orders")
     .insert({
       order_number: orderNumber,
-      customer_name: input.customerName ?? `Table ${input.tableNumber}`,
+      customer_name: input.customerName ?? tableGuestCustomerName(input.tableNumber),
       order_type: orderType,
       source: input.source,
       table_id: input.tableRowId,

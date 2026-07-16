@@ -1,5 +1,8 @@
 import type { Messages } from "./fr"
 import { landing } from "./landing/landing.en"
+import { adminMessages } from "./admin/en"
+import { workspaceMessages } from "./workspace/en"
+import { caisseMessages } from "./caisse/en"
 
 export const en: Messages = {
   common: {
@@ -320,6 +323,10 @@ export const en: Messages = {
     noResults: "No dishes match your filters.",
     unavailableBadge: "Unavailable",
     resetFilters: "Reset filters",
+    openFilters: "Filters",
+    applyFilters: "Apply filters",
+    publicHeroSubtitle:
+      "Syrian-Lebanese cuisine — starters, grills, desserts, drinks and shisha.",
     filtersTitle: "Filters",
     categoryLabel: "Category",
     categoryAll: "All categories",
@@ -491,16 +498,20 @@ export const en: Messages = {
     table: "Table",
     orderNumber: "Order",
     createdAt: "Received",
+    guestAtTable: "Guest table {n}",
     notes: "Notes",
     ticket: {
       title: "KITCHEN TICKET",
       printedAt: "Printed at",
       orderType: {
-        qr_self_service: "QR",
+        qr_self_service: "QR (self-service)",
         server: "Waiter",
         pos: "POS",
         delivery: "Delivery",
       },
     },
   },
+  admin: adminMessages,
+  workspace: workspaceMessages,
+  caisse: caisseMessages,
 }

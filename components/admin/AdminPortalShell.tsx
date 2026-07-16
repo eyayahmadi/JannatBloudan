@@ -20,12 +20,9 @@ import {
 import { ADMIN_PORTAL_NAV, isAdminNavItemActive } from "@/components/admin/admin-portal-nav"
 import { useAuth } from "@/lib/context/AuthContext"
 import { usePurchaseNotifications } from "@/lib/hooks/usePurchaseNotifications"
+import { useI18n } from "@/lib/i18n/context"
 
-const PERIODS: { id: AdminDashboardPeriod; label: string }[] = [
-  { id: "today", label: "Aujourd'hui" },
-  { id: "week", label: "Semaine" },
-  { id: "month", label: "Mois" },
-]
+const PERIOD_IDS: AdminDashboardPeriod[] = ["today", "week", "month"]
 
 function NavGroups({
   onNavigate,
@@ -39,9 +36,10 @@ function NavGroups({
   locationHash: string
 }) {
   const pathname = usePathname()
+  const { t } = useI18n()
 
   return (
-    <nav className="flex flex-col gap-1 p-2" aria-label="Modules administration">
+    <nav className="flex flex-col gap-1 p-2" aria-label={t("admin.shell.navAriaLabel", "Modules administration")}>
       {ADMIN_PORTAL_NAV.map((group) => {
         const collapsed = collapsedGroups[group.id]
         return (
@@ -52,7 +50,7 @@ function NavGroups({
               className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.12em] text-amber-900/55 transition hover:text-amber-950 dark:text-amber-200/55 dark:hover:text-amber-100"
               aria-expanded={!collapsed}
             >
-              {group.label}
+              {t(`admin.nav.groups.${group.id}`, group.label)}
               <ChevronDown
                 className={cn("h-4 w-4 shrink-0 transition-transform", collapsed ? "-rotate-90" : "rotate-0")}
               />
@@ -85,10 +83,12 @@ function NavGroups({
                         >
                           <Icon className="h-4 w-4" strokeWidth={1.65} />
                         </span>
-                        <span className="min-w-0 flex-1 leading-snug">{item.label}</span>
+                        <span className="min-w-0 flex-1 leading-snug">
+                          {t(`admin.nav.items.${item.id}`, item.label)}
+                        </span>
                         {item.badge === "new" ? (
                           <span className="rounded-full bg-[color:var(--lux-gold)]/25 px-1.5 py-0.5 text-[9px] font-bold uppercase text-[color:var(--lux-bordeaux)]">
-                            New
+                            {t("admin.shell.badgeNew", "New")}
                           </span>
                         ) : null}
                       </Link>
@@ -107,6 +107,7 @@ function NavGroups({
 export function AdminPortalShell({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const { logout } = useAuth()
+  const { t } = useI18n()
   const [locationHash, setLocationHash] = useState("")
   const [dashboardPeriod, setDashboardPeriod] = useState<AdminDashboardPeriod>("today")
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -169,7 +170,7 @@ export function AdminPortalShell({ children }: { children: ReactNode }) {
                     variant="outline"
                     size="sm"
                     className="shrink-0 rounded-xl border-[color:var(--lux-gold)]/40 lg:hidden"
-                    aria-label="Ouvrir le menu"
+                    aria-label={t("admin.shell.openMenu", "Ouvrir le menu")}
                   >
                     <Menu className="h-4 w-4" />
                   </Button>
@@ -180,7 +181,7 @@ export function AdminPortalShell({ children }: { children: ReactNode }) {
                 >
                   <SheetHeader className="border-b border-amber-900/10 px-4 py-4 text-left">
                     <SheetTitle className="font-display text-base text-amber-950 dark:text-amber-100">
-                      Navigation admin
+                      {t("admin.shell.navTitle", "Navigation admin")}
                     </SheetTitle>
                   </SheetHeader>
                   <ScrollArea className="h-[calc(100vh-5rem)]">
@@ -203,10 +204,10 @@ export function AdminPortalShell({ children }: { children: ReactNode }) {
                 </span>
                 <div className="min-w-0">
                   <p className="truncate font-display text-sm font-semibold text-amber-950 dark:text-amber-50">
-                    Jannat Bloudan
+                    {t("admin.shell.brandName", "Jannat Bloudan")}
                   </p>
                   <p className="truncate text-[11px] font-medium uppercase tracking-[0.14em] text-[color:var(--lux-bordeaux)] dark:text-amber-300/90">
-                    Administration ERP
+                    {t("admin.shell.portalTitle", "Administration ERP")}
                   </p>
                 </div>
               </Link>
@@ -215,21 +216,21 @@ export function AdminPortalShell({ children }: { children: ReactNode }) {
             <div className="flex flex-wrap items-center justify-end gap-2">
               {isDashboard ? (
                 <div className="mr-1 hidden flex-wrap items-center gap-1 rounded-full border border-amber-900/10 bg-white/70 p-1 dark:border-zinc-700 dark:bg-zinc-900/80 sm:flex">
-                  {PERIODS.map((p) => (
+                  {PERIOD_IDS.map((id) => (
                     <Button
-                      key={p.id}
+                      key={id}
                       type="button"
                       size="sm"
-                      variant={dashboardPeriod === p.id ? "default" : "ghost"}
+                      variant={dashboardPeriod === id ? "default" : "ghost"}
                       className={cn(
                         "h-8 rounded-full px-3 text-xs",
-                        dashboardPeriod === p.id
+                        dashboardPeriod === id
                           ? "bg-[color:var(--lux-bordeaux)] text-white hover:bg-[color:var(--lux-bordeaux)]/90"
                           : "",
                       )}
-                      onClick={() => setDashboardPeriod(p.id)}
+                      onClick={() => setDashboardPeriod(id)}
                     >
-                      {p.label}
+                      {t(`admin.shell.periods.${id}`, id)}
                     </Button>
                   ))}
                 </div>
@@ -245,10 +246,10 @@ export function AdminPortalShell({ children }: { children: ReactNode }) {
                 size="sm"
                 className="shrink-0 gap-1.5 rounded-full border-[color:var(--lux-bordeaux)]/30 text-[color:var(--lux-bordeaux)] hover:bg-[color:var(--lux-bordeaux)]/10 dark:border-amber-200/25 dark:text-amber-100 dark:hover:bg-white/10"
                 onClick={() => void logout()}
-                aria-label="Déconnexion"
+                aria-label={t("admin.shell.logout", "Déconnexion")}
               >
                 <LogOut className="h-4 w-4" aria-hidden />
-                <span className="hidden sm:inline">Déconnexion</span>
+                <span className="hidden sm:inline">{t("admin.shell.logout", "Déconnexion")}</span>
               </Button>
               <Button
                 type="button"
@@ -256,7 +257,11 @@ export function AdminPortalShell({ children }: { children: ReactNode }) {
                 size="sm"
                 className="hidden h-9 w-9 rounded-full lg:inline-flex"
                 onClick={() => setSidebarCollapsed((v) => !v)}
-                aria-label={sidebarCollapsed ? "Afficher le menu latéral" : "Masquer le menu latéral"}
+                aria-label={
+                  sidebarCollapsed
+                    ? t("admin.shell.expandSidebar", "Afficher le menu latéral")
+                    : t("admin.shell.collapseSidebar", "Masquer le menu latéral")
+                }
               >
                 {sidebarCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
               </Button>
@@ -265,19 +270,19 @@ export function AdminPortalShell({ children }: { children: ReactNode }) {
           {isDashboard ? (
             <div className="flex border-t border-amber-900/8 px-3 py-2 sm:hidden dark:border-zinc-800">
               <div className="flex w-full gap-1 rounded-full bg-white/70 p-1 dark:bg-zinc-900/80">
-                {PERIODS.map((p) => (
+                {PERIOD_IDS.map((id) => (
                   <Button
-                    key={p.id}
+                    key={id}
                     type="button"
                     size="sm"
-                    variant={dashboardPeriod === p.id ? "default" : "ghost"}
+                    variant={dashboardPeriod === id ? "default" : "ghost"}
                     className={cn(
                       "h-8 flex-1 rounded-full text-xs",
-                      dashboardPeriod === p.id ? "bg-[color:var(--lux-bordeaux)] text-white" : "",
+                      dashboardPeriod === id ? "bg-[color:var(--lux-bordeaux)] text-white" : "",
                     )}
-                    onClick={() => setDashboardPeriod(p.id)}
+                    onClick={() => setDashboardPeriod(id)}
                   >
-                    {p.label}
+                    {t(`admin.shell.periods.${id}`, id)}
                   </Button>
                 ))}
               </div>
@@ -294,8 +299,12 @@ export function AdminPortalShell({ children }: { children: ReactNode }) {
             style={{ "--admin-header-h": "7.25rem" } as React.CSSProperties}
           >
             <div className="border-b border-amber-900/10 px-4 py-3 dark:border-zinc-800">
-              <p className="font-display text-sm font-semibold text-[color:var(--lux-bordeaux)]">Portail admin</p>
-              <p className="text-xs text-amber-900/55 dark:text-amber-200/50">Modules regroupés par domaine</p>
+              <p className="font-display text-sm font-semibold text-[color:var(--lux-bordeaux)]">
+                {t("admin.shell.sidebarTitle", "Portail admin")}
+              </p>
+              <p className="text-xs text-amber-900/55 dark:text-amber-200/50">
+                {t("admin.shell.sidebarSubtitle", "Modules regroupés par domaine")}
+              </p>
             </div>
             <ScrollArea className="flex-1">
               <NavGroups

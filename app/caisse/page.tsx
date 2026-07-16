@@ -52,6 +52,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { PremiumStatCard, PremiumSection } from "@/components/ui/premium"
 import { FadeIn } from "@/components/ui/motion-primitives"
 import { useAuth } from "@/lib/context/AuthContext"
+import { useI18n } from "@/lib/i18n/context"
+import { formatMessage } from "@/lib/i18n/format-message"
 import { cn } from "@/lib/utils"
 import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
 
@@ -66,7 +68,9 @@ type DashboardPayload = {
 }
 
 export default function CaisseModulePage() {
+  const { t } = useI18n()
   const searchParams = useSearchParams()
+  const dash = t("caisse.summary.dash")
   const allowedTabs = useMemo(
     () =>
       [
@@ -277,23 +281,23 @@ export default function CaisseModulePage() {
 
   return (
     <RequireAuth roles={["ADMIN", "CASHIER"]}>
-      <StaffWorkspaceShell title="Caisse" subtitle="Vue journée, tables et encaissements">
+      <StaffWorkspaceShell title={t("caisse.shell.title")} subtitle={t("caisse.shell.subtitle")}>
         <PageShell className="min-h-screen bg-[color:var(--lux-cream)] dark:bg-neutral-950">
         <SiteHeader
           hideMainNav
           backHref="/admin"
-          backLabel="Admin"
+          backLabel={t("nav.admin")}
           trailing={
             <div className="flex gap-2">
               <Button asChild size="sm" variant="outline" className="gap-1">
                 <Link href="/pos">
-                  <Wallet className="h-4 w-4" /> POS
+                  <Wallet className="h-4 w-4" /> {t("workspace.nav.cashier.pos")}
                 </Link>
               </Button>
               {isAdminLike ? (
                 <Button asChild size="sm" variant="outline" className="gap-1">
                   <Link href="/admin/taxes">
-                    <Building2 className="h-4 w-4" /> Taxes
+                    <Building2 className="h-4 w-4" /> {t("caisse.page.taxes")}
                   </Link>
                 </Button>
               ) : null}
@@ -304,14 +308,14 @@ export default function CaisseModulePage() {
         <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
           <div>
             <h1 className="font-display text-3xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
-              Gestion de caisse intelligente
+              {t("caisse.page.title")}
             </h1>
             <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-              Synthèse des encaissements, TVA suivie hors espèces (configurable admin), journaux et clôture.
+              {t("caisse.page.description")}
             </p>
             <div className="mt-4 flex flex-wrap items-end gap-3">
               <div>
-                <Label className="text-xs text-neutral-500">Date</Label>
+                <Label className="text-xs text-neutral-500">{t("caisse.page.date")}</Label>
                 <Input
                   type="date"
                   className="h-9 max-w-[12rem]"
@@ -328,7 +332,7 @@ export default function CaisseModulePage() {
                 }}
               />
               <Button type="button" size="sm" variant="secondary" className="h-9" onClick={() => loadDashboard()}>
-                Actualiser
+                {t("common.refresh")}
               </Button>
             </div>
           </div>
@@ -337,7 +341,7 @@ export default function CaisseModulePage() {
             <Card className="border-amber-200 bg-amber-50/70 dark:bg-amber-950/40">
               <CardContent className="flex items-center gap-2 py-4 text-sm text-amber-900 dark:text-amber-100">
                 <Receipt className="h-5 w-5 shrink-0" />
-                Connectez Supabase pour activer le pilotage financier temps réel.
+                {t("caisse.page.supabaseDisabled")}
               </CardContent>
             </Card>
           ) : null}
@@ -345,34 +349,34 @@ export default function CaisseModulePage() {
           <Tabs value={mainTab} onValueChange={setMainTab}>
             <TabsList className="flex flex-wrap gap-1">
               <TabsTrigger value="vue" className="gap-1">
-                <LayoutDashboard className="h-3.5 w-3.5" /> Synthèse
+                <LayoutDashboard className="h-3.5 w-3.5" /> {t("caisse.tabs.vue")}
               </TabsTrigger>
               <TabsTrigger value="encaisser" className="gap-1">
-                <Receipt className="h-3.5 w-3.5" /> À encaisser
+                <Receipt className="h-3.5 w-3.5" /> {t("caisse.tabs.encaisser")}
               </TabsTrigger>
               <TabsTrigger value="factures" className="gap-1">
-                <Receipt className="h-3.5 w-3.5" /> Factures &amp; paiements
+                <Receipt className="h-3.5 w-3.5" /> {t("caisse.tabs.factures")}
               </TabsTrigger>
               <TabsTrigger value="tables" className="gap-1">
-                <Table2 className="h-3.5 w-3.5" /> Tables
+                <Table2 className="h-3.5 w-3.5" /> {t("caisse.tabs.tables")}
               </TabsTrigger>
               <TabsTrigger value="externes" className="gap-1">
-                <Truck className="h-3.5 w-3.5" /> Externes
+                <Truck className="h-3.5 w-3.5" /> {t("caisse.tabs.externes")}
               </TabsTrigger>
               <TabsTrigger value="evenements" className="gap-1">
-                <Ticket className="h-3.5 w-3.5" /> Événements
+                <Ticket className="h-3.5 w-3.5" /> {t("caisse.tabs.evenements")}
               </TabsTrigger>
               <TabsTrigger value="mouvements" className="gap-1">
-                <Banknote className="h-3.5 w-3.5" /> Sorties
+                <Banknote className="h-3.5 w-3.5" /> {t("caisse.tabs.mouvements")}
               </TabsTrigger>
               <TabsTrigger value="credits" className="gap-1">
-                <PiggyBank className="h-3.5 w-3.5" /> Crédits clients
+                <PiggyBank className="h-3.5 w-3.5" /> {t("caisse.tabs.credits")}
               </TabsTrigger>
               <TabsTrigger value="revenus" className="gap-1">
-                <TrendingUp className="h-3.5 w-3.5" /> Revenus stations
+                <TrendingUp className="h-3.5 w-3.5" /> {t("caisse.tabs.revenus")}
               </TabsTrigger>
               <TabsTrigger value="cloture" className="gap-1">
-                <Lock className="h-3.5 w-3.5" /> Clôture jour
+                <Lock className="h-3.5 w-3.5" /> {t("caisse.tabs.cloture")}
               </TabsTrigger>
             </TabsList>
 
@@ -400,12 +404,12 @@ export default function CaisseModulePage() {
               />
 
               <PremiumSection
-                title="Synthèse du jour"
-                description="Encaissements, mouvements et entrées externes — mis à jour en temps réel."
+                title={t("caisse.summary.title")}
+                description={t("caisse.summary.description")}
               >
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <PremiumStatCard
-                    label="Ventes (paiements jour)"
+                    label={t("caisse.summary.salesToday")}
                     value={Number(summary.totalSalesToday ?? 0)}
                     suffix=" €"
                     decimals={2}
@@ -413,7 +417,7 @@ export default function CaisseModulePage() {
                     icon={ArrowLeftRight}
                   />
                   <PremiumStatCard
-                    label="Cash encaissé"
+                    label={t("caisse.summary.cashPaid")}
                     value={Number(summary.cashPaid ?? 0)}
                     suffix=" €"
                     decimals={2}
@@ -421,7 +425,7 @@ export default function CaisseModulePage() {
                     icon={Banknote}
                   />
                   <PremiumStatCard
-                    label="Carte + online"
+                    label={t("caisse.summary.cardOnline")}
                     value={Number((summary.cardAndElectronic ?? summary.cardPaid) ?? 0)}
                     suffix=" €"
                     decimals={2}
@@ -429,7 +433,7 @@ export default function CaisseModulePage() {
                     icon={Wallet}
                   />
                   <PremiumStatCard
-                    label="Sorties caisse jour"
+                    label={t("caisse.summary.sorties")}
                     value={Number(summary.sortiesCaisse ?? 0)}
                     suffix=" €"
                     decimals={2}
@@ -437,7 +441,7 @@ export default function CaisseModulePage() {
                     icon={TrendingDown}
                   />
                   <PremiumStatCard
-                    label="Avances employés"
+                    label={t("caisse.summary.advances")}
                     value={Number(summary.employeeAdvances ?? 0)}
                     suffix=" €"
                     decimals={2}
@@ -445,7 +449,7 @@ export default function CaisseModulePage() {
                     icon={Receipt}
                   />
                   <PremiumStatCard
-                    label="Entrées externes (plateformes)"
+                    label={t("caisse.summary.externalIncome")}
                     value={Number(summary.externalIncomesTotal ?? 0)}
                     suffix=" €"
                     decimals={2}
@@ -453,7 +457,7 @@ export default function CaisseModulePage() {
                     icon={Truck}
                   />
                   <PremiumStatCard
-                    label="Crédits clients ouverts"
+                    label={t("caisse.summary.openCredits")}
                     value={Number((summary as { creditTotalRemaining?: number }).creditTotalRemaining ?? 0)}
                     suffix=" €"
                     decimals={2}
@@ -476,27 +480,27 @@ export default function CaisseModulePage() {
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <MetricBox
-                  label="Caisse théorique (après mouvements)"
-                  value={`${nf(summary.expectedCashDrawerAfterMovements as number)} €`}
+                  label={t("caisse.summary.expectedCash")}
+                  value={`${nf(summary.expectedCashDrawerAfterMovements as number, dash)} €`}
                   icon={Banknote}
                 />
                 <MetricBox
-                  label="Écart clôture (compté − attendu)"
+                  label={t("caisse.summary.closingGap")}
                   value={
                     summary.cashGapAtClosing === null || summary.cashGapAtClosing === undefined
-                      ? "—"
-                      : `${nf(summary.cashGapAtClosing)} €`
+                      ? dash
+                      : `${nf(summary.cashGapAtClosing, dash)} €`
                   }
                   icon={AlertTriangle}
                 />
                 <MetricBox
-                  label="Journée clôturée ?"
-                  value={(summary.closingLocked as boolean) ? "Oui" : "Non"}
+                  label={t("caisse.summary.dayClosed")}
+                  value={(summary.closingLocked as boolean) ? t("caisse.summary.yes") : t("caisse.summary.no")}
                   icon={Lock}
                 />
                 <MetricBox
-                  label="Total factures (lignes jour)"
-                  value={String(summary.invoicesTotalCount ?? "—")}
+                  label={t("caisse.summary.invoicesTotal")}
+                  value={String(summary.invoicesTotalCount ?? dash)}
                   icon={Receipt}
                 />
               </div>
@@ -504,38 +508,38 @@ export default function CaisseModulePage() {
               <div className="grid gap-3 md:grid-cols-3">
                 <Card>
                   <CardHeader className="pb-1">
-                    <CardTitle className="text-base">Factures journée</CardTitle>
+                    <CardTitle className="text-base">{t("caisse.invoices.dayTitle")}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-sm text-muted-foreground">
-                    Brouillon: <strong>{(summary.invoicesCounts as { draft?: number })?.draft ?? "—"}</strong>
-                    {" · "}Ouvert:
-                    <strong> {(summary.invoicesCounts as { validated_open?: number })?.validated_open ?? "—"}</strong>
+                    {t("caisse.invoices.draft")}: <strong>{(summary.invoicesCounts as { draft?: number })?.draft ?? dash}</strong>
+                    {" · "}{t("caisse.invoices.open")}:
+                    <strong> {(summary.invoicesCounts as { validated_open?: number })?.validated_open ?? dash}</strong>
                     <br />
-                    Payées:
-                    <strong> {(summary.invoicesCounts as { paid?: number })?.paid ?? "—"}</strong>
-                    {" · "}Annul.:
-                    <strong> {(summary.invoicesCounts as { cancelled?: number })?.cancelled ?? "—"}</strong>
+                    {t("caisse.invoices.paid")}:
+                    <strong> {(summary.invoicesCounts as { paid?: number })?.paid ?? dash}</strong>
+                    {" · "}{t("caisse.invoices.cancelled")}:
+                    <strong> {(summary.invoicesCounts as { cancelled?: number })?.cancelled ?? dash}</strong>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader className="pb-1">
-                    <CardTitle className="text-base">Estimation TVA (règle admin)</CardTitle>
+                    <CardTitle className="text-base">{t("caisse.vat.title")}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-sm">
                     <span className="text-muted-foreground">
-                      Hors espèces (fact.) : {""}
-                      <strong>{nf((fiscal as { electronic_vat_from_invoices_eur?: number })?.electronic_vat_from_invoices_eur)} €</strong>
+                      {t("caisse.vat.nonCash")} : {""}
+                      <strong>{nf((fiscal as { electronic_vat_from_invoices_eur?: number })?.electronic_vat_from_invoices_eur, dash)} €</strong>
                       <br />
-                      + cash déclaré si option : {""}
-                      <strong>{nf((fiscal as { extra_declared_cash_tax_eur?: number })?.extra_declared_cash_tax_eur)} €</strong>
+                      {t("caisse.vat.declaredCash")} : {""}
+                      <strong>{nf((fiscal as { extra_declared_cash_tax_eur?: number })?.extra_declared_cash_tax_eur, dash)} €</strong>
                     </span>
                     <p className="mt-2 text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-                      Total estimation : {""}
-                      {nf((fiscal as { total_tax_due_estimate_eur?: number })?.total_tax_due_estimate_eur)} €
+                      {t("caisse.vat.totalEstimate")} : {""}
+                      {nf((fiscal as { total_tax_due_estimate_eur?: number })?.total_tax_due_estimate_eur, dash)} €
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Scope fiscal : {""}
+                      {t("caisse.vat.fiscalScope")} : {""}
                       {String((fiscal as { vat_scope?: string })?.vat_scope)}
                     </p>
                   </CardContent>
@@ -543,16 +547,16 @@ export default function CaisseModulePage() {
 
                 <Card className={cn(!data?.closing && "opacity-90")}>
                   <CardHeader className="pb-1">
-                    <CardTitle className="text-base">Dernière clôture (date)</CardTitle>
+                    <CardTitle className="text-base">{t("caisse.closing.lastTitle")}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-sm">
                     {data?.closing ? (
                       <>
-                        <p>Réel déclaré : {(data.closing as { cash_declared_official?: number }).cash_declared_official}</p>
-                        <p>Interne résiduel : {(data.closing as { cash_internal_residual?: number }).cash_internal_residual}</p>
+                        <p>{t("caisse.closing.declaredReal")} : {(data.closing as { cash_declared_official?: number }).cash_declared_official}</p>
+                        <p>{t("caisse.closing.internalResidual")} : {(data.closing as { cash_internal_residual?: number }).cash_internal_residual}</p>
                       </>
                     ) : (
-                      <span className="text-muted-foreground">Pas encore clôturée aujourd’hui.</span>
+                      <span className="text-muted-foreground">{t("caisse.closing.notYetToday")}</span>
                     )}
                   </CardContent>
                 </Card>
@@ -567,7 +571,7 @@ export default function CaisseModulePage() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 font-medium text-neutral-900 dark:text-neutral-50">
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
-                  Alertes
+                  {t("caisse.alerts.title")}
                 </div>
                 <ul className="space-y-1 text-sm">
                   {(data?.alerts ?? []).map((a) => (
@@ -576,7 +580,7 @@ export default function CaisseModulePage() {
                     </li>
                   ))}
                   {(data?.alerts ?? []).length === 0 ? (
-                    <li className="text-muted-foreground">Aucune alerte automatique détectée.</li>
+                    <li className="text-muted-foreground">{t("caisse.alerts.none")}</li>
                   ) : null}
                 </ul>
               </div>
@@ -635,13 +639,19 @@ export default function CaisseModulePage() {
                     {requestAlertsCount > 0 ? (
                       <div className="flex items-center gap-3">
                         <BellRing className="h-4 w-4 animate-pulse" />
-                        {requestAlertsCount} demande{requestAlertsCount > 1 ? "s" : ""} d’addition en attente.
+                        {formatMessage(t("caisse.tables.billRequests"), {
+                          count: requestAlertsCount,
+                          plural: requestAlertsCount > 1 ? "s" : "",
+                        })}
                       </div>
                     ) : null}
                     {cashierCallCount > 0 ? (
                       <div className="flex items-center gap-3">
                         <BellRing className="h-4 w-4 animate-pulse" />
-                        {cashierCallCount} appel{cashierCallCount > 1 ? "s" : ""} caisse en attente.
+                        {formatMessage(t("caisse.tables.cashierCalls"), {
+                          count: cashierCallCount,
+                          plural: cashierCallCount > 1 ? "s" : "",
+                        })}
                       </div>
                     ) : null}
                   </CardContent>
@@ -650,7 +660,7 @@ export default function CaisseModulePage() {
               {tables.length === 0 ? (
                 <Card>
                   <CardContent className="py-6 text-sm text-muted-foreground">
-                    Tables indisponibles (schéma `restaurant_tables` non chargé ou vide).
+                    {t("caisse.tables.unavailable")}
                   </CardContent>
                 </Card>
               ) : (
@@ -684,7 +694,7 @@ export default function CaisseModulePage() {
             <TabsContent value="evenements" className="mt-4 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Tickets événements (jour sélectionné)</CardTitle>
+                  <CardTitle className="text-base">{t("caisse.tables.eventsTitle")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CaisseEventTicketsPanel date={date} />
@@ -710,42 +720,41 @@ export default function CaisseModulePage() {
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Wallet className="h-5 w-5 text-[color:var(--lux-gold-deep)]" />
-                    Cash déclaré &amp; physique
+                    {t("caisse.closing.cashTitle")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <Label className="text-xs">Espèces comptées (physique)</Label>
+                      <Label className="text-xs">{t("caisse.closing.physicalCounted")}</Label>
                       <Input
                         className="h-10"
                         inputMode="decimal"
-                        placeholder="0,00"
+                        placeholder={t("caisse.closing.placeholder")}
                         value={closing.physical}
                         onChange={(e) => setClosing((c) => ({ ...c, physical: e.target.value }))}
                       />
                     </div>
                     <div>
-                      <Label className="text-xs">Espèces déclarées (officiel)</Label>
+                      <Label className="text-xs">{t("caisse.closing.declaredOfficial")}</Label>
                       <Input
                         className="h-10"
                         inputMode="decimal"
-                        placeholder="0,00"
+                        placeholder={t("caisse.closing.placeholder")}
                         value={closing.declared}
                         onChange={(e) => setClosing((c) => ({ ...c, declared: e.target.value }))}
                       />
                     </div>
                   </div>
                   <div>
-                    <Label className="text-xs">Commentaire (écart, incident)</Label>
+                    <Label className="text-xs">{t("caisse.closing.comment")}</Label>
                     <Textarea rows={3} value={closing.comment} onChange={(e) => setClosing((c) => ({ ...c, comment: e.target.value }))} />
                   </div>
                   <Button type="button" onClick={() => void submitClosing()}>
-                    Valider et clôturer ({date})
+                    {formatMessage(t("caisse.closing.submit"), { date })}
                   </Button>
                   <p className="text-xs text-muted-foreground">
-                    Une ligne immuable sera créée (pas de suppression utilisateur). L’interne résiduel = attendu système −
-                    déclaré officiel. Les écarts physiques créent une alerte si volumineux.
+                    {t("caisse.closing.hint")}
                   </p>
                 </CardContent>
               </Card>
@@ -768,8 +777,10 @@ export default function CaisseModulePage() {
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <SheetTitle className="flex items-center gap-2 text-base">
                         <Receipt className="h-4 w-4 text-[color:var(--lux-bordeaux)]" />
-                        Table {focusedTable.table_number}
-                        {focusedTable.session_id ? " · session active" : " · libre"}
+                        {t("caisse.tables.tableLabel")} {focusedTable.table_number}
+                        {focusedTable.session_id
+                          ? ` · ${t("caisse.tables.activeSession")}`
+                          : ` · ${t("caisse.tables.free")}`}
                       </SheetTitle>
                       {(() => {
                         const previewUrl = resolveClientPreviewUrl({
@@ -780,8 +791,8 @@ export default function CaisseModulePage() {
                         return previewUrl ? (
                           <ClientPreviewDialog
                             url={previewUrl}
-                            label={`Table ${focusedTable.table_number}`}
-                            triggerLabel="Vue client"
+                            label={`${t("caisse.tables.tableLabel")} ${focusedTable.table_number}`}
+                            triggerLabel={t("caisse.tables.clientView")}
                             variant="outline"
                             size="sm"
                           />
@@ -814,9 +825,9 @@ export default function CaisseModulePage() {
   )
 }
 
-function nf(v: unknown) {
+function nf(v: unknown, dash = "—") {
   const n = Number(v)
-  if (!Number.isFinite(n)) return "—"
+  if (!Number.isFinite(n)) return dash
   return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ")
 }
 
@@ -834,6 +845,8 @@ function FreeTableDetailPanel({
     restaurant_status?: string
   } | null
 }) {
+  const { t } = useI18n()
+  const dash = t("caisse.summary.dash")
   if (!table) return null
   return (
     <div className="space-y-3">
@@ -842,62 +855,61 @@ function FreeTableDetailPanel({
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 flex-col items-center justify-center rounded-xl border bg-white text-[color:var(--lux-bordeaux)] shadow-sm dark:bg-neutral-800">
               <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
-                Table
+                {t("caisse.tables.tableLabel")}
               </span>
               <span className="-mt-0.5 text-lg font-bold leading-none">{table.table_number}</span>
             </div>
             <div className="space-y-0.5">
               <div className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
-                {table.payment_status_label ?? "Libre"}
+                {table.payment_status_label ?? t("caisse.tables.freeStatus")}
               </div>
               <div className="text-xs text-emerald-900/70 dark:text-emerald-100/70">
-                {table.zone ? `Zone ${table.zone}` : "Aucune zone"}
+                {table.zone ? formatMessage(t("caisse.tables.zone"), { zone: table.zone }) : t("caisse.tables.noZone")}
                 {table.display_name ? ` · ${table.display_name}` : ""}
               </div>
             </div>
           </div>
           <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100">
-            Aucune session ouverte
+            {t("caisse.tables.noSession")}
           </span>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Informations</CardTitle>
+          <CardTitle className="text-sm">{t("caisse.tables.info")}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-2 text-sm">
-          <Row label="Numéro de table" value={`#${table.table_number ?? "—"}`} />
-          {table.zone ? <Row label="Zone" value={table.zone} /> : null}
-          {table.display_name ? <Row label="Nom affiché" value={table.display_name} /> : null}
-          {table.table_code ? <Row label="Code QR" value={table.table_code} mono /> : null}
+          <Row label={t("caisse.tables.tableNumber")} value={`#${table.table_number ?? dash}`} />
+          {table.zone ? <Row label={t("caisse.tables.zone").split("{zone}")[0].trim()} value={table.zone} /> : null}
+          {table.display_name ? <Row label={t("caisse.tables.displayName")} value={table.display_name} /> : null}
+          {table.table_code ? <Row label={t("caisse.tables.qrCode")} value={table.table_code} mono /> : null}
           {table.restaurant_status ? (
-            <Row label="État (POS)" value={table.restaurant_status} />
+            <Row label={t("caisse.tables.posStatus")} value={table.restaurant_status} />
           ) : null}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Actions disponibles</CardTitle>
+          <CardTitle className="text-sm">{t("caisse.tables.availableActions")}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-2 sm:grid-cols-2">
           <Button asChild variant="default" className="h-10 gap-1">
             <Link href={`/pos?table=${encodeURIComponent(String(table.table_number ?? ""))}`}>
-              <Wallet className="h-4 w-4" /> Ouvrir sur le POS
+              <Wallet className="h-4 w-4" /> {t("caisse.tables.openOnPos")}
             </Link>
           </Button>
           <Button asChild variant="outline" className="h-10 gap-1">
             <Link href="/pos/tables">
-              <Table2 className="h-4 w-4" /> Plan POS
+              <Table2 className="h-4 w-4" /> {t("caisse.tables.posPlan")}
             </Link>
           </Button>
         </CardContent>
       </Card>
 
       <p className="text-center text-[11px] text-muted-foreground">
-        La session de cette table sera créée automatiquement à la première commande prise sur le POS
-        ou via le QR client.
+        {t("caisse.tables.autoSessionHint")}
       </p>
     </div>
   )

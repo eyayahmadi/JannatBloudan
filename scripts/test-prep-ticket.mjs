@@ -6,7 +6,7 @@ import { describe, it } from "node:test"
 import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
 import { join, dirname } from "node:path"
-import { fileURLToPath } from "node:url"
+import { fileURLToPath, pathToFileURL } from "node:url"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, "..")
@@ -75,19 +75,20 @@ describe("optionsSnapshotFromNotes", () => {
 describe("kitchen-ticket HTML", () => {
   const src = readFileSync(join(ROOT, "lib/print/kitchen-ticket.ts"), "utf8")
 
-  it("includes classic receipt metadata and total", () => {
-    assert.match(src, /\.total/)
+  it("excludes price and total from ticket", () => {
+    assert.doesNotMatch(src, /\.total/)
+    assert.doesNotMatch(src, /DT/)
+    assert.doesNotMatch(src, /unit_price/)
+    assert.doesNotMatch(src, /order\.total/)
     assert.match(src, /customer_name/)
     assert.match(src, /order_type/)
-    assert.match(src, /DT/)
   })
 
-  it("uses classic receipt layout with station badge and total", () => {
+  it("uses classic receipt layout with station badge", () => {
     assert.match(src, /size: 80mm auto/)
     assert.match(src, /margin: 2mm/)
     assert.match(src, /width: 76mm/)
     assert.match(src, /station-badge/)
-    assert.match(src, /\.total/)
     assert.match(src, /color: #000/)
     assert.doesNotMatch(src, /#0891b2|#d97706|#7c3aed/)
     assert.match(src, /Courier New/)
@@ -99,6 +100,25 @@ describe("cart-line bilingual extras", () => {
   it("formats extras with name_ar", () => {
     assert.match(src, /formatExtraLabel/)
     assert.match(src, /formatExtraLabel\(e\)/)
+  })
+})
+
+describe("customer display labels", () => {
+  it("formats guest at table per locale", async () => {
+    const mod = await import(pathToFileURL(join(ROOT, "lib/orders/customer-display.ts")).href)
+    const { formatGuestAtTableLabel, tableGuestCustomerName, resolveOrderCustomerDisplay } = mod
+
+    assert.equal(formatGuestAtTableLabel(55, "de"), "Gast Tisch 55")
+    assert.equal(formatGuestAtTableLabel(55, "fr"), "Client table 55")
+    assert.equal(tableGuestCustomerName(55), "table_guest:55")
+    assert.equal(
+      resolveOrderCustomerDisplay("Client Table 55", 55, "de"),
+      "Gast Tisch 55",
+    )
+    assert.equal(
+      resolveOrderCustomerDisplay("table_guest:55", 55, "de"),
+      "Gast Tisch 55",
+    )
   })
 })
 

@@ -1,4 +1,8 @@
 import { parseOptionsSnapshotJson } from "@/lib/orders/order-item-options"
+import {
+  normalizeOrderNumber,
+  normalizeProductLabel,
+} from "@/lib/orders/sanitize-display-text"
 import type { KitchenOrder, OrderStatus, OrderType } from "@/lib/hooks/useRealtimeOrders"
 import type { ItemStatus, Station } from "@/lib/stations/config"
 import { inferStation } from "@/lib/stations/inference"
@@ -109,8 +113,8 @@ export function mapDbRowsToKitchenOrders(
 
       return {
         id: it.id,
-        name: it.product_name,
-        name_ar: it.product_name_ar?.trim() || undefined,
+        name: normalizeProductLabel(it.product_name),
+        name_ar: normalizeProductLabel(it.product_name_ar) || undefined,
         quantity: typeof it.quantity === "number" ? it.quantity : Number.parseInt(String(it.quantity), 10) || 0,
         notes: it.special_instructions?.trim() || undefined,
         options_snapshot: parseOptionsSnapshotJson(it.options_snapshot) ?? undefined,
@@ -152,7 +156,7 @@ export function mapDbRowsToKitchenOrders(
 
     return {
       id: order.id,
-      order_number: order.order_number,
+      order_number: normalizeOrderNumber(order.order_number),
       table_number: Number.isFinite(tableNumber) ? tableNumber : null,
       order_type: mapDbOrderType(order.order_type, order.source),
       status: mapDbOrderStatus(order.status),
