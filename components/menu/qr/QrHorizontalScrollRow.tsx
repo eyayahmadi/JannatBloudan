@@ -8,12 +8,14 @@ type QrHorizontalScrollRowProps = {
   className?: string
   trackClassName?: string
   ariaLabel?: string
-  /** Pull track to screen edges on mobile (default true). */
   bleed?: boolean
   "data-qr-category-carousel"?: boolean
 }
 
-/** Single-row horizontal carousel — never wraps to a grid. */
+/**
+ * Single-row horizontal carousel.
+ * Viewport scrolls; inner track uses inline-flex + w-max so items never wrap/shrink into a grid.
+ */
 export function QrHorizontalScrollRow({
   children,
   className,
@@ -28,16 +30,19 @@ export function QrHorizontalScrollRow({
       aria-label={ariaLabel}
       {...(dataQrCategoryCarousel ? { "data-qr-category-carousel": true } : {})}
     >
-      <div className={cn("w-full min-w-0", bleed && "-mx-4 overflow-hidden sm:mx-0")}>
+      <div
+        data-qr-scroll-viewport
+        className={cn(
+          "w-full min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth snap-x snap-mandatory touch-pan-x",
+          "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          bleed && "-mx-4 px-4 sm:mx-0 sm:px-0",
+          trackClassName,
+        )}
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
         <div
           data-qr-scroll-track
-          className={cn(
-            "flex flex-row flex-nowrap items-stretch gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth pb-2 snap-x snap-mandatory touch-pan-x",
-            "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-            bleed && "px-4 sm:px-0",
-            trackClassName,
-          )}
-          style={{ WebkitOverflowScrolling: "touch" }}
+          className="inline-flex w-max min-w-full flex-row flex-nowrap items-stretch gap-3 pb-2"
         >
           {children}
         </div>
@@ -55,7 +60,7 @@ export function QrHorizontalScrollItem({ children, className }: QrHorizontalScro
   return (
     <div
       data-qr-scroll-item
-      className={cn("flex shrink-0 grow-0 basis-auto snap-start", className)}
+      className={cn("flex shrink-0 grow-0 snap-start", className)}
     >
       {children}
     </div>

@@ -55,11 +55,9 @@ export function QrTableMenuPage() {
         <StationStatusBanner />
       </div>
 
-      {!offline && !loadError && !(loading && menuItems.length === 0) ? (
-        <div className="relative z-0 mx-auto max-w-2xl px-4 pb-2">
-          <QrMenuCategoryCards tableId={tableId} />
-        </div>
-      ) : null}
+      <div className="relative z-0 mx-auto max-w-2xl px-4 pb-3 pt-1">
+        <QrMenuCategoryCards tableId={tableId} />
+      </div>
 
       <main className="relative z-0 mx-auto max-w-2xl px-4 py-5 pb-28" data-menu-background>
         {offline && !loading ? (

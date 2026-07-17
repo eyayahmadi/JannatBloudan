@@ -393,6 +393,8 @@ export const ar: Messages = {
       plats: "الوجبات الرئيسية",
       grillades: "المشاوي",
       manakish: "المناقيش",
+      tajine: "الطواجن",
+      hauptgerichte: "الطبخات",
       pizza: "البيتزا",
       burgers: "البرغر",
       sandwiches: "الساندويش",

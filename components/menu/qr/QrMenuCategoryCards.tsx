@@ -77,7 +77,7 @@ export function QrMenuCategoryCards({ tableId, className }: QrMenuCategoryCardsP
         return (
           <QrHorizontalScrollItem
             key={card.slug}
-            className="w-[38vw] min-w-[9.25rem] max-w-[10.5rem] sm:w-[9.75rem] sm:min-w-[9.75rem] sm:max-w-[10.5rem]"
+            className="w-[78vw] min-w-[78vw] max-w-[18rem] snap-center sm:w-[16.5rem] sm:min-w-[16.5rem]"
           >
             <CategoryCard
               card={card}

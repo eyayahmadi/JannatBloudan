@@ -426,131 +426,6 @@
       ]
     },
     {
-      "file": "app/admin/page.tsx",
-      "hits": [
-        {
-          "kind": "jsx-text",
-          "text": "Encaissements & TVA — détail finances",
-          "line": 429
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Ouvrir le POS",
-          "line": 441
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Gérer l&apos;inventaire",
-          "line": 465
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Synthèse jour",
-          "line": 496
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Encaissements & écarts",
-          "line": 497
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Agents, prévisions, anomalies",
-          "line": 517
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Revenus sur 7 jours",
-          "line": 586
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Aucun produit vendu.",
-          "line": 618
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Voir tout (POS)",
-          "line": 656
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Aucune commande pour cette periode.",
-          "line": 665
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Aucune alerte de stock.",
-          "line": 708
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Aucune commande",
-          "line": 755
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Aucune commande enregistree pour cette periode. Verifiez le systeme.",
-          "line": 756
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Rupture de stock critique",
-          "line": 766
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Baisse de revenus",
-          "line": 777
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Des commandes sont en attente depuis plus longtemps que la normale.",
-          "line": 789
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Tout va bien",
-          "line": 799
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Aucune alerte critique. Les operations se deroulent normalement.",
-          "line": 800
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Ce plat genere le plus de revenus. Envisagez de le promouvoir en homepage et sur les reseaux sociaux.",
-          "line": 820
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Ce produit est en baisse. Considerez une promotion ou un ajustement de recette.",
-          "line": 826
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Optimiser les heures de pointe",
-          "line": 830
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Analysez les heures de commande pour ajuster le personnel et reduire les temps d&apos;attente.",
-          "line": 831
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Programme de fidelite",
-          "line": 834
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Les clients reguliers generent 60% du chiffre. Renforcez le programme de fidelite pour augmenter la retention.",
-          "line": 835
-        }
-      ]
-    },
-    {
       "file": "components/admin/promotions/PromotionsAdminModule.tsx",
       "hits": [
         {
@@ -1851,66 +1726,6 @@
       ]
     },
     {
-      "file": "app/caisse/page.tsx",
-      "hits": [
-        {
-          "kind": "jsx-text",
-          "text": "Factures journée",
-          "line": 507
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Estimation TVA (règle admin)",
-          "line": 523
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Dernière clôture (date)",
-          "line": 546
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Pas encore clôturée aujourd’hui.",
-          "line": 555
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Aucune alerte automatique détectée.",
-          "line": 579
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Tickets événements (jour sélectionné)",
-          "line": 687
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Espèces comptées (physique)",
-          "line": 719
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Espèces déclarées (officiel)",
-          "line": 729
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Commentaire (écart, incident)",
-          "line": 740
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Avance salarié (sortie instantanée en caisse)",
-          "line": 1063
-        },
-        {
-          "kind": "attr:title",
-          "text": "Synthèse du jour",
-          "line": 403
-        }
-      ]
-    },
-    {
       "file": "app/delivery/checkout/page.tsx",
       "hits": [
         {
@@ -2916,31 +2731,6 @@
       ]
     },
     {
-      "file": "components/admin/AdminPortalShell.tsx",
-      "hits": [
-        {
-          "kind": "jsx-text",
-          "text": "Déconnexion",
-          "line": 251
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Modules regroupés par domaine",
-          "line": 298
-        },
-        {
-          "kind": "attr:aria-label",
-          "text": "Ouvrir le menu",
-          "line": 172
-        },
-        {
-          "kind": "attr:aria-label",
-          "text": "Déconnexion",
-          "line": 248
-        }
-      ]
-    },
-    {
       "file": "components/caisse/SortiesJourTable.tsx",
       "hits": [
         {
@@ -3347,26 +3137,6 @@
           "kind": "jsx-text",
           "text": "A payer sur place",
           "line": 124
-        }
-      ]
-    },
-    {
-      "file": "components/workspace/StaffWorkspaceShell.tsx",
-      "hits": [
-        {
-          "kind": "jsx-text",
-          "text": "Déconnexion",
-          "line": 140
-        },
-        {
-          "kind": "jsx-text",
-          "text": "Espace équipe",
-          "line": 158
-        },
-        {
-          "kind": "attr:aria-label",
-          "text": "Navigation espace équipe",
-          "line": 41
         }
       ]
     },
@@ -3851,6 +3621,16 @@
       ]
     },
     {
+      "file": "app/caisse/page.tsx",
+      "hits": [
+        {
+          "kind": "jsx-text",
+          "text": "Avance salarié (sortie instantanée en caisse)",
+          "line": 1075
+        }
+      ]
+    },
+    {
       "file": "app/events/not-found.tsx",
       "hits": [
         {
@@ -3867,16 +3647,6 @@
           "kind": "jsx-text",
           "text": "Chargement de la page de connexion…",
           "line": 11
-        }
-      ]
-    },
-    {
-      "file": "app/menu/page.tsx",
-      "hits": [
-        {
-          "kind": "attr:title",
-          "text": "Menu",
-          "line": 21
         }
       ]
     },
@@ -3961,16 +3731,6 @@
       ]
     },
     {
-      "file": "components/menu/qr/QrMenuHero.tsx",
-      "hits": [
-        {
-          "kind": "attr:aria-label",
-          "text": "Zurück",
-          "line": 56
-        }
-      ]
-    },
-    {
       "file": "components/menu/qr/QrMenuSearch.tsx",
       "hits": [
         {
@@ -4021,6 +3781,6 @@
       ]
     }
   ],
-  "totalStrings": 681,
-  "totalFiles": 123
+  "totalStrings": 638,
+  "totalFiles": 118
 }

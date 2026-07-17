@@ -394,6 +394,8 @@ export const de: Messages = {
       plats: "Tellergerichte",
       grillades: "Grillgerichte",
       manakish: "Manakish",
+      tajine: "Tajine",
+      hauptgerichte: "Hauptgerichte",
       pizza: "Pizza",
       burgers: "Burger",
       sandwiches: "Sandwiches",

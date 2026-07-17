@@ -17,6 +17,8 @@ export const QR_NAV_CATEGORIES = [
   { slug: "plats", labelDe: "Tellergerichte", labelAr: "الوجبات الرئيسية", icon: "🍛", kind: "food" as const },
   { slug: "grillades", labelDe: "Grillgerichte", labelAr: "المشاوي", icon: "🥩", kind: "food" as const },
   { slug: "manakish", labelDe: "Manakish", labelAr: "المناقيش", icon: "🫓", kind: "food" as const },
+  { slug: "tajine", labelDe: "Tajine", labelAr: "الطواجن", icon: "🍲", kind: "food" as const },
+  { slug: "hauptgerichte", labelDe: "Hauptgerichte", labelAr: "الطبخات", icon: "🥘", kind: "food" as const },
   { slug: "pizza", labelDe: "Pizza", labelAr: "البيتزا", icon: "🍕", kind: "food" as const },
   { slug: "burgers", labelDe: "Burger", labelAr: "البرغر", icon: "🍔", kind: "food" as const },
   { slug: "sandwiches", labelDe: "Sandwiches", labelAr: "الساندويش", icon: "🥪", kind: "food" as const },
@@ -49,7 +51,7 @@ export type QrCategoryNavItem = {
   icon: string
 }
 
-/** All category nav pills in canonical menu order (always 13, no Shawarma). */
+/** All category nav pills in canonical menu order (always 15 food/drink nav entries, no Shawarma). */
 export function buildQrCategoryNavItems(): QrCategoryNavItem[] {
   return QR_NAV_CATEGORIES.map((nav) => ({
     slug: nav.slug,
@@ -104,6 +106,20 @@ export const QR_CATEGORY_NAV_CARDS: QrCategoryNavCard[] = [
     labelDe: "Manakish",
     labelAr: "المناقيش",
     gradient: "from-amber-900 via-orange-900 to-yellow-950",
+  },
+  {
+    slug: "tajine",
+    icon: "🍲",
+    labelDe: "Tajine",
+    labelAr: "الطواجن",
+    gradient: "from-orange-950 via-red-900 to-amber-950",
+  },
+  {
+    slug: "hauptgerichte",
+    icon: "🥘",
+    labelDe: "Hauptgerichte",
+    labelAr: "الطبخات",
+    gradient: "from-stone-800 via-amber-950 to-orange-950",
   },
   {
     slug: "pizza",
@@ -423,6 +439,9 @@ const QR_CATEGORY_LABEL_OVERRIDES: Record<string, { labelDe: string; labelAr: st
   salades: { labelDe: "Salate", labelAr: "السلطات" },
   plats: { labelDe: "Tellergerichte", labelAr: "الوجبات الرئيسية" },
   grillades: { labelDe: "Grillgerichte", labelAr: "المشاوي" },
+  manakish: { labelDe: "Manakish", labelAr: "المناقيش" },
+  tajine: { labelDe: "Tajine", labelAr: "الطواجن" },
+  hauptgerichte: { labelDe: "Hauptgerichte", labelAr: "الطبخات" },
   burgers: { labelDe: "Burger", labelAr: "البرغر" },
   water: { labelDe: "Wasser", labelAr: "المياه" },
   juices: { labelDe: "Säfte", labelAr: "العصائر" },

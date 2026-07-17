@@ -395,6 +395,8 @@ export const fr = {
       plats: "Plats",
       grillades: "Grillades",
       manakish: "Manakish",
+      tajine: "Tajine",
+      hauptgerichte: "Hauptgerichte",
       pizza: "Pizza",
       burgers: "Burgers",
       sandwiches: "Sandwiches",

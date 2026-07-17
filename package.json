@@ -33,6 +33,8 @@
     "menu:salades:images": "node --env-file=.env.local scripts/assign-salades-images.mjs",
     "menu:manakish:generate": "node --env-file=.env.local scripts/generate-manakish-images.mjs",
     "menu:manakish:images": "node --env-file=.env.local scripts/assign-manakish-images.mjs",
+    "menu:tajine-hauptgerichte:generate": "node --env-file=.env.local scripts/generate-tajine-hauptgerichte-images.mjs",
+    "menu:tajine-hauptgerichte:images": "node --env-file=.env.local scripts/assign-tajine-hauptgerichte-images.mjs",
     "menu:plats:images": "node --env-file=.env.local scripts/assign-plats-images.mjs",
     "menu:shawarma:images": "node --env-file=.env.local scripts/assign-shawarma-images.mjs",
     "menu:grillades:images": "node --env-file=.env.local scripts/assign-grillades-images.mjs",

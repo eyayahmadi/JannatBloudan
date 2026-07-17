@@ -150,6 +150,15 @@ const CATEGORY_PREFIX = {
   entrees: null,
   salades: null,
   manakish: (s) => s.startsWith("manakish-"),
+  tajine: (s) => s.startsWith("tajine-"),
+  hauptgerichte: (s) =>
+    [
+      "shakriyeh-mit-weissem-reis",
+      "kibbeh-labaniyeh-mit-weissem-reis",
+      "shish-barak",
+      "basha-wa-asakro",
+      "jaddi-bil-zeit",
+    ].includes(s),
   plats: null,
   shawarma: (s) => s.includes("shawarma"),
   grillades: null,

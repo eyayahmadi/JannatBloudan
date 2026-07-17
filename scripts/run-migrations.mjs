@@ -91,6 +91,7 @@ const NUMBERED_MIGRATIONS = [
   "62-order-item-options-snapshot.sql",
   "63-public-rls-hardening.sql",
   "64-sensitive-data-lockdown.sql",
+  "65-tajine-hauptgerichte-categories.sql",
 ]
 
 /** Après le schéma : durcissement rôles puis correctif signup / RLS audit (idempotent). */
