@@ -199,7 +199,7 @@ export function buildTajineHauptgerichteFallbackProducts(): MenuProductFallbackR
       display_order: p.display_order,
       section: cat.section,
       station: "KITCHEN",
-      image_url: "/placeholder.svg",
+      image_url: `/images/menu/${p.category}/${p.slug}.webp`,
     }
   })
 }

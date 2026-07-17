@@ -34,6 +34,7 @@
     "menu:manakish:generate": "node --env-file=.env.local scripts/generate-manakish-images.mjs",
     "menu:manakish:images": "node --env-file=.env.local scripts/assign-manakish-images.mjs",
     "menu:tajine-hauptgerichte:generate": "node --env-file=.env.local scripts/generate-tajine-hauptgerichte-images.mjs",
+    "menu:tajine-hauptgerichte:prepare": "node scripts/prepare-tajine-hauptgerichte-public-images.mjs",
     "menu:tajine-hauptgerichte:images": "node --env-file=.env.local scripts/assign-tajine-hauptgerichte-images.mjs",
     "menu:plats:images": "node --env-file=.env.local scripts/assign-plats-images.mjs",
     "menu:shawarma:images": "node --env-file=.env.local scripts/assign-shawarma-images.mjs",
