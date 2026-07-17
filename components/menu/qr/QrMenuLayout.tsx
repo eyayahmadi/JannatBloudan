@@ -46,7 +46,7 @@ function CategoryItem({
         "category-item w-full min-h-[68px] rounded-xl px-3.5 py-3 text-start transition-colors",
         active
           ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-600/20"
-          : "border border-amber-800/40 bg-neutral-900 text-amber-100 hover:border-amber-700",
+          : "border border-amber-600/40 bg-[#14100c] text-white hover:border-amber-500/60 hover:bg-amber-950/30",
       )}
     >
       <span className="flex items-center gap-3">
@@ -68,7 +68,7 @@ function CategoryItem({
                 <span
                   className={cn(
                     "category-item-ar mt-0.5 block text-[15px] font-bold leading-tight",
-                    active ? "text-white/90" : "text-amber-300/90",
+                    active ? "text-white/90" : "text-amber-400",
                   )}
                   dir="rtl"
                 >
@@ -193,7 +193,7 @@ export function QrMenuLayout({
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-amber-800/40 bg-neutral-900 px-4 py-2.5 text-sm font-medium text-amber-100 shadow-sm transition hover:border-amber-700"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-amber-600/40 bg-[#14100c] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:border-amber-500/60 hover:bg-amber-950/30"
           >
             <LayoutGrid className="h-4 w-4" />
             {t("menu.qrCategoriesAria")}

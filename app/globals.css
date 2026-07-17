@@ -1778,9 +1778,13 @@ html.menu-stable-scroll .qr-home-main [data-menu-product-id] {
 }
 
 [data-qr-table-menu] .category-item:not(.bg-gradient-to-r) {
-  border-color: rgb(120 53 15 / 0.35);
-  background: rgb(23 23 23);
-  color: rgb(254 243 199);
+  border-color: rgb(217 119 6 / 0.4);
+  background: rgb(20 16 12);
+  color: rgb(255 255 255);
+}
+
+[data-qr-table-menu] .category-item:not(.bg-gradient-to-r) .category-item-ar {
+  color: rgb(251 191 36);
 }
 
 [data-qr-table-menu] .category-item.bg-gradient-to-r .category-item-ar {
@@ -1788,13 +1792,14 @@ html.menu-stable-scroll .qr-home-main [data-menu-product-id] {
 }
 
 [data-qr-table-menu] .category-item:not(.bg-gradient-to-r):hover {
-  border-color: rgb(180 83 9 / 0.45);
+  border-color: rgb(245 158 11 / 0.55);
+  background: rgb(69 26 3 / 0.35);
 }
 
 [data-qr-table-menu] .qr-categories-mobile-trigger button {
-  border-color: rgb(120 53 15 / 0.35);
-  background: rgb(23 23 23);
-  color: rgb(254 243 199);
+  border-color: rgb(217 119 6 / 0.4);
+  background: rgb(20 16 12);
+  color: rgb(255 255 255);
 }
 
 [data-qr-table-menu] .border-amber-200\/50,
