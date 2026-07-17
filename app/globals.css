@@ -1729,6 +1729,11 @@ html.menu-stable-scroll .qr-home-main [data-menu-product-id] {
 }
 
 /* QR table menu — always dark (not tied to system dark mode) */
+html.menu-stable-scroll:has([data-qr-table-menu]),
+html.menu-stable-scroll:has([data-qr-table-menu]) body {
+  background: #0a0a0a;
+}
+
 [data-qr-table-menu] {
   background: #0a0a0a;
   color: #fafafa;
@@ -1739,8 +1744,13 @@ html.menu-stable-scroll .qr-home-main [data-menu-product-id] {
   color: #fafafa;
 }
 
+[data-qr-table-menu] .qr-menu-layout,
+[data-qr-table-menu] .menu-content {
+  background: #0a0a0a;
+}
+
 [data-qr-table-menu] [data-menu-background] {
-  background: transparent;
+  background: #0a0a0a;
 }
 
 [data-qr-table-menu] .menu-product-card {
