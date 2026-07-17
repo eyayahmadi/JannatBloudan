@@ -19,9 +19,11 @@ export function useBodyScrollLock(locked: boolean) {
       bodyTop: body.style.top,
       bodyWidth: body.style.width,
       bodyTouchAction: body.style.touchAction,
+      htmlOverflow: html.style.overflow,
     }
 
     html.classList.add("menu-modal-open")
+    html.style.overflow = "hidden"
     body.style.overflow = "hidden"
     body.style.position = "fixed"
     body.style.top = `-${scrollY}px`
@@ -30,11 +32,12 @@ export function useBodyScrollLock(locked: boolean) {
 
     return () => {
       html.classList.remove("menu-modal-open")
+      html.style.overflow = prev.htmlOverflow
       body.style.overflow = prev.bodyOverflow
-      body.style.position = prev.bodyPosition
+      body.style.position = prev.bodyPosition || "static"
       body.style.top = prev.bodyTop
       body.style.width = prev.bodyWidth
-      body.style.touchAction = prev.bodyTouchAction
+      body.style.touchAction = prev.bodyTouchAction || "auto"
       window.scrollTo(0, scrollY)
     }
   }, [locked])

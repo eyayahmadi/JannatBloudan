@@ -5,6 +5,7 @@ import { ChevronRight, Minus, Plus, ShoppingBag, X } from "lucide-react"
 import { OrderItemOptions } from "@/components/orders/OrderItemOptions"
 import { optionsSnapshotFromCart } from "@/lib/orders/order-item-options"
 import { isPlaceholderImage } from "@/lib/menu/menu-display"
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock"
 import type { QrCartEntry } from "@/lib/menu/qr-menu-types"
 
 type QrMenuCartSheetProps = {
@@ -88,6 +89,7 @@ export function QrMenuCartSheet({
   submitting,
 }: QrMenuCartSheetProps) {
   const subtotal = cartTotal
+  useBodyScrollLock(open)
 
   return (
     <AnimatePresence>

@@ -8,6 +8,7 @@ import { QrTableMenuProductGrid } from "@/components/menu/qr/QrTableMenuProductG
 import { useQrTableMenu } from "@/components/menu/qr/QrTableMenuProvider"
 import { matchesProductNameSearch } from "@/lib/menu/menu-display"
 import { sortByMenuCardOrder } from "@/lib/menu/menu-order"
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock"
 
 type QrMenuSearchOverlayProps = {
   open: boolean
@@ -19,7 +20,6 @@ export function QrMenuSearchOverlay({ open, onClose }: QrMenuSearchOverlayProps)
   const { menuItems } = useQrTableMenu()
   const [query, setQuery] = useState("")
   const inputWrapRef = useRef<HTMLDivElement>(null)
-  const scrollYRef = useRef(0)
 
   const results = useMemo(() => {
     const q = query.trim()
@@ -32,33 +32,15 @@ export function QrMenuSearchOverlay({ open, onClose }: QrMenuSearchOverlayProps)
     onClose()
   }, [onClose])
 
+  useBodyScrollLock(open)
+
   useEffect(() => {
     if (!open) return
-
-    scrollYRef.current = window.scrollY
-    const prevOverflow = document.body.style.overflow
-    const prevPosition = document.body.style.position
-    const prevTop = document.body.style.top
-    const prevWidth = document.body.style.width
-
-    document.body.style.overflow = "hidden"
-    document.body.style.position = "fixed"
-    document.body.style.top = `-${scrollYRef.current}px`
-    document.body.style.width = "100%"
-
     const t = window.setTimeout(() => {
       const input = inputWrapRef.current?.querySelector("input")
       input?.focus({ preventScroll: true })
     }, 50)
-
-    return () => {
-      window.clearTimeout(t)
-      document.body.style.overflow = prevOverflow
-      document.body.style.position = prevPosition
-      document.body.style.top = prevTop
-      document.body.style.width = prevWidth
-      window.scrollTo(0, scrollYRef.current)
-    }
+    return () => window.clearTimeout(t)
   }, [open])
 
   useEffect(() => {

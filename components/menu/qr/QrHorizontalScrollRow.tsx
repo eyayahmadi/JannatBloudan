@@ -33,7 +33,7 @@ export function QrHorizontalScrollRow({
       <div
         data-qr-scroll-viewport
         className={cn(
-          "w-full min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth snap-x snap-mandatory touch-pan-x",
+          "w-full min-w-0 overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-mandatory",
           "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           bleed && "-mx-4 px-4 sm:mx-0 sm:px-0",
           trackClassName,
