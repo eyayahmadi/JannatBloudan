@@ -76,7 +76,7 @@ export function QrTableMenuPage() {
               <QrMenuFeaturedStrip
                 id="qr-featured-bestseller"
                 icon="⭐"
-                titleDe="Bestseller"
+                titleKey="bestseller"
                 titleAr="الأكثر مبيعاً"
                 items={bestsellerItems}
                 favoriteIds={new Set(favoriteIds)}
@@ -91,7 +91,7 @@ export function QrTableMenuPage() {
               <QrMenuFeaturedStrip
                 id="qr-featured-today"
                 icon="🔥"
-                titleDe="Heute empfohlen"
+                titleKey="today"
                 titleAr="موصى به اليوم"
                 items={todayItems}
                 favoriteIds={new Set(favoriteIds)}

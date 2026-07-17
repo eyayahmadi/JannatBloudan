@@ -29,7 +29,7 @@ import { formatMenuPriceLabel } from "@/lib/menu/menu-display"
 import { filterMenuProducts, similarProducts, sortMenuProducts } from "@/lib/menu/filter-menu-client"
 import { filterProductsByAttributeTag, QR_MENU_ATTRIBUTE_FILTERS, attributeBadgeLabel, BADGE_GROUP_TAGS, productHasTag, type QrAttributeFilterId } from "@/lib/menu/product-attributes"
 import { ProductAttributeBadges } from "@/components/menu/ProductAttributeBadges"
-import { QrAttributeFilterChips } from "@/components/menu/qr/QrAttributeFilterChips"
+import { MenuAttributeFilterChips } from "@/components/menu/public/MenuAttributeFilterChips"
 import type { Station } from "@/lib/stations/config"
 import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
 import { groupMenuItemsByDbCategories } from "@/lib/menu/menu-category-groups"
@@ -653,7 +653,7 @@ export function DigitalMenuExperience() {
             </div>
           </div>
 
-          <QrAttributeFilterChips activeId={attributeFilter} onSelect={handleAttributeFilterChange} />
+          <MenuAttributeFilterChips activeId={attributeFilter} onSelect={handleAttributeFilterChange} />
 
           <div className="flex w-full gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {SECTION_IDS.map((sid) => {

@@ -26,7 +26,7 @@ export function PublicMenuPage() {
           imageAlt="Mezzés syriens — la carte de Jannat Bloudan"
           kicker={t("nav.menu")}
           title={t("menu.menuTitle")}
-          subtitle={t("menu.publicHeroSubtitle", "Syrisch-libanesische Küche — Entrées, Grillades, Desserts, Getränke & Shisha.")}
+          subtitle={t("menu.publicHeroSubtitle")}
           height="sm"
         />
         <div className="flex-1 py-8">

@@ -5,6 +5,7 @@ import { ArrowLeft, Clock, Search, ShoppingCart } from "lucide-react"
 import { BloudanLogoMark } from "@/components/site/BloudanLogoMark"
 import type { OrderStatus } from "@/lib/hooks/useRealtimeOrders"
 import { qrOrderEtaLabel, qrOrderStatusLabel } from "@/lib/menu/qr-order-eta"
+import { useI18n } from "@/lib/i18n/context"
 import { cn } from "@/lib/utils"
 
 type QrMenuHeroProps = {
@@ -27,10 +28,11 @@ export function QrMenuHero({
   onSearchOpen,
   activeOrder,
 }: QrMenuHeroProps) {
+  const { t } = useI18n()
   const eta = activeOrder ? qrOrderEtaLabel(activeOrder.status) : null
   const tableStatus = activeOrder
     ? qrOrderStatusLabel(activeOrder.status)
-    : "Bereit zu bestellen"
+    : t("menu.qrReadyToOrder")
 
   return (
     <header className="relative z-0 shrink-0 overflow-hidden">
@@ -53,7 +55,7 @@ export function QrMenuHero({
             <Link
               href={`/table/${tableId}`}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/12 transition-colors hover:bg-white/20 active:scale-[0.98]"
-              aria-label="Zurück"
+              aria-label={t("menu.qrBack")}
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
@@ -63,7 +65,7 @@ export function QrMenuHero({
                   type="button"
                   onClick={onSearchOpen}
                   className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 transition-colors hover:bg-white/25 active:scale-[0.98]"
-                  aria-label="Suchen"
+                  aria-label={t("menu.qrSearch")}
                 >
                   <Search className="h-5 w-5" />
                 </button>
@@ -72,7 +74,7 @@ export function QrMenuHero({
                 type="button"
                 onClick={onCartOpen}
                 className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white/15 transition-colors hover:bg-white/25 active:scale-[0.98]"
-                aria-label="Warenkorb"
+                aria-label={t("menu.qrCart")}
               >
                 <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 ? (
@@ -111,7 +113,7 @@ export function QrMenuHero({
             </p>
 
             <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/12 px-4 py-2 text-sm font-medium text-amber-50/95">
-              <span>Tisch {tableLabel}</span>
+              <span>{t("menu.qrTable").replace("{label}", tableLabel)}</span>
               <span className="text-amber-200/50">·</span>
               <span
                 className={cn(

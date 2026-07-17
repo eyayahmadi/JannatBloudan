@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import type { QrCategoryNavItem } from "@/lib/menu/qr-printed-menu"
+import { resolveQrCategoryLabel } from "@/lib/menu/qr-category-i18n"
+import { useI18n } from "@/lib/i18n/context"
 import { cn } from "@/lib/utils"
 
 type QrMenuCategoryNavProps = {
@@ -17,11 +19,13 @@ type QrMenuCategoryNavProps = {
 function CategoryPill({
   category,
   active,
+  label,
   onSelect,
   chipRef,
 }: {
   category: QrCategoryNavItem
   active: boolean
+  label: string
   onSelect: () => void
   chipRef?: (el: HTMLButtonElement | null) => void
 }) {
@@ -42,7 +46,7 @@ function CategoryPill({
       ) : null}
       <span className="relative flex items-center gap-1.5 whitespace-nowrap">
         <span className="text-base leading-none">{category.icon}</span>
-        <span>{category.labelDe}</span>
+        <span>{label}</span>
       </span>
     </button>
   )
@@ -57,6 +61,7 @@ export function QrMenuCategoryNav({
   hrefForCategory,
 }: QrMenuCategoryNavProps) {
   const router = useRouter()
+  const { t, locale } = useI18n()
   const scrollRef = useRef<HTMLDivElement>(null)
   const chipRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const prevActiveRef = useRef<string | null>(null)
@@ -83,15 +88,25 @@ export function QrMenuCategoryNav({
   if (categories.length === 0) return null
 
   return (
-    <nav className={cn("w-full min-w-0 max-w-full", className)} aria-label="Kategorien" data-menu-category-nav>
+    <nav className={cn("w-full min-w-0 max-w-full", className)} aria-label={t("menu.qrCategoriesAria")} data-menu-category-nav>
       <div
         ref={scrollRef}
-        className="flex gap-2 overflow-x-auto overscroll-x-contain pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex flex-row flex-nowrap gap-2 overflow-x-auto overscroll-x-contain scroll-smooth pb-0.5 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
-        {categories.map((category) => (
+        {categories.map((category) => {
+          const { primary } = resolveQrCategoryLabel(
+            category.slug,
+            locale,
+            t,
+            category.labelDe,
+            category.labelAr,
+          )
+          return (
           <CategoryPill
             key={category.slug}
             category={category}
+            label={primary}
             active={activeSlug === category.slug}
             onSelect={() =>
               router.push(hrefForCategory?.(category.slug) ?? `/table/${tableId}/menu/${category.slug}`)
@@ -100,7 +115,8 @@ export function QrMenuCategoryNav({
               chipRefs.current[category.slug] = el
             }}
           />
-        ))}
+          )
+        })}
       </div>
     </nav>
   )

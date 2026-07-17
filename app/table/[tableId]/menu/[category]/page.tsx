@@ -12,11 +12,14 @@ import { QrTableMenuProductGrid } from "@/components/menu/qr/QrTableMenuProductG
 import { QrTableMenuShell } from "@/components/menu/qr/QrTableMenuShell"
 import { useQrTableMenu } from "@/components/menu/qr/QrTableMenuProvider"
 import { isQrDrinkSectionId, isValidQrNavCategorySlug, navCategoryFromSlug } from "@/lib/menu/qr-printed-menu"
+import { resolveQrCategoryLabel } from "@/lib/menu/qr-category-i18n"
+import { useI18n } from "@/lib/i18n/context"
 import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
 
 export default function TableMenuCategoryPage() {
   const { category } = useParams<{ category: string }>()
   const router = useRouter()
+  const { t, locale } = useI18n()
   const {
     tableId,
     displayLabel,
@@ -42,6 +45,10 @@ export default function TableMenuCategoryPage() {
     blockFrozenRef.current = block
   }
   const displayBlock = detailItemId ? blockFrozenRef.current : block
+  const categoryLabels =
+    valid && navMeta
+      ? resolveQrCategoryLabel(slug, locale, t, navMeta.labelDe, navMeta.labelAr)
+      : null
 
   useEffect(() => {
     if (!loading && !valid) {
@@ -61,21 +68,23 @@ export default function TableMenuCategoryPage() {
             className="flex items-center gap-2 rounded-full px-2 py-1.5 text-sm font-medium text-amber-950 transition hover:bg-amber-100/80 dark:text-amber-100 dark:hover:bg-amber-900/30"
           >
             <ArrowLeft className="h-4 w-4" />
-            Zurück
+            {t("menu.qrBack")}
           </button>
           <div className="min-w-0 text-center">
             <p className="truncate font-display text-base font-bold text-amber-950 dark:text-white">
-              {navMeta?.labelDe ?? "Kategorie"}
+              {categoryLabels?.primary ?? t("menu.categoryFallback")}
             </p>
-            <p className="truncate text-xs text-amber-800/60 dark:text-amber-300/60" dir="rtl">
-              {navMeta?.labelAr}
-            </p>
+            {categoryLabels?.secondary ? (
+              <p className="truncate text-xs text-amber-800/60 dark:text-amber-300/60" dir="rtl">
+                {categoryLabels.secondary}
+              </p>
+            ) : null}
           </div>
           <button
             type="button"
             onClick={() => setCartOpen(true)}
             className="relative flex h-10 w-10 items-center justify-center rounded-full bg-amber-600 text-white shadow-md"
-            aria-label="Warenkorb"
+            aria-label={t("menu.qrCart")}
           >
             🛒
             {cartCount > 0 ? (
@@ -96,7 +105,9 @@ export default function TableMenuCategoryPage() {
 
       <div className="relative z-0 mx-auto max-w-2xl px-4 pt-3 pb-2">
         <StationStatusBanner />
-        <p className="text-xs text-amber-800/50 dark:text-amber-300/50">Tisch {displayLabel}</p>
+        <p className="text-xs text-amber-800/50 dark:text-amber-300/50">
+          {t("menu.qrTable").replace("{label}", displayLabel)}
+        </p>
       </div>
 
       <main className="relative z-0 mx-auto max-w-2xl px-4 py-5 pb-28" data-menu-background>
@@ -116,8 +127,8 @@ export default function TableMenuCategoryPage() {
           <div className="space-y-8">
             <MenuSubcategoryHeader
               icon={displayBlock.icon}
-              labelDe={displayBlock.labelDe}
-              labelAr={displayBlock.labelAr}
+              labelDe={categoryLabels?.primary ?? displayBlock.labelDe}
+              labelAr={categoryLabels?.secondary ?? displayBlock.labelAr}
               variant="table"
               drink={isQrDrinkSectionId(displayBlock.id)}
               sweet={displayBlock.id === "qr-section-desserts"}
