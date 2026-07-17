@@ -391,7 +391,7 @@ export const ar: Messages = {
     qrCategory: {
       entrees: "المقبلات",
       salades: "السلطات",
-      plats: "الوجبات الرئيسية",
+      plats: "الوجبات",
       grillades: "المشاوي",
       manakish: "المناقيش",
       tajine: "الطواجن",

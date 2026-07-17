@@ -12,7 +12,7 @@ import { StaffVisualProductGrid } from "@/components/menu/staff/StaffVisualProdu
 import { useStaffTableMenu } from "@/components/menu/staff/StaffTableMenuProvider"
 import {
   isQrDrinkSectionId,
-  isValidQrNavCategorySlug,
+  resolveQrNavCategorySlug,
   navCategoryFromSlug,
 } from "@/lib/menu/qr-printed-menu"
 import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
@@ -41,9 +41,10 @@ export default function StaffTableMenuCategoryPage() {
   } = useStaffTableMenu()
 
   const slug = String(category ?? "")
-  const valid = isValidQrNavCategorySlug(slug)
-  const navMeta = valid ? navCategoryFromSlug(slug) : undefined
-  const block = valid ? getCategoryBlock(slug) : null
+  const resolvedSlug = resolveQrNavCategorySlug(slug)
+  const valid = resolvedSlug != null
+  const navMeta = valid ? navCategoryFromSlug(resolvedSlug!) : undefined
+  const block = valid ? getCategoryBlock(resolvedSlug!) : null
 
   const blockFrozenRef = useRef(block)
   if (!detailItemId) {
@@ -52,10 +53,14 @@ export default function StaffTableMenuCategoryPage() {
   const displayBlock = detailItemId ? blockFrozenRef.current : block
 
   useEffect(() => {
+    if (slug === "bar" && resolvedSlug === "cold-drinks") {
+      router.replace(`/server/${tableId}/menu/cold-drinks`)
+      return
+    }
     if (!loading && !valid) {
       router.replace(`/server/${tableId}/menu`)
     }
-  }, [loading, valid, router, tableId])
+  }, [loading, valid, router, tableId, slug, resolvedSlug])
 
   const handleSubmit = async () => {
     const ok = await submitOrder()
@@ -111,7 +116,7 @@ export default function StaffTableMenuCategoryPage() {
           <QrMenuCategoryNav
             categories={categoryNavItems}
             tableId={tableId}
-            activeSlug={slug}
+            activeSlug={valid ? resolvedSlug : null}
             hrefForCategory={(s) => `/server/${tableId}/menu/${s}`}
           />
         </div>

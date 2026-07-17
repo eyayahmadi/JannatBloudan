@@ -10,7 +10,7 @@ import { QrMenuEmptyState, QrMenuCardSkeleton } from "@/components/menu/qr/QrMen
 import { QrTableMenuProductGrid } from "@/components/menu/qr/QrTableMenuProductGrid"
 import { QrTableMenuShell } from "@/components/menu/qr/QrTableMenuShell"
 import { useQrTableMenu } from "@/components/menu/qr/QrTableMenuProvider"
-import { isQrDrinkSectionId, isValidQrNavCategorySlug, navCategoryFromSlug } from "@/lib/menu/qr-printed-menu"
+import { isQrDrinkSectionId, resolveQrNavCategorySlug, navCategoryFromSlug } from "@/lib/menu/qr-printed-menu"
 import { resolveQrCategoryLabel } from "@/lib/menu/qr-category-i18n"
 import { useI18n } from "@/lib/i18n/context"
 import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
@@ -36,9 +36,10 @@ export default function TableMenuCategoryPage() {
   } = useQrTableMenu()
 
   const slug = String(category ?? "")
-  const valid = isValidQrNavCategorySlug(slug)
-  const navMeta = valid ? navCategoryFromSlug(slug) : undefined
-  const block = valid ? getCategoryBlock(slug) : null
+  const resolvedSlug = resolveQrNavCategorySlug(slug)
+  const valid = resolvedSlug != null
+  const navMeta = valid ? navCategoryFromSlug(resolvedSlug!) : undefined
+  const block = valid ? getCategoryBlock(resolvedSlug!) : null
 
   const blockFrozenRef = useRef(block)
   if (!detailItemId) {
@@ -47,14 +48,18 @@ export default function TableMenuCategoryPage() {
   const displayBlock = detailItemId ? blockFrozenRef.current : block
   const categoryLabels =
     valid && navMeta
-      ? resolveQrCategoryLabel(slug, locale, t, navMeta.labelDe, navMeta.labelAr)
+      ? resolveQrCategoryLabel(resolvedSlug!, locale, t, navMeta.labelDe, navMeta.labelAr)
       : null
 
   useEffect(() => {
+    if (slug === "bar" && resolvedSlug === "cold-drinks") {
+      router.replace(`/table/${tableId}/menu/cold-drinks`)
+      return
+    }
     if (!loading && !valid) {
       router.replace(`/table/${tableId}/menu`)
     }
-  }, [loading, valid, router, tableId])
+  }, [loading, valid, router, tableId, slug, resolvedSlug])
 
   return (
     <PageShell stableViewport className="relative !bg-neutral-950 text-white">
@@ -74,7 +79,7 @@ export default function TableMenuCategoryPage() {
       <QrMenuLayout
         categories={categoryNavItems}
         tableId={tableId}
-        activeSlug={valid ? slug : null}
+        activeSlug={valid ? resolvedSlug : null}
         className="pb-28 pt-1"
       >
         <main data-menu-background>

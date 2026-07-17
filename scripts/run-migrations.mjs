@@ -102,6 +102,7 @@ const NUMBERED_MIGRATIONS = [
   "64-sensitive-data-lockdown.sql",
   "65-tajine-hauptgerichte-categories.sql",
   "66-tajine-hauptgerichte-images.sql",
+  "67-plats-ar-label.sql",
 ]
 
 const POST_MIGRATIONS = ["APPLY-ROLE-HARDENING.sql", "fix-signup-database-error-updating-user.sql"]
