@@ -1,19 +1,20 @@
 #!/usr/bin/env node
 /**
- * Applique toutes les migrations SQL sur Postgres / Supabase, dans l'ordre canonique.
+ * Applique les migrations SQL sur Postgres / Supabase — **incremental only**.
+ *
+ * Chaque fichier n'est exécuté qu'une seule fois (table `schema_migrations`).
+ * Les modifications manuelles en base ne sont plus écrasées en relançant migrate.
  *
  * Usage:
- *   npm install --no-save pg
- *   $env:DATABASE_URL="postgres://postgres:<password>@db.<ref>.supabase.co:5432/postgres"
- *   node scripts/run-migrations.mjs
- *
- * Ou avec .env.local (Node 20.6+) :
- *   node --env-file=.env.local scripts/run-migrations.mjs
+ *   npm run db:migrate:env                    # nouvelles migrations seulement
+ *   npm run db:migrate:baseline               # marquer tout comme déjà appliqué (1× sur base existante)
+ *   npm run db:migrate:status                 # voir ce qui reste à appliquer
+ *   npm run db:migrate:env -- --only=66-...   # un seul fichier
+ *   npm run db:migrate:env -- --force-all     # ⚠️ ré-exécute TOUT (destructif)
  *
  * Non inclus (volontairement) :
- *   - APPLY-ALL-NEW.sql, APPLY-TODAY.sql (doublons partiels de migrations numérotées)
- *   - create_admin.sql (ponctuel / données sensibles)
- *   - 07-demo-seed.sql, 09-demo-data.sql : optionnels ; retirer du tableau si tu veux une base vide
+ *   - APPLY-ALL-NEW.sql, APPLY-TODAY.sql
+ *   - create_admin.sql
  */
 
 import { readFile, access } from "node:fs/promises"
@@ -23,6 +24,14 @@ import { fileURLToPath } from "node:url"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const here = __dirname
+
+const args = process.argv.slice(2)
+const BASELINE = args.includes("--baseline")
+const STATUS = args.includes("--status")
+const FORCE_ALL = args.includes("--force-all")
+const FORCE = args.includes("--force")
+const onlyArg = args.find((a) => a.startsWith("--only="))
+const ONLY = onlyArg ? onlyArg.slice("--only=".length) : null
 
 /** Ordre explicite : le tri lexicographique ne suffit pas (13-*, 20-*, 21-*). */
 const NUMBERED_MIGRATIONS = [
@@ -92,9 +101,9 @@ const NUMBERED_MIGRATIONS = [
   "63-public-rls-hardening.sql",
   "64-sensitive-data-lockdown.sql",
   "65-tajine-hauptgerichte-categories.sql",
+  "66-tajine-hauptgerichte-images.sql",
 ]
 
-/** Après le schéma : durcissement rôles puis correctif signup / RLS audit (idempotent). */
 const POST_MIGRATIONS = ["APPLY-ROLE-HARDENING.sql", "fix-signup-database-error-updating-user.sql"]
 
 const ALL_MIGRATIONS = [...NUMBERED_MIGRATIONS, ...POST_MIGRATIONS]
@@ -128,8 +137,49 @@ for (const file of ALL_MIGRATIONS) {
   }
 }
 
-console.log("📄  Migrations à appliquer :")
-ALL_MIGRATIONS.forEach((f) => console.log("   •", f))
+function resolveOnlyFilter(pattern) {
+  const p = pattern.trim()
+  if (!p) return () => false
+  return (file) => file === p || file.startsWith(p) || file.includes(p)
+}
+
+async function ensureMigrationTable(client) {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      filename TEXT PRIMARY KEY,
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `)
+}
+
+async function getAppliedSet(client) {
+  const res = await client.query("SELECT filename FROM schema_migrations ORDER BY filename")
+  return new Set(res.rows.map((r) => r.filename))
+}
+
+async function markApplied(client, file) {
+  await client.query(
+    "INSERT INTO schema_migrations (filename) VALUES ($1) ON CONFLICT (filename) DO NOTHING",
+    [file],
+  )
+}
+
+function pickMigrations(applied) {
+  if (FORCE_ALL) return [...ALL_MIGRATIONS]
+
+  if (ONLY) {
+    const match = resolveOnlyFilter(ONLY)
+    const picked = ALL_MIGRATIONS.filter(match)
+    if (picked.length === 0) {
+      console.error(`❌  Aucune migration ne correspond à --only=${ONLY}`)
+      process.exit(1)
+    }
+    if (FORCE || FORCE_ALL) return picked
+    return picked.filter((f) => !applied.has(f))
+  }
+
+  return ALL_MIGRATIONS.filter((f) => !applied.has(f))
+}
 
 const client = new Client({
   connectionString: DATABASE_URL,
@@ -138,13 +188,57 @@ const client = new Client({
 
 try {
   await client.connect()
-  console.log("\n✅  Connecté à la base.")
+  console.log("✅  Connecté à la base.")
 
-  for (const file of ALL_MIGRATIONS) {
+  await ensureMigrationTable(client)
+  const applied = await getAppliedSet(client)
+
+  if (BASELINE) {
+    console.log("\n📌  Baseline — marquer toutes les migrations comme déjà appliquées (sans SQL).\n")
+    let marked = 0
+    for (const file of ALL_MIGRATIONS) {
+      if (!applied.has(file)) {
+        await markApplied(client, file)
+        console.log(`   ✔  ${file}`)
+        marked++
+      }
+    }
+    console.log(`\n✅  Baseline terminée : ${marked} migration(s) enregistrée(s), ${applied.size} déjà présentes.`)
+    console.log("   Prochaine fois : npm run db:migrate:env → seulement les NOUVEAUX fichiers.\n")
+    process.exit(0)
+  }
+
+  const pending = pickMigrations(applied)
+
+  if (STATUS) {
+    console.log("\n📋  État des migrations\n")
+    for (const file of ALL_MIGRATIONS) {
+      console.log(applied.has(file) ? `   ✔  ${file}` : `   ○  ${file}  (en attente)`)
+    }
+    console.log(`\n   Appliquées : ${applied.size}/${ALL_MIGRATIONS.length}`)
+    console.log(`   En attente : ${pending.length}\n`)
+    process.exit(0)
+  }
+
+  if (pending.length === 0) {
+    console.log("\n✅  Rien à faire — toutes les migrations sont déjà appliquées.")
+    console.log("   Voir l'état : npm run db:migrate:status\n")
+    process.exit(0)
+  }
+
+  if (FORCE_ALL) {
+    console.warn("\n⚠️  --force-all : ré-exécution de TOUTES les migrations (peut écraser des données).\n")
+  } else {
+    console.log(`\n📄  Migrations à appliquer (${pending.length}) :`)
+    pending.forEach((f) => console.log("   •", f))
+  }
+
+  for (const file of pending) {
     const sql = await readFile(join(here, file), "utf8")
     console.log(`\n▶  Application : ${file}`)
     try {
       await client.query(sql)
+      await markApplied(client, file)
       console.log(`   ✔  ${file} OK`)
     } catch (err) {
       console.error(`   ✘  Erreur dans ${file} :`, err.message)
@@ -172,7 +266,7 @@ try {
       AND table_name IN (
         'restaurant_tables','table_sessions','table_alerts','event_tickets',
         'client_memory','chat_sessions','product_analytics','agent_decisions',
-        'staff_profiles'
+        'staff_profiles','schema_migrations'
       )
     ORDER BY table_name
   `)
@@ -188,7 +282,7 @@ try {
     rolesRes.rows.forEach((r) => console.log(`     - ${r.name}  →  ${r.auth_level}`))
   }
   console.log(`\n  Tables restaurant (seed) : ${tablesRes.rows[0].n}`)
-  console.log(`\n  Tables clés présentes (${tableListRes.rowCount}/9) :`)
+  console.log(`\n  Tables clés présentes (${tableListRes.rowCount}) :`)
   tableListRes.rows.forEach((r) => console.log(`     ✔ ${r.table_name}`))
   console.log("═════════════════════════════════════════════════\n")
 } finally {
