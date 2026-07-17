@@ -379,6 +379,7 @@ export const de: Messages = {
       chef_recommendation: "Chef Choice",
     },
     qrCategoriesAria: "Kategorien",
+    qrHome: "Start",
     qrBack: "Zurück",
     qrCart: "Warenkorb",
     qrSearch: "Suchen",

@@ -380,6 +380,7 @@ export const fr = {
       chef_recommendation: "Choix du chef",
     },
     qrCategoriesAria: "Catégories",
+    qrHome: "Accueil",
     qrBack: "Retour",
     qrCart: "Panier",
     qrSearch: "Rechercher",

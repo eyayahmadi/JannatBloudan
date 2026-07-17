@@ -378,6 +378,7 @@ export const ar: Messages = {
       chef_recommendation: "اختيار الشيف",
     },
     qrCategoriesAria: "الفئات",
+    qrHome: "الرئيسية",
     qrBack: "رجوع",
     qrCart: "السلة",
     qrSearch: "بحث",
