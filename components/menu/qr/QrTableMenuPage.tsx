@@ -4,7 +4,7 @@ import { useState } from "react"
 import { PageShell } from "@/components/site/PageShell"
 import { PremiumBackdrop } from "@/components/site/PremiumBackdrop"
 import { QrMenuHero } from "@/components/menu/qr/QrMenuHero"
-import { QrMenuCategoryCards } from "@/components/menu/qr/QrMenuCategoryCards"
+import { QrMenuCategoryNav } from "@/components/menu/qr/QrMenuCategoryNav"
 import { QrMenuFeaturedStrip } from "@/components/menu/qr/QrMenuFeaturedStrip"
 import { QrMenuSearchOverlay } from "@/components/menu/qr/QrMenuSearchOverlay"
 import { QrMenuEmptyState, QrMenuCardSkeleton } from "@/components/menu/qr/QrMenuEmptyState"
@@ -24,6 +24,7 @@ export function QrTableMenuPage() {
     cartCount,
     setCartOpen,
     activeOrder,
+    categoryNavItems,
     bestsellerItems,
     todayItems,
     favoriteIds,
@@ -56,17 +57,24 @@ export function QrTableMenuPage() {
       </div>
 
       <div className="relative z-0 mx-auto max-w-2xl px-4 pb-3 pt-1">
-        <QrMenuCategoryCards tableId={tableId} />
+        <QrMenuCategoryNav categories={categoryNavItems} tableId={tableId} />
       </div>
 
       <main className="relative z-0 mx-auto max-w-2xl px-4 py-5 pb-28" data-menu-background>
         {offline && !loading ? (
           <QrMenuEmptyState variant="offline" onRetry={loadMenu} />
         ) : loading && menuItems.length === 0 ? (
-          <div className="flex gap-3 overflow-x-auto pb-1">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="w-[72%] min-w-[11.5rem] shrink-0">
-                <QrMenuCardSkeleton index={i} />
+          <div className="space-y-8">
+            {(["bestseller", "today"] as const).map((key) => (
+              <div key={key} className="space-y-3">
+                <div className="h-6 w-44 animate-pulse rounded-lg bg-amber-200/40 dark:bg-amber-900/30" />
+                <div className="flex gap-3 overflow-x-auto pb-1">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="w-[74vw] min-w-[11.5rem] max-w-[17rem] shrink-0 sm:w-[15.5rem]">
+                      <QrMenuCardSkeleton index={i} />
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
