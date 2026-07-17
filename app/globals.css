@@ -1608,3 +1608,58 @@ img:not([width]):not([height]) {
     scroll-behavior: auto;
   }
 }
+
+/* ====================================================
+   QR TABLE MENU — vertical category sidebar layout
+   (table QR only; public website menu unchanged)
+   ==================================================== */
+.qr-menu-layout {
+  display: block;
+  gap: 16px;
+}
+
+.category-sidebar {
+  display: none;
+}
+
+.category-item {
+  width: 100%;
+  text-align: start;
+}
+
+.category-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (min-width: 768px) {
+  .qr-menu-layout {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .category-sidebar {
+    position: sticky;
+    top: 12px;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .qr-menu-layout .qr-categories-mobile-trigger {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .qr-menu-layout {
+    display: block;
+  }
+
+  .category-sidebar {
+    display: none !important;
+  }
+}

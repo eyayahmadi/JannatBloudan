@@ -136,14 +136,9 @@ export function QrMenuLayout({
   }
 
   return (
-    <div
-      className={cn(
-        "qr-menu-layout relative z-0 mx-auto grid max-w-4xl grid-cols-1 gap-4 px-4 md:grid-cols-[11.25rem_minmax(0,1fr)]",
-        className,
-      )}
-    >
+    <div className={cn("qr-menu-layout relative z-0 mx-auto max-w-4xl px-4", className)}>
       <aside
-        className="category-sidebar sticky top-3 hidden max-h-[calc(100dvh-1.5rem)] self-start overflow-y-auto overscroll-contain md:flex md:flex-col md:gap-2"
+        className="category-sidebar max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain"
         aria-label={t("menu.qrCategoriesAria")}
         data-menu-category-sidebar
       >
@@ -160,7 +155,7 @@ export function QrMenuLayout({
       </aside>
 
       <div className="menu-content min-w-0">
-        <div className="mb-3 md:hidden">
+        <div className="qr-categories-mobile-trigger mb-3">
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
