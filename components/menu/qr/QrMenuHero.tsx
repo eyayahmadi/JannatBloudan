@@ -18,6 +18,8 @@ type QrMenuHeroProps = {
     order_number: string
     status: OrderStatus
   } | null
+  /** Smaller header on mobile — QR homepage scroll performance. */
+  compact?: boolean
 }
 
 export function QrMenuHero({
@@ -27,6 +29,7 @@ export function QrMenuHero({
   onCartOpen,
   onSearchOpen,
   activeOrder,
+  compact = false,
 }: QrMenuHeroProps) {
   const { t } = useI18n()
   const eta = activeOrder ? qrOrderEtaLabel(activeOrder.status) : null
@@ -35,9 +38,12 @@ export function QrMenuHero({
     : t("menu.qrReadyToOrder")
 
   return (
-    <header className="relative z-0 shrink-0 overflow-hidden">
+    <header className="relative z-0 shrink-0 overflow-visible">
       <div
-        className="relative px-4 pb-8 pt-3 text-white sm:pb-10"
+        className={cn(
+          "relative px-4 pt-3 text-white",
+          compact ? "pb-5 sm:pb-8" : "pb-8 sm:pb-10",
+        )}
         style={{
           background: "linear-gradient(160deg, #14100c 0%, #4a1520 42%, #6b4f12 78%, #2a1f14 100%)",
         }}
@@ -87,18 +93,28 @@ export function QrMenuHero({
           </div>
 
           <div className="flex flex-col items-center text-center">
-            <div className="mb-5 h-28 w-28 sm:h-32 sm:w-32">
+            <div
+              className={cn(
+                "mb-4",
+                compact ? "h-20 w-20 sm:mb-5 sm:h-28 sm:w-28" : "mb-5 h-28 w-28 sm:h-32 sm:w-32",
+              )}
+            >
               <BloudanLogoMark
                 size={0}
                 variant="inline"
-                pulse
-                loop
+                pulse={!compact}
+                loop={!compact}
                 withPhotoBack
                 className="h-full w-full rounded-3xl border border-amber-300/25 bg-black/20 shadow-2xl shadow-black/30"
               />
             </div>
 
-            <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            <h1
+              className={cn(
+                "font-display font-bold tracking-tight",
+                compact ? "text-2xl sm:text-4xl" : "text-3xl sm:text-4xl",
+              )}
+            >
               Jannat Bloudan
             </h1>
             <p className="mt-1 text-lg text-amber-100/90 sm:text-xl" dir="rtl">

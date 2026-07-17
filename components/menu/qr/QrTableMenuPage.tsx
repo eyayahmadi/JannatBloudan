@@ -45,6 +45,7 @@ export function QrTableMenuPage() {
         onCartOpen={() => setCartOpen(true)}
         onSearchOpen={() => setSearchOpen(true)}
         activeOrder={activeOrder}
+        compact
       />
 
       <div className="relative z-0 mx-auto max-w-4xl px-4 pt-3 pb-2">
@@ -52,7 +53,7 @@ export function QrTableMenuPage() {
       </div>
 
       <QrMenuLayout categories={categoryNavItems} tableId={tableId} activeSlug={null} className="pb-28 pt-1">
-        <main data-menu-background>
+        <main className="qr-home-main min-w-0" data-qr-homepage data-menu-background>
           {offline && !loading ? (
             <QrMenuEmptyState variant="offline" onRetry={loadMenu} />
           ) : loading && menuItems.length === 0 ? (

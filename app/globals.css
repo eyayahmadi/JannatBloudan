@@ -1698,3 +1698,31 @@ img:not([width]):not([height]) {
     touch-action: auto;
   }
 }
+
+/* QR homepage — native vertical scroll on phones (Bestseller + Heute empfohlen grids) */
+html.menu-stable-scroll .qr-home-main,
+html.menu-stable-scroll [data-qr-homepage] {
+  overflow: visible;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.menu-stable-scroll .qr-home-main [data-menu-scroll-list] {
+  overflow: visible;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.menu-stable-scroll .qr-home-main .menu-product-card,
+html.menu-stable-scroll .qr-home-main [data-menu-product-id] {
+  content-visibility: visible;
+  contain: none;
+  contain-intrinsic-size: auto;
+  touch-action: manipulation;
+}
+
+@media (max-width: 767px) {
+  html.menu-stable-scroll .menu-page-root:has(.qr-home-main) header {
+    overflow: visible;
+  }
+}
