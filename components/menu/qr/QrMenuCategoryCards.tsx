@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { ChevronRight } from "lucide-react"
 import { QR_CATEGORY_NAV_CARDS, type QrCategoryNavCard } from "@/lib/menu/qr-printed-menu"
 import { resolveQrCategoryLabel } from "@/lib/menu/qr-category-i18n"
+import { QrHorizontalScrollItem, QrHorizontalScrollRow } from "@/components/menu/qr/QrHorizontalScrollRow"
 import { useI18n } from "@/lib/i18n/context"
 import { cn } from "@/lib/utils"
 
@@ -53,47 +54,40 @@ function CategoryCard({
 }
 
 /**
- * Large colored category cards — ONE horizontal swipeable row only (never wraps to grid).
+ * Category cards — one horizontal swipeable row (13 categories, no grid wrap).
  */
 export function QrMenuCategoryCards({ tableId, className }: QrMenuCategoryCardsProps) {
   const router = useRouter()
   const { t, locale } = useI18n()
 
   return (
-    <section
-      className={cn("w-full min-w-0", className)}
-      aria-label={t("menu.qrCategoriesAria")}
+    <QrHorizontalScrollRow
+      className={className}
+      ariaLabel={t("menu.qrCategoriesAria")}
       data-qr-category-carousel
     >
-      <div className="-mx-4 overflow-hidden sm:-mx-0">
-        <div
-          className="flex flex-row flex-nowrap items-stretch gap-3 overflow-x-auto overscroll-x-contain scroll-smooth px-4 pb-2 snap-x snap-mandatory touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] sm:px-0 [&::-webkit-scrollbar]:hidden"
-          style={{ WebkitOverflowScrolling: "touch" }}
-        >
-          {QR_CATEGORY_NAV_CARDS.map((card) => {
-            const { primary, secondary } = resolveQrCategoryLabel(
-              card.slug,
-              locale,
-              t,
-              card.labelDe,
-              card.labelAr,
-            )
-            return (
-              <div
-                key={card.slug}
-                className="flex w-[min(72vw,13.5rem)] shrink-0 grow-0 basis-[min(72vw,13.5rem)] snap-start"
-              >
-                <CategoryCard
-                  card={card}
-                  primaryLabel={primary}
-                  secondaryLabel={secondary}
-                  onOpen={() => router.push(`/table/${tableId}/menu/${card.slug}`)}
-                />
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    </section>
+      {QR_CATEGORY_NAV_CARDS.map((card) => {
+        const { primary, secondary } = resolveQrCategoryLabel(
+          card.slug,
+          locale,
+          t,
+          card.labelDe,
+          card.labelAr,
+        )
+        return (
+          <QrHorizontalScrollItem
+            key={card.slug}
+            className="w-[38vw] min-w-[9.25rem] max-w-[10.5rem] sm:w-[9.75rem] sm:min-w-[9.75rem] sm:max-w-[10.5rem]"
+          >
+            <CategoryCard
+              card={card}
+              primaryLabel={primary}
+              secondaryLabel={secondary}
+              onOpen={() => router.push(`/table/${tableId}/menu/${card.slug}`)}
+            />
+          </QrHorizontalScrollItem>
+        )
+      })}
+    </QrHorizontalScrollRow>
   )
 }

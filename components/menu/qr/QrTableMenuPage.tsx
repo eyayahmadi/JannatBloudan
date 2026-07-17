@@ -55,6 +55,12 @@ export function QrTableMenuPage() {
         <StationStatusBanner />
       </div>
 
+      {!offline && !loadError && !(loading && menuItems.length === 0) ? (
+        <div className="relative z-0 mx-auto max-w-2xl px-4 pb-2">
+          <QrMenuCategoryCards tableId={tableId} />
+        </div>
+      ) : null}
+
       <main className="relative z-0 mx-auto max-w-2xl px-4 py-5 pb-28" data-menu-background>
         {offline && !loading ? (
           <QrMenuEmptyState variant="offline" onRetry={loadMenu} />
@@ -70,8 +76,6 @@ export function QrTableMenuPage() {
           <QrMenuEmptyState variant="error" onRetry={loadMenu} />
         ) : (
           <div className="space-y-8">
-            <QrMenuCategoryCards tableId={tableId} />
-
             {bestsellerItems.length > 0 ? (
               <QrMenuFeaturedStrip
                 id="qr-featured-bestseller"

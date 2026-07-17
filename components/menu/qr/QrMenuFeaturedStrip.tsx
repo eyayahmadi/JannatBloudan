@@ -2,6 +2,7 @@
 
 import type { QrMenuItem } from "@/lib/menu/qr-menu-types"
 import { QrMenuProductCard } from "@/components/menu/qr/QrMenuProductCard"
+import { QrHorizontalScrollItem, QrHorizontalScrollRow } from "@/components/menu/qr/QrHorizontalScrollRow"
 import { useI18n } from "@/lib/i18n/context"
 import { cn } from "@/lib/utils"
 
@@ -54,9 +55,12 @@ export function QrMenuFeaturedStrip({
           </p>
         ) : null}
       </div>
-      <div className="flex flex-row flex-nowrap gap-3 overflow-x-auto overscroll-x-contain pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <QrHorizontalScrollRow bleed trackClassName="pb-1">
         {items.map((item, i) => (
-          <div key={item.id} className="w-[46%] min-w-[160px] max-w-[200px] shrink-0 grow-0 sm:w-[42%]">
+          <QrHorizontalScrollItem
+            key={item.id}
+            className="w-[74vw] min-w-[11.5rem] max-w-[17rem] sm:w-[15.5rem] sm:min-w-[15.5rem]"
+          >
             <QrMenuProductCard
               item={item}
               index={i}
@@ -66,9 +70,9 @@ export function QrMenuFeaturedStrip({
               onOpen={() => onOpenProduct(item)}
               onQuickAdd={() => onQuickAdd(item)}
             />
-          </div>
+          </QrHorizontalScrollItem>
         ))}
-      </div>
+      </QrHorizontalScrollRow>
     </section>
   )
 }
