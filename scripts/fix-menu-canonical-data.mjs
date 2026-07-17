@@ -140,6 +140,8 @@ const CATEGORY_ORDER = [
   { slug: "entrees", name: "Entrées", name_ar: "المقبلات", section: "food", display_order: 10 },
   { slug: "salades", name: "Salades", name_ar: "السلطات", section: "food", display_order: 20 },
   { slug: "manakish", name: "Manakish", name_ar: "المناقيش", section: "food", display_order: 30 },
+  { slug: "tajine", name: "Tajine", name_ar: "الطواجن", section: "food", display_order: 35 },
+  { slug: "hauptgerichte", name: "Hauptgerichte", name_ar: "الطبخات", section: "food", display_order: 36 },
   { slug: "plats", name: "Plats", name_ar: "الوجبات", section: "food", display_order: 40 },
   { slug: "shawarma", name: "Shawarma", name_ar: "الشاورما", section: "food", display_order: 50 },
   { slug: "grillades", name: "Grillades", name_ar: "المشاوي", section: "food", display_order: 60 },

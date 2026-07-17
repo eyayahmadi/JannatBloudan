@@ -18,6 +18,7 @@ import {
   type StationAvailabilityStatus,
 } from "@/lib/stations/availability"
 import { fetchMenuHomepageSections } from "@/lib/menu/menu-homepage-sections"
+import { mergeTajineHauptgerichteCatalog } from "@/lib/menu/tajine-hauptgerichte-fallback"
 
 type ProductRow = Record<string, unknown> & {
   id: string
@@ -550,9 +551,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: catErr }, { status: 500 })
     }
 
+    const mergedCatalog = mergeTajineHauptgerichteCatalog(categoryRowsNormalized, [])
+    const categoryRowsWithFallback = mergedCatalog.categories
+
     const sectionByCategoryId = new Map<string, string>()
     const categoryOrderBySlug = new Map<string, number>()
-    for (const c of categoryRowsNormalized) {
+    for (const c of categoryRowsWithFallback) {
       sectionByCategoryId.set(c.id, c.section ?? "food")
       categoryOrderBySlug.set(c.slug, c.display_order ?? 0)
     }
@@ -619,7 +623,13 @@ export async function GET(request: NextRequest) {
         can_order: base.can_order && accepting,
       }
     })
-    const localized = locale === "fr" ? enrichedRows : await localizeProducts(enrichedRows, locale)
+
+    const { products: enrichedWithFallback } = mergeTajineHauptgerichteCatalog(
+      categoryRowsWithFallback,
+      enrichedRows,
+    )
+    const localized =
+      locale === "fr" ? enrichedWithFallback : await localizeProducts(enrichedWithFallback, locale)
 
     const sold = new Map<string, number>()
     for (const r of oi ?? []) {
@@ -688,7 +698,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       source: "supabase",
       items,
-      categories: categoryRowsNormalized,
+      categories: categoryRowsWithFallback,
       by_section: bySection,
       often_ordered_with,
       most_ordered_ids: mostOrderedIds,

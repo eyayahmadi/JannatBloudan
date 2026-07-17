@@ -1,8 +1,7 @@
 "use client"
 
 import type { QrMenuItem } from "@/lib/menu/qr-menu-types"
-import { QrMenuProductCard } from "@/components/menu/qr/QrMenuProductCard"
-import { QrHorizontalScrollItem, QrHorizontalScrollRow } from "@/components/menu/qr/QrHorizontalScrollRow"
+import { QrTableMenuProductGrid } from "@/components/menu/qr/QrTableMenuProductGrid"
 import { useI18n } from "@/lib/i18n/context"
 import { cn } from "@/lib/utils"
 
@@ -14,25 +13,16 @@ type QrMenuFeaturedStripProps = {
   titleKey: QrFeaturedKey
   titleAr: string
   items: QrMenuItem[]
-  favoriteIds: Set<string>
-  onToggleFavorite: (productId: string) => void
-  onOpenProduct: (item: QrMenuItem) => void
-  onQuickAdd: (item: QrMenuItem) => void
-  getInCartQty: (item: QrMenuItem) => number
   className?: string
 }
 
+/** Homepage promo section — same 2-column product grid as category pages. */
 export function QrMenuFeaturedStrip({
   id,
   icon,
   titleKey,
   titleAr,
   items,
-  favoriteIds,
-  onToggleFavorite,
-  onOpenProduct,
-  onQuickAdd,
-  getInCartQty,
   className,
 }: QrMenuFeaturedStripProps) {
   const { t, locale } = useI18n()
@@ -55,24 +45,7 @@ export function QrMenuFeaturedStrip({
           </p>
         ) : null}
       </div>
-      <QrHorizontalScrollRow bleed trackClassName="pb-1">
-        {items.map((item, i) => (
-          <QrHorizontalScrollItem
-            key={item.id}
-            className="w-[74vw] min-w-[11.5rem] max-w-[17rem] sm:w-[15.5rem] sm:min-w-[15.5rem]"
-          >
-            <QrMenuProductCard
-              item={item}
-              index={i}
-              inCartQty={getInCartQty(item)}
-              isFavorite={favoriteIds.has(item.id)}
-              onToggleFavorite={() => onToggleFavorite(item.id)}
-              onOpen={() => onOpenProduct(item)}
-              onQuickAdd={() => onQuickAdd(item)}
-            />
-          </QrHorizontalScrollItem>
-        ))}
-      </QrHorizontalScrollRow>
+      <QrTableMenuProductGrid items={items} />
     </section>
   )
 }

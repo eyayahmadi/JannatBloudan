@@ -27,11 +27,6 @@ export function QrTableMenuPage() {
     categoryNavItems,
     bestsellerItems,
     todayItems,
-    favoriteIds,
-    handleToggleFavorite,
-    openDetail,
-    handleQuickAdd,
-    getInCartQty,
     loading,
     loadError,
     offline,
@@ -65,11 +60,9 @@ export function QrTableMenuPage() {
               {(["bestseller", "today"] as const).map((key) => (
                 <div key={key} className="space-y-3">
                   <div className="h-6 w-44 animate-pulse rounded-lg bg-amber-200/40 dark:bg-amber-900/30" />
-                  <div className="flex gap-3 overflow-x-auto pb-1">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="w-[74vw] min-w-[11.5rem] max-w-[17rem] shrink-0 sm:w-[15.5rem]">
-                        <QrMenuCardSkeleton index={i} />
-                      </div>
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <QrMenuCardSkeleton key={i} index={i} />
                     ))}
                   </div>
                 </div>
@@ -86,11 +79,6 @@ export function QrTableMenuPage() {
                   titleKey="bestseller"
                   titleAr="الأكثر مبيعاً"
                   items={bestsellerItems}
-                  favoriteIds={new Set(favoriteIds)}
-                  onToggleFavorite={handleToggleFavorite}
-                  onOpenProduct={openDetail}
-                  onQuickAdd={handleQuickAdd}
-                  getInCartQty={getInCartQty}
                 />
               ) : null}
 
@@ -101,11 +89,6 @@ export function QrTableMenuPage() {
                   titleKey="today"
                   titleAr="موصى به اليوم"
                   items={todayItems}
-                  favoriteIds={new Set(favoriteIds)}
-                  onToggleFavorite={handleToggleFavorite}
-                  onOpenProduct={openDetail}
-                  onQuickAdd={handleQuickAdd}
-                  getInCartQty={getInCartQty}
                 />
               ) : null}
             </div>
