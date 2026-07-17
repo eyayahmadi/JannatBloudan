@@ -5,8 +5,7 @@ import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
 import { LayoutGrid, X } from "lucide-react"
 import type { QrCategoryNavItem } from "@/lib/menu/qr-printed-menu"
-import { resolveQrCategoryLabel } from "@/lib/menu/qr-category-i18n"
-import type { Locale } from "@/lib/i18n/config"
+import { resolveQrCategorySidebarLabels } from "@/lib/menu/qr-category-i18n"
 import { useI18n } from "@/lib/i18n/context"
 import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock"
 import { cn } from "@/lib/utils"
@@ -24,29 +23,61 @@ type QrMenuLayoutProps = {
 
 function CategoryItem({
   icon,
-  label,
+  german,
+  arabic,
+  homeLabel,
   active,
   onSelect,
 }: {
   icon: string
-  label: string
+  german?: string
+  arabic?: string
+  homeLabel?: string
   active: boolean
   onSelect: () => void
 }) {
+  const isHome = homeLabel != null
+
   return (
     <button
       type="button"
       onClick={onSelect}
       className={cn(
-        "category-item w-full rounded-xl px-3 py-2.5 text-start text-sm font-medium transition-colors",
+        "category-item w-full min-h-[68px] rounded-xl px-3.5 py-3 text-start transition-colors",
         active
           ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-600/20"
-          : "border border-amber-200/80 bg-white text-amber-950 hover:border-amber-300 dark:border-amber-800 dark:bg-neutral-900 dark:text-amber-100 dark:hover:border-amber-700",
+          : "border border-amber-800/40 bg-neutral-900 text-amber-100 hover:border-amber-700",
       )}
     >
-      <span className="flex items-center gap-2">
-        <span className="shrink-0 text-base leading-none">{icon}</span>
-        <span className="truncate">{label}</span>
+      <span className="flex items-center gap-3">
+        <span
+          className="category-item-icon shrink-0 text-[30px] leading-none"
+          aria-hidden
+        >
+          {icon}
+        </span>
+        <span className="min-w-0 flex-1 leading-snug">
+          {isHome ? (
+            <span className="block text-[17px] font-bold leading-tight">{homeLabel}</span>
+          ) : (
+            <>
+              <span className="category-item-de block text-[17px] font-bold leading-tight">
+                {german}
+              </span>
+              {arabic ? (
+                <span
+                  className={cn(
+                    "category-item-ar mt-0.5 block text-[15px] font-bold leading-tight",
+                    active ? "text-white/90" : "text-amber-300/90",
+                  )}
+                  dir="rtl"
+                >
+                  {arabic}
+                </span>
+              ) : null}
+            </>
+          )}
+        </span>
       </span>
     </button>
   )
@@ -56,7 +87,6 @@ function CategoryList({
   categories,
   tableId,
   activeSlug,
-  locale,
   t,
   onSelect,
   hrefForCategory,
@@ -65,7 +95,6 @@ function CategoryList({
   categories: QrCategoryNavItem[]
   tableId: string
   activeSlug?: string | null
-  locale: Locale
   t: (key: string) => string
   onSelect: (href: string) => void
   hrefForCategory?: (slug: string) => string
@@ -75,18 +104,15 @@ function CategoryList({
   const isHome = activeSlug == null
 
   return (
-    <div className="category-drawer flex flex-col gap-2">
+    <div className="category-drawer flex flex-col gap-2.5">
       <CategoryItem
         icon="🏠"
-        label={t("menu.qrHome")}
+        homeLabel={t("menu.qrHome")}
         active={isHome}
         onSelect={() => onSelect(homeHref)}
       />
       {categories.map((category) => {
-        const { primary } = resolveQrCategoryLabel(
-          category.slug,
-          locale,
-          t,
+        const { german, arabic } = resolveQrCategorySidebarLabels(
           category.labelDe,
           category.labelAr,
         )
@@ -96,7 +122,8 @@ function CategoryList({
           <CategoryItem
             key={category.slug}
             icon={category.icon}
-            label={primary}
+            german={german}
+            arabic={arabic}
             active={activeSlug === category.slug}
             onSelect={() => onSelect(href)}
           />
@@ -120,7 +147,7 @@ export function QrMenuLayout({
   hrefForHome,
 }: QrMenuLayoutProps) {
   const router = useRouter()
-  const { t, locale } = useI18n()
+  const { t } = useI18n()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -154,7 +181,6 @@ export function QrMenuLayout({
           categories={categories}
           tableId={tableId}
           activeSlug={activeSlug}
-          locale={locale}
           t={t}
           onSelect={navigate}
           hrefForCategory={hrefForCategory}
@@ -167,7 +193,7 @@ export function QrMenuLayout({
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="inline-flex items-center gap-2 rounded-full border border-amber-200/80 bg-white px-4 py-2 text-sm font-medium text-amber-950 shadow-sm transition hover:border-amber-300 dark:border-amber-800 dark:bg-neutral-900 dark:text-amber-100"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-amber-800/40 bg-neutral-900 px-4 py-2.5 text-sm font-medium text-amber-100 shadow-sm transition hover:border-amber-700"
           >
             <LayoutGrid className="h-4 w-4" />
             {t("menu.qrCategoriesAria")}
@@ -186,15 +212,18 @@ export function QrMenuLayout({
                 aria-label={t("menu.qrBack")}
                 onClick={() => setDrawerOpen(false)}
               />
-              <aside className="absolute inset-y-0 left-0 flex w-[min(100%,18rem)] flex-col bg-[#faf6f0] shadow-2xl dark:bg-neutral-950">
-                <div className="flex items-center justify-between border-b border-amber-200/60 px-4 py-4 dark:border-amber-900/40">
-                  <p className="font-display text-base font-semibold text-amber-950 dark:text-white">
+              <aside
+                data-qr-table-menu
+                className="absolute inset-y-0 left-0 flex w-[min(100%,20.5rem)] flex-col bg-neutral-950 shadow-2xl"
+              >
+                <div className="flex items-center justify-between border-b border-amber-900/40 px-4 py-4">
+                  <p className="font-display text-base font-semibold text-white">
                     {t("menu.qrCategoriesAria")}
                   </p>
                   <button
                     type="button"
                     onClick={() => setDrawerOpen(false)}
-                    className="rounded-full p-2 text-amber-800 hover:bg-amber-100 dark:text-amber-200 dark:hover:bg-amber-900/40"
+                    className="rounded-full p-2 text-amber-200 hover:bg-amber-900/40"
                     aria-label={t("menu.qrBack")}
                   >
                     <X className="h-4 w-4" />
@@ -205,7 +234,6 @@ export function QrMenuLayout({
                     categories={categories}
                     tableId={tableId}
                     activeSlug={activeSlug}
-                    locale={locale}
                     t={t}
                     onSelect={navigate}
                     hrefForCategory={hrefForCategory}

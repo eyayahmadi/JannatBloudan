@@ -20,7 +20,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.AI_API_KEY
 const OPENAI_BASE = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "")
 
 const STYLE =
-  "Premium food photography, soft natural lighting, shallow depth of field, square composition 1:1, warm tones, no text, no watermark, no logo, no people, no hands, restaurant menu quality, appetizing, Syrian Lebanese restaurant"
+  "Professional restaurant food photography, ultra realistic, soft studio lighting, shallow depth of field, square composition 1:1, centered dish on pure black background, warm appetizing tones, no text, no watermark, no logo, no people, no hands, high-end menu photo quality matching premium grill and shawarma menu images"
 
 /** slug → { folder, prompt } */
 const PRODUCTS = {

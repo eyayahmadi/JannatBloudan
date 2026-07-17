@@ -1,4 +1,5 @@
 import type { QrMenuItem } from "@/lib/menu/qr-menu-types"
+import { isPlaceholderImage } from "@/lib/menu/menu-display"
 import { normalizeProductTags, productHasAnyTag, productHasTag } from "@/lib/menu/product-attributes"
 import { stationBadgeForProduct } from "@/lib/menu/station-order-block"
 import type { StockAvailability } from "@/lib/menu/availability"
@@ -82,6 +83,54 @@ export function mapApiToQrMenuItem(
     modifiers: Array.isArray(p.modifiers) ? (p.modifiers as QrMenuItem["modifiers"]) : [],
     variants: Array.isArray(p.variants) ? (p.variants as QrMenuItem["variants"]) : [],
   }
+}
+
+const CATALOG_FALLBACK_ID_PREFIX = "catalog-tajine-haupt"
+
+function isCatalogFallbackId(id: string): boolean {
+  return id.startsWith(CATALOG_FALLBACK_ID_PREFIX)
+}
+
+function preferCanonicalMenuItem(next: QrMenuItem, prev: QrMenuItem): boolean {
+  const nextFallback = isCatalogFallbackId(next.id)
+  const prevFallback = isCatalogFallbackId(prev.id)
+  if (prevFallback && !nextFallback) return true
+  if (!prevFallback && nextFallback) return false
+
+  const nextPlaceholder = isPlaceholderImage(next.image)
+  const prevPlaceholder = isPlaceholderImage(prev.image)
+  if (prevPlaceholder && !nextPlaceholder) return true
+  if (!prevPlaceholder && nextPlaceholder) return false
+
+  return false
+}
+
+/** Map featured picks to the same catalog rows used on category pages (id, then slug). */
+export function canonicalizeMenuItemsForDisplay(
+  picks: QrMenuItem[],
+  catalog: QrMenuItem[],
+): QrMenuItem[] {
+  if (picks.length === 0 || catalog.length === 0) return picks
+
+  const byId = new Map(catalog.map((item) => [item.id, item]))
+  const bySlug = new Map<string, QrMenuItem>()
+  for (const item of catalog) {
+    if (!item.slug) continue
+    const prev = bySlug.get(item.slug)
+    if (!prev || preferCanonicalMenuItem(item, prev)) {
+      bySlug.set(item.slug, item)
+    }
+  }
+
+  return picks.map((pick) => {
+    const byExactId = byId.get(pick.id)
+    if (byExactId) return byExactId
+    if (pick.slug) {
+      const byExactSlug = bySlug.get(pick.slug)
+      if (byExactSlug) return byExactSlug
+    }
+    return pick
+  })
 }
 
 /** Preserve stable item references when polling refreshes unchanged products. */

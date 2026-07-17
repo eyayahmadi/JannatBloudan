@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { PageShell } from "@/components/site/PageShell"
-import { PremiumBackdrop } from "@/components/site/PremiumBackdrop"
 import { QrMenuHero } from "@/components/menu/qr/QrMenuHero"
 import { QrMenuLayout } from "@/components/menu/qr/QrMenuLayout"
 import { QrMenuFeaturedStrip } from "@/components/menu/qr/QrMenuFeaturedStrip"
@@ -35,8 +34,7 @@ export function QrTableMenuPage() {
   } = useQrTableMenu()
 
   return (
-    <PageShell stableViewport className="relative dark:bg-neutral-950">
-      <PremiumBackdrop variant="cream" lite />
+    <PageShell stableViewport className="relative !bg-neutral-950 text-white">
 
       <QrMenuHero
         tableId={tableId}
@@ -60,7 +58,7 @@ export function QrTableMenuPage() {
             <div className="space-y-8">
               {(["bestseller", "today"] as const).map((key) => (
                 <div key={key} className="space-y-3">
-                  <div className="h-6 w-44 animate-pulse rounded-lg bg-amber-200/40 dark:bg-amber-900/30" />
+                  <div className="h-6 w-44 animate-pulse rounded-lg bg-amber-900/40" />
                   <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     {Array.from({ length: 4 }).map((_, i) => (
                       <QrMenuCardSkeleton key={i} index={i} />

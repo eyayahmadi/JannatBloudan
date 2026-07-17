@@ -54,7 +54,7 @@ function QrMenuProductCardInner({
       translate="no"
       data-no-translate
       className={cn(
-        "menu-product-card group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-amber-100/90 bg-white shadow-sm dark:border-amber-900/25 dark:bg-neutral-900",
+        "menu-product-card group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-amber-900/25 bg-neutral-900 shadow-sm",
         disabled && "opacity-60",
       )}
       onClick={onOpen}
@@ -154,12 +154,12 @@ function QrMenuProductCardInner({
       </div>
 
       <div className="flex flex-1 flex-col p-3.5">
-        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-amber-950 dark:text-white" dir="ltr">
+        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-white" dir="ltr">
           <HighlightText text={item.name} query={query} />
         </h3>
         {item.name_ar ? (
           <p
-            className="mt-0.5 line-clamp-2 break-words text-xs leading-snug text-amber-800/60 dark:text-amber-300/60"
+            className="mt-0.5 line-clamp-2 break-words text-xs leading-snug text-amber-300/60"
             dir="rtl"
           >
             <HighlightText text={item.name_ar} query={query} />
@@ -167,7 +167,7 @@ function QrMenuProductCardInner({
         ) : null}
         {item.description ? (
           <p
-            className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-amber-800/50 dark:text-amber-300/45"
+            className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-amber-300/45"
             dir="ltr"
           >
             {item.description}
@@ -175,7 +175,7 @@ function QrMenuProductCardInner({
         ) : null}
         {item.description_ar ? (
           <p
-            className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-amber-800/45 dark:text-amber-300/40"
+            className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-amber-300/40"
             dir="rtl"
           >
             {item.description_ar}
@@ -192,12 +192,12 @@ function QrMenuProductCardInner({
         <div className="mt-auto flex items-end justify-between gap-2 pt-3">
           <div>
             {rating != null ? (
-              <p className="mb-0.5 flex items-center gap-0.5 text-[10px] font-medium text-amber-700/80 dark:text-amber-400/80">
+              <p className="mb-0.5 flex items-center gap-0.5 text-[10px] font-medium text-amber-400/80">
                 <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                 {rating.toFixed(1)}
               </p>
             ) : null}
-            <span className="text-base font-bold tabular-nums text-amber-700 dark:text-amber-400">
+            <span className="text-base font-bold tabular-nums text-amber-400">
               {priceLabel}
             </span>
           </div>
@@ -207,7 +207,7 @@ function QrMenuProductCardInner({
               <button
                 type="button"
                 onClick={onDecrement}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-900/40 text-amber-300"
               >
                 <Minus className="h-4 w-4" />
               </button>

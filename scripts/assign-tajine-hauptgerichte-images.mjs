@@ -66,13 +66,33 @@ async function uploadAndLink(slug, folder, buf) {
   return pub.publicUrl
 }
 
+async function linkLocalPublicUrl(slug, folder) {
+  const localUrl = `/images/menu/${folder}/${slug}.webp`
+  const { error: dbErr } = await supabase.from("products").update({ image_url: localUrl }).eq("slug", slug)
+  if (dbErr) throw new Error(`DB ${slug}: ${dbErr.message}`)
+  return localUrl
+}
+
+const localDbOnly = process.argv.includes("--local-db")
+
 console.log("🍲  Tajine + Hauptgerichte — upload images menu\n")
 let ok = 0
 for (const { slug, folder } of PRODUCTS) {
   try {
     const buf = await prepareSquareWebp(slug, folder)
-    await uploadAndLink(slug, folder, buf)
-    console.log(`  ✅  ${slug}  (${(buf.length / 1024).toFixed(0)} KB)`)
+    if (localDbOnly) {
+      const url = await linkLocalPublicUrl(slug, folder)
+      console.log(`  ✅  ${slug}  (local ${url})`)
+    } else {
+      try {
+        await uploadAndLink(slug, folder, buf)
+        console.log(`  ✅  ${slug}  (${(buf.length / 1024).toFixed(0)} KB → Storage)`)
+      } catch (uploadErr) {
+        const url = await linkLocalPublicUrl(slug, folder)
+        console.log(`  ⚠️  ${slug}  Storage failed — linked local ${url}`)
+        console.log(`       (${uploadErr.message})`)
+      }
+    }
     ok++
   } catch (e) {
     console.error(`  ❌  ${slug}: ${e.message}`)

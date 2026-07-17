@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { PageShell } from "@/components/site/PageShell"
-import { PremiumBackdrop } from "@/components/site/PremiumBackdrop"
 import { MenuSubcategoryHeader } from "@/components/menu/MenuSubcategoryHeader"
 import { QrMenuHero } from "@/components/menu/qr/QrMenuHero"
 import { QrMenuLayout } from "@/components/menu/qr/QrMenuLayout"
@@ -58,8 +57,7 @@ export default function TableMenuCategoryPage() {
   }, [loading, valid, router, tableId])
 
   return (
-    <PageShell stableViewport className="relative dark:bg-neutral-950">
-      <PremiumBackdrop variant="cream" lite />
+    <PageShell stableViewport className="relative !bg-neutral-950 text-white">
 
       <QrMenuHero
         tableId={tableId}

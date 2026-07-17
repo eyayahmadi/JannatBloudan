@@ -35,12 +35,12 @@ export function QrMenuFeaturedStrip({
   return (
     <section id={id} className={cn("scroll-mt-28 space-y-3", className)}>
       <div className="px-1">
-        <h2 className="flex items-center gap-2 font-display text-base font-bold text-amber-950 dark:text-white">
+        <h2 className="flex items-center gap-2 font-display text-base font-bold text-white">
           <span>{icon}</span>
           <span>{primary}</span>
         </h2>
         {secondary ? (
-          <p className="text-sm text-amber-800/55 dark:text-amber-300/55" dir="rtl">
+          <p className="text-sm text-amber-300/70" dir="rtl">
             {secondary}
           </p>
         ) : null}

@@ -11,7 +11,7 @@ import { MENU_IMAGE_BUCKET, MENU_IMAGE_CACHE_CONTROL } from "./lib/menu-image-up
 const PREFIXES = [
   "products/manakish", "products/entrees", "products/salades", "products/plats",
   "products/shawarma", "products/grillades", "products/pizza", "products/burgers",
-  "products/sandwiches", "products/tea", "products/waffeln", "products/crepes",
+  "products/sandwiches", "products/tajine", "products/hauptgerichte", "products/tea", "products/waffeln", "products/crepes",
   "products/pancakes", "products/fruit-salads", "products/snacks", "products/ice-cream",
   "products/cheesecakes", "products/cakes", "products/shisha", "products/water",
   "products/juices", "products/soft-drinks", "products/ice-tea", "products/cocktails",

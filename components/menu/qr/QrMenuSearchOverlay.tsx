@@ -56,17 +56,18 @@ export function QrMenuSearchOverlay({ open, onClose }: QrMenuSearchOverlayProps)
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex flex-col bg-[#faf6f0] dark:bg-neutral-950"
+      className="fixed inset-0 z-[100] flex flex-col bg-neutral-950"
+      data-qr-table-menu
       role="dialog"
       aria-modal="true"
       aria-label="Produktsuche"
     >
-      <header className="shrink-0 border-b border-amber-200/60 bg-[#faf6f0]/95 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md dark:border-amber-900/40 dark:bg-neutral-950/95">
+      <header className="shrink-0 border-b border-amber-900/40 bg-neutral-950/95 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <button
             type="button"
             onClick={handleClose}
-            className="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full bg-amber-100/80 px-3 text-sm font-medium text-amber-950 transition active:scale-[0.98] dark:bg-amber-900/30 dark:text-amber-100"
+            className="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full bg-amber-900/30 px-3 text-sm font-medium text-amber-100 transition active:scale-[0.98]"
             aria-label="Zurück zur Startseite"
           >
             <ArrowLeft className="h-5 w-5" />

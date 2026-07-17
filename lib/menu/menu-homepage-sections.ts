@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { productHasTag } from "@/lib/menu/product-attributes"
+import { canonicalizeMenuItemsForDisplay } from "@/lib/menu/qr-menu-helpers"
 import type { QrMenuItem } from "@/lib/menu/qr-menu-types"
 
 /** Configurable homepage promo sections — add keys here to extend without route changes. */
@@ -102,14 +103,15 @@ export function resolveHomepageSectionProducts(
   limit = 8,
 ): QrMenuItem[] {
   const selectedIds = homepageSections[sectionKey] ?? []
-  if (selectedIds.length > 0) {
-    const byId = new Map(items.map((i) => [i.id, i]))
-    return selectedIds
-      .map((id) => byId.get(id))
-      .filter((i): i is QrMenuItem => !!i && !i.soldOut && i.canOrder)
-      .slice(0, limit)
-  }
-  return pickByTags(sectionKey, items, limit)
+  const resolved =
+    selectedIds.length > 0
+      ? selectedIds
+          .map((id) => items.find((i) => i.id === id))
+          .filter((i): i is QrMenuItem => !!i && !i.soldOut && i.canOrder)
+          .slice(0, limit)
+      : pickByTags(sectionKey, items, limit)
+
+  return canonicalizeMenuItemsForDisplay(resolved, items)
 }
 
 export function sectionDefByKey(key: string) {

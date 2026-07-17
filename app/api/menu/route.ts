@@ -19,6 +19,7 @@ import {
 } from "@/lib/stations/availability"
 import { fetchMenuHomepageSections } from "@/lib/menu/menu-homepage-sections"
 import { mergeTajineHauptgerichteCatalog } from "@/lib/menu/tajine-hauptgerichte-fallback"
+import { resolveMenuProductImageUrl } from "@/lib/menu/resolve-product-image"
 
 type ProductRow = Record<string, unknown> & {
   id: string
@@ -360,7 +361,11 @@ function enrich(
     display_order: Number((p as { display_order?: number }).display_order) || 0,
     section: secFromMap ?? p.categories?.section ?? "food",
     price: displayPrice,
-    image_url: p.image_url ?? null,
+    image_url: resolveMenuProductImageUrl(
+      p.image_url != null ? String(p.image_url) : null,
+      catSlug,
+      String((p as { slug?: string }).slug ?? ""),
+    ),
     station: p.station ?? "KITCHEN",
     /** Recalculé après agrégation commandes */
     is_popular: !!p.is_popular,
