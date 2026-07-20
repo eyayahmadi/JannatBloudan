@@ -1,7 +1,8 @@
 "use client"
 
 import { AnimatePresence, motion } from "framer-motion"
-import type { MouseEvent } from "react"
+import { useEffect, useState, type MouseEvent } from "react"
+import { createPortal } from "react-dom"
 import { ChevronRight, Minus, Plus, ShoppingBag, X } from "lucide-react"
 import { OrderItemOptions } from "@/components/orders/OrderItemOptions"
 import { optionsSnapshotFromCart } from "@/lib/orders/order-item-options"
@@ -96,7 +97,12 @@ export function QrMenuCartSheet({
 }: QrMenuCartSheetProps) {
   const { t } = useI18n()
   const subtotal = cartTotal
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null)
   useBodyScrollLock(open)
+
+  useEffect(() => {
+    setPortalRoot(document.body)
+  }, [])
 
   const handleCheckout = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
@@ -105,10 +111,14 @@ export function QrMenuCartSheet({
     void onSubmit(event)
   }
 
-  return (
+  const sheet = (
     <AnimatePresence>
       {open ? (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+        <div
+          data-qr-cart-sheet
+          className="fixed inset-0 z-[10050] flex flex-col justify-end"
+          style={{ pointerEvents: "auto", touchAction: "auto" }}
+        >
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -236,7 +246,7 @@ export function QrMenuCartSheet({
                   </AnimatePresence>
                 </div>
 
-                <div className="border-t border-amber-100 px-5 py-4 dark:border-amber-900/30">
+                <div className="shrink-0 border-t border-amber-100 px-5 py-4 dark:border-amber-900/30">
                   <div className="mb-3 space-y-1 text-sm">
                     <div className="flex justify-between text-amber-800/80 dark:text-amber-300/80">
                       <span>Zwischensumme</span>
@@ -295,4 +305,7 @@ export function QrMenuCartSheet({
       ) : null}
     </AnimatePresence>
   )
+
+  if (!portalRoot) return null
+  return createPortal(sheet, portalRoot)
 }

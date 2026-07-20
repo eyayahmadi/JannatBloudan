@@ -199,6 +199,13 @@ html.menu-product-sheet-open [data-menu-background] {
   touch-action: none !important;
 }
 
+/* QR cart sheet is portaled to body — must stay interactive while menu-modal-open */
+html.menu-modal-open [data-qr-cart-sheet],
+html.menu-product-sheet-open [data-qr-cart-sheet] {
+  pointer-events: auto !important;
+  touch-action: auto !important;
+}
+
 html.menu-product-sheet-open [data-menu-page-root],
 html.menu-product-sheet-open [data-menu-background],
 html.menu-product-sheet-open .menu-page-root,
