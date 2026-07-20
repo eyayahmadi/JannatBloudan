@@ -410,15 +410,32 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
   const cartTotal = cart.reduce((s, c) => s + c.price * c.quantity, 0)
 
   const submitOrder = useCallback(async () => {
-    if (cart.length === 0 || submitting) return
-    if (effectiveNumber == null) {
+    console.log("[QR CHECKOUT] clicked", {
+      tableId,
+      cartItems: cart.length,
+      submitting,
+      effectiveNumber,
+    })
+
+    if (submitting) {
+      console.log("[QR CHECKOUT] blocked: already submitting")
+      return
+    }
+    if (cart.length === 0) {
+      console.log("[QR CHECKOUT] blocked: empty cart")
+      return
+    }
+
+    const tableRef = String(tableId ?? "").trim()
+    if (!tableRef) {
+      console.error("[QR CHECKOUT] blocked: missing table ref from route")
       setCheckoutError(t("menu.tableNotFound"))
       return
     }
+
     setCheckoutError(null)
     setSubmitting(true)
-    const localId = `ORD-${Date.now()}`
-    const orderNumber = `T${effectiveNumber}-${String(Math.floor(1000 + Math.random() * 9000))}`
+
     const items = cart.map((c) => {
       const menuItem = menuItemsRef.current.find((m) => m.id === c.productId)
       return {
@@ -433,95 +450,106 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    const requestBody = {
-      id: localId,
-      orderNumber,
-      tableRef: String(tableId),
+    const requestBody: Record<string, unknown> = {
+      tableRef,
       items,
       total: cartTotal,
     }
-
-    console.log("QR CHECKOUT PAYLOAD:", requestBody)
-
-    let resolvedId = localId
-    type QrOrderPayload = {
-      id?: string
-      order_number?: string
-      total?: number
-      status?: string
-      items?: Array<{
-        id?: string
-        name: string
-        name_ar?: string | null
-        quantity: number
-        unitPrice?: number
-        notes?: string
-        station?: string
-        item_status?: string
-      }>
+    if (effectiveNumber != null) {
+      requestBody.orderNumber = `T${effectiveNumber}-${String(Math.floor(1000 + Math.random() * 9000))}`
     }
-    let serverOrder: QrOrderPayload | null = null
+
+    console.log("[QR CHECKOUT] payload", requestBody)
 
     try {
-      const res = await fetch("/api/orders/qr", {
+      const response = await fetch("/api/orders/qr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
       })
-      const json = (await res.json()) as { order?: QrOrderPayload; error?: string }
-      console.log("QR CHECKOUT RESPONSE:", { ok: res.ok, status: res.status, json })
-      if (!res.ok) {
-        const message = json.error ?? t("menu.orderFailed")
-        console.error("QR CHECKOUT ERROR:", message)
-        setCheckoutError(message)
-        return
+
+      const result = (await response.json().catch(() => null)) as {
+        order?: {
+          id?: string
+          order_number?: string
+          table_number?: number
+          total?: number
+          status?: string
+          items?: Array<{
+            id?: string
+            name: string
+            name_ar?: string | null
+            quantity: number
+            unitPrice?: number
+            notes?: string
+            station?: string
+            item_status?: string
+          }>
+        }
+        error?: string
+        message?: string
+      } | null
+
+      console.log("[QR CHECKOUT] response", { status: response.status, result })
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+            result?.message ||
+            `Checkout failed with status ${response.status}`,
+        )
       }
-      if (json?.order?.id) {
-        resolvedId = json.order.id
-        serverOrder = json.order
-      } else {
-        console.error("QR CHECKOUT ERROR: missing order id in response", json)
-        setCheckoutError(t("menu.orderFailed"))
-        return
+
+      const serverOrder = result?.order
+      if (!serverOrder?.id) {
+        throw new Error(t("menu.orderFailed"))
       }
-    } catch (err) {
-      console.error("QR CHECKOUT NETWORK ERROR:", err)
-      setCheckoutError(t("menu.orderNetworkError"))
-      return
+
+      const resolvedId = String(serverOrder.id)
+      const tableNumber =
+        typeof serverOrder.table_number === "number"
+          ? serverOrder.table_number
+          : effectiveNumber ?? 0
+
+      const apiItems = serverOrder.items ?? []
+      addOrder({
+        id: resolvedId,
+        order_number: serverOrder.order_number ?? String(requestBody.orderNumber ?? resolvedId),
+        table_number: tableNumber,
+        order_type: "qr_self_service",
+        status: mapQrApiStatus(serverOrder.status),
+        items:
+          apiItems.length > 0
+            ? apiItems.map((it, idx) => ({
+                id: it.id ?? `${resolvedId}-${idx}`,
+                name: it.name,
+                name_ar: it.name_ar ?? null,
+                quantity: it.quantity,
+                notes: it.notes,
+                unit_price: it.unitPrice,
+                station: it.station,
+                item_status: (it.item_status as "new") ?? "new",
+              }))
+            : items.map((i, idx) => ({ id: `${resolvedId}-${idx}`, name: i.name, quantity: i.quantity })),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        customer_name:
+          tableNumber > 0
+            ? tableGuestCustomerName(tableNumber)
+            : `Gast ${tableRef}`,
+        total: typeof serverOrder.total === "number" ? serverOrder.total : cartTotal,
+      })
+
+      pushQrRecentlyOrdered(tableRef, cart.map((c) => c.productId))
+      setCart([])
+      setCartOpen(false)
+      router.push(`/table/${tableId}/order?oid=${encodeURIComponent(resolvedId)}`)
+    } catch (error) {
+      console.error("[QR CHECKOUT] failed", error)
+      setCheckoutError(error instanceof Error ? error.message : t("menu.orderFailed"))
     } finally {
       setSubmitting(false)
     }
-
-    const apiItems = serverOrder?.items ?? []
-    addOrder({
-      id: resolvedId,
-      order_number: serverOrder?.order_number ?? orderNumber,
-      table_number: effectiveNumber,
-      order_type: "qr_self_service",
-      status: mapQrApiStatus(serverOrder?.status),
-      items:
-        apiItems.length > 0
-          ? apiItems.map((it, idx) => ({
-              id: it.id ?? `${resolvedId}-${idx}`,
-              name: it.name,
-              name_ar: it.name_ar ?? null,
-              quantity: it.quantity,
-              notes: it.notes,
-              unit_price: it.unitPrice,
-              station: it.station,
-              item_status: (it.item_status as "new") ?? "new",
-            }))
-          : items.map((i, idx) => ({ id: `${resolvedId}-${idx}`, name: i.name, quantity: i.quantity })),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      customer_name: tableGuestCustomerName(effectiveNumber),
-      total: typeof serverOrder?.total === "number" ? serverOrder.total : cartTotal,
-    })
-
-    pushQrRecentlyOrdered(String(tableId), cart.map((c) => c.productId))
-    setCart([])
-    setCartOpen(false)
-    router.push(`/table/${tableId}/order?oid=${encodeURIComponent(resolvedId)}`)
   }, [cart, cartTotal, submitting, effectiveNumber, tableId, addOrder, router, t])
 
   const clearCheckoutError = useCallback(() => setCheckoutError(null), [])

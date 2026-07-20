@@ -28,7 +28,11 @@ export function useResolvedRestaurantTable(rawRef: string | undefined) {
     fetch(`/api/public/table-resolve?ref=${encodeURIComponent(ref)}`)
       .then((r) => r.json())
       .then((j) => {
-        if (cancelled || !j?.table) return
+        if (cancelled) return
+        if (!j?.table) {
+          console.warn("[table-resolve] no table for ref", ref, j)
+          return
+        }
         const t = j.table as { table_number?: number; display_name?: string | null; is_active?: boolean | null }
         setResolved({
           table_number: Number(t.table_number),
@@ -36,7 +40,9 @@ export function useResolvedRestaurantTable(rawRef: string | undefined) {
           is_active: t.is_active !== false,
         })
       })
-      .catch(() => {})
+      .catch((err) => {
+        console.warn("[table-resolve] fetch failed", ref, err)
+      })
     return () => {
       cancelled = true
     }

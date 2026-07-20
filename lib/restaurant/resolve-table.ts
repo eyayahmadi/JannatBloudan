@@ -32,5 +32,14 @@ export async function resolveRestaurantTableFromRef(
     .maybeSingle()
   if (byCode) return { id: Number(byCode.id), table_number: Number(byCode.table_number) }
 
+  const { data: byCodeIlike } = await supabase
+    .from("restaurant_tables")
+    .select("id,table_number")
+    .ilike("table_code", ref)
+    .maybeSingle()
+  if (byCodeIlike) {
+    return { id: Number(byCodeIlike.id), table_number: Number(byCodeIlike.table_number) }
+  }
+
   return null
 }

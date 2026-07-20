@@ -1,6 +1,7 @@
 "use client"
 
 import { AnimatePresence, motion } from "framer-motion"
+import type { MouseEvent } from "react"
 import { ChevronRight, Minus, Plus, ShoppingBag, X } from "lucide-react"
 import { OrderItemOptions } from "@/components/orders/OrderItemOptions"
 import { optionsSnapshotFromCart } from "@/lib/orders/order-item-options"
@@ -18,7 +19,7 @@ type QrMenuCartSheetProps = {
   onClose: () => void
   onIncrement: (lineId: string) => void
   onDecrement: (lineId: string) => void
-  onSubmit: () => void
+  onSubmit: (event?: MouseEvent<HTMLButtonElement>) => void | Promise<void>
   submitting?: boolean
   checkoutError?: string | null
   onDismissError?: () => void
@@ -96,6 +97,13 @@ export function QrMenuCartSheet({
   const { t } = useI18n()
   const subtotal = cartTotal
   useBodyScrollLock(open)
+
+  const handleCheckout = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+    console.log("[QR CHECKOUT] button clicked", { cartItems: cart.length, submitting })
+    void onSubmit(event)
+  }
 
   return (
     <AnimatePresence>
@@ -270,9 +278,9 @@ export function QrMenuCartSheet({
                   ) : null}
                   <button
                     type="button"
-                    disabled={submitting}
+                    disabled={submitting || cart.length === 0}
                     aria-busy={submitting}
-                    onClick={onSubmit}
+                    onClick={handleCheckout}
                     className="w-full rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 py-4 text-lg font-bold text-white shadow-lg transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
                   >
                     {submitting
