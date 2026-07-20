@@ -7,7 +7,7 @@ import { ChevronRight, Minus, Plus, ShoppingBag, X } from "lucide-react"
 import { OrderItemOptions } from "@/components/orders/OrderItemOptions"
 import { optionsSnapshotFromCart } from "@/lib/orders/order-item-options"
 import { isPlaceholderImage } from "@/lib/menu/menu-display"
-import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock"
+import { useQrCartSheetLock } from "@/lib/hooks/useQrCartSheetLock"
 import { useI18n } from "@/lib/i18n/context"
 import type { QrCartEntry } from "@/lib/menu/qr-menu-types"
 
@@ -98,7 +98,7 @@ export function QrMenuCartSheet({
   const { t } = useI18n()
   const subtotal = cartTotal
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null)
-  useBodyScrollLock(open)
+  useQrCartSheetLock(open)
 
   useEffect(() => {
     setPortalRoot(document.body)
@@ -107,6 +107,7 @@ export function QrMenuCartSheet({
   const handleCheckout = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
     event.stopPropagation()
+    if (submitting || cart.length === 0) return
     console.log("[QR CHECKOUT] button clicked", { cartItems: cart.length, submitting })
     void onSubmit(event)
   }
@@ -131,7 +132,8 @@ export function QrMenuCartSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 340, damping: 36 }}
-            className="relative flex max-h-[88vh] flex-col rounded-t-[28px] bg-white shadow-2xl dark:bg-neutral-950"
+            className="relative flex max-h-[min(85dvh,100dvh)] flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl dark:bg-neutral-950"
+            style={{ touchAction: "auto" }}
           >
             <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-amber-200 dark:bg-amber-800" />
             <div className="flex items-center justify-between border-b border-amber-100 px-5 py-4 dark:border-amber-900/30">
@@ -155,7 +157,7 @@ export function QrMenuCartSheet({
               </div>
             ) : (
               <>
-                <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4">
                   <AnimatePresence initial={false}>
                     {cart.map((item) => {
                       const { base, extrasTotal } = lineBreakdown(item)
@@ -246,7 +248,11 @@ export function QrMenuCartSheet({
                   </AnimatePresence>
                 </div>
 
-                <div className="shrink-0 border-t border-amber-100 px-5 py-4 dark:border-amber-900/30">
+                <div
+                  data-qr-cart-checkout
+                  className="shrink-0 border-t border-amber-100 bg-white px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] dark:border-amber-900/30 dark:bg-neutral-950"
+                  style={{ touchAction: "manipulation" }}
+                >
                   <div className="mb-3 space-y-1 text-sm">
                     <div className="flex justify-between text-amber-800/80 dark:text-amber-300/80">
                       <span>Zwischensumme</span>
@@ -291,7 +297,8 @@ export function QrMenuCartSheet({
                     disabled={submitting || cart.length === 0}
                     aria-busy={submitting}
                     onClick={handleCheckout}
-                    className="w-full rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 py-4 text-lg font-bold text-white shadow-lg transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
+                    className="w-full rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 py-4 text-lg font-bold text-white shadow-lg transition active:scale-[0.98] disabled:opacity-60"
+                    style={{ touchAction: "manipulation" }}
                   >
                     {submitting
                       ? t("menu.orderPlacing")
