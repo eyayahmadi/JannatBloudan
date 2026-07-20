@@ -27,6 +27,7 @@ type DbOrderRow = {
   id: string
   order_number: string
   table_id?: number | null
+  table_number?: number | null
   order_type?: string | null
   status?: string | null
   customer_name?: string | null
@@ -48,7 +49,12 @@ export function shapeGuestOrderResponse(order: DbOrderRow, items: DbOrderItemRow
   return {
     id: order.id,
     order_number: order.order_number,
-    table_number: order.table_id != null ? Number(order.table_id) : 0,
+    table_number:
+      order.table_number != null
+        ? Number(order.table_number)
+        : order.table_id != null
+          ? Number(order.table_id)
+          : 0,
     order_type: order.order_type ?? "qr_self_service",
     status: mapDbOrderStatusToGuestTracker(order.status),
     items: items.map((it) => ({

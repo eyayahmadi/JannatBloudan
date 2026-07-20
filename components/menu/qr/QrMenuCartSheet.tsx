@@ -6,6 +6,7 @@ import { OrderItemOptions } from "@/components/orders/OrderItemOptions"
 import { optionsSnapshotFromCart } from "@/lib/orders/order-item-options"
 import { isPlaceholderImage } from "@/lib/menu/menu-display"
 import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock"
+import { useI18n } from "@/lib/i18n/context"
 import type { QrCartEntry } from "@/lib/menu/qr-menu-types"
 
 type QrMenuCartSheetProps = {
@@ -19,6 +20,8 @@ type QrMenuCartSheetProps = {
   onDecrement: (lineId: string) => void
   onSubmit: () => void
   submitting?: boolean
+  checkoutError?: string | null
+  onDismissError?: () => void
 }
 
 export function QrMenuFloatingBar({
@@ -87,7 +90,10 @@ export function QrMenuCartSheet({
   onDecrement,
   onSubmit,
   submitting,
+  checkoutError,
+  onDismissError,
 }: QrMenuCartSheetProps) {
+  const { t } = useI18n()
   const subtotal = cartTotal
   useBodyScrollLock(open)
 
@@ -245,13 +251,33 @@ export function QrMenuCartSheet({
                   <p className="mb-3 text-[11px] text-amber-800/50 dark:text-amber-400/50">
                     {cartCount} {cartCount === 1 ? "Artikel" : "Artikel"} · Endpreis inkl. Varianten & Extras
                   </p>
+                  {checkoutError ? (
+                    <div
+                      role="alert"
+                      className="mb-3 rounded-xl border border-rose-300/80 bg-rose-50 px-3 py-2.5 text-sm text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200"
+                    >
+                      <p>{checkoutError}</p>
+                      {onDismissError ? (
+                        <button
+                          type="button"
+                          onClick={onDismissError}
+                          className="mt-1 text-xs font-medium underline underline-offset-2"
+                        >
+                          {t("menu.orderRetryDismiss")}
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <button
                     type="button"
                     disabled={submitting}
+                    aria-busy={submitting}
                     onClick={onSubmit}
-                    className="w-full rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 py-4 text-lg font-bold text-white shadow-lg transition active:scale-[0.98] disabled:opacity-60"
+                    className="w-full rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 py-4 text-lg font-bold text-white shadow-lg transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
                   >
-                    {submitting ? "Wird gesendet…" : `Bestellen — ${cartTotal.toFixed(2)} €`}
+                    {submitting
+                      ? t("menu.orderPlacing")
+                      : `${t("menu.orderPlace")} — ${cartTotal.toFixed(2)} €`}
                   </button>
                 </div>
               </>

@@ -25,6 +25,8 @@ export function QrTableMenuShell() {
     decrement,
     submitOrder,
     submitting,
+    checkoutError,
+    clearCheckoutError,
     displayLabel,
   } = useQrTableMenu()
 
@@ -65,6 +67,8 @@ export function QrTableMenuShell() {
         onDecrement={decrement}
         onSubmit={submitOrder}
         submitting={submitting}
+        checkoutError={checkoutError}
+        onDismissError={clearCheckoutError}
       />
     </>
   )

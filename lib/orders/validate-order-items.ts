@@ -18,6 +18,41 @@ import {
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
+const CATALOG_FALLBACK_ID_PREFIX = "catalog-tajine-haupt-prod-"
+
+function slugFromFallbackProductId(productId: string | undefined): string | null {
+  if (!productId?.startsWith(CATALOG_FALLBACK_ID_PREFIX)) return null
+  const slug = productId.slice(CATALOG_FALLBACK_ID_PREFIX.length).trim()
+  return slug || null
+}
+
+async function resolveProductIdsBySlug(
+  supabase: SupabaseClient,
+  slugs: string[],
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>()
+  if (slugs.length === 0) return out
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, slug, is_archived")
+    .in("slug", slugs)
+
+  if (error) {
+    console.error("[validate-order-items] slug lookup error:", error)
+    throw new Error(error.message)
+  }
+
+  for (const row of data ?? []) {
+    if ((row as { is_archived?: boolean }).is_archived) continue
+    const slug = String((row as { slug?: string }).slug ?? "").trim()
+    const id = String((row as { id?: string }).id ?? "").trim()
+    if (slug && id && UUID_RE.test(id)) out.set(slug, id)
+  }
+
+  return out
+}
+
 type DbVariant = {
   id: string
   name_de: string
@@ -295,7 +330,23 @@ export async function validateAndEnrichOrderItems(
 ): Promise<ValidatedOrderItem[]> {
   if (items.length === 0) throw new Error("items requis")
 
-  const productIds = items
+  const slugsToResolve = new Set<string>()
+  for (const it of items) {
+    if (it.productId && UUID_RE.test(it.productId)) continue
+    const slug = (it.slug?.trim() || slugFromFallbackProductId(it.productId)) ?? null
+    if (slug) slugsToResolve.add(slug)
+  }
+  const slugToProductId = await resolveProductIdsBySlug(supabase, [...slugsToResolve])
+
+  const normalizedItems = items.map((it) => {
+    if (it.productId && UUID_RE.test(it.productId)) return it
+    const slug = (it.slug?.trim() || slugFromFallbackProductId(it.productId)) ?? null
+    const resolvedId = slug ? slugToProductId.get(slug) : undefined
+    if (resolvedId) return { ...it, productId: resolvedId }
+    return it
+  })
+
+  const productIds = normalizedItems
     .map((it) => it.productId)
     .filter((id): id is string => !!id && UUID_RE.test(id))
 
@@ -315,12 +366,17 @@ export async function validateAndEnrichOrderItems(
   const stationMap = await loadStationStatusMap(supabase)
   const validated: ValidatedOrderItem[] = []
 
-  for (const it of items) {
+  for (const it of normalizedItems) {
     const qty = Number(it.quantity) || 0
     if (qty <= 0) throw new Error("Quantité invalide")
 
     if (!it.productId || !UUID_RE.test(it.productId)) {
-      throw new Error(`Produit invalide : ${it.name}`)
+      const slugHint = it.slug?.trim() || slugFromFallbackProductId(it.productId)
+      throw new Error(
+        slugHint
+          ? `Produit introuvable en base (${it.name}, slug « ${slugHint} »)`
+          : `Produit invalide : ${it.name}`,
+      )
     }
 
     const prod = productMap.get(it.productId)

@@ -12,6 +12,7 @@ type QrOrderInput = {
   tableRef?: string
   items: Array<{
     productId?: string
+    slug?: string
     name: string
     quantity: number
     unitPrice?: number
@@ -38,6 +39,13 @@ export async function POST(request: Request) {
     if (!ref || items.length === 0) {
       return NextResponse.json({ error: "tableRef (ou tableId) et items requis" }, { status: 400 })
     }
+
+    console.log("[orders/qr] checkout request", {
+      tableRef: ref,
+      itemCount: items.length,
+      productIds: items.map((it) => it.productId),
+      slugs: items.map((it) => (it as { slug?: string }).slug),
+    })
 
     let tableRowId = Number(body.tableId)
     let tableNumberForOrder = Number.isFinite(tableRowId) ? tableRowId : 0
@@ -90,6 +98,7 @@ export async function POST(request: Request) {
       tableNumber: tableNumberForOrder,
       items: items.map((it) => ({
         productId: it.productId,
+        slug: typeof (it as { slug?: string }).slug === "string" ? (it as { slug?: string }).slug : undefined,
         name: it.name,
         quantity: it.quantity,
         unitPrice: it.unitPrice,

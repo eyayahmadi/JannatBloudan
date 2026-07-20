@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { useI18n } from "@/lib/i18n/context"
 import type { OrderStatus } from "@/lib/hooks/useRealtimeOrders"
 import { useRealtimeOrders } from "@/lib/hooks/useRealtimeOrders"
 import { useResolvedRestaurantTable } from "@/lib/hooks/useResolvedRestaurantTable"
@@ -77,6 +78,8 @@ type QrTableMenuContextValue = {
   cartOpen: boolean
   setCartOpen: (open: boolean) => void
   submitting: boolean
+  checkoutError: string | null
+  clearCheckoutError: () => void
   favoriteIds: string[]
   detailItemId: string | null
   setDetailItemId: (id: string | null) => void
@@ -117,6 +120,7 @@ export function useQrTableMenu() {
 export function QrTableMenuProvider({ children }: { children: ReactNode }) {
   const { tableId } = useParams<{ tableId: string }>()
   const router = useRouter()
+  const { t } = useI18n()
   const { addOrder, orders } = useRealtimeOrders()
   const { effectiveNumber, displayLabel } = useResolvedRestaurantTable(tableId)
 
@@ -132,6 +136,7 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
   const [detailItemSnapshot, setDetailItemSnapshot] = useState<QrMenuItem | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
 
   const menuItemsRef = useRef<QrMenuItem[]>([])
@@ -407,21 +412,36 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
   const submitOrder = useCallback(async () => {
     if (cart.length === 0 || submitting) return
     if (effectiveNumber == null) {
-      alert("Tisch nicht gefunden. Bitte warten oder den Service rufen.")
+      setCheckoutError(t("menu.tableNotFound"))
       return
     }
+    setCheckoutError(null)
     setSubmitting(true)
     const localId = `ORD-${Date.now()}`
     const orderNumber = `T${effectiveNumber}-${String(Math.floor(1000 + Math.random() * 9000))}`
-    const items = cart.map((c) => ({
-      productId: c.productId,
-      name: c.name,
-      name_ar: c.name_ar ?? null,
-      quantity: c.quantity,
-      unitPrice: c.price,
-      variantId: c.variant?.id ?? null,
-      notes: formatKitchenTicketNotes(c.extras, c.variant, c.note),
-    }))
+    const items = cart.map((c) => {
+      const menuItem = menuItemsRef.current.find((m) => m.id === c.productId)
+      return {
+        productId: c.productId,
+        slug: menuItem?.slug ?? undefined,
+        name: c.name,
+        name_ar: c.name_ar ?? null,
+        quantity: c.quantity,
+        unitPrice: c.price,
+        variantId: c.variant?.id ?? null,
+        notes: formatKitchenTicketNotes(c.extras, c.variant, c.note),
+      }
+    })
+
+    const requestBody = {
+      id: localId,
+      orderNumber,
+      tableRef: String(tableId),
+      items,
+      total: cartTotal,
+    }
+
+    console.log("QR CHECKOUT PAYLOAD:", requestBody)
 
     let resolvedId = localId
     type QrOrderPayload = {
@@ -446,25 +466,27 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
       const res = await fetch("/api/orders/qr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: localId,
-          orderNumber,
-          tableRef: String(tableId),
-          items,
-          total: cartTotal,
-        }),
+        body: JSON.stringify(requestBody),
       })
       const json = (await res.json()) as { order?: QrOrderPayload; error?: string }
+      console.log("QR CHECKOUT RESPONSE:", { ok: res.ok, status: res.status, json })
       if (!res.ok) {
-        alert(json.error ?? "Bestellung fehlgeschlagen. Bitte erneut versuchen.")
+        const message = json.error ?? t("menu.orderFailed")
+        console.error("QR CHECKOUT ERROR:", message)
+        setCheckoutError(message)
         return
       }
       if (json?.order?.id) {
         resolvedId = json.order.id
         serverOrder = json.order
+      } else {
+        console.error("QR CHECKOUT ERROR: missing order id in response", json)
+        setCheckoutError(t("menu.orderFailed"))
+        return
       }
-    } catch {
-      alert("Keine Verbindung. Bitte Netzwerk prüfen oder den Service rufen.")
+    } catch (err) {
+      console.error("QR CHECKOUT NETWORK ERROR:", err)
+      setCheckoutError(t("menu.orderNetworkError"))
       return
     } finally {
       setSubmitting(false)
@@ -498,8 +520,11 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
 
     pushQrRecentlyOrdered(String(tableId), cart.map((c) => c.productId))
     setCart([])
+    setCartOpen(false)
     router.push(`/table/${tableId}/order?oid=${encodeURIComponent(resolvedId)}`)
-  }, [cart, cartTotal, submitting, effectiveNumber, tableId, addOrder, router])
+  }, [cart, cartTotal, submitting, effectiveNumber, tableId, addOrder, router, t])
+
+  const clearCheckoutError = useCallback(() => setCheckoutError(null), [])
 
   const getCategoryBlock = useCallback(
     (slug: string) => getPrintedBlockForCategory(menuItems, categoryRows, slug),
@@ -535,6 +560,8 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
       cartOpen,
       setCartOpen,
       submitting,
+      checkoutError,
+      clearCheckoutError,
       favoriteIds,
       detailItemId,
       setDetailItemId: setDetailItemIdWithSnapshot,
@@ -572,6 +599,8 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
     cartTotal,
     cartOpen,
     submitting,
+    checkoutError,
+    clearCheckoutError,
     favoriteIds,
     detailItemId,
     setDetailItemIdWithSnapshot,

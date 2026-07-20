@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server"
+import { createServiceRoleClient } from "@/lib/auth/admin-api"
+import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { isLikelyOrderUuid, shapeGuestOrderResponse } from "@/lib/orders/guest-tracking"
 import { type NextRequest, NextResponse } from "next/server"
 
@@ -10,7 +11,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "invalid_id" }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    if (!hasServerSupabaseEnv()) {
+      return NextResponse.json({ error: "not_configured" }, { status: 503 })
+    }
+
+    const supabase = createServiceRoleClient()
     const { data: order, error } = await supabase
       .from("orders")
       .select(
@@ -18,6 +23,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         id,
         order_number,
         table_id,
+        table_number,
         order_type,
         status,
         customer_name,
@@ -35,6 +41,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .maybeSingle()
 
     if (error) {
+      console.error("[orders/id] GET error", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -48,7 +55,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     const { order_items: _, ...rest } = order as typeof order & { order_items?: unknown }
     return NextResponse.json({ order: shapeGuestOrderResponse(rest, items) })
-  } catch {
+  } catch (err) {
+    console.error("[orders/id] GET exception", err)
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }
@@ -56,8 +64,12 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const supabase = await createClient()
+    if (!hasServerSupabaseEnv()) {
+      return NextResponse.json({ error: "not_configured" }, { status: 503 })
+    }
+
     const body = await request.json()
+    const supabase = createServiceRoleClient()
 
     const { data, error } = await supabase
       .from("orders")
@@ -72,6 +84,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json({ order: data })
   } catch (error) {
+    console.error("[orders/id] PATCH exception", error)
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }

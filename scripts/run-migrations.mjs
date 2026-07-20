@@ -103,6 +103,7 @@ const NUMBERED_MIGRATIONS = [
   "65-tajine-hauptgerichte-categories.sql",
   "66-tajine-hauptgerichte-images.sql",
   "67-plats-ar-label.sql",
+  "68-qr-order-checkout.sql",
 ]
 
 const POST_MIGRATIONS = ["APPLY-ROLE-HARDENING.sql", "fix-signup-database-error-updating-user.sql"]

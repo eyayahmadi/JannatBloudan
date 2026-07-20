@@ -128,11 +128,16 @@ export async function POST(request: Request) {
     if (orderId) insertRow.order_id = orderId
     if (sessionId) insertRow.session_id = sessionId
 
-    const { data, error } = await supabase
-      .from("table_alerts")
-      .insert(insertRow)
-      .select("*")
-      .single()
+    let { data, error } = await supabase.from("table_alerts").insert(insertRow).select("*").single()
+
+    if (error) {
+      console.error("[table-alerts] insert error (anon)", error)
+      const admin = createServiceRoleClient()
+      const retry = await admin.from("table_alerts").insert(insertRow).select("*").single()
+      data = retry.data
+      error = retry.error
+      if (error) console.error("[table-alerts] insert error (service role)", error)
+    }
 
     if (error || !data) {
       console.error("[table-alerts] insert error", error)
