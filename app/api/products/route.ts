@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { compareMenuCardOrder } from "@/lib/menu/menu-order"
+import { getActiveProducts } from "@/lib/menu/menu-catalog-service"
 
 type ProductRow = Record<string, unknown> & {
   display_order?: number | null
@@ -22,7 +23,6 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
 
-    // Filtres
     const category = searchParams.get("category")
     const isVegetarian = searchParams.get("isVegetarian")
     const isVegan = searchParams.get("isVegan")
@@ -33,52 +33,41 @@ export async function GET(request: NextRequest) {
     const spiceLevel = searchParams.get("spiceLevel")
     const sortBy = searchParams.get("sortBy") || "menu-order"
 
-    let query = supabase
-      .from("products")
-      .select(`
-        *,
-        categories (
-          id,
-          name,
-          slug,
-          display_order
-        )
-      `)
-      .eq("is_available", true)
-
-    // Appliquer les filtres
-    if (category && category !== "tous") {
-      query = query.eq("categories.slug", category)
-    }
-    if (isVegetarian === "true") {
-      query = query.eq("is_vegetarian", true)
-    }
-    if (isVegan === "true") {
-      query = query.eq("is_vegan", true)
-    }
-    if (isGlutenFree === "true") {
-      query = query.eq("is_gluten_free", true)
-    }
-    if (isLactoseFree === "true") {
-      query = query.eq("is_lactose_free", true)
-    }
-    if (isHalal === "true") {
-      query = query.eq("is_halal", true)
-    }
-    if (isPopular === "true") {
-      query = query.eq("is_popular", true)
-    }
-    if (spiceLevel) {
-      query = query.eq("spice_level", spiceLevel)
-    }
-
-    const { data, error } = await query
+    // Canonical catalog — same source as /api/menu (Admin CMS → Supabase)
+    const { rows, error } = await getActiveProducts(supabase, {
+      includeInactive: true,
+    })
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error }, { status: 500 })
     }
 
-    let products = (data ?? []) as ProductRow[]
+    let products = rows as ProductRow[]
+
+    if (category && category !== "tous") {
+      products = products.filter((p) => p.categories?.slug === category)
+    }
+    if (isVegetarian === "true") {
+      products = products.filter((p) => p.is_vegetarian === true)
+    }
+    if (isVegan === "true") {
+      products = products.filter((p) => p.is_vegan === true)
+    }
+    if (isGlutenFree === "true") {
+      products = products.filter((p) => p.is_gluten_free === true)
+    }
+    if (isLactoseFree === "true") {
+      products = products.filter((p) => p.is_lactose_free === true)
+    }
+    if (isHalal === "true") {
+      products = products.filter((p) => p.is_halal === true)
+    }
+    if (isPopular === "true") {
+      products = products.filter((p) => p.is_popular === true)
+    }
+    if (spiceLevel) {
+      products = products.filter((p) => String(p.spice_level ?? "") === spiceLevel)
+    }
 
     switch (sortBy) {
       case "price-asc":
@@ -106,7 +95,7 @@ export async function GET(request: NextRequest) {
         break
     }
 
-    return NextResponse.json({ products })
+    return NextResponse.json({ products, source: "supabase" })
   } catch (error) {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }

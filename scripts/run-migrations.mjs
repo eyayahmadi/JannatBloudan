@@ -21,6 +21,7 @@ import { readFile, access } from "node:fs/promises"
 import { constants } from "node:fs"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
+import { connectPgWithFallback } from "./lib/pg-connect.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const here = __dirname
@@ -105,6 +106,16 @@ const NUMBERED_MIGRATIONS = [
   "67-plats-ar-label.sql",
   "68-qr-order-checkout.sql",
   "69-menu-unified-catalog.sql",
+  "70-menu-page-1-vorspeisen-salate.sql",
+  "71-menu-page-2-burger-kleine-saj.sql",
+  "72-menu-page-3-hauptgerichte-menu.sql",
+  "73-menu-page-4-grillgerichte.sql",
+  "74-menu-page-5-manakish-saj.sql",
+  "75-menu-page-6-pizza.sql",
+  "76-menu-page-7-desserts.sql",
+  "77-menu-page-8-waffel-crepes-cocktails.sql",
+  "78-menu-page-9-smoothies-milkshakes-drinks.sql",
+  "79-menu-page-10-heissgetraenke-tee.sql",
 ]
 
 const POST_MIGRATIONS = ["APPLY-ROLE-HARDENING.sql", "fix-signup-database-error-updating-user.sql"]
@@ -128,8 +139,6 @@ try {
   console.error("   npm install --no-save pg")
   process.exit(1)
 }
-
-const { Client } = pgModule.default
 
 for (const file of ALL_MIGRATIONS) {
   try {
@@ -184,14 +193,21 @@ function pickMigrations(applied) {
   return ALL_MIGRATIONS.filter((f) => !applied.has(f))
 }
 
-const client = new Client({
-  connectionString: DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-})
+let client
+try {
+  const connected = await connectPgWithFallback(pgModule)
+  client = connected.client
+  if (connected.label !== "DATABASE_URL") {
+    console.log(`✅  Connecté à la base (${connected.label}).`)
+  } else {
+    console.log("✅  Connecté à la base.")
+  }
+} catch (connectError) {
+  console.error(`❌  ${connectError instanceof Error ? connectError.message : connectError}`)
+  process.exit(1)
+}
 
 try {
-  await client.connect()
-  console.log("✅  Connecté à la base.")
 
   await ensureMigrationTable(client)
   const applied = await getAppliedSet(client)

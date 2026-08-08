@@ -1,0 +1,43 @@
+---
+description: Single canonical Supabase menu — Admin CMS is the only source of truth for all interfaces
+alwaysApply: true
+---
+
+# Unified restaurant menu (GLOBAL RULE)
+
+There is **ONE** canonical menu in Supabase (`categories`, `products`, modifiers, variants).
+
+**Admin Menu CMS** is the management UI for that data. All consumer interfaces read the **same** rows:
+
+- Admin Menu CMS (via `/api/admin/catalog`, mutations → `menu-catalog-service`)
+- Public website menu (`/api/menu`, `useMenuCatalog`)
+- QR table menu (`/api/menu`, `QrTableMenuProvider`)
+- POS / waiter / server / cashier / delivery (all via `/api/menu` or `menu-catalog-service`)
+
+## Required patterns
+
+- **Read menu (customer/staff ordering):** `GET /api/menu` or server helpers:
+  - `getActiveCategories()` / `getActiveProducts()` from `@/lib/menu/menu-catalog-service`
+  - Visibility: `@/lib/menu/menu-visibility` (`isCategoryVisibleForMenu`, `isProductListedInCatalog`)
+- **Admin mutations:** `/api/admin/categories`, `/api/admin/products` → call `invalidateMenuCache()` after every change
+- **Safe delete:** `deleteCategorySafe()` / `deleteProductSafe()` — never hard-delete when order history exists
+- **QR nav:** `buildQrCategoryNavItemsFromDb(categories)` — never hardcoded category slug lists
+
+## Forbidden
+
+- QR-only / website-only / POS-only category or product arrays
+- Hardcoded product lists or category order in frontend
+- Static JSON menu files used at runtime
+- `mergeTajineHauptgerichteCatalog` or any fallback that injects products not in Supabase
+- Local caches that survive Admin delete (must invalidate + refetch on realtime `menu` scope)
+- Separate Supabase queries with **different** visibility filters per page (use shared service)
+
+## UI-only exceptions (NOT menu data)
+
+- `ADMIN_MENU_SECTIONS` — section taxonomy labels (food/drinks/desserts/special) for admin grouping
+- `QR_VIRTUAL_NAV_GROUPS` — virtual QR pages (`hot-drinks`, `cold-drinks`, `desserts`) driven by `categories.nav_group` in DB
+- Layout/branding differences between QR, website, and POS are allowed
+
+## After any Admin menu change
+
+Must propagate without redeploy: DB update → `invalidateMenuCache()` → Supabase realtime on `categories`/`products` → clients refetch `/api/menu`.

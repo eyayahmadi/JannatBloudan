@@ -85,23 +85,11 @@ export function mapApiToQrMenuItem(
   }
 }
 
-const CATALOG_FALLBACK_ID_PREFIX = "catalog-tajine-haupt"
-
-function isCatalogFallbackId(id: string): boolean {
-  return id.startsWith(CATALOG_FALLBACK_ID_PREFIX)
-}
-
 function preferCanonicalMenuItem(next: QrMenuItem, prev: QrMenuItem): boolean {
-  const nextFallback = isCatalogFallbackId(next.id)
-  const prevFallback = isCatalogFallbackId(prev.id)
-  if (prevFallback && !nextFallback) return true
-  if (!prevFallback && nextFallback) return false
-
   const nextPlaceholder = isPlaceholderImage(next.image)
   const prevPlaceholder = isPlaceholderImage(prev.image)
   if (prevPlaceholder && !nextPlaceholder) return true
   if (!prevPlaceholder && nextPlaceholder) return false
-
   return false
 }
 

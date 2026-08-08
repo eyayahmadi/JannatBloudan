@@ -246,6 +246,8 @@ export async function deleteProductSafe(
 /** Invalide caches Next.js après mutation Admin — pas de redeploy requis. */
 export function invalidateMenuCache(): void {
   revalidatePath("/api/menu")
+  revalidatePath("/api/categories")
+  revalidatePath("/api/products")
   revalidatePath("/menu")
   revalidatePath("/table", "layout")
   revalidatePath("/server", "layout")

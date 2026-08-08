@@ -414,14 +414,14 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const { rows: categoryRowsWithFallback, error: catErr } = await getActiveCategories(supabase)
+    const { rows: categoryRows, error: catErr } = await getActiveCategories(supabase)
     if (catErr) {
       return NextResponse.json({ error: catErr }, { status: 500 })
     }
 
     const sectionByCategoryId = new Map<string, string>()
     const categoryOrderBySlug = new Map<string, number>()
-    for (const c of categoryRowsWithFallback) {
+    for (const c of categoryRows) {
       sectionByCategoryId.set(c.id, c.section ?? "food")
       categoryOrderBySlug.set(c.slug, c.display_order ?? 0)
     }
@@ -559,7 +559,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       source: "supabase",
       items,
-      categories: categoryRowsWithFallback,
+      categories: categoryRows,
       by_section: bySection,
       often_ordered_with,
       most_ordered_ids: mostOrderedIds,

@@ -17,6 +17,7 @@
     "db:migrate:env": "node --env-file=.env.local scripts/run-migrations.mjs",
     "db:migrate:baseline": "node --env-file=.env.local scripts/run-migrations.mjs --baseline",
     "db:migrate:status": "node --env-file=.env.local scripts/run-migrations.mjs --status",
+    "db:test-connection": "node --env-file=.env.local scripts/test-db-connection.mjs",
     "db:bootstrap": "node --env-file=.env.local scripts/bootstrap-new-supabase.mjs",
     "db:check-rls": "node --env-file=.env.local scripts/check-rls-tables.mjs",
     "test:tax": "node --test scripts/test-tax.mjs",

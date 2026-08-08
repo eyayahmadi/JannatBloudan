@@ -18,12 +18,15 @@ import {
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
-const CATALOG_FALLBACK_ID_PREFIX = "catalog-tajine-haupt-prod-"
-
-function slugFromFallbackProductId(productId: string | undefined): string | null {
-  if (!productId?.startsWith(CATALOG_FALLBACK_ID_PREFIX)) return null
-  const slug = productId.slice(CATALOG_FALLBACK_ID_PREFIX.length).trim()
-  return slug || null
+/** Legacy client ids → resolve slug against Supabase (no hardcoded catalog). */
+function slugHintFromProductId(productId: string | undefined): string | null {
+  if (!productId || UUID_RE.test(productId)) return null
+  const legacyPrefix = "catalog-tajine-haupt-prod-"
+  if (productId.startsWith(legacyPrefix)) {
+    return productId.slice(legacyPrefix.length).trim() || null
+  }
+  if (/^[a-z0-9-]+$/.test(productId)) return productId
+  return null
 }
 
 async function resolveProductIdsBySlug(
@@ -333,14 +336,14 @@ export async function validateAndEnrichOrderItems(
   const slugsToResolve = new Set<string>()
   for (const it of items) {
     if (it.productId && UUID_RE.test(it.productId)) continue
-    const slug = (it.slug?.trim() || slugFromFallbackProductId(it.productId)) ?? null
+    const slug = (it.slug?.trim() || slugHintFromProductId(it.productId)) ?? null
     if (slug) slugsToResolve.add(slug)
   }
   const slugToProductId = await resolveProductIdsBySlug(supabase, [...slugsToResolve])
 
   const normalizedItems = items.map((it) => {
     if (it.productId && UUID_RE.test(it.productId)) return it
-    const slug = (it.slug?.trim() || slugFromFallbackProductId(it.productId)) ?? null
+    const slug = (it.slug?.trim() || slugHintFromProductId(it.productId)) ?? null
     const resolvedId = slug ? slugToProductId.get(slug) : undefined
     if (resolvedId) return { ...it, productId: resolvedId }
     return it
@@ -371,7 +374,7 @@ export async function validateAndEnrichOrderItems(
     if (qty <= 0) throw new Error("Quantité invalide")
 
     if (!it.productId || !UUID_RE.test(it.productId)) {
-      const slugHint = it.slug?.trim() || slugFromFallbackProductId(it.productId)
+      const slugHint = it.slug?.trim() || slugHintFromProductId(it.productId)
       throw new Error(
         slugHint
           ? `Produit introuvable en base (${it.name}, slug « ${slugHint} »)`
