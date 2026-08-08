@@ -217,7 +217,7 @@ export function DigitalMenuExperience() {
 
   useEffect(() => {
     void load()
-    const pollId = window.setInterval(() => void load({ silent: true }), 60_000)
+    const pollId = window.setInterval(() => void load({ silent: true }), 20_000)
     const unsub = onRealtimeRefresh((scope) => {
       if (scopeMatches("menu", scope)) void load({ silent: true })
     })

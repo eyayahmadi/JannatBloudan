@@ -154,6 +154,32 @@ export async function getLiveMenuCatalog(
   }
 }
 
+/**
+ * Admin Menu read — same Supabase tables as live menu, includes inactive/archived rows
+ * for CMS management. Customer menus use getLiveMenuCatalog() instead.
+ */
+export async function getAdminMenuCatalog(
+  supabase: SupabaseClient,
+): Promise<{
+  categories: MenuCategoryRow[]
+  products: Record<string, unknown>[]
+  error: string | null
+}> {
+  const [catRes, prodRes] = await Promise.all([
+    getActiveCategories(supabase, { includeInactive: true }),
+    getActiveProducts(supabase, { includeInactive: true }),
+  ])
+
+  if (catRes.error) return { categories: [], products: [], error: catRes.error }
+  if (prodRes.error) return { categories: catRes.rows, products: [], error: prodRes.error }
+
+  return {
+    categories: catRes.rows,
+    products: prodRes.rows,
+    error: null,
+  }
+}
+
 export async function getProductsByCategoryId(
   supabase: SupabaseClient,
   categoryId: string,
@@ -280,4 +306,5 @@ export function invalidateMenuCache(): void {
   revalidatePath("/server", "layout")
   revalidatePath("/pos")
   revalidatePath("/delivery")
+  revalidatePath("/caisse")
 }

@@ -232,7 +232,7 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadMenu()
-    const id = window.setInterval(() => loadMenu({ silent: true }), 60_000)
+    const id = window.setInterval(() => loadMenu({ silent: true }), 20_000)
     const unsub = onRealtimeRefresh((scope) => {
       if (scopeMatches("menu", scope)) loadMenu({ silent: true })
     })

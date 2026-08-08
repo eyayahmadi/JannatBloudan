@@ -135,12 +135,16 @@ export function mergeQrMenuItems(prev: QrMenuItem[], next: QrMenuItem[]): QrMenu
       old.description_ar === item.description_ar &&
       old.price === item.price &&
       old.image === item.image &&
+      old.category === item.category &&
+      old.section === item.section &&
       old.canOrder === item.canOrder &&
       old.soldOut === item.soldOut &&
       old.unavailableLabel === item.unavailableLabel &&
       old.displayOrder === item.displayOrder &&
       old.categoryDisplayOrder === item.categoryDisplayOrder &&
-      JSON.stringify(old.tags) === JSON.stringify(item.tags)
+      JSON.stringify(old.tags) === JSON.stringify(item.tags) &&
+      JSON.stringify(old.modifiers) === JSON.stringify(item.modifiers) &&
+      JSON.stringify(old.variants) === JSON.stringify(item.variants)
     ) {
       return old
     }

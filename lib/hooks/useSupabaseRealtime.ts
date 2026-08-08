@@ -23,6 +23,12 @@ const WATCHED: WatchedTable[] = [
   { table: "table_alerts", scope: "alerts" },
   { table: "categories", scope: "menu" },
   { table: "products", scope: "menu" },
+  { table: "product_modifiers", scope: "menu" },
+  { table: "product_modifier_groups", scope: "menu" },
+  { table: "product_variants", scope: "menu" },
+  { table: "product_variant_groups", scope: "menu" },
+  { table: "menu_homepage_sections", scope: "menu" },
+  { table: "product_recommendations", scope: "menu" },
 ]
 
 /** Abonnements postgres_changes — déclenche un refresh immédiat des hooks métier. */

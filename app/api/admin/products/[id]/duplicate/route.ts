@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireAdmin } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import { invalidateMenuCache } from "@/lib/menu/menu-catalog-service"
 
 type Ctx = { params: Promise<{ id: string }> }
 
@@ -83,5 +84,6 @@ export async function POST(_request: Request, ctx: Ctx) {
     await supabase.from("product_recommendations").insert({ ...rRest, product_id: newId })
   }
 
+  invalidateMenuCache()
   return NextResponse.json({ product: created }, { status: 201 })
 }

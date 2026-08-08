@@ -95,7 +95,10 @@ export async function GET(request: NextRequest) {
         break
     }
 
-    return NextResponse.json({ products, source: "supabase" })
+    return NextResponse.json(
+      { products, source: "supabase" },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } },
+    )
   } catch (error) {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }

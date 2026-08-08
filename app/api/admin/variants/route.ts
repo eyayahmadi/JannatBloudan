@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireAdmin } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import { invalidateMenuCache } from "@/lib/menu/menu-catalog-service"
 
 function slugify(s: string) {
   return s
@@ -82,5 +83,6 @@ export async function POST(request: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  invalidateMenuCache()
   return NextResponse.json({ variant: data }, { status: 201 })
 }

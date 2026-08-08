@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireAdmin } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import { invalidateMenuCache } from "@/lib/menu/menu-catalog-service"
 
 type Ctx = { params: Promise<{ productId: string }> }
 
@@ -53,5 +54,6 @@ export async function PUT(request: Request, ctx: Ctx) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  invalidateMenuCache()
   return NextResponse.json({ ok: true, recommended_product_ids: ids })
 }

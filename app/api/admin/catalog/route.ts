@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireAdmin } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import { getAdminMenuCatalog } from "@/lib/menu/menu-catalog-service"
 import { sortByMenuCardOrder } from "@/lib/menu/menu-order"
+
+export const dynamic = "force-dynamic"
 
 /**
  * Données complètes pour Admin > Menu Management.
+ * Categories + products via menu-catalog-service (same Supabase tables as /api/menu).
  */
 export async function GET() {
   const guard = await requireAdmin()
@@ -15,15 +19,12 @@ export async function GET() {
   }
 
   const supabase = createServiceRoleClient()
-  const [cat, prod, ing, recs, modGroups, mods, varGroups, vars] = await Promise.all([
-    supabase.from("categories").select("*").order("display_order").order("name"),
-    supabase
-      .from("products")
-      .select(
-        `*, categories ( id, name, slug, section ), product_ingredients ( quantity, ingredients ( id, name, unit, stock_quantity ) )`,
-      )
-      .order("display_order")
-      .order("name"),
+  const { categories, products, error: catalogErr } = await getAdminMenuCatalog(supabase)
+  if (catalogErr) {
+    return NextResponse.json({ error: catalogErr }, { status: 500 })
+  }
+
+  const [ing, recs, modGroups, mods, varGroups, vars] = await Promise.all([
     supabase.from("ingredients").select("id, name, unit, stock_quantity").order("name"),
     supabase
       .from("product_recommendations")
@@ -35,8 +36,6 @@ export async function GET() {
     supabase.from("product_variants").select("*").order("display_order"),
   ])
 
-  if (cat.error) return NextResponse.json({ error: cat.error.message }, { status: 500 })
-  if (prod.error) return NextResponse.json({ error: prod.error.message }, { status: 500 })
   if (ing.error) return NextResponse.json({ error: ing.error.message }, { status: 500 })
 
   const recommendations: Record<string, string[]> = {}
@@ -48,21 +47,28 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json({
-    categories: cat.data ?? [],
-    products: sortByMenuCardOrder(
-      (prod.data ?? []).map((p: Record<string, unknown> & { categories?: { display_order?: number } | null }) => ({
-        ...p,
-        category_display_order: p.categories?.display_order ?? 0,
-        display_order: Number(p.display_order) || 0,
-        id: String(p.id ?? ""),
-      })),
-    ),
-    ingredients: ing.data ?? [],
-    recommendations,
-    modifier_groups: modGroups.data ?? [],
-    modifiers: mods.data ?? [],
-    variant_groups: varGroups.data ?? [],
-    variants: vars.data ?? [],
-  })
+  return NextResponse.json(
+    {
+      categories,
+      products: sortByMenuCardOrder(
+        products.map((p: Record<string, unknown> & { categories?: { display_order?: number } | null }) => ({
+          ...p,
+          category_display_order: p.categories?.display_order ?? 0,
+          display_order: Number(p.display_order) || 0,
+          id: String(p.id ?? ""),
+        })),
+      ),
+      ingredients: ing.data ?? [],
+      recommendations,
+      modifier_groups: modGroups.data ?? [],
+      modifiers: mods.data ?? [],
+      variant_groups: varGroups.data ?? [],
+      variants: vars.data ?? [],
+    },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    },
+  )
 }

@@ -20,6 +20,7 @@ import {
 import { fetchMenuHomepageSections } from "@/lib/menu/menu-homepage-sections"
 import { getLiveMenuCatalog } from "@/lib/menu/menu-catalog-service"
 import { resolveMenuProductImageUrl } from "@/lib/menu/resolve-product-image"
+import { getSupabaseProjectRef } from "@/lib/supabase/config"
 
 export const dynamic = "force-dynamic"
 
@@ -573,6 +574,8 @@ export async function GET(request: NextRequest) {
           client_filter_tip:
             "Pour le menu client : GET ?include_unavailable=1&locale=fr puis filtrer côté navigateur (instantané).",
           popular_threshold: MENU_POPULAR_ORDER_MIN,
+          menu_source: "live-catalog",
+          supabase_project: getSupabaseProjectRef(),
         },
       },
       {

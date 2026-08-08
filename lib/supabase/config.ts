@@ -92,3 +92,16 @@ export function getServerSupabaseEnv() {
     serviceRoleKey: supabaseServiceRoleKey as string,
   }
 }
+
+/** Project ref from NEXT_PUBLIC_SUPABASE_URL — for verifying prod vs preview DB. */
+export function getSupabaseProjectRef(): string | null {
+  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
+  if (!raw) return null
+  try {
+    const hostname = new URL(raw).hostname
+    const match = hostname.match(/^([a-z0-9-]+)\.supabase\.co$/i)
+    return match?.[1] ?? hostname
+  } catch {
+    return null
+  }
+}

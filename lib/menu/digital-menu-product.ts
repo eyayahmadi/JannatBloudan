@@ -95,6 +95,11 @@ export function mergeDigitalMenuProducts(
       old.description_ar === item.description_ar &&
       old.price === item.price &&
       old.image_url === item.image_url &&
+      old.category === item.category &&
+      old.categoryName === item.categoryName &&
+      old.section === item.section &&
+      old.display_order === item.display_order &&
+      old.category_display_order === item.category_display_order &&
       old.can_order === item.can_order &&
       old.availability === item.availability &&
       old.max_orderable === item.max_orderable &&

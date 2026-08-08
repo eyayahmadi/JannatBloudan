@@ -5,6 +5,9 @@ import {
   MENU_HOMEPAGE_SECTION_DEFS,
   type MenuHomepageSectionKey,
 } from "@/lib/menu/menu-homepage-sections"
+import { invalidateMenuCache } from "@/lib/menu/menu-catalog-service"
+
+export const dynamic = "force-dynamic"
 
 const VALID_KEYS = new Set<string>(MENU_HOMEPAGE_SECTION_DEFS.map((d) => d.key))
 
@@ -106,5 +109,6 @@ export async function PUT(request: NextRequest) {
     }
   }
 
+  invalidateMenuCache()
   return NextResponse.json({ ok: true })
 }

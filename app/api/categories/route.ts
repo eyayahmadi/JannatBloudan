@@ -14,7 +14,10 @@ export async function GET() {
       return NextResponse.json({ error }, { status: 500 })
     }
 
-    return NextResponse.json({ categories: rows, source: "supabase" })
+    return NextResponse.json(
+      { categories: rows, source: "supabase" },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } },
+    )
   } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
