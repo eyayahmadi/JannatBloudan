@@ -17,7 +17,7 @@ import {
   Wallet,
   Utensils,
   Wine,
-  Cigarette,
+  Wind,
   AlertTriangle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -79,7 +79,7 @@ type DailyBreakdown = {
 const STATION_ICON: Record<Station, React.ComponentType<{ className?: string }>> = {
   KITCHEN: Utensils,
   BAR: Wine,
-  SHISHA: Cigarette,
+  SHISHA: Wind,
 }
 
 const PAYMENT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {

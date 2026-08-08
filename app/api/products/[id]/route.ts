@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
+import { isProductListedInCatalog } from "@/lib/menu/menu-visibility"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -12,14 +13,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         categories (
           id,
           name,
-          slug
+          slug,
+          is_active,
+          deleted_at
         )
       `)
       .eq("id", id)
+      .is("deleted_at", null)
+      .eq("is_archived", false)
       .single()
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 404 })
+    if (error || !data) {
+      return NextResponse.json({ error: error?.message ?? "Produit introuvable" }, { status: 404 })
+    }
+
+    if (!isProductListedInCatalog(data)) {
+      return NextResponse.json({ error: "Produit introuvable" }, { status: 404 })
     }
 
     return NextResponse.json({ product: data })

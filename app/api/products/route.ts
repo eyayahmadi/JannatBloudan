@@ -3,6 +3,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { compareMenuCardOrder } from "@/lib/menu/menu-order"
 import { getActiveProducts } from "@/lib/menu/menu-catalog-service"
 
+export const dynamic = "force-dynamic"
+
 type ProductRow = Record<string, unknown> & {
   display_order?: number | null
   name?: string | null
@@ -33,10 +35,8 @@ export async function GET(request: NextRequest) {
     const spiceLevel = searchParams.get("spiceLevel")
     const sortBy = searchParams.get("sortBy") || "menu-order"
 
-    // Canonical catalog — same source as /api/menu (Admin CMS → Supabase)
-    const { rows, error } = await getActiveProducts(supabase, {
-      includeInactive: true,
-    })
+    // Same live catalog as GET /api/menu (non-archived, active categories only)
+    const { rows, error } = await getActiveProducts(supabase)
 
     if (error) {
       return NextResponse.json({ error }, { status: 500 })

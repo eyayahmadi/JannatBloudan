@@ -18,8 +18,10 @@ import {
   type StationAvailabilityStatus,
 } from "@/lib/stations/availability"
 import { fetchMenuHomepageSections } from "@/lib/menu/menu-homepage-sections"
-import { getActiveCategories, getActiveProducts } from "@/lib/menu/menu-catalog-service"
+import { getLiveMenuCatalog } from "@/lib/menu/menu-catalog-service"
 import { resolveMenuProductImageUrl } from "@/lib/menu/resolve-product-image"
+
+export const dynamic = "force-dynamic"
 
 type ProductRow = Record<string, unknown> & {
   id: string
@@ -414,9 +416,10 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const { rows: categoryRows, error: catErr } = await getActiveCategories(supabase)
-    if (catErr) {
-      return NextResponse.json({ error: catErr }, { status: 500 })
+    const { categories: categoryRows, products: productRowsRaw, error: catalogErr } =
+      await getLiveMenuCatalog(supabase)
+    if (catalogErr) {
+      return NextResponse.json({ error: catalogErr }, { status: 500 })
     }
 
     const sectionByCategoryId = new Map<string, string>()
@@ -426,9 +429,8 @@ export async function GET(request: NextRequest) {
       categoryOrderBySlug.set(c.slug, c.display_order ?? 0)
     }
 
-    const [{ rows: productRowsRaw, error: productsErr }, { data: oi }, { data: availRows }, modifiersByProductId, variantsByProductId, adminRecommendations] =
+    const [{ data: oi }, { data: availRows }, modifiersByProductId, variantsByProductId, adminRecommendations] =
       await Promise.all([
-        getActiveProducts(supabase),
         supabase
           .from("order_items")
           .select("order_id, product_id, quantity")
@@ -442,11 +444,7 @@ export async function GET(request: NextRequest) {
         loadAdminRecommendations(supabase),
       ])
 
-    if (productsErr) {
-      return NextResponse.json({ error: productsErr }, { status: 500 })
-    }
-
-    // Construit la map availability (toujours toutes les 3 stations).
+    const productRows = productRowsRaw as unknown as ProductRow[]
     const stationAvailMap = new Map<Station, StationAvailability>()
     for (const station of STATIONS) {
       stationAvailMap.set(station, defaultStationAvailability(station))
@@ -472,7 +470,6 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const productRows = productRowsRaw as unknown as ProductRow[]
     const enrichedRows = productRows.map((r) => {
       const base = enrich(r, sectionByCategoryId, categoryOrderBySlug, modifiersByProductId, variantsByProductId)
       const stationKey = (base.station as Station) ?? "KITCHEN"
@@ -556,27 +553,34 @@ export async function GET(request: NextRequest) {
       homepage_sections = {}
     }
 
-    return NextResponse.json({
-      source: "supabase",
-      items,
-      categories: categoryRows,
-      by_section: bySection,
-      often_ordered_with,
-      most_ordered_ids: mostOrderedIds,
-      homepage_sections,
-      chef_choice: items.filter((p) => p.is_chef_choice),
-      recommended: items.filter((p) => p.is_recommended),
-      most_popular: [...items]
-        .filter((p) => p.is_popular)
-        .sort((a, b) => (sold.get(b.id) ?? 0) - (sold.get(a.id) ?? 0))
-        .slice(0, 8),
-      station_availability: stationAvailability,
-      meta: {
-        client_filter_tip:
-          "Pour le menu client : GET ?include_unavailable=1&locale=fr puis filtrer côté navigateur (instantané).",
-        popular_threshold: MENU_POPULAR_ORDER_MIN,
+    return NextResponse.json(
+      {
+        source: "supabase",
+        items,
+        categories: categoryRows,
+        by_section: bySection,
+        often_ordered_with,
+        most_ordered_ids: mostOrderedIds,
+        homepage_sections,
+        chef_choice: items.filter((p) => p.is_chef_choice),
+        recommended: items.filter((p) => p.is_recommended),
+        most_popular: [...items]
+          .filter((p) => p.is_popular)
+          .sort((a, b) => (sold.get(b.id) ?? 0) - (sold.get(a.id) ?? 0))
+          .slice(0, 8),
+        station_availability: stationAvailability,
+        meta: {
+          client_filter_tip:
+            "Pour le menu client : GET ?include_unavailable=1&locale=fr puis filtrer côté navigateur (instantané).",
+          popular_threshold: MENU_POPULAR_ORDER_MIN,
+        },
       },
-    })
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      },
+    )
   } catch (e) {
     console.error("[menu]", e)
     return NextResponse.json({ error: "Erreur menu" }, { status: 500 })

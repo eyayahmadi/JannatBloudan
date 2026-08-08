@@ -4,6 +4,7 @@
  * par la base (categories.display_order) via groupMenuItemsByCategory(..., orderedSlugs).
  */
 import { sortByMenuCardOrder } from "@/lib/menu/menu-order"
+import { resolveCategoryDisplayIcon } from "@/lib/menu/category-display-icon"
 
 export const DRINKS_CATEGORY_GROUPS = [
   { slug: "water", labelDe: "Wasser", labelAr: "المياه", icon: "💧" },
@@ -107,7 +108,7 @@ export function groupMenuItemsByDbCategories<T extends { category: string }>(
       key: cat.slug,
       labelDe: cat.name,
       labelAr: cat.name_ar ?? "",
-      icon: cat.icon_emoji ?? "🍽️",
+      icon: resolveCategoryDisplayIcon(cat.slug, cat.icon_emoji),
       subtitle: cat.description?.trim() || undefined,
       items: sortByMenuCardOrder(groupItems),
     })

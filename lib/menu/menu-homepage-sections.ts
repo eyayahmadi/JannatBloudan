@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { productHasTag } from "@/lib/menu/product-attributes"
 import { canonicalizeMenuItemsForDisplay } from "@/lib/menu/qr-menu-helpers"
 import type { QrMenuItem } from "@/lib/menu/qr-menu-types"
 
@@ -66,36 +65,7 @@ export async function fetchMenuHomepageSections(
   return map
 }
 
-function pickByTags(sectionKey: string, items: QrMenuItem[], limit: number): QrMenuItem[] {
-  const available = items.filter((i) => !i.soldOut && i.canOrder)
-
-  if (sectionKey === "bestseller") {
-    return available
-      .filter(
-        (i) =>
-          productHasTag(i.tags, "best_seller") ||
-          productHasTag(i.tags, "popular") ||
-          productHasTag(i.tags, "featured"),
-      )
-      .slice(0, limit)
-  }
-
-  if (sectionKey === "today_recommended") {
-    return available
-      .filter(
-        (i) =>
-          productHasTag(i.tags, "today_recommended") ||
-          productHasTag(i.tags, "chef_recommendation") ||
-          productHasTag(i.tags, "featured") ||
-          productHasTag(i.tags, "promotion"),
-      )
-      .slice(0, limit)
-  }
-
-  return []
-}
-
-/** Resolve homepage products: CMS selection first, tag fallback when empty. */
+/** Resolve homepage products from Admin CMS selections only — no tag fallback. */
 export function resolveHomepageSectionProducts(
   sectionKey: MenuHomepageSectionKey,
   items: QrMenuItem[],
@@ -103,13 +73,10 @@ export function resolveHomepageSectionProducts(
   limit = 8,
 ): QrMenuItem[] {
   const selectedIds = homepageSections[sectionKey] ?? []
-  const resolved =
-    selectedIds.length > 0
-      ? selectedIds
-          .map((id) => items.find((i) => i.id === id))
-          .filter((i): i is QrMenuItem => !!i && !i.soldOut && i.canOrder)
-          .slice(0, limit)
-      : pickByTags(sectionKey, items, limit)
+  const resolved = selectedIds
+    .map((id) => items.find((i) => i.id === id))
+    .filter((i): i is QrMenuItem => !!i && !i.soldOut && i.canOrder)
+    .slice(0, limit)
 
   return canonicalizeMenuItemsForDisplay(resolved, items)
 }

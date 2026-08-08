@@ -1,6 +1,8 @@
-import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
 import { getActiveCategories } from "@/lib/menu/menu-catalog-service"
+
+export const dynamic = "force-dynamic"
 
 /** Public categories — same visibility rules as GET /api/menu. */
 export async function GET() {

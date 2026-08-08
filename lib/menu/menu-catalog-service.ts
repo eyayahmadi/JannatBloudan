@@ -1,7 +1,7 @@
 import "server-only"
 
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import type {
   MenuCatalogLoadOptions,
   MenuCategoryRow,
@@ -128,6 +128,32 @@ export async function getActiveProducts(
   return { rows, error: null }
 }
 
+/**
+ * Live menu catalog — same data as Admin Menu default view (non-archived products,
+ * active non-deleted categories). Used by GET /api/menu and all client menus.
+ */
+export async function getLiveMenuCatalog(
+  supabase: SupabaseClient,
+): Promise<{
+  categories: MenuCategoryRow[]
+  products: Record<string, unknown>[]
+  error: string | null
+}> {
+  const [catRes, prodRes] = await Promise.all([
+    getActiveCategories(supabase),
+    getActiveProducts(supabase),
+  ])
+
+  if (catRes.error) return { categories: [], products: [], error: catRes.error }
+  if (prodRes.error) return { categories: catRes.rows, products: [], error: prodRes.error }
+
+  return {
+    categories: catRes.rows,
+    products: prodRes.rows,
+    error: null,
+  }
+}
+
 export async function getProductsByCategoryId(
   supabase: SupabaseClient,
   categoryId: string,
@@ -245,6 +271,7 @@ export async function deleteProductSafe(
 
 /** Invalide caches Next.js après mutation Admin — pas de redeploy requis. */
 export function invalidateMenuCache(): void {
+  revalidateTag(MENU_CATALOG_CACHE_TAG, "default")
   revalidatePath("/api/menu")
   revalidatePath("/api/categories")
   revalidatePath("/api/products")

@@ -1,4 +1,5 @@
 import { normalizeProductTags, productHasAnyTag, productHasTag } from "@/lib/menu/product-attributes"
+import { resolveCategoryDisplayIcon } from "@/lib/menu/category-display-icon"
 
 export type DeliveryMenuItem = {
   id: string
@@ -55,7 +56,7 @@ export function buildDeliveryCategories(
   const fromApi = apiCategories.map((c) => ({
     id: c.slug,
     name: c.name,
-    icon: c.icon_emoji ?? "🍽️",
+    icon: resolveCategoryDisplayIcon(c.slug, c.icon_emoji),
   }))
   return [...DELIVERY_CATEGORY_CHIPS, ...fromApi]
 }

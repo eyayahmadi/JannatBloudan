@@ -116,6 +116,7 @@ const NUMBERED_MIGRATIONS = [
   "77-menu-page-8-waffel-crepes-cocktails.sql",
   "78-menu-page-9-smoothies-milkshakes-drinks.sql",
   "79-menu-page-10-heissgetraenke-tee.sql",
+  "80-add-limonade.sql",
 ]
 
 const POST_MIGRATIONS = ["APPLY-ROLE-HARDENING.sql", "fix-signup-database-error-updating-user.sql"]

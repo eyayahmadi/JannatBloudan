@@ -1,3 +1,4 @@
+import { resolveCategoryDisplayIcon } from "@/lib/menu/category-display-icon"
 import type { MenuCategoryRow } from "@/lib/menu/menu-catalog-types"
 import { isCategoryVisibleForMenu } from "@/lib/menu/menu-visibility"
 
@@ -59,7 +60,7 @@ export function buildQrCategoryNavItemsFromDb(categories: MenuCategoryRow[]): Qr
     id: qrSectionDomId(c.slug),
     labelDe: c.name,
     labelAr: c.name_ar?.trim() || c.name,
-    icon: c.icon_emoji?.trim() || "🍽",
+    icon: resolveCategoryDisplayIcon(c.slug, c.icon_emoji, "🍽"),
     sortOrder: c.display_order ?? 0,
   }))
 

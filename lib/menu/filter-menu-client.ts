@@ -1,10 +1,6 @@
 import type { DigitalMenuProduct, MenuClientFilters, MenuSortId } from "@/lib/menu/digital-menu-product"
 import { attributeSearchHaystack } from "@/lib/menu/product-attributes"
-import { DRINKS_CATEGORY_GROUPS, DESSERTS_CATEGORY_GROUPS } from "@/lib/menu/menu-category-groups"
 import { compareMenuCardOrder } from "@/lib/menu/menu-order"
-
-const DRINK_CATEGORY_SLUGS = new Set<string>(DRINKS_CATEGORY_GROUPS.map((g) => g.slug))
-const DESSERT_CATEGORY_SLUGS = new Set<string>(DESSERTS_CATEGORY_GROUPS.map((g) => g.slug))
 
 function norm(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -38,8 +34,8 @@ export function filterMenuProducts(items: DigitalMenuProduct[], f: MenuClientFil
   return items.filter((p) => {
     if (!matchesSearch(p, f.search)) return false
     if (f.section !== "all" && f.section !== "drinks" && f.section !== "desserts" && p.section !== f.section) return false
-    if (f.section === "drinks" && p.section !== "drinks" && !DRINK_CATEGORY_SLUGS.has(p.category)) return false
-    if (f.section === "desserts" && p.section !== "desserts" && !DESSERT_CATEGORY_SLUGS.has(p.category)) return false
+    if (f.section === "drinks" && p.section !== "drinks") return false
+    if (f.section === "desserts" && p.section !== "desserts") return false
     if (f.categorySlug !== "all" && p.category !== f.categorySlug) return false
     if (f.priceMin != null && Number.isFinite(f.priceMin) && p.price < f.priceMin) return false
     if (f.priceMax != null && Number.isFinite(f.priceMax) && p.price > f.priceMax) return false

@@ -1,5 +1,6 @@
 import type { ProductVariant } from "@/lib/menu/digital-menu-product"
 import { attributeSearchHaystack } from "@/lib/menu/product-attributes"
+import { SHISHA_CATEGORY_ICON } from "@/lib/menu/category-display-icon"
 
 export type MenuPriceDisplayInput = {
   price: number
@@ -71,7 +72,7 @@ export function categoryPlaceholderEmoji(section: string, category?: string): st
   if (category === "pizza") return "🍕"
   if (category === "burgers") return "🍔"
   if (category === "grillades") return "🔥"
-  if (category === "shisha" || category === "imperator") return "💨"
+  if (category === "shisha" || category === "imperator") return SHISHA_CATEGORY_ICON
   if (section === "desserts") return "🍰"
   if (section === "drinks") return "🥤"
   if (category === "salades" || category === "entrees") return "🥗"
