@@ -5,7 +5,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
+  // Standalone is for Docker only. On Vercel it is ignored yet breaks the build
+  // (Turbopack skips next-server.js.nft.json → ENOENT in onBuildComplete).
+  ...(process.env.DOCKER_BUILD === "1" ? { output: "standalone" } : {}),
   /**
    * Force Turbopack à utiliser ce dossier comme racine du workspace.
    * Sinon Next.js 16 remonte la chaîne et tombe sur un package.json

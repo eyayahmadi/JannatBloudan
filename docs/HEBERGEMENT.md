@@ -33,7 +33,7 @@ npm run verify:deploy
 
 ### Docker (VPS / cloud)
 
-- `output: "standalone"` est activé dans `next.config.mjs`.
+- `output: "standalone"` s’active avec `DOCKER_BUILD=1` (voir `next.config.mjs` + `Dockerfile`). Vercel utilise la sortie Next par défaut.
 - Build image : `docker build -t jannat-app .`
 - Run : monter les env (fichier ou secrets), port **3000**.
 
