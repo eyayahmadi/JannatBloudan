@@ -131,7 +131,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className={`${outfit.variable} ${playfair.variable}`} suppressHydrationWarning>
-      <body className="font-sans antialiased min-h-dvh">
+      <body className="font-sans antialiased min-h-screen min-h-dvh overflow-x-clip safe-area-x">
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-[color:var(--lux-bordeaux)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg focus:ring-2 focus:ring-[color:var(--lux-gold)]/60"
@@ -140,7 +140,13 @@ export default function RootLayout({
         </a>
         <Providers>
           {children}
-          <Toaster position="bottom-right" richColors closeButton duration={4500} />
+          <Toaster
+            position="bottom-right"
+            richColors
+            closeButton
+            duration={4500}
+            toastOptions={{ className: "safe-area-bottom" }}
+          />
         </Providers>
         <Analytics />
         <script

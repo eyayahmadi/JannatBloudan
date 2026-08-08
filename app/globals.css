@@ -1,6 +1,128 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* ====================================================
+   MOBILE FOUNDATION — viewport, overflow, safe areas
+   ==================================================== */
+html {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  overflow-x: clip;
+}
+
+@supports not (overflow: clip) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+/* Z-index scale — consistent overlays (also in :root theme block below) */
+.z-drawer-backdrop {
+  z-index: var(--z-drawer-backdrop);
+}
+.z-drawer {
+  z-index: var(--z-drawer);
+}
+.z-modal {
+  z-index: var(--z-modal);
+}
+.z-toast-layer {
+  z-index: var(--z-toast);
+}
+
+/* Responsive product grids — single column on very small phones */
+.menu-product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+}
+
+@media (max-width: 360px) {
+  .menu-product-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.menu-product-grid > * {
+  min-width: 0;
+}
+
+/* Long DE/AR product names */
+.menu-product-grid .menu-product-card h3,
+.menu-product-grid [data-menu-product-id] h3 {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* Mobile bottom sheets / drawers */
+.mobile-sheet {
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+.mobile-sheet-panel {
+  max-height: min(85dvh, calc(100dvh - env(safe-area-inset-top, 0px)));
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-bottom {
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+}
+
+.safe-area-x {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Touch targets — minimum 44px for primary controls on phones */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
@@ -176,27 +298,25 @@ html.menu-stable-scroll [data-menu-product-id] {
   }
 }
 
-/* Product modal: freeze background list paint + block interaction behind portal */
-html.menu-modal-open {
+/* Product modal: freeze background list paint — do not block portaled overlays */
+html.menu-modal-open:not(.qr-cart-sheet-open) {
   overflow: hidden !important;
 }
 
-html.menu-modal-open body {
+html.menu-modal-open:not(.qr-cart-sheet-open) body {
   overflow: hidden !important;
 }
 
-html.menu-modal-open [data-menu-page-root],
+html.menu-modal-open:not(.qr-cart-sheet-open) [data-menu-page-root],
 html.menu-product-sheet-open [data-menu-page-root] {
   overflow: hidden !important;
   pointer-events: none !important;
-  touch-action: none !important;
 }
 
-html.menu-modal-open [data-menu-background],
+html.menu-modal-open:not(.qr-cart-sheet-open) [data-menu-background],
 html.menu-product-sheet-open [data-menu-background] {
   pointer-events: none !important;
   overflow: hidden !important;
-  touch-action: none !important;
 }
 
 /* QR cart sheet is portaled to body — must stay interactive while menu-modal-open */
@@ -282,6 +402,14 @@ html.menu-modal-open [data-menu-product-id] {
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --z-sticky: 10;
+  --z-header: 20;
+  --z-bottom-nav: 30;
+  --z-drawer-backdrop: 40;
+  --z-drawer: 50;
+  --z-modal: 51;
+  --z-toast: 60;
+
   --site-header-sticky-offset: 7rem;
   --syrian-terra-cotta: #a0522d;
   --syrian-terra-cotta-dark: #8b4513;
@@ -758,10 +886,8 @@ html.menu-modal-open [data-menu-product-id] {
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 100px;
-  scroll-padding-bottom: 80px; /* compenser la mobile bottom nav < lg */
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
+  scroll-padding-top: calc(100px + env(safe-area-inset-top, 0px));
+  scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -773,14 +899,14 @@ html {
 * {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
-/* Min touch target 44x44 pour tous les boutons icônes selon WCAG 2.5.5 */
+/* Min touch target — reduce accidental mis-taps on mobile */
 button,
 [role="button"],
 a {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 body {

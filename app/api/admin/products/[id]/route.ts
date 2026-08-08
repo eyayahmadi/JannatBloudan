@@ -3,6 +3,7 @@ import { createServiceRoleClient, requireAdmin } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { insertCaisseAudit } from "@/lib/caisse/audit"
 import { normalizeProductTags, syncLegacyFieldsFromTags } from "@/lib/menu/product-attributes"
+import { deleteProductSafe, invalidateMenuCache } from "@/lib/menu/menu-catalog-service"
 
 type Ctx = { params: Promise<{ id: string }> }
 
@@ -78,6 +79,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
     metadata: { source: "api/admin/products PATCH" },
   })
 
+  invalidateMenuCache()
   return NextResponse.json({ product: data })
 }
 
@@ -95,20 +97,24 @@ export async function DELETE(_request: Request, ctx: Ctx) {
     return NextResponse.json({ error: "Produit introuvable" }, { status: 404 })
   }
 
-  const { error } = await supabase.from("products").delete().eq("id", id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  const result = await deleteProductSafe(supabase, id)
+  if (!result.ok) {
+    const status = result.code === "NOT_FOUND" ? 404 : 500
+    return NextResponse.json({ error: result.error, code: result.code }, { status })
+  }
 
   const actorEmail = typeof guard.user.email === "string" ? guard.user.email.trim() || null : null
   await insertCaisseAudit(supabase, {
     userId: guard.user.id ?? null,
     userEmail: actorEmail,
-    action: "delete",
+    action: result.mode === "archived" ? "archive" : "delete",
     entityType: "products",
     entityId: id,
     oldValues: serializeRow(before as Record<string, unknown>),
     newValues: null,
-    metadata: { source: "api/admin/products DELETE" },
+    metadata: { source: "api/admin/products DELETE", mode: result.mode },
   })
 
-  return NextResponse.json({ success: true })
+  invalidateMenuCache()
+  return NextResponse.json({ success: true, mode: result.mode })
 }

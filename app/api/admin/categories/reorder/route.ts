@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireAdmin } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
+import { invalidateMenuCache } from "@/lib/menu/menu-catalog-service"
 
 export async function POST(request: Request) {
   const guard = await requireAdmin()
@@ -23,5 +24,6 @@ export async function POST(request: Request) {
     await supabase.from("categories").update({ display_order }).eq("id", id)
   }
 
+  invalidateMenuCache()
   return NextResponse.json({ ok: true })
 }

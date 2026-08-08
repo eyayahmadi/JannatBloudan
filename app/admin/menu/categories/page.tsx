@@ -19,6 +19,7 @@ import {
 } from "@/lib/menu/menu-category-groups"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { invalidateMenuCacheClient } from "@/lib/menu/invalidate-menu-cache-client"
 
 type Category = {
   id: string
@@ -94,7 +95,9 @@ export default function AdminMenuCategoriesPage() {
       })
       setName("")
       setNameAr("")
+      invalidateMenuCacheClient()
       await load()
+      toast.success("Kategorie erstellt")
     } finally {
       setBusy(false)
     }
@@ -106,13 +109,29 @@ export default function AdminMenuCategoriesPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(patch),
     })
+    invalidateMenuCacheClient()
     await load()
   }
 
   const remove = async (cat: Category) => {
-    if (!confirm(`Kategorie « ${cat.name} » löschen?`)) return
-    await fetch(`/api/admin/categories/${cat.id}`, { method: "DELETE" })
+    if (!confirm(`Kategorie « ${cat.name} » löschen oder archivieren?`)) return
+    let res = await fetch(`/api/admin/categories/${cat.id}`, { method: "DELETE" })
+    if (res.status === 409) {
+      if (!confirm("Diese Kategorie enthält noch Produkte. Alle Produkte mitarchivieren?")) return
+      res = await fetch(`/api/admin/categories/${cat.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archiveProducts: true }),
+      })
+    }
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      toast.error(typeof data.error === "string" ? data.error : "Löschen fehlgeschlagen")
+      return
+    }
+    invalidateMenuCacheClient()
     await load()
+    toast.success(data.mode === "archived" ? "Kategorie archiviert" : "Kategorie gelöscht")
   }
 
   const openEdit = (cat: Category) => {
@@ -159,7 +178,9 @@ export default function AdminMenuCategoriesPage() {
       }),
     })
     setReorderMode(false)
+    invalidateMenuCacheClient()
     await load()
+    toast.success("Reihenfolge gespeichert")
   }
 
   const renderCategoryRow = (cat: Category) => (

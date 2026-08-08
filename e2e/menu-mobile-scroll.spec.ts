@@ -1,13 +1,7 @@
 import { test, expect } from "@playwright/test"
+import { assertNoHorizontalOverflow, MOBILE_VIEWPORTS } from "./mobile-helpers"
 
-const PHONE_VIEWPORTS = [
-  { name: "iPhone SE", width: 375, height: 667 },
-  { name: "iPhone 14", width: 390, height: 844 },
-  { name: "iPhone 14 Pro Max", width: 430, height: 932 },
-  { name: "Galaxy S21", width: 360, height: 800 },
-  { name: "Pixel 7", width: 412, height: 915 },
-  { name: "small Android", width: 320, height: 568 },
-] as const
+const PHONE_VIEWPORTS = MOBILE_VIEWPORTS.filter((v) => v.width <= 430)
 
 for (const vp of PHONE_VIEWPORTS) {
   test.describe(`${vp.name} (${vp.width}×${vp.height})`, () => {
@@ -22,6 +16,7 @@ for (const vp of PHONE_VIEWPORTS) {
     test("table menu keeps scroll during polling", async ({ page }) => {
       await page.goto("/table/T01/menu", { waitUntil: "domcontentloaded" })
       await page.waitForSelector("[data-menu-product-id]", { timeout: 60_000 })
+      await assertNoHorizontalOverflow(page)
 
       await page.evaluate(() => {
         document.documentElement.classList.add("menu-stable-scroll")
@@ -46,6 +41,7 @@ for (const vp of PHONE_VIEWPORTS) {
     test("public menu keeps scroll during polling", async ({ page }) => {
       await page.goto("/menu", { waitUntil: "domcontentloaded" })
       await page.waitForSelector("[data-menu-product-id]", { timeout: 60_000 })
+      await assertNoHorizontalOverflow(page)
 
       await page.evaluate(() => {
         window.scrollTo({ top: Math.min(2400, document.body.scrollHeight - 400), behavior: "instant" as ScrollBehavior })

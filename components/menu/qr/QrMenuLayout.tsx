@@ -159,7 +159,7 @@ export function QrMenuLayout({
     return () => mq.removeEventListener("change", sync)
   }, [])
 
-  useBodyScrollLock(drawerOpen && isMobile)
+  useBodyScrollLock(drawerOpen && isMobile, { mode: "fixed", htmlClass: "menu-modal-open" })
 
   const navigate = (href: string) => {
     setDrawerOpen(false)
@@ -205,7 +205,7 @@ export function QrMenuLayout({
 
       {drawerOpen && isMobile && typeof document !== "undefined"
         ? createPortal(
-            <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true">
+            <div className="z-drawer fixed inset-0 md:hidden safe-area-top" role="dialog" aria-modal="true">
               <button
                 type="button"
                 className="absolute inset-0 bg-black/45"
@@ -214,7 +214,7 @@ export function QrMenuLayout({
               />
               <aside
                 data-qr-table-menu
-                className="absolute inset-y-0 left-0 flex w-[min(100%,20.5rem)] flex-col bg-neutral-950 shadow-2xl"
+                className="mobile-sheet absolute inset-y-0 left-0 flex w-[min(100%,20.5rem)] flex-col bg-neutral-950 pb-[env(safe-area-inset-bottom)] shadow-2xl safe-area-x"
               >
                 <div className="flex items-center justify-between border-b border-amber-900/40 px-4 py-4">
                   <p className="font-display text-base font-semibold text-white">

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createServiceRoleClient, requireAdmin } from "@/lib/auth/admin-api"
 import { hasServerSupabaseEnv } from "@/lib/supabase/config"
 import { normalizeProductTags, syncLegacyFieldsFromTags } from "@/lib/menu/product-attributes"
+import { invalidateMenuCache } from "@/lib/menu/menu-catalog-service"
 
 function slugify(s: string) {
   return s
@@ -50,5 +51,6 @@ export async function POST(request: Request) {
   const { data, error } = await supabase.from("products").insert(row).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
+  invalidateMenuCache()
   return NextResponse.json({ product: data }, { status: 201 })
 }

@@ -1,44 +1,32 @@
 "use client"
 
-import { useLayoutEffect } from "react"
+import { useLayoutEffect, useRef } from "react"
+import { acquireBodyScrollLock, type BodyScrollLockMode } from "@/lib/mobile/body-scroll-lock"
+
+export type UseBodyScrollLockOptions = {
+  /** `fixed` restores scroll position; `overflow` only hides scrollbars (portaled UI stays tappable). */
+  mode?: BodyScrollLockMode
+  htmlClass?: string | string[]
+  blockTouch?: boolean
+}
 
 /**
- * Locks document scroll while a modal/sheet is open.
- * Restores scroll position on close (required for Android Chrome).
+ * Locks document scroll while a modal/drawer is open.
+ * Reference-counted — safe with multiple overlays.
  */
-export function useBodyScrollLock(locked: boolean) {
+export function useBodyScrollLock(locked: boolean, options: UseBodyScrollLockOptions = {}) {
+  const optionsRef = useRef(options)
+  optionsRef.current = options
+
   useLayoutEffect(() => {
-    if (!locked || typeof document === "undefined") return
+    if (!locked) return
 
-    const scrollY = window.scrollY
-    const { body, documentElement: html } = document
+    const handle = acquireBodyScrollLock({
+      mode: optionsRef.current.mode ?? "fixed",
+      htmlClass: optionsRef.current.htmlClass ?? "menu-modal-open",
+      blockTouch: optionsRef.current.blockTouch,
+    })
 
-    const prev = {
-      bodyOverflow: body.style.overflow,
-      bodyPosition: body.style.position,
-      bodyTop: body.style.top,
-      bodyWidth: body.style.width,
-      bodyTouchAction: body.style.touchAction,
-      htmlOverflow: html.style.overflow,
-    }
-
-    html.classList.add("menu-modal-open")
-    html.style.overflow = "hidden"
-    body.style.overflow = "hidden"
-    body.style.position = "fixed"
-    body.style.top = `-${scrollY}px`
-    body.style.width = "100%"
-    body.style.touchAction = "none"
-
-    return () => {
-      html.classList.remove("menu-modal-open")
-      html.style.overflow = prev.htmlOverflow
-      body.style.overflow = prev.bodyOverflow
-      body.style.position = prev.bodyPosition || "static"
-      body.style.top = prev.bodyTop
-      body.style.width = prev.bodyWidth
-      body.style.touchAction = prev.bodyTouchAction || "auto"
-      window.scrollTo(0, scrollY)
-    }
+    return () => handle.release()
   }, [locked])
 }

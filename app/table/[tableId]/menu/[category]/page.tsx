@@ -10,7 +10,7 @@ import { QrMenuEmptyState, QrMenuCardSkeleton } from "@/components/menu/qr/QrMen
 import { QrTableMenuProductGrid } from "@/components/menu/qr/QrTableMenuProductGrid"
 import { QrTableMenuShell } from "@/components/menu/qr/QrTableMenuShell"
 import { useQrTableMenu } from "@/components/menu/qr/QrTableMenuProvider"
-import { isQrDrinkSectionId, resolveQrNavCategorySlug, navCategoryFromSlug } from "@/lib/menu/qr-printed-menu"
+import { isQrDrinkSectionId, resolveQrNavCategorySlug } from "@/lib/menu/qr-printed-menu"
 import { resolveQrCategoryLabel } from "@/lib/menu/qr-category-i18n"
 import { useI18n } from "@/lib/i18n/context"
 import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
@@ -26,6 +26,7 @@ export default function TableMenuCategoryPage() {
     setCartOpen,
     activeOrder,
     categoryNavItems,
+    categoryRows,
     getCategoryBlock,
     loading,
     loadError,
@@ -36,9 +37,9 @@ export default function TableMenuCategoryPage() {
   } = useQrTableMenu()
 
   const slug = String(category ?? "")
-  const resolvedSlug = resolveQrNavCategorySlug(slug)
+  const resolvedSlug = resolveQrNavCategorySlug(slug, categoryRows)
   const valid = resolvedSlug != null
-  const navMeta = valid ? navCategoryFromSlug(resolvedSlug!) : undefined
+  const navMeta = valid ? categoryNavItems.find((n) => n.slug === resolvedSlug) : undefined
   const block = valid ? getCategoryBlock(resolvedSlug!) : null
 
   const blockFrozenRef = useRef(block)

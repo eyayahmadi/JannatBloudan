@@ -36,7 +36,28 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "mobile-chrome",
+      use: { ...devices["Pixel 7"] },
+    },
+    {
+      name: "mobile-safari",
+      use: { ...devices["iPhone 14"] },
+    },
+    {
+      name: "mobile-small",
+      use: {
+        ...devices["iPhone SE"],
+        viewport: { width: 320, height: 568 },
+      },
+    },
+    {
+      name: "tablet",
+      use: { ...devices["iPad (gen 7)"] },
+    },
+  ],
   webServer: process.env.PLAYWRIGHT_REUSE_SERVER
     ? undefined
     : {

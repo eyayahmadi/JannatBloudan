@@ -45,6 +45,7 @@ type StaffTableMenuContextValue = {
   effectiveNumber: number | null
   menuItems: QrMenuItem[]
   catalog: DigitalMenuProduct[]
+  categoryRows: Array<{ id: string; name: string; slug: string; section?: string; display_order?: number; icon_emoji?: string | null; name_ar?: string | null; nav_group?: string | null; card_gradient?: string | null }>
   categoryNavItems: QrCategoryNavItem[]
   loading: boolean
   cart: StaffCartLine[]
@@ -130,7 +131,12 @@ export function StaffTableMenuProvider({ children }: { children: ReactNode }) {
     [catalog, menuData?.station_availability],
   )
 
-  const categoryNavItems = useMemo(() => buildQrCategoryNavItems(), [])
+  const categoryRows = menuData?.categories ?? []
+
+  const categoryNavItems = useMemo(
+    () => buildQrCategoryNavItems(categoryRows),
+    [categoryRows],
+  )
 
   const detailItem = useMemo(
     () => menuItems.find((i) => i.id === detailItemId) ?? null,
@@ -265,6 +271,7 @@ export function StaffTableMenuProvider({ children }: { children: ReactNode }) {
     effectiveNumber,
     menuItems,
     catalog,
+    categoryRows,
     categoryNavItems,
     loading,
     cart,

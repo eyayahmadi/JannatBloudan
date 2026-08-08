@@ -144,7 +144,7 @@ export function QrProductDetailSheet({
       aria-labelledby="qr-product-detail-title"
     >
       <header
-        className="sticky top-0 z-[10010] flex shrink-0 items-center justify-end border-b border-amber-100/90 bg-white px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] dark:border-amber-900/40 dark:bg-neutral-950"
+        className="sticky top-0 z-modal flex shrink-0 items-center justify-end border-b border-amber-100/90 bg-white px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] dark:border-amber-900/40 dark:bg-neutral-950"
       >
         <button
           type="button"

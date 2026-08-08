@@ -20,7 +20,7 @@ export const StationBoardToast = memo(function StationBoardToast({
 
   return createPortal(
     <div
-      className="pointer-events-none fixed end-4 top-20 z-[100] w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 shadow-lg dark:border-amber-700 dark:bg-amber-950"
+      className="pointer-events-none fixed end-4 top-20 z-toast-layer w-[min(20rem,calc(100%-2rem))] rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 shadow-lg dark:border-amber-700 dark:bg-amber-950"
       role="status"
       aria-live="polite"
     >

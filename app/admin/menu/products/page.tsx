@@ -35,6 +35,7 @@ import { compareMenuCardOrder } from "@/lib/menu/menu-order"
 import { menuStatusFromRow, rowFromMenuStatus, MENU_STATUS_LABELS } from "@/lib/menu/product-availability-status"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { invalidateMenuCacheClient } from "@/lib/menu/invalidate-menu-cache-client"
 
 type Category = {
   id: string
@@ -360,6 +361,7 @@ export default function AdminMenuProductsPage() {
       const wasEdit = !!editing
       setModalOpen(false)
       setEditing(null)
+      invalidateMenuCacheClient()
       toast.success(wasEdit ? "Produkt erfolgreich gespeichert" : "Produkt erfolgreich erstellt")
     } finally {
       setSaving(false)
@@ -375,11 +377,13 @@ export default function AdminMenuProductsPage() {
       }),
     })
     setReorderMode(false)
+    invalidateMenuCacheClient()
     await load()
   }
 
   const duplicate = async (p: Product) => {
     await fetch(`/api/admin/products/${p.id}/duplicate`, { method: "POST" })
+    invalidateMenuCacheClient()
     await load()
   }
 
@@ -390,6 +394,7 @@ export default function AdminMenuProductsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(row),
     })
+    invalidateMenuCacheClient()
     await load()
   }
 
@@ -402,6 +407,7 @@ export default function AdminMenuProductsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(row),
     })
+    invalidateMenuCacheClient()
     await load()
   }
 
@@ -411,8 +417,9 @@ export default function AdminMenuProductsPage() {
     setDeleting(true)
     try {
       const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" })
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        toast.error("Löschen fehlgeschlagen")
+        toast.error(typeof data.error === "string" ? data.error : "Löschen fehlgeschlagen")
         return
       }
       setProducts((prev) => prev.filter((p) => p.id !== id))
@@ -422,7 +429,8 @@ export default function AdminMenuProductsPage() {
         return next
       })
       setDeleteTarget(null)
-      toast.success("Produkt gelöscht")
+      invalidateMenuCacheClient()
+      toast.success(data.mode === "archived" ? "Produkt archiviert" : "Produkt gelöscht")
     } finally {
       setDeleting(false)
     }

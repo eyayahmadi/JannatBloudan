@@ -30,6 +30,7 @@ import {
 import { mapApiToQrMenuItem, mergeQrMenuItems } from "@/lib/menu/qr-menu-helpers"
 import { captureProductSheetScroll } from "@/lib/menu/product-sheet-scroll"
 import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
+import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
 import { isMenuModalBlockingRefresh } from "@/lib/menu/menu-modal-guard"
 import { isStableQrMenuPayload } from "@/lib/menu/menu-poll-stable"
 import { getQrFavorites, getQrRecentlyOrdered, pushQrRecentlyOrdered, toggleQrFavorite } from "@/lib/menu/qr-guest-prefs"
@@ -232,7 +233,13 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     loadMenu()
     const id = window.setInterval(() => loadMenu({ silent: true }), 60_000)
-    return () => window.clearInterval(id)
+    const unsub = onRealtimeRefresh((scope) => {
+      if (scopeMatches("menu", scope)) loadMenu({ silent: true })
+    })
+    return () => {
+      window.clearInterval(id)
+      unsub()
+    }
   }, [loadMenu])
 
   useEffect(() => {
@@ -264,7 +271,10 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
   }
   const activeOrder = backgroundFrozen ? activeOrderFrozenRef.current : activeOrderLive
 
-  const categoryNavItems = useMemo(() => buildQrCategoryNavItems(), [])
+  const categoryNavItems = useMemo(
+    () => buildQrCategoryNavItems(categoryRows),
+    [categoryRows],
+  )
 
   const bestsellerItems = useMemo(
     () => resolveHomepageSectionProducts("bestseller", menuItems, homepageSections, 8),

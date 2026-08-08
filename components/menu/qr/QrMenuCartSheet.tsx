@@ -117,8 +117,7 @@ export function QrMenuCartSheet({
       {open ? (
         <div
           data-qr-cart-sheet
-          className="fixed inset-0 z-[10050] flex flex-col justify-end"
-          style={{ pointerEvents: "auto", touchAction: "auto" }}
+          className="z-modal fixed inset-0 flex flex-col justify-end safe-area-x"
         >
           <motion.div
             initial={{ opacity: 0 }}
@@ -132,8 +131,7 @@ export function QrMenuCartSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 340, damping: 36 }}
-            className="relative flex max-h-[min(85dvh,100dvh)] flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl dark:bg-neutral-950"
-            style={{ touchAction: "auto" }}
+            className="mobile-sheet-panel relative flex min-h-0 flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl dark:bg-neutral-950"
           >
             <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-amber-200 dark:bg-amber-800" />
             <div className="flex items-center justify-between border-b border-amber-100 px-5 py-4 dark:border-amber-900/30">
@@ -144,7 +142,8 @@ export function QrMenuCartSheet({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full p-2 text-amber-800 transition hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
+                aria-label="Schließen"
+                className="touch-target rounded-full p-2 text-amber-800 transition hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -220,7 +219,7 @@ export function QrMenuCartSheet({
                                 type="button"
                                 onClick={() => onDecrement(item.lineId)}
                                 aria-label="Menge verringern"
-                                className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-200 text-amber-700 transition active:scale-90 dark:border-amber-700"
+                                className="touch-target flex h-11 w-11 items-center justify-center rounded-full border border-amber-200 text-amber-700 transition active:scale-90 dark:border-amber-700"
                               >
                                 <Minus className="h-4 w-4" />
                               </button>
@@ -236,7 +235,7 @@ export function QrMenuCartSheet({
                                 type="button"
                                 onClick={() => onIncrement(item.lineId)}
                                 aria-label="Menge erhöhen"
-                                className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-600 text-white transition active:scale-90"
+                                className="touch-target flex h-11 w-11 items-center justify-center rounded-full bg-amber-600 text-white transition active:scale-90"
                               >
                                 <Plus className="h-4 w-4" />
                               </button>
@@ -297,8 +296,7 @@ export function QrMenuCartSheet({
                     disabled={submitting || cart.length === 0}
                     aria-busy={submitting}
                     onClick={handleCheckout}
-                    className="w-full rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 py-4 text-lg font-bold text-white shadow-lg transition active:scale-[0.98] disabled:opacity-60"
-                    style={{ touchAction: "manipulation" }}
+                  className="touch-target min-h-[48px] w-full rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 py-4 text-lg font-bold text-white shadow-lg transition active:scale-[0.98] disabled:opacity-60"
                   >
                     {submitting
                       ? t("menu.orderPlacing")

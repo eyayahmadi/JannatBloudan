@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation"
 import { ChevronRight } from "lucide-react"
-import { QR_CATEGORY_NAV_CARDS, type QrCategoryNavCard } from "@/lib/menu/qr-printed-menu"
+import { useQrTableMenu } from "@/components/menu/qr/QrTableMenuProvider"
+import { buildQrCategoryNavCards, type QrCategoryNavCard } from "@/lib/menu/qr-printed-menu"
 import { resolveQrCategoryLabel } from "@/lib/menu/qr-category-i18n"
 import { QrHorizontalScrollItem, QrHorizontalScrollRow } from "@/components/menu/qr/QrHorizontalScrollRow"
 import { useI18n } from "@/lib/i18n/context"
@@ -59,6 +60,8 @@ function CategoryCard({
 export function QrMenuCategoryCards({ tableId, className }: QrMenuCategoryCardsProps) {
   const router = useRouter()
   const { t, locale } = useI18n()
+  const { categoryRows } = useQrTableMenu()
+  const cards = buildQrCategoryNavCards(categoryRows)
 
   return (
     <QrHorizontalScrollRow
@@ -66,7 +69,7 @@ export function QrMenuCategoryCards({ tableId, className }: QrMenuCategoryCardsP
       ariaLabel={t("menu.qrCategoriesAria")}
       data-qr-category-carousel
     >
-      {QR_CATEGORY_NAV_CARDS.map((card) => {
+      {cards.map((card) => {
         const { primary, secondary } = resolveQrCategoryLabel(
           card.slug,
           locale,

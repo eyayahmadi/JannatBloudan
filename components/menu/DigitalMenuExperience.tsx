@@ -796,7 +796,7 @@ export function DigitalMenuExperience() {
                   sweet={groupedSection === "desserts"}
                   premium={groupedSection === "food"}
                 />
-                <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid auto-rows-fr grid-cols-1 gap-4 min-[361px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {group.items.map((item) => (
                     <div key={item.id} className="h-full min-h-0">
                       <MenuCard
@@ -818,7 +818,7 @@ export function DigitalMenuExperience() {
             ))}
           </div>
         ) : (
-        <div className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid auto-rows-fr grid-cols-1 gap-4 min-[361px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filtered.map((item) => (
                 <div key={item.id} className="h-full min-h-0">
                   <MenuCard

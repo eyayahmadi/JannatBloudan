@@ -18,7 +18,7 @@ import {
   type StationAvailabilityStatus,
 } from "@/lib/stations/availability"
 import { fetchMenuHomepageSections } from "@/lib/menu/menu-homepage-sections"
-import { mergeTajineHauptgerichteCatalog } from "@/lib/menu/tajine-hauptgerichte-fallback"
+import { getActiveCategories, getActiveProducts } from "@/lib/menu/menu-catalog-service"
 import { resolveMenuProductImageUrl } from "@/lib/menu/resolve-product-image"
 
 type ProductRow = Record<string, unknown> & {
@@ -59,104 +59,6 @@ type ProductRow = Record<string, unknown> & {
   }> | null
 }
 
-/** Jointure produits + catégories + ingrédients (schéma digital menu). */
-const PRODUCTS_SELECT_FULL = `id, name, name_ar, slug, description, description_ar, price, image_url, is_available, is_popular, is_new,
-           is_chef_choice, is_recommended, is_vegetarian, spice_level, stock_quantity, tags, station, display_order, created_at,
-           categories ( id, name, slug ),
-           product_ingredients ( quantity, ingredients ( id, name, unit, stock_quantity, threshold_low, threshold_critical ) )`
-
-/** Sans is_new (colonne ajoutée dans scripts/13 — parfois absente si migration partielle). */
-const PRODUCTS_SELECT_NO_IS_NEW = `id, name, name_ar, slug, description, description_ar, price, image_url, is_available, is_popular,
-           is_chef_choice, is_recommended, is_vegetarian, spice_level, stock_quantity, tags, station, created_at,
-           categories ( id, name, slug ),
-           product_ingredients ( quantity, ingredients ( id, name, unit, stock_quantity, threshold_low, threshold_critical ) )`
-
-/** Même requête sans name_ar (bases n’ayant pas exécuté scripts/13 ou 22). */
-const PRODUCTS_SELECT_NO_NAME_AR = `id, name, slug, description, description_ar, price, image_url, is_available, is_popular, is_new,
-           is_chef_choice, is_recommended, is_vegetarian, spice_level, stock_quantity, tags, station, created_at,
-           categories ( id, name, slug ),
-           product_ingredients ( quantity, ingredients ( id, name, unit, stock_quantity, threshold_low, threshold_critical ) )`
-
-/** Schéma minimal produits : sans name_ar ni is_new. */
-const PRODUCTS_SELECT_NO_NAME_AR_NO_IS_NEW = `id, name, slug, description, description_ar, price, image_url, is_available, is_popular,
-           is_chef_choice, is_recommended, is_vegetarian, spice_level, stock_quantity, tags, station, created_at,
-           categories ( id, name, slug ),
-           product_ingredients ( quantity, ingredients ( id, name, unit, stock_quantity, threshold_low, threshold_critical ) )`
-
-function isMissingColumnError(msg: string | undefined): boolean {
-  if (!msg) return false
-  const m = msg.toLowerCase()
-  return m.includes("does not exist") || m.includes("column ") || m.includes("unknown")
-}
-
-/** Schéma complet (script 13) ; sinon fallback schéma minimal (script 01). */
-async function loadMenuCategories(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const full = await supabase
-    .from("categories")
-    .select("id, name, slug, section, display_order, icon_emoji, name_ar, description")
-    .eq("is_active", true)
-    .order("display_order", { ascending: true })
-    .order("name", { ascending: true })
-
-  if (!full.error) {
-    const rows = (full.data ?? []).map((c: Record<string, unknown>) => ({
-      id: String(c.id),
-      name: String(c.name ?? ""),
-      slug: String(c.slug ?? ""),
-      section: typeof c.section === "string" ? c.section : "food",
-      display_order: Number(c.display_order) || 0,
-      icon_emoji: c.icon_emoji != null ? String(c.icon_emoji) : null,
-      name_ar: c.name_ar != null ? String(c.name_ar) : null,
-      description: c.description != null ? String(c.description) : null,
-    }))
-    return { rows, error: null as string | null }
-  }
-  if (!isMissingColumnError(full.error.message)) {
-    return { rows: [], error: full.error.message }
-  }
-
-  const noActiveFilter = await supabase
-    .from("categories")
-    .select("id, name, slug, section, display_order, icon_emoji, name_ar, description")
-    .order("display_order", { ascending: true })
-    .order("name", { ascending: true })
-
-  if (!noActiveFilter.error) {
-    const rows = (noActiveFilter.data ?? []).map((c: Record<string, unknown>) => ({
-      id: String(c.id),
-      name: String(c.name ?? ""),
-      slug: String(c.slug ?? ""),
-      section: typeof c.section === "string" ? c.section : "food",
-      display_order: Number(c.display_order) || 0,
-      icon_emoji: c.icon_emoji != null ? String(c.icon_emoji) : null,
-      name_ar: c.name_ar != null ? String(c.name_ar) : null,
-      description: c.description != null ? String(c.description) : null,
-    }))
-    return { rows, error: null as string | null }
-  }
-  if (!isMissingColumnError(noActiveFilter.error.message)) {
-    return { rows: [], error: noActiveFilter.error.message }
-  }
-
-  const minimal = await supabase.from("categories").select("id, name, slug").order("name", { ascending: true })
-
-  if (minimal.error) {
-    return { rows: [], error: minimal.error.message }
-  }
-
-  const rows = (minimal.data ?? []).map((c) => ({
-    id: String((c as { id: string }).id),
-    name: String((c as { name?: string }).name ?? ""),
-    slug: String((c as { slug?: string }).slug ?? ""),
-    section: "food",
-    display_order: 0,
-    icon_emoji: null as string | null,
-    name_ar: null as string | null,
-    description: null as string | null,
-  }))
-  return { rows, error: null as string | null }
-}
-
 async function loadAdminRecommendations(
   supabase: Awaited<ReturnType<typeof createClient>>,
 ): Promise<Record<string, string[]>> {
@@ -177,45 +79,6 @@ async function loadAdminRecommendations(
   return out
 }
 
-async function loadMenuProducts(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const first = await supabase.from("products").select(PRODUCTS_SELECT_FULL).order("display_order").order("name")
-  if (!first.error) {
-    return { rows: (first.data ?? []) as unknown as ProductRow[], error: null as string | null }
-  }
-  if (!isMissingColumnError(first.error.message)) {
-    return { rows: [] as ProductRow[], error: first.error.message }
-  }
-
-  const noIsNew = await supabase.from("products").select(PRODUCTS_SELECT_NO_IS_NEW).order("display_order").order("name")
-  if (!noIsNew.error) {
-    return { rows: (noIsNew.data ?? []) as unknown as ProductRow[], error: null as string | null }
-  }
-  if (!isMissingColumnError(noIsNew.error.message)) {
-    return { rows: [] as ProductRow[], error: noIsNew.error.message }
-  }
-
-  const noNameAr = await supabase.from("products").select(PRODUCTS_SELECT_NO_NAME_AR).order("display_order").order("name")
-  if (!noNameAr.error) {
-    const rows = (noNameAr.data ?? []).map((raw) => {
-      const r = raw as Record<string, unknown>
-      return { ...r, name_ar: null } as unknown as ProductRow
-    })
-    return { rows, error: null as string | null }
-  }
-  if (!isMissingColumnError(noNameAr.error.message)) {
-    return { rows: [] as ProductRow[], error: noNameAr.error.message }
-  }
-
-  const minimal = await supabase.from("products").select(PRODUCTS_SELECT_NO_NAME_AR_NO_IS_NEW).order("display_order").order("name")
-  if (minimal.error) {
-    return { rows: [] as ProductRow[], error: minimal.error.message }
-  }
-  const rows = (minimal.data ?? []).map((raw) => {
-    const r = raw as Record<string, unknown>
-    return { ...r, name_ar: null, is_new: false } as unknown as ProductRow
-  })
-  return { rows, error: null as string | null }
-}
 
 type ModifierGroupRow = { id: string; product_id: string }
 type ModifierRow = {
@@ -551,13 +414,10 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const { rows: categoryRowsNormalized, error: catErr } = await loadMenuCategories(supabase)
+    const { rows: categoryRowsWithFallback, error: catErr } = await getActiveCategories(supabase)
     if (catErr) {
       return NextResponse.json({ error: catErr }, { status: 500 })
     }
-
-    const mergedCatalog = mergeTajineHauptgerichteCatalog(categoryRowsNormalized, [])
-    const categoryRowsWithFallback = mergedCatalog.categories
 
     const sectionByCategoryId = new Map<string, string>()
     const categoryOrderBySlug = new Map<string, number>()
@@ -566,9 +426,9 @@ export async function GET(request: NextRequest) {
       categoryOrderBySlug.set(c.slug, c.display_order ?? 0)
     }
 
-    const [{ rows: productRows, error: productsErr }, { data: oi }, { data: availRows }, modifiersByProductId, variantsByProductId, adminRecommendations] =
+    const [{ rows: productRowsRaw, error: productsErr }, { data: oi }, { data: availRows }, modifiersByProductId, variantsByProductId, adminRecommendations] =
       await Promise.all([
-        loadMenuProducts(supabase),
+        getActiveProducts(supabase),
         supabase
           .from("order_items")
           .select("order_id, product_id, quantity")
@@ -612,8 +472,8 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const rows = productRows.filter((r) => !(r as { is_archived?: boolean }).is_archived)
-    const enrichedRows = rows.map((r) => {
+    const productRows = productRowsRaw as unknown as ProductRow[]
+    const enrichedRows = productRows.map((r) => {
       const base = enrich(r, sectionByCategoryId, categoryOrderBySlug, modifiersByProductId, variantsByProductId)
       const stationKey = (base.station as Station) ?? "KITCHEN"
       const avail = stationAvailMap.get(stationKey)
@@ -629,12 +489,8 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const { products: enrichedWithFallback } = mergeTajineHauptgerichteCatalog(
-      categoryRowsWithFallback,
-      enrichedRows,
-    )
     const localized =
-      locale === "fr" ? enrichedWithFallback : await localizeProducts(enrichedWithFallback, locale)
+      locale === "fr" ? enrichedRows : await localizeProducts(enrichedRows, locale)
 
     const sold = new Map<string, number>()
     for (const r of oi ?? []) {

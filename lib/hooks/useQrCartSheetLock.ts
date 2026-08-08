@@ -1,29 +1,22 @@
 "use client"
 
 import { useLayoutEffect } from "react"
+import { acquireBodyScrollLock } from "@/lib/mobile/body-scroll-lock"
 
 /**
- * QR cart sheet: lock background scroll without disabling touch on the portaled sheet.
- * Avoids useBodyScrollLock (body touch-action:none breaks mobile checkout taps).
+ * QR cart sheet: overflow-only lock — background does not scroll,
+ * but portaled sheet buttons remain tappable (no body touch-action:none).
  */
 export function useQrCartSheetLock(locked: boolean) {
   useLayoutEffect(() => {
-    if (!locked || typeof document === "undefined") return
+    if (!locked) return
 
-    const { body, documentElement: html } = document
-    const prev = {
-      htmlOverflow: html.style.overflow,
-      bodyOverflow: body.style.overflow,
-    }
+    const handle = acquireBodyScrollLock({
+      mode: "overflow",
+      htmlClass: "qr-cart-sheet-open",
+      blockTouch: false,
+    })
 
-    html.classList.add("qr-cart-sheet-open")
-    html.style.overflow = "hidden"
-    body.style.overflow = "hidden"
-
-    return () => {
-      html.classList.remove("qr-cart-sheet-open")
-      html.style.overflow = prev.htmlOverflow
-      body.style.overflow = prev.bodyOverflow
-    }
+    return () => handle.release()
   }, [locked])
 }

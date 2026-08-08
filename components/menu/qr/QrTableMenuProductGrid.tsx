@@ -34,7 +34,7 @@ function QrTableMenuProductGridInner({ items }: { items: QrMenuItem[] }) {
   if (display.items.length === 0) return null
 
   return (
-    <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4" data-menu-scroll-list>
+    <div className="menu-product-grid auto-rows-fr gap-3 sm:gap-4" data-menu-scroll-list>
       {display.items.map((item) => {
         const line =
           !item.isCustomizable && !item.hasVariants

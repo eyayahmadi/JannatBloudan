@@ -151,7 +151,7 @@ export function ProductCustomizationModal({
       >
         <header
           className={cn(
-            "sticky top-0 z-[10010] flex shrink-0 items-center justify-between gap-3 border-b px-5 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]",
+            "sticky top-0 z-modal flex shrink-0 items-center justify-between gap-3 border-b px-5 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]",
             isTable ? "border-amber-100 bg-white dark:border-amber-900/30 dark:bg-neutral-900" : "border-border bg-background",
           )}
         >

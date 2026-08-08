@@ -32,7 +32,7 @@ export function QrMenuSearchOverlay({ open, onClose }: QrMenuSearchOverlayProps)
     onClose()
   }, [onClose])
 
-  useBodyScrollLock(open)
+  useBodyScrollLock(open, { mode: "fixed", htmlClass: "menu-modal-open", blockTouch: false })
 
   useEffect(() => {
     if (!open) return
@@ -56,7 +56,7 @@ export function QrMenuSearchOverlay({ open, onClose }: QrMenuSearchOverlayProps)
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex flex-col bg-neutral-950"
+      className="z-drawer fixed inset-0 flex flex-col bg-neutral-950 safe-area-x"
       data-qr-table-menu
       role="dialog"
       aria-modal="true"

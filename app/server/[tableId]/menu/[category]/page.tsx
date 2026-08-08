@@ -13,7 +13,6 @@ import { useStaffTableMenu } from "@/components/menu/staff/StaffTableMenuProvide
 import {
   isQrDrinkSectionId,
   resolveQrNavCategorySlug,
-  navCategoryFromSlug,
 } from "@/lib/menu/qr-printed-menu"
 import { StationStatusBanner } from "@/components/stations/StationStatusBanner"
 import { Button } from "@/components/ui/button"
@@ -26,6 +25,7 @@ export default function StaffTableMenuCategoryPage() {
     displayLabel,
     menuItems,
     categoryNavItems,
+    categoryRows,
     getCategoryBlock,
     loading,
     cartCount,
@@ -41,9 +41,9 @@ export default function StaffTableMenuCategoryPage() {
   } = useStaffTableMenu()
 
   const slug = String(category ?? "")
-  const resolvedSlug = resolveQrNavCategorySlug(slug)
+  const resolvedSlug = resolveQrNavCategorySlug(slug, categoryRows)
   const valid = resolvedSlug != null
-  const navMeta = valid ? navCategoryFromSlug(resolvedSlug!) : undefined
+  const navMeta = valid ? categoryNavItems.find((n) => n.slug === resolvedSlug) : undefined
   const block = valid ? getCategoryBlock(resolvedSlug!) : null
 
   const blockFrozenRef = useRef(block)
