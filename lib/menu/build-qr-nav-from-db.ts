@@ -48,11 +48,17 @@ export const QR_VIRTUAL_NAV_GROUPS: Record<
 const DEFAULT_GRADIENT = "from-stone-800 via-amber-950 to-stone-900"
 
 /** Construit la navigation QR depuis les catégories Supabase (Admin = source de vérité). */
-export function buildQrCategoryNavItemsFromDb(categories: MenuCategoryRow[]): QrCategoryNavItem[] {
+export function buildQrCategoryNavItemsFromDb(
+  categories: MenuCategoryRow[],
+  productCategorySlugs?: Set<string>,
+): QrCategoryNavItem[] {
   const active = categories.filter(isCategoryVisibleForMenu)
+  const hasProducts = (slug: string) =>
+    !productCategorySlugs || productCategorySlugs.size === 0 || productCategorySlugs.has(slug)
 
   const standalone = active
     .filter((c) => !c.nav_group?.trim())
+    .filter((c) => hasProducts(c.slug))
     .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || a.name.localeCompare(b.name))
 
   const nav: Array<QrCategoryNavItem & { sortOrder: number }> = standalone.map((c) => ({
@@ -67,6 +73,8 @@ export function buildQrCategoryNavItemsFromDb(categories: MenuCategoryRow[]): Qr
   for (const [groupKey, meta] of Object.entries(QR_VIRTUAL_NAV_GROUPS)) {
     const members = active.filter((c) => c.nav_group === groupKey)
     if (members.length === 0) continue
+    const withProducts = members.filter((c) => hasProducts(c.slug))
+    if (productCategorySlugs && productCategorySlugs.size > 0 && withProducts.length === 0) continue
     const minOrder = Math.min(...members.map((m) => m.display_order ?? meta.sortOrder))
     nav.push({
       slug: meta.slug,
@@ -136,8 +144,13 @@ const VIRTUAL_GROUP_GRADIENTS: Record<string, string> = {
 }
 
 /** Cartes catégories QR — ordre et style depuis Supabase. */
-export function buildQrCategoryNavCardsFromDb(categories: MenuCategoryRow[]): QrCategoryNavCard[] {
-  const nav = buildQrCategoryNavItemsFromDb(categories)
+export function buildQrCategoryNavCardsFromDb(
+  categories: MenuCategoryRow[],
+  menuItems: Array<{ category: string }> = [],
+): QrCategoryNavCard[] {
+  const productSlugs =
+    menuItems.length > 0 ? new Set(menuItems.map((i) => i.category)) : undefined
+  const nav = buildQrCategoryNavItemsFromDb(categories, productSlugs)
   const catBySlug = new Map(categories.map((c) => [c.slug, c]))
 
   return nav.map((item) => {

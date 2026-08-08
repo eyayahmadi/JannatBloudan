@@ -27,7 +27,8 @@ import {
   resolveHomepageSectionProducts,
   type MenuHomepageSectionsMap,
 } from "@/lib/menu/menu-homepage-sections"
-import { mapApiToQrMenuItem, mergeQrMenuItems } from "@/lib/menu/qr-menu-helpers"
+import { fetchLiveMenuCatalog, parseMenuFetchDebug } from "@/lib/menu/qr-menu-fetch"
+import { mapApiToQrMenuItem } from "@/lib/menu/qr-menu-helpers"
 import { captureProductSheetScroll } from "@/lib/menu/product-sheet-scroll"
 import { logMenuTelemetry } from "@/lib/menu/menu-telemetry"
 import { onRealtimeRefresh, scopeMatches } from "@/lib/realtime/bus"
@@ -177,49 +178,44 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
     setLoadError(false)
     setOffline(!navigator.onLine)
 
-    fetch("/api/menu?include_unavailable=1")
+    fetchLiveMenuCatalog(true)
       .then((res) => {
         if (!res.ok) throw new Error("menu fetch failed")
         return res.json()
       })
       .then((data) => {
+        const debug = parseMenuFetchDebug(data as Record<string, unknown>)
+        if (process.env.NODE_ENV !== "production") {
+          console.info("[qr-menu] live catalog", debug)
+        } else {
+          console.info(
+            `[qr-menu] categories=${debug.categoryCount} products=${debug.productCount} project=${debug.supabaseProject ?? "?"} source=${debug.menuSource ?? debug.source}`,
+          )
+        }
+
         const rows = (data.categories ?? []) as QrMenuCategoryRow[]
         const stations = (data.station_availability as StationAvailability[]) ?? []
         const products = (data.items ?? []).map((p: Record<string, unknown>) =>
           mapApiToQrMenuItem(p, stations),
         )
-        const merged = mergeQrMenuItems(menuItemsRef.current, products)
 
         if (
           silent &&
           menuItemsRef.current.length > 0 &&
-          isStableQrMenuPayload(menuItemsRef.current, merged, categoryRowsRef.current, rows)
+          isStableQrMenuPayload(menuItemsRef.current, products, categoryRowsRef.current, rows)
         ) {
           return
         }
 
         if (silent) captureScrollForSilentRefresh()
 
-        setCategoryRows((prev) => {
-          if (
-            prev.length === rows.length &&
-            prev.every(
-              (c, i) =>
-                c.id === rows[i]?.id &&
-                c.slug === rows[i]?.slug &&
-                c.name === rows[i]?.name,
-            )
-          ) {
-            return prev
-          }
-          return rows
-        })
+        setCategoryRows(rows)
         setOftenOrderedWith((data.often_ordered_with as Record<string, string[]>) ?? {})
         setHomepageSections({
           ...emptyHomepageSectionsMap(),
           ...((data.homepage_sections as MenuHomepageSectionsMap) ?? {}),
         })
-        setMenuItems(merged)
+        setMenuItems(products)
       })
       .catch(() => {
         if (!silent) setLoadError(true)
@@ -272,8 +268,8 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
   const activeOrder = backgroundFrozen ? activeOrderFrozenRef.current : activeOrderLive
 
   const categoryNavItems = useMemo(
-    () => buildQrCategoryNavItems(categoryRows),
-    [categoryRows],
+    () => buildQrCategoryNavItems(categoryRows, menuItems),
+    [categoryRows, menuItems],
   )
 
   const bestsellerItems = useMemo(

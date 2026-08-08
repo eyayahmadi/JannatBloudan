@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
-import { LayoutGrid, X } from "lucide-react"
+import { LayoutGrid, Wind, X } from "lucide-react"
 import type { QrCategoryNavItem } from "@/lib/menu/qr-printed-menu"
+import { isShishaCategorySlug } from "@/lib/menu/category-display-icon"
 import { resolveQrCategorySidebarLabels } from "@/lib/menu/qr-category-i18n"
 import { useI18n } from "@/lib/i18n/context"
 import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock"
@@ -22,6 +23,7 @@ type QrMenuLayoutProps = {
 }
 
 function CategoryItem({
+  slug,
   icon,
   german,
   arabic,
@@ -29,6 +31,7 @@ function CategoryItem({
   active,
   onSelect,
 }: {
+  slug?: string
   icon: string
   german?: string
   arabic?: string
@@ -37,6 +40,7 @@ function CategoryItem({
   onSelect: () => void
 }) {
   const isHome = homeLabel != null
+  const shisha = slug != null && isShishaCategorySlug(slug)
 
   return (
     <button
@@ -54,7 +58,11 @@ function CategoryItem({
           className="category-item-icon shrink-0 text-[30px] leading-none"
           aria-hidden
         >
-          {icon}
+          {shisha ? (
+            <Wind className="h-[30px] w-[30px] stroke-[1.75] text-sky-200" aria-hidden />
+          ) : (
+            icon
+          )}
         </span>
         <span className="min-w-0 flex-1 leading-snug">
           {isHome ? (
@@ -121,6 +129,7 @@ function CategoryList({
         return (
           <CategoryItem
             key={category.slug}
+            slug={category.slug}
             icon={category.icon}
             german={german}
             arabic={arabic}

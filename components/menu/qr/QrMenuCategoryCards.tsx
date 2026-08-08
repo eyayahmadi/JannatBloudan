@@ -1,9 +1,10 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, Wind } from "lucide-react"
 import { useQrTableMenu } from "@/components/menu/qr/QrTableMenuProvider"
 import { buildQrCategoryNavCards, type QrCategoryNavCard } from "@/lib/menu/qr-printed-menu"
+import { isShishaCategorySlug } from "@/lib/menu/category-display-icon"
 import { resolveQrCategoryLabel } from "@/lib/menu/qr-category-i18n"
 import { QrHorizontalScrollItem, QrHorizontalScrollRow } from "@/components/menu/qr/QrHorizontalScrollRow"
 import { useI18n } from "@/lib/i18n/context"
@@ -36,9 +37,13 @@ function CategoryCard({
       )}
     >
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.14),transparent_55%)]" />
-      <div className="relative flex h-full items-center justify-between gap-3 p-4 sm:p-5">
+        <div className="relative flex h-full items-center justify-between gap-3 p-4 sm:p-5">
         <div className="min-w-0">
-          <span className="text-2xl sm:text-3xl">{card.icon}</span>
+          {isShishaCategorySlug(card.slug) ? (
+            <Wind className="h-8 w-8 stroke-[1.75] text-sky-200 sm:h-9 sm:w-9" aria-hidden />
+          ) : (
+            <span className="text-2xl sm:text-3xl">{card.icon}</span>
+          )}
           <h3 className="mt-2 font-display text-base font-bold tracking-tight sm:text-lg">{primaryLabel}</h3>
           {secondaryLabel ? (
             <p className="mt-0.5 text-sm text-white/75" dir="rtl">
@@ -60,8 +65,8 @@ function CategoryCard({
 export function QrMenuCategoryCards({ tableId, className }: QrMenuCategoryCardsProps) {
   const router = useRouter()
   const { t, locale } = useI18n()
-  const { categoryRows } = useQrTableMenu()
-  const cards = buildQrCategoryNavCards(categoryRows)
+  const { categoryRows, menuItems } = useQrTableMenu()
+  const cards = buildQrCategoryNavCards(categoryRows, menuItems)
 
   return (
     <QrHorizontalScrollRow

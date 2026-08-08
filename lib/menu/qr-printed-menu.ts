@@ -32,13 +32,21 @@ function asMenuCategories(categories: QrMenuCategoryRow[]): MenuCategoryRow[] {
 }
 
 /** Navigation QR — construite depuis Supabase (Admin = source de vérité). */
-export function buildQrCategoryNavItems(categories: MenuCategoryRow[] = []): QrCategoryNavItem[] {
-  return buildQrCategoryNavItemsFromDb(categories)
+export function buildQrCategoryNavItems(
+  categories: MenuCategoryRow[] = [],
+  menuItems: Array<{ category: string }> = [],
+): QrCategoryNavItem[] {
+  const productSlugs =
+    menuItems.length > 0 ? new Set(menuItems.map((i) => i.category)) : undefined
+  return buildQrCategoryNavItemsFromDb(categories, productSlugs)
 }
 
 /** Cartes catégories homepage QR — depuis Supabase. */
-export function buildQrCategoryNavCards(categories: MenuCategoryRow[] = []): QrCategoryNavCard[] {
-  return buildQrCategoryNavCardsFromDb(categories)
+export function buildQrCategoryNavCards(
+  categories: MenuCategoryRow[] = [],
+  menuItems: Array<{ category: string }> = [],
+): QrCategoryNavCard[] {
+  return buildQrCategoryNavCardsFromDb(categories, menuItems)
 }
 
 export type QrPrintedMenuBlock = {

@@ -576,6 +576,7 @@ export async function GET(request: NextRequest) {
           popular_threshold: MENU_POPULAR_ORDER_MIN,
           menu_source: "live-catalog",
           supabase_project: getSupabaseProjectRef(),
+          deploy_commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
         },
       },
       {
