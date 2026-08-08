@@ -1,6 +1,11 @@
 "use client"
 
+import { Wind } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  isShishaCategorySlug,
+  resolveCategoryDisplayIcon,
+} from "@/lib/menu/category-display-icon"
 
 type MenuSubcategoryHeaderProps = {
   icon: string
@@ -11,6 +16,7 @@ type MenuSubcategoryHeaderProps = {
   drink?: boolean
   sweet?: boolean
   premium?: boolean
+  categorySlug?: string
 }
 
 export function MenuSubcategoryHeader({
@@ -22,8 +28,13 @@ export function MenuSubcategoryHeader({
   drink,
   sweet,
   premium,
+  categorySlug,
 }: MenuSubcategoryHeaderProps) {
   const isTable = variant === "table"
+  const displayIcon = categorySlug
+    ? resolveCategoryDisplayIcon(categorySlug, icon)
+    : icon
+  const shisha = categorySlug != null && isShishaCategorySlug(categorySlug)
 
   return (
     <div
@@ -47,7 +58,11 @@ export function MenuSubcategoryHeader({
         )}
         aria-hidden
       >
-        {icon}
+        {shisha ? (
+          <Wind className="h-5 w-5 stroke-[1.75] text-sky-300" aria-hidden />
+        ) : (
+          displayIcon
+        )}
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">

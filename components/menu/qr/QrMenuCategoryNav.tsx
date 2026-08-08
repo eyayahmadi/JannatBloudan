@@ -2,7 +2,9 @@
 
 import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { Wind } from "lucide-react"
 import type { QrCategoryNavItem } from "@/lib/menu/qr-printed-menu"
+import { isShishaCategorySlug } from "@/lib/menu/category-display-icon"
 import { resolveQrCategoryLabel } from "@/lib/menu/qr-category-i18n"
 import { useI18n } from "@/lib/i18n/context"
 import { cn } from "@/lib/utils"
@@ -29,6 +31,8 @@ function CategoryPill({
   onSelect: () => void
   chipRef?: (el: HTMLButtonElement | null) => void
 }) {
+  const shisha = isShishaCategorySlug(category.slug)
+
   return (
     <button
       ref={chipRef}
@@ -45,7 +49,13 @@ function CategoryPill({
         <span className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-600 to-orange-600" />
       ) : null}
       <span className="relative flex items-center gap-1.5 whitespace-nowrap">
-        <span className="text-base leading-none">{category.icon}</span>
+        <span className="text-base leading-none">
+          {shisha ? (
+            <Wind className="h-4 w-4 stroke-[1.75] text-sky-200" aria-hidden />
+          ) : (
+            category.icon
+          )}
+        </span>
         <span>{label}</span>
       </span>
     </button>

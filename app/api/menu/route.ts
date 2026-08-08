@@ -18,7 +18,10 @@ import {
   type StationAvailabilityStatus,
 } from "@/lib/stations/availability"
 import { fetchMenuHomepageSections } from "@/lib/menu/menu-homepage-sections"
-import { getLiveMenuCatalog } from "@/lib/menu/menu-catalog-service"
+import {
+  filterCategoriesWithListedProducts,
+  getLiveMenuCatalog,
+} from "@/lib/menu/menu-catalog-service"
 import { resolveMenuProductImageUrl } from "@/lib/menu/resolve-product-image"
 import { getSupabaseProjectRef } from "@/lib/supabase/config"
 
@@ -554,11 +557,29 @@ export async function GET(request: NextRequest) {
       homepage_sections = {}
     }
 
+    const categoriesForClient = filterCategoriesWithListedProducts(
+      categoryRows,
+      items.map((p) => p.category),
+    )
+
+    if (searchParams.get("debug") === "1") {
+      console.info("[menu] live catalog", {
+        supabase_project: getSupabaseProjectRef(),
+        category_count: categoriesForClient.length,
+        product_count: items.length,
+        category_slugs: categoriesForClient.map((c) => c.slug),
+        menu_source: "live-catalog",
+        deploy_commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+      })
+    }
+
+    const deployCommit = process.env.VERCEL_GIT_COMMIT_SHA ?? null
+
     return NextResponse.json(
       {
         source: "supabase",
         items,
-        categories: categoryRows,
+        categories: categoriesForClient,
         by_section: bySection,
         often_ordered_with,
         most_ordered_ids: mostOrderedIds,
@@ -576,12 +597,17 @@ export async function GET(request: NextRequest) {
           popular_threshold: MENU_POPULAR_ORDER_MIN,
           menu_source: "live-catalog",
           supabase_project: getSupabaseProjectRef(),
-          deploy_commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+          deploy_commit: deployCommit,
+          category_count: categoriesForClient.length,
+          product_count: items.length,
+          category_slugs: categoriesForClient.map((c) => c.slug),
         },
       },
       {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",
+          "X-Menu-Source": "live-catalog",
+          ...(deployCommit ? { "X-Deploy-Commit": deployCommit } : {}),
         },
       },
     )

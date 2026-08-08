@@ -154,6 +154,25 @@ export async function getLiveMenuCatalog(
   }
 }
 
+/** Keep only categories that appear in the live product list (Admin-visible menu). */
+export function filterCategoriesWithListedProducts(
+  categories: MenuCategoryRow[],
+  productCategorySlugs: Iterable<string>,
+): MenuCategoryRow[] {
+  const slugsWithProducts = new Set(productCategorySlugs)
+  const navGroupsWithProducts = new Set(
+    categories
+      .filter((c) => c.nav_group?.trim() && slugsWithProducts.has(c.slug))
+      .map((c) => c.nav_group!.trim()),
+  )
+
+  return categories.filter((c) => {
+    if (slugsWithProducts.has(c.slug)) return true
+    const group = c.nav_group?.trim()
+    return group ? navGroupsWithProducts.has(group) : false
+  })
+}
+
 /**
  * Admin Menu read — same Supabase tables as live menu, includes inactive/archived rows
  * for CMS management. Customer menus use getLiveMenuCatalog() instead.

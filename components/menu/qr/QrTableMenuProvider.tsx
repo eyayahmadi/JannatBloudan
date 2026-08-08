@@ -189,7 +189,7 @@ export function QrTableMenuProvider({ children }: { children: ReactNode }) {
           console.info("[qr-menu] live catalog", debug)
         } else {
           console.info(
-            `[qr-menu] categories=${debug.categoryCount} products=${debug.productCount} project=${debug.supabaseProject ?? "?"} source=${debug.menuSource ?? debug.source}`,
+            `[qr-menu] categories=${debug.categoryCount} products=${debug.productCount} project=${debug.supabaseProject ?? "?"} source=${debug.menuSource ?? debug.source} slugs=${debug.categorySlugs.join(",")}`,
           )
         }
 

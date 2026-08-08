@@ -106,6 +106,7 @@ export default function TableMenuCategoryPage() {
                 drink={isQrDrinkSectionId(displayBlock.id)}
                 sweet={displayBlock.id === "qr-section-desserts"}
                 premium
+                categorySlug={resolvedSlug ?? undefined}
               />
               {displayBlock.groups.length === 1 && displayBlock.groups[0]?.key !== "other" ? (
                 <QrTableMenuProductGrid items={displayBlock.groups[0].items} />
